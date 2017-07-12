@@ -44,7 +44,9 @@ void MakeRatioPlots(TString mfile,Int_t scanType, Double_t pDown, Double_t pUp, 
 void RatioScan(TString etaScanFile,TString momScanFile );
 void SetYTitleName(TString branchName);
 void MultiplydNch(TString momFile, Int_t flag);
-
+void TIdentityStatisticalErrorMCNew(TString momentsFile, Int_t dataType, Int_t nSubsample, Double_t etaDown, Double_t etaUp, Double_t pDown, Double_t pUp);
+Double_t GetNuDyn(Double_t a, Double_t b, Double_t a2, Double_t b2, Double_t ab);
+Double_t GetNetParCumulant2(Double_t a, Double_t b, Double_t a2, Double_t b2, Double_t ab);
 
 
 void FastPlotVScent(Int_t style, Int_t col, TString momentsFile, Int_t dataType, TString var, Double_t etaDown, Double_t etaUp, Double_t pDown, Double_t pUp, Int_t same);
@@ -85,6 +87,49 @@ Double_t dnchArrayAMPT[9]      = {1592.5, 1291.8, 962.6, 646.4, 422.1, 260.9, 14
 Double_t dnchArrayAMPTErr[9]   = {60,49,37,23,15,9,6,4,2};
 // ******************************* Modification region ******************************************
 
+enum momentType {kPi=0,kKa=1,kPr=2,kPiPi=3,kKaKa=4,kPrPr=5,kPiKa=6,kPiPr=7,kKaPr=8,};
+enum momentTypeUnlike {
+    kPiPosPiNeg=0,
+    kPiPosKaNeg=1,
+    kPiPosPrNeg=2,
+    kKaPosPiNeg=3,
+    kKaPosKaNeg=4,
+    kKaPosPrNeg=5,
+    kPrPosPiNeg=6,
+    kPrPosKaNeg=7,
+    kPrPosPrNeg=8,
+};
+enum nudynType {
+    kNudyn_PiKa=0,
+    kNudyn_PiPr=1,
+    kNudyn_KaPr=2,
+    
+    kNudyn_PiPosKaPos=3,
+    kNudyn_PiPosPrPos=4,
+    kNudyn_KaPosPrPos=5,
+    
+    kNudyn_PiNegKaNeg=6,
+    kNudyn_PiNegPrNeg=7,
+    kNudyn_KaNegPrNeg=8,
+    
+    kNudyn_PiPosPiNeg=9,
+    kNudyn_PiPosKaNeg=10,
+    kNudyn_PiPosPrNeg=11,
+    kNudyn_KaPosPiNeg=12,
+    kNudyn_KaPosKaNeg=13,
+    kNudyn_KaPosPrNeg=14,
+    kNudyn_PrPosPiNeg=15,
+    kNudyn_PrPosKaNeg=16,
+    kNudyn_PrPosPrNeg=17,
+};
+enum netCumType {
+    kNetPi2=0,
+    kNetKa2=1,
+    kNetPr2=2,
+};
+
+
+
 void TIdentityStatisticalErrorMC(TString momentsFile, Int_t dataType, Int_t nSubsample, Double_t etaDown=-0.8, Double_t etaUp=0.8, Double_t pDown=0.2, Double_t pUp=3.){
 
   //
@@ -93,7 +138,7 @@ void TIdentityStatisticalErrorMC(TString momentsFile, Int_t dataType, Int_t nSub
                                                                                        
   // To RUN
   /*                                        
-  cd /hera/alice/marsland/pFluct/files/analysis/IdentityFiles/MC_genVSrec/SSanalysis/EtaMomentumScan/cRows80/centBinWidth_10_all
+  cd /lustre/nyx/alice/users/marsland/pFluct/files/analysis/IdentityFiles/MC_genVSrec/SSanalysis/EtaMomentumScan/cRows80/centBinWidth_10_all
   tpcdev
   aliroot -l -b
   .L ~/PHD/macros/marsland_EbyeRatios/TIdentityStatisticalErrorMC.C+
@@ -356,6 +401,289 @@ void TIdentityStatisticalErrorMC(TString momentsFile, Int_t dataType, Int_t nSub
   
 }
 // =====================================================================================================
+void TIdentityStatisticalErrorMCNew(TString momentsFile, Int_t dataType, Int_t nSubsample, Double_t etaDown, Double_t etaUp, Double_t pDown, Double_t pUp){
+
+  //
+  // Calculate statistical errors for MCgen and MCrec form "MC_recgen_moments.root" using subsample method
+  // 
+                                                                                       
+  // To RUN
+  /*     
+        
+  TString input = "/lustre/nyx/alice/users/marsland/pFluct/files/analysis/Data/PbPb/MC/RUN1/11a10abis_ResRhoPhiOff_cRows_80_10EtaBin_mombin20MeV/mergedPeriods/AnalysisResults.list"    
+        
+  cd /lustre/nyx/alice/users/marsland/pFluct/files/analysis/Data/PbPb/MC/RUN1/11a10abis_ResRhoPhiOff_cRows_80_10EtaBin_mombin20MeV
+  aliroot -l -b
+  TString input = "AnalysisResults.root"
+  //   TString input = "/lustre/nyx/alice/users/marsland/pFluct/files/analysis/Data/PbPb/MC/RUN1/11a10abis_ResRhoPhiOff_cRows_80_10EtaBin_mombin20MeV/mergedPeriods/AnalysisResults.list"    
+  .L ~/PHD/macros/marsland_EbyeRatios/TIdentityStatisticalErrorMC.C+
+  TIdentityStatisticalErrorMCNew(input,1,1,-1,1,0.2,1.5)
+  TIdentityStatisticalErrorMCNew(input,1,1,-0.8,0.8,0.2,1.5)
+  TIdentityStatisticalErrorMCNew(input,1,1,-0.6,0.6,0.2,1.5)
+  TIdentityStatisticalErrorMCNew(input,1,1,-0.4,0.4,0.2,1.5)
+  TIdentityStatisticalErrorMCNew(input,1,1,-0.2,0.2,0.2,1.5)
+  
+  TFile ("MomentsTree_DT_1_eta_-1.0-1.0_mom_0.2-1.5.root")
+  mcMoments->SetMarkerStyle(20); mcMoments->SetMarkerColor(kRed+1); 
+  mcMoments->Draw("momentPos.fElements[0]+momentNeg.fElements[0]:centBin","","")
+  mcMoments->SetMarkerStyle(24); mcMoments->SetMarkerColor(kRed+1); 
+  mcMoments->Draw("netpar.fElements[0]:centBin","","same")
+  mcMoments->SetMarkerStyle(21); mcMoments->SetMarkerColor(kGreen+1); 
+  mcMoments->Draw("noResmomentPos.fElements[0]+noResmomentNeg.fElements[0]:centBin","","same")
+  mcMoments->SetMarkerStyle(25); mcMoments->SetMarkerColor(kGreen+1); 
+  mcMoments->Draw("noResnetpar.fElements[0]:centBin","","same")
+
+  new TCanvas
+  mcMoments->SetMarkerStyle(20); mcMoments->SetMarkerColor(kRed+1); 
+  mcMoments->Draw("momentPos.fElements[1]+momentNeg.fElements[1]:centBin","","")
+  mcMoments->SetMarkerStyle(24); mcMoments->SetMarkerColor(kRed+1); 
+  mcMoments->Draw("netpar.fElements[1]:centBin","","same")
+  mcMoments->SetMarkerStyle(21); mcMoments->SetMarkerColor(kGreen+1); 
+  mcMoments->Draw("noResmomentPos.fElements[1]+noResmomentNeg.fElements[1]:centBin","","same")
+  mcMoments->SetMarkerStyle(25); mcMoments->SetMarkerColor(kGreen+1); 
+  mcMoments->Draw("noResnetpar.fElements[1]:centBin","","same")
+
+  new TCanvas
+  mcMoments->SetMarkerStyle(20); mcMoments->SetMarkerColor(kRed+1); 
+  mcMoments->Draw("momentPos.fElements[2]+momentNeg.fElements[2]:centBin","","")
+  mcMoments->SetMarkerStyle(24); mcMoments->SetMarkerColor(kRed+1); 
+  mcMoments->Draw("netpar.fElements[2]:centBin","","same")
+  mcMoments->SetMarkerStyle(21); mcMoments->SetMarkerColor(kGreen+1); 
+  mcMoments->Draw("noResmomentPos.fElements[2]+noResmomentNeg.fElements[2]:centBin","","same")
+  mcMoments->SetMarkerStyle(25); mcMoments->SetMarkerColor(kGreen+1); 
+  mcMoments->Draw("noResnetpar.fElements[2]:centBin","","same")
+
+  
+  new TCanvas
+  mcMoments->SetMarkerStyle(20); mcMoments->SetMarkerColor(kRed+1); 
+  mcMoments->Draw("nudyn.fElements[0]:centBin","","")
+  mcMoments->SetMarkerStyle(24); mcMoments->SetMarkerColor(kRed+1); 
+  mcMoments->Draw("noResnudyn.fElements[0]:centBin","","same")
+ 
+  new TCanvas
+  mcMoments->SetMarkerStyle(20); mcMoments->SetMarkerColor(kRed+1); 
+  mcMoments->Draw("nudyn.fElements[1]:centBin","","")
+  mcMoments->SetMarkerStyle(24); mcMoments->SetMarkerColor(kRed+1); 
+  mcMoments->Draw("noResnudyn.fElements[1]:centBin","","same")
+
+  new TCanvas
+  mcMoments->SetMarkerStyle(20); mcMoments->SetMarkerColor(kRed+1); 
+  mcMoments->Draw("nudyn.fElements[2]:centBin","","")
+  mcMoments->SetMarkerStyle(24); mcMoments->SetMarkerColor(kRed+1); 
+  mcMoments->Draw("noResnudyn.fElements[2]:centBin","","same")
+
+  new TCanvas
+  mcMoments->SetMarkerStyle(20); mcMoments->SetMarkerColor(kRed+1); 
+  mcMoments->Draw("nudyn.fElements[9]:centBin","","")
+  mcMoments->SetMarkerStyle(24); mcMoments->SetMarkerColor(kRed+1); 
+  mcMoments->Draw("noResnudyn.fElements[9]:centBin","","same")
+
+  new TCanvas
+  mcMoments->SetMarkerStyle(20); mcMoments->SetMarkerColor(kRed+1); 
+  mcMoments->Draw("nudyn.fElements[13]:centBin","","")
+  mcMoments->SetMarkerStyle(24); mcMoments->SetMarkerColor(kRed+1); 
+  mcMoments->Draw("noResnudyn.fElements[13]:centBin","","same")
+
+  */
+  //
+  
+  gSystem->Exec("cp /u/marsland/PHD/macros/marsland_EbyeRatios/TIdentityStatisticalErrorMC.C .");
+
+  
+  // Output file
+  MCssMomets = new TTreeSRedirector(Form("MomentsTree_DT_%d_eta_%2.1f-%2.1f_mom_%2.1f-%2.1f.root",dataType,etaDown,etaUp,pDown,pUp),"recreate");
+
+  // Get the trees 
+  TTree *tree;
+//   TString treeName = "mcMoments";
+  TString treeName = (dataType==0) ? "mcRec": "mcGen";
+
+  if (momentsFile.Contains(".root")){
+    TFile *f = TFile::Open(momentsFile);
+    cout << " get the ttree " << treeName << endl;
+    tree = (TTree*)f->Get(treeName);
+  } else {
+    TChain *chain;
+    cout << " make the chain " << treeName << endl;
+    chain = AliXRDPROOFtoolkit::MakeChainRandom(momentsFile,treeName,0,500000,0);  
+    chain -> SetCacheSize(100000000000000000);
+    tree = (TTree*)chain;
+  }
+  if (!tree) return;
+  
+  // Second array to hold centDown
+  Int_t nPoints = sizeof(centDownArray)/sizeof(centDownArray[0]);   
+  cout << " nPoints == " << nPoints << endl;   
+  const Int_t nMoments = 9;
+
+  // loop over centrality bins
+  for(Int_t subsample=0; subsample<nSubsample;subsample++){
+    cout << " =========== subsample = " << subsample << " =========== " << endl;
+    for (Int_t icent=0;icent<nPoints;icent++){
+        
+      TVectorF moment(nMoments);
+      TVectorF momentPos(nMoments);
+      TVectorF momentNeg(nMoments);
+      TVectorF momentCross(nMoments);
+      TVectorF noResmoment(nMoments);
+      TVectorF noResmomentPos(nMoments);
+      TVectorF noResmomentNeg(nMoments);
+      TVectorF noResmomentCross(nMoments);
+      // initialize counters 
+      for(Int_t i=0;i<nMoments; i++){  
+          moment[i]=0.; 
+          momentPos[i]=0.;  
+          momentNeg[i]=0.; 
+          momentCross[i]=0.;
+          noResmoment[i]=0.; 
+          noResmomentPos[i]=0.;  
+          noResmomentNeg[i]=0.; 
+          noResmomentCross[i]=0.;
+      }
+      
+      // get the moments from tree   
+      TCut centCut   = Form("abs(centDown-%f)<0.01 && isample==%d && dataType==%d",centDownArray[icent],subsample,dataType);
+      TCut etaMomCut = Form("abs(etaUp-%f)<0.001 && abs(pDown-%f)<0.001 && abs(pUp-%f)<0.001", etaUp, pDown, pUp);
+
+      // get list of the branches to loop over them
+      TObjArray *branchArr   =  (TObjArray*)tree  ->GetListOfBranches(); 
+      Int_t nEntries = branchArr->GetEntriesFast();
+      for (Int_t ielement=0; ielement<nMoments; ++ielement){
+  
+        // plot the graph hist for each moment and get mean
+        tree->Draw(Form("moment.fElements[%d]",ielement),centCut && etaMomCut,"goff");
+        TH1D *hmoment = (TH1D*)tree->GetHistogram()->Clone();
+        moment[ielement]=hmoment->GetMean();
+        tree->Draw(Form("momentPos.fElements[%d]",ielement),centCut && etaMomCut,"goff");
+        TH1D *hmomentPos = (TH1D*)tree->GetHistogram()->Clone();
+        momentPos[ielement]=hmomentPos->GetMean();
+        tree->Draw(Form("momentNeg.fElements[%d]",ielement),centCut && etaMomCut,"goff");
+        TH1D *hmomentNeg = (TH1D*)tree->GetHistogram()->Clone();
+        momentNeg[ielement]=hmomentNeg->GetMean();
+        tree->Draw(Form("momentCross.fElements[%d]",ielement),centCut && etaMomCut,"goff");
+        TH1D *hmomentCross = (TH1D*)tree->GetHistogram()->Clone();
+        momentCross[ielement]=hmomentCross->GetMean();
+       
+        tree->Draw(Form("noResmoment.fElements[%d]",ielement),centCut && etaMomCut,"goff");
+        TH1D *hnoResmoment = (TH1D*)tree->GetHistogram()->Clone();
+        noResmoment[ielement]=hnoResmoment->GetMean();
+        tree->Draw(Form("noResmomentPos.fElements[%d]",ielement),centCut && etaMomCut,"goff");
+        TH1D *hnoResmomentPos = (TH1D*)tree->GetHistogram()->Clone();
+        noResmomentPos[ielement]=hnoResmomentPos->GetMean();
+        tree->Draw(Form("noResmomentNeg.fElements[%d]",ielement),centCut && etaMomCut,"goff");
+        TH1D *hnoResmomentNeg = (TH1D*)tree->GetHistogram()->Clone();
+        noResmomentNeg[ielement]=hnoResmomentNeg->GetMean();
+        tree->Draw(Form("noResmomentCross.fElements[%d]",ielement),centCut && etaMomCut,"goff");
+        TH1D *hnoResmomentCross = (TH1D*)tree->GetHistogram()->Clone();
+        noResmomentCross[ielement]=hnoResmomentCross->GetMean();
+        
+        delete hmoment; 
+        delete hmomentPos; 
+        delete hmomentNeg; 
+        delete hmomentCross; 
+        delete hnoResmoment; 
+        delete hnoResmomentPos; 
+        delete hnoResmomentNeg; 
+        delete hnoResmomentCross; 
+
+      }
+      
+      // Calculate nudyn
+      TVectorF nudyn(2*nMoments); for(Int_t i=0;i<2*nMoments; i++) nudyn[i]=0.;
+      TVectorF noResnudyn(2*nMoments); for(Int_t i=0;i<2*nMoments; i++) nudyn[i]=0.;
+      nudyn[kNudyn_PiKa]       = GetNuDyn(moment[kPi],moment[kKa],moment[kPiPi],moment[kKaKa],moment[kPiKa]);
+      nudyn[kNudyn_PiPr]       = GetNuDyn(moment[kPi],moment[kPr],moment[kPiPi],moment[kPrPr],moment[kPiPr]);
+      nudyn[kNudyn_KaPr]       = GetNuDyn(moment[kKa],moment[kPr],moment[kKaKa],moment[kPrPr],moment[kKaPr]);
+      nudyn[kNudyn_PiPosKaPos] = GetNuDyn(momentPos[kPi],momentPos[kKa],momentPos[kPiPi],momentPos[kKaKa],momentPos[kPiKa]);
+      nudyn[kNudyn_PiPosPrPos] = GetNuDyn(momentPos[kPi],momentPos[kPr],momentPos[kPiPi],momentPos[kPrPr],momentPos[kPiPr]);
+      nudyn[kNudyn_KaPosPrPos] = GetNuDyn(momentPos[kKa],momentPos[kPr],momentPos[kKaKa],momentPos[kPrPr],momentPos[kKaPr]);
+      nudyn[kNudyn_PiNegKaNeg] = GetNuDyn(momentNeg[kPi],momentNeg[kKa],momentNeg[kPiPi],momentNeg[kKaKa],momentNeg[kPiKa]);
+      nudyn[kNudyn_PiNegPrNeg] = GetNuDyn(momentNeg[kPi],momentNeg[kPr],momentNeg[kPiPi],momentNeg[kPrPr],momentNeg[kPiPr]);
+      nudyn[kNudyn_KaNegPrNeg] = GetNuDyn(momentNeg[kKa],momentNeg[kPr],momentNeg[kKaKa],momentNeg[kPrPr],momentNeg[kKaPr]);
+      nudyn[kNudyn_PiPosPiNeg] = GetNuDyn(momentPos[kPi],momentNeg[kPi],momentPos[kPiPi],momentNeg[kPiPi],momentCross[kPiPosPiNeg]);
+      nudyn[kNudyn_PiPosKaNeg] = GetNuDyn(momentPos[kPi],momentNeg[kKa],momentPos[kPiPi],momentNeg[kKaKa],momentCross[kPiPosKaNeg]);
+      nudyn[kNudyn_PiPosPrNeg] = GetNuDyn(momentPos[kPi],momentNeg[kPr],momentPos[kPiPi],momentNeg[kPrPr],momentCross[kPiPosPrNeg]);
+      nudyn[kNudyn_KaPosPiNeg] = GetNuDyn(momentPos[kKa],momentNeg[kPi],momentPos[kKaKa],momentNeg[kPiPi],momentCross[kKaPosPiNeg]);
+      nudyn[kNudyn_KaPosKaNeg] = GetNuDyn(momentPos[kKa],momentNeg[kKa],momentPos[kKaKa],momentNeg[kKaKa],momentCross[kKaPosKaNeg]);
+      nudyn[kNudyn_KaPosPrNeg] = GetNuDyn(momentPos[kKa],momentNeg[kPr],momentPos[kKaKa],momentNeg[kPrPr],momentCross[kKaPosPrNeg]);
+      nudyn[kNudyn_PrPosPiNeg] = GetNuDyn(momentPos[kPr],momentNeg[kPi],momentPos[kPrPr],momentNeg[kPiPi],momentCross[kPrPosPiNeg]);
+      nudyn[kNudyn_PrPosKaNeg] = GetNuDyn(momentPos[kPr],momentNeg[kKa],momentPos[kPrPr],momentNeg[kKaKa],momentCross[kPrPosKaNeg]);
+      nudyn[kNudyn_PrPosPrNeg] = GetNuDyn(momentPos[kPr],momentNeg[kPr],momentPos[kPrPr],momentNeg[kPrPr],momentCross[kPrPosPrNeg]);
+      
+      noResnudyn[kNudyn_PiKa]       = GetNuDyn(noResmoment[kPi],noResmoment[kKa],noResmoment[kPiPi],noResmoment[kKaKa],noResmoment[kPiKa]);
+      noResnudyn[kNudyn_PiPr]       = GetNuDyn(noResmoment[kPi],noResmoment[kPr],noResmoment[kPiPi],noResmoment[kPrPr],noResmoment[kPiPr]);
+      noResnudyn[kNudyn_KaPr]       = GetNuDyn(noResmoment[kKa],noResmoment[kPr],noResmoment[kKaKa],noResmoment[kPrPr],noResmoment[kKaPr]);
+      noResnudyn[kNudyn_PiPosKaPos] = GetNuDyn(noResmomentPos[kPi],noResmomentPos[kKa],noResmomentPos[kPiPi],noResmomentPos[kKaKa],noResmomentPos[kPiKa]);
+      noResnudyn[kNudyn_PiPosPrPos] = GetNuDyn(noResmomentPos[kPi],noResmomentPos[kPr],noResmomentPos[kPiPi],noResmomentPos[kPrPr],noResmomentPos[kPiPr]);
+      noResnudyn[kNudyn_KaPosPrPos] = GetNuDyn(noResmomentPos[kKa],noResmomentPos[kPr],noResmomentPos[kKaKa],noResmomentPos[kPrPr],noResmomentPos[kKaPr]);
+      noResnudyn[kNudyn_PiNegKaNeg] = GetNuDyn(noResmomentNeg[kPi],noResmomentNeg[kKa],noResmomentNeg[kPiPi],noResmomentNeg[kKaKa],noResmomentNeg[kPiKa]);
+      noResnudyn[kNudyn_PiNegPrNeg] = GetNuDyn(noResmomentNeg[kPi],noResmomentNeg[kPr],noResmomentNeg[kPiPi],noResmomentNeg[kPrPr],noResmomentNeg[kPiPr]);
+      noResnudyn[kNudyn_KaNegPrNeg] = GetNuDyn(noResmomentNeg[kKa],noResmomentNeg[kPr],noResmomentNeg[kKaKa],noResmomentNeg[kPrPr],noResmomentNeg[kKaPr]);
+      noResnudyn[kNudyn_PiPosPiNeg] = GetNuDyn(noResmomentPos[kPi],noResmomentNeg[kPi],noResmomentPos[kPiPi],noResmomentNeg[kPiPi],noResmomentCross[kPiPosPiNeg]);
+      noResnudyn[kNudyn_PiPosKaNeg] = GetNuDyn(noResmomentPos[kPi],noResmomentNeg[kKa],noResmomentPos[kPiPi],noResmomentNeg[kKaKa],noResmomentCross[kPiPosKaNeg]);
+      noResnudyn[kNudyn_PiPosPrNeg] = GetNuDyn(noResmomentPos[kPi],noResmomentNeg[kPr],noResmomentPos[kPiPi],noResmomentNeg[kPrPr],noResmomentCross[kPiPosPrNeg]);
+      noResnudyn[kNudyn_KaPosPiNeg] = GetNuDyn(noResmomentPos[kKa],noResmomentNeg[kPi],noResmomentPos[kKaKa],noResmomentNeg[kPiPi],noResmomentCross[kKaPosPiNeg]);
+      noResnudyn[kNudyn_KaPosKaNeg] = GetNuDyn(noResmomentPos[kKa],noResmomentNeg[kKa],noResmomentPos[kKaKa],noResmomentNeg[kKaKa],noResmomentCross[kKaPosKaNeg]);
+      noResnudyn[kNudyn_KaPosPrNeg] = GetNuDyn(noResmomentPos[kKa],noResmomentNeg[kPr],noResmomentPos[kKaKa],noResmomentNeg[kPrPr],noResmomentCross[kKaPosPrNeg]);
+      noResnudyn[kNudyn_PrPosPiNeg] = GetNuDyn(noResmomentPos[kPr],noResmomentNeg[kPi],noResmomentPos[kPrPr],noResmomentNeg[kPiPi],noResmomentCross[kPrPosPiNeg]);
+      noResnudyn[kNudyn_PrPosKaNeg] = GetNuDyn(noResmomentPos[kPr],noResmomentNeg[kKa],noResmomentPos[kPrPr],noResmomentNeg[kKaKa],noResmomentCross[kPrPosKaNeg]);
+      noResnudyn[kNudyn_PrPosPrNeg] = GetNuDyn(noResmomentPos[kPr],noResmomentNeg[kPr],noResmomentPos[kPrPr],noResmomentNeg[kPrPr],noResmomentCross[kPrPosPrNeg]);
+
+      //calculate net particles
+      TVectorF netpar(2*nMoments); for(Int_t i=0;i<2*nMoments; i++) netpar[i]=0.;
+      TVectorF noResnetpar(2*nMoments); for(Int_t i=0;i<2*nMoments; i++) noResnetpar[i]=0.;
+      netpar[kNetPi2] = GetNetParCumulant2(momentPos[kPi],momentNeg[kPi],momentPos[kPiPi],momentNeg[kPiPi],momentCross[kPiPosPiNeg]);
+      netpar[kNetKa2] = GetNetParCumulant2(momentPos[kKa],momentNeg[kKa],momentPos[kKaKa],momentNeg[kKaKa],momentCross[kKaPosKaNeg]);
+      netpar[kNetPr2] = GetNetParCumulant2(momentPos[kPr],momentNeg[kPr],momentPos[kPrPr],momentNeg[kPrPr],momentCross[kPrPosPrNeg]);
+      
+      noResnetpar[kNetPi2] = GetNetParCumulant2(noResmomentPos[kPi],noResmomentNeg[kPi],noResmomentPos[kPiPi],noResmomentNeg[kPiPi],noResmomentCross[kPiPosPiNeg]);
+      noResnetpar[kNetKa2] = GetNetParCumulant2(noResmomentPos[kKa],noResmomentNeg[kKa],noResmomentPos[kKaKa],noResmomentNeg[kKaKa],noResmomentCross[kKaPosKaNeg]);
+      noResnetpar[kNetPr2] = GetNetParCumulant2(noResmomentPos[kPr],noResmomentNeg[kPr],noResmomentPos[kPrPr],noResmomentNeg[kPrPr],noResmomentCross[kPrPosPrNeg]);
+
+      Double_t pBin   =(pDown+pUp)/2.;
+      Double_t etaBin =(etaDown+etaUp)/2.;
+      Double_t centBin=(centDownArray[icent]+centUpArray[icent])/2.;  
+      cout << "etaRange = " << etaDown << " - "     << etaUp << "    pRange = " << pDown << " - " << pUp << " ------------ ";
+      cout << "etaBin = " << etaBin << "   pBin = " << pBin << "    centBin = " << centBin << endl;
+       
+      // dump everything into ttree   
+      MCssMomets -> GetFile()->cd();
+      *MCssMomets << "mcMoments" <<
+          
+          "dataType="     << dataType            <<
+          "subsample="    << subsample           <<
+          "pDown="        << pDown               << 
+          "pUp="          << pUp                 << 
+          "pBin="         << pBin                << 
+          "etaDown="      << etaDown             << 
+          "etaUp="        << etaUp               << 
+          "etaBin="       << etaBin              << 
+          "centDown="     << centDownArray[icent]<< 
+          "centUp="       << centUpArray[icent]  << 
+          "centBin="      << centBin             << 
+          
+          "netpar.="       << &netpar <<             // second moments for particle+antiparticle
+          "noResnetpar.="  << &noResnetpar <<             // second moments for particle+antiparticle
+          "nudyn.="        << &nudyn <<             // second moments for particle+antiparticle
+          "noResnudyn.="   << &noResnudyn <<             // second moments for particle+antiparticle
+          "moment.="       << &moment <<             // second moments for particle+antiparticle
+          "momentPos.="    << &momentPos <<          // second moment of positive particles
+          "momentNeg.="    << &momentNeg <<          // second moment of negative particles
+          "momentCross.="  << &momentCross <<        // second moment of unlikesign particles
+          "noResmoment.="      << &noResmoment <<             // second moments for particle+antiparticle
+          "noResmomentPos.="   << &noResmomentPos <<          // second moment of positive particles
+          "noResmomentNeg.="   << &noResmomentNeg <<          // second moment of negative particles
+          "noResmomentCross.=" << &noResmomentCross <<        // second moment of unlikesign particles
+           
+          
+          "\n"; 
+        
+    } // end of centrality loop
+  } // end of subsample loop
+  delete MCssMomets;
+  
+}
+// =====================================================================================================
 void ProcessErrorCalculationVScent(TString momentsFile,Double_t etaDown, Double_t etaUp, Double_t pDown, Double_t pUp){
 
   //
@@ -366,7 +694,7 @@ void ProcessErrorCalculationVScent(TString momentsFile,Double_t etaDown, Double_
                                                                                        
   // To RUN
   /*                                        
-  cd /hera/alice/marsland/pFluct/files/analysis/IdentityFiles/test
+  cd /lustre/nyx/alice/users/marsland/pFluct/files/analysis/IdentityFiles/test
   tpcdev
   aliroot -l
   .L /u/marsland/PHD/macros/marsland_EbyeRatios/TIdentityStatisticalErrorMC.C+
@@ -494,7 +822,7 @@ void ProcessErrorCalculationVSmomentum(TString momentsFile,Double_t centDown, Do
                                                                                        
   // To RUN
   /*                                        
-  cd /hera/alice/marsland/pFluct/files/analysis/IdentityFiles/test
+  cd /lustre/nyx/alice/users/marsland/pFluct/files/analysis/IdentityFiles/test
   tpcdev
   aliroot -l -b
   .L ~/PHD/macros/marsland_EbyeRatios/TIdentityStatisticalErrorMC.C+
@@ -616,7 +944,7 @@ void ProcessErrorCalculationVSmomentum(TString momentsFile,Double_t centDown, Do
 void ProcessErrorCalculationVSeta(TString momentsFile,Double_t centDown, Double_t centUp, Double_t pDown, Double_t pUp){
                                                                                     
   /*                                        
-  cd /hera/alice/marsland/pFluct/files/analysis/IdentityFiles/test
+  cd /lustre/nyx/alice/users/marsland/pFluct/files/analysis/IdentityFiles/test
   tpcdev
   aliroot -l -b
   .L ~/PHD/macros/marsland_EbyeRatios/TIdentityStatisticalErrorMC.C+
@@ -879,7 +1207,7 @@ void RatioScan(TString etaScanFile,TString momScanFile ){
 
   // To RUN
   /*                                        
-  cd /hera/alice/marsland/pFluct/files/analysis/IdentityFiles/MC_genVSrec/SSanalysis/EtaMomentumScan/cRows80/centBinWidth_10_all/Results
+  cd /lustre/nyx/alice/users/marsland/pFluct/files/analysis/IdentityFiles/MC_genVSrec/SSanalysis/EtaMomentumScan/cRows80/centBinWidth_10_all/Results
   tpcdev
   aliroot -l -b
   .L ~/PHD/macros/marsland_EbyeRatios/TIdentityStatisticalErrorMC.C+
@@ -947,7 +1275,7 @@ void AnalyseWs(TString wFile, TString wSliceFile){
   //
   // Calculate statistical errors using subsample method
   /*
-  cd /hera/alice/marsland/pFluct/files/analysis/IdentityFiles/IdDataTrees_300000_Results_OK2
+  cd /lustre/nyx/alice/users/marsland/pFluct/files/analysis/IdentityFiles/IdDataTrees_300000_Results_OK2
   aliroot -l
   .L ~/PHD/macros/marsland_EbyeRatios/TIdentityStatisticalErrorMC.C+
   AnalyseWs("streamer_All.root","streamer_Slice.root")
@@ -1026,7 +1354,7 @@ void AnalyseHistsInFile(TString file){
   // 
   // delete TH1D object from file
   /*
-  cd /hera/alice/marsland/pFluct/files/analysis/IdentityFiles/IdDataTrees_MC_060514/
+  cd /lustre/nyx/alice/users/marsland/pFluct/files/analysis/IdentityFiles/IdDataTrees_MC_060514/
   aliroot -l 
   .L ~/PHD/macros/marsland_EbyeRatios/TIdentityStatisticalErrorMC.C+
   AnalyseHistsInFile("TIdenResults_0_0_GAUS.root"); 2> /dev/null
@@ -1550,7 +1878,7 @@ void MultiplydNch(TString momFile, Int_t flag){
   //
   /*
    
-   cd /hera/alice/marsland/pFluct/files/analysis/Data/PbPb/MC/MC_PbPb_HIJING_TightCuts/test
+   cd /lustre/nyx/alice/users/marsland/pFluct/files/analysis/Data/PbPb/MC/MC_PbPb_HIJING_TightCuts/test
    aliroot -l 
    .L ~/PHD/macros/marsland_EbyeRatios/TIdentityStatisticalErrorMC.C+
    MultiplydNch("Ratios_CentScan_eta_-0.8-0.8_mom_0.2-1.5.root", 0)
@@ -1702,3 +2030,49 @@ void MultiplydNch(TString momFile, Int_t flag){
   delete scaling;
   
 } 
+// =====================================================================================================
+Double_t GetNuDyn(Double_t a, Double_t b, Double_t a2, Double_t b2, Double_t ab )
+{
+    
+    if (a&&b) {
+        return a2/(a*a)+b2/(b*b)-2*ab/(a*b)-(1/a+1/b);
+    } else {
+        cout << "ERROR: Problem with the first moments" << endl;
+        return 0.;
+    }
+    
+}
+// =====================================================================================================
+Double_t GetNetParCumulant2(Double_t a, Double_t b, Double_t a2, Double_t b2, Double_t ab )
+{
+    
+    if (a&&b) {
+        return (a2-a*a)+(b2-b*b)-2*(ab-a*b);
+    } else {
+        cout << "ERROR: Problem with the first moments" << endl;
+        return 0.;
+    }
+    
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

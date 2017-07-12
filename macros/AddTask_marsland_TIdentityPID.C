@@ -124,6 +124,7 @@ AliAnalysisTask *AddTask_marsland_TIdentityPID(Bool_t getFromAlien=kFALSE,TStrin
   coutput11 = mgr->CreateContainer("fTreeCuts",     TTree::Class(), AliAnalysisManager::kOutputContainer ,results.Data());
   coutput12 = mgr->CreateContainer("dnchdeta",      TTree::Class(), AliAnalysisManager::kOutputContainer ,results.Data());
   coutput13 = mgr->CreateContainer("fullacc",       TTree::Class(), AliAnalysisManager::kOutputContainer ,results.Data());
+  coutput14 = mgr->CreateContainer("resonance",       TTree::Class(), AliAnalysisManager::kOutputContainer ,results.Data());
   mgr->ConnectOutput (task,  1, coutput1);
   mgr->ConnectOutput (task,  2, coutput2);
   mgr->ConnectOutput (task,  3, coutput3);
@@ -137,6 +138,7 @@ AliAnalysisTask *AddTask_marsland_TIdentityPID(Bool_t getFromAlien=kFALSE,TStrin
   mgr->ConnectOutput (task,  11, coutput11);
   mgr->ConnectOutput (task,  12, coutput12);
   mgr->ConnectOutput (task,  13, coutput13);
+  mgr->ConnectOutput (task,  14, coutput14);
   cout << " === Containers are ready === " << endl;
   return task;
 }

@@ -45,7 +45,7 @@ class AliAnalysisTaskTIdentityPID : public AliAnalysisTaskSE {
   AliAnalysisTaskTIdentityPID();
   virtual ~AliAnalysisTaskTIdentityPID();
   
-  enum momentType {kPi=0,kKa=1,kPr=2,kPiPi=3,kKaKa=4,kPrPr=5,kPiKa=6,kPiPr=7,kKaPr=8,};
+  enum momentType {kPi=0,kKa=1,kPr=2,kPiPi=3,kKaKa=4,kPrPr=5,kPiKa=6,kPiPr=7,kKaPr=8,kLa=9,kLaLa=10};
   enum momentTypeUnlike {
     kPiPosPiNeg=0,
     kPiPosKaNeg=1,
@@ -56,6 +56,7 @@ class AliAnalysisTaskTIdentityPID : public AliAnalysisTaskSE {
     kPrPosPiNeg=6,
     kPrPosKaNeg=7,
     kPrPosPrNeg=8,
+    kLaPosLaNeg=9,
   };
 
 // ---------------------------------------------------------------------------------
@@ -75,19 +76,24 @@ class AliAnalysisTaskTIdentityPID : public AliAnalysisTaskSE {
   void   Initialize();
   
    // Some boolian settings
-  void   SetIncludeITScuts(const Bool_t ifITSCuts = kTRUE)        {fIncludeITS          = ifITSCuts;}
-  void   SetFillArmPodTree(const Bool_t ifArmpodTree = kTRUE)     {fFillArmPodTree      = ifArmpodTree;}
-  void   SetTightCuts(const Bool_t ifTightCuts = kFALSE)          {fTightCuts           = ifTightCuts;}
-  void   SetDeDxCheck(const Bool_t ifDeDxCheck = kFALSE)          {fdEdxCheck           = ifDeDxCheck;}
-  void   SetEffMatrix(const Bool_t ifEffMatrix = kFALSE)          {fEffMatrix           = ifEffMatrix;}
-  void   SetCleanSamplesOnly(const Bool_t ifSamplesOnly = kFALSE) {fCleanSamplesOnly    = ifSamplesOnly;}
-  void   SetFillBayesianProb(const Bool_t ifBayesProb = kFALSE)   {fFillBayes           = ifBayesProb;}
-  void   SetFillAllCutVariables(const Bool_t ifAllCuts = kFALSE)  {fFillCuts            = ifAllCuts;}
-  void   SetFillDeDxTree(const Bool_t ifDeDxTree = kFALSE)        {fFillDeDxTree        = ifDeDxTree;}
-  void   SetRunFastSimulation(const Bool_t ifFastSimul = kFALSE)  {fRunFastSimulation   = ifFastSimul;}
-  void   SetFillDnchDeta(const Bool_t ifDnchDetaCal = kFALSE)     {fFillDnchDeta        = ifDnchDetaCal;}
-  void   SetIncludeTOF(const Bool_t ifIncludeTOF = kFALSE)        {fIncludeTOF          = ifIncludeTOF;}
+  void   SetIncludeITScuts(const Bool_t ifITSCuts = kTRUE)          {fIncludeITS          = ifITSCuts;}
+  void   SetFillArmPodTree(const Bool_t ifArmpodTree = kTRUE)       {fFillArmPodTree      = ifArmpodTree;}
+  void   SetTightCuts(const Bool_t ifTightCuts = kFALSE)            {fTightCuts           = ifTightCuts;}
+  void   SetDeDxCheck(const Bool_t ifDeDxCheck = kFALSE)            {fdEdxCheck           = ifDeDxCheck;}
+  void   SetEffMatrix(const Bool_t ifEffMatrix = kFALSE)            {fEffMatrix           = ifEffMatrix;}
+  void   SetCleanSamplesOnly(const Bool_t ifSamplesOnly = kFALSE)   {fCleanSamplesOnly    = ifSamplesOnly;}
+  void   SetFillBayesianProb(const Bool_t ifBayesProb = kFALSE)     {fFillBayes           = ifBayesProb;}
+  void   SetFillAllCutVariables(const Bool_t ifAllCuts = kFALSE)    {fFillCuts            = ifAllCuts;}
+  void   SetFillDeDxTree(const Bool_t ifDeDxTree = kFALSE)          {fFillDeDxTree        = ifDeDxTree;}
+  void   SetRunFastSimulation(const Bool_t ifFastSimul = kFALSE)    {fRunFastSimulation   = ifFastSimul;}
+  void   SetFillDnchDeta(const Bool_t ifDnchDetaCal = kFALSE)       {fFillDnchDeta        = ifDnchDetaCal;}
+  void   SetIncludeTOF(const Bool_t ifIncludeTOF = kFALSE)          {fIncludeTOF          = ifIncludeTOF;}
+  void   SetAnalysisOnGrid(const Bool_t ifAnalysisOnGRID = kFALSE)  {fAnalysisOnGRID      = ifAnalysisOnGRID;}
+  void   SetWeakAndMaterial(const Bool_t ifWeakAndMaterial = kFALSE){fWeakAndMaterial     = ifWeakAndMaterial;}
+  void   SetFillTIdenTrees(const Bool_t ifTIdentity = kFALSE)       {fTIdentity           = ifTIdentity;}
 
+  
+  
   // Setters for the systematic uncertainty checks
   void   SetSystCentEstimator(const Int_t systCentEstimator = 0)  {fSystCentEstimatetor = systCentEstimator;}
   void   SetSystDCAxy(const Int_t systDCAxy = 0)                  {fSystDCAxy           = systDCAxy;}
@@ -138,6 +144,16 @@ class AliAnalysisTaskTIdentityPID : public AliAnalysisTaskSE {
       fetaDownArr[i] =  tmpetaDownArr[i]; 
       fetaUpArr[i]   =  tmpetaUpArr[i]; 
     } 
+  }
+  
+  void SetMCResonanceArray(const Int_t tmpNRes, TString tmpResArr[])
+  {    
+    // set MC eta values to scan 
+    cout << " !!!!!! SetMCResonanceArray is being set !!!!!!! " << endl;
+    fnResBins = tmpNRes;
+    fResonances = new TString[fnResBins]; 
+    for (Int_t i=0; i<fnResBins; i++) fResonances[i] = tmpResArr[i]; 
+     
   }
   
   void SetMCMomScanArray(const Int_t tmpMomBinsMC, Float_t tmppDownArr[], Float_t tmppUpArr[])
@@ -203,6 +219,7 @@ class AliAnalysisTaskTIdentityPID : public AliAnalysisTaskSE {
   TTree            * fTreeBayes;              // tree to save bayesian probabilities
   TTree            * fTreeCuts;               // tree to save all variables for control plots
   TTree            * fTreeMCFullAcc;          // tree with full acceptance filled with MC
+  TTree            * fTreeResonance;          // tree with full acceptance filled with MC
 
   TH1F             * fhEta;                   // helper histogram for TIdentity tree
   TH1F             * fhCent;                  // helper histogram for TIdentity tree
@@ -220,6 +237,8 @@ class AliAnalysisTaskTIdentityPID : public AliAnalysisTaskSE {
   Int_t             fnEtaBins;
       
   Bool_t            fMCtrue;                 // flag if real data or MC is processed
+  Bool_t            fTIdentity;              // flag if tidentity trees are to be filled
+  Bool_t            fWeakAndMaterial;        // flag for the Weak and Material analysis
   Bool_t            fEffMatrix;              // flag for efficiency matrix filling
   Bool_t            fdEdxCheck;              // flag to check only the dEdx performance
   Bool_t            fCleanSamplesOnly;       // flag for only clean sample production
@@ -285,6 +304,7 @@ class AliAnalysisTaskTIdentityPID : public AliAnalysisTaskSE {
   Float_t           fPrMC;
   Float_t           fDeMC;
   Float_t           fMuMC;
+  Float_t           fLaMC;
   
   Float_t           fptotMCgen;
   Float_t           fpTMCgen;
@@ -299,6 +319,7 @@ class AliAnalysisTaskTIdentityPID : public AliAnalysisTaskSE {
   Float_t           fPrMCgen;
   Float_t           fDeMCgen;
   Float_t           fMuMCgen;
+  Float_t           fLaMCgen;
    
   Float_t           fPx;                     // x component of momentum
   Float_t           fPy;                     // y component of momentum
@@ -331,6 +352,7 @@ class AliAnalysisTaskTIdentityPID : public AliAnalysisTaskSE {
   Int_t              fTPCShared;              // number of shared clusters
   Int_t              fNcl;                    // number of points used for dEdx
 
+  Int_t              fnResBins;
   Int_t              fnEtaWinBinsMC;
   Int_t              fnMomBinsMC;
   Int_t              fnCentBinsMC;
@@ -353,6 +375,7 @@ class AliAnalysisTaskTIdentityPID : public AliAnalysisTaskSE {
   Bool_t             fHasTrack0FirstITSlayer;
   Bool_t             fHasTrack1FirstITSlayer;
   Bool_t             fHasV0FirstITSlayer;
+  Bool_t             fAnalysisOnGRID;
   
   TCutG              *fPionCutG;
   TCutG              *fAntiProtonCutG;
@@ -379,6 +402,7 @@ class AliAnalysisTaskTIdentityPID : public AliAnalysisTaskSE {
   Float_t            *fpDownArr;             //[fnMomBinsMC]
   Float_t            *fpUpArr;               //[fnMomBinsMC]
   Float_t            *fxCentBins;            //[fnCentbinsData]
+  TString            *fResonances;           //[fnResBins]
 
   //
   // control and QA histograms
