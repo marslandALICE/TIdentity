@@ -1,0 +1,5 @@
+--2017-06-29 22:15:49--  https://alimonitor.cern.ch/configuration/index.jsp?partition=LHC15o&pass=pass5_lowIR&res_path=mif
+OpenSSL: error:06065064:digital envelope routines:EVP_DecryptFinal_ex:bad decrypt
+OpenSSL: error:0906A065:PEM routines:PEM_do_header:bad decrypt
+OpenSSL: error:140B0009:SSL routines:SSL_CTX_use_PrivateKey_file:PEM lib
+Disabling SSL due to encountered errors.

@@ -1,0 +1,16 @@
+--2017-07-01 00:36:54--  https://alimonitor.cern.ch/configuration/index.jsp?partition=LHC15o&pass=pass2_lowIR&res_path=mif
+Resolving alimonitor.cern.ch (alimonitor.cern.ch)... 137.138.47.208, 2001:1458:201:b50e::100:a
+Connecting to alimonitor.cern.ch (alimonitor.cern.ch)|137.138.47.208|:443... connected.
+WARNING: cannot verify alimonitor.cern.ch's certificate, issued by 'CN=CERN Grid Certification Authority,DC=cern,DC=ch':
+  Self-signed certificate encountered.
+HTTP request sent, awaiting response... 200 OK
+Length: 175871 (172K) [text/mif]
+Saving to: './data/2015/LHC15o/pass2_lowIR/RCT.mif'
+
+     0K .......... .......... .......... .......... .......... 29%  576K 0s
+    50K .......... .......... .......... .......... .......... 58% 1.25M 0s
+   100K .......... .......... .......... .......... .......... 87% 2.58M 0s
+   150K .......... .......... .                               100% 23.8M=0.1s
+
+2017-07-01 00:37:02 (1.15 MB/s) - './data/2015/LHC15o/pass2_lowIR/RCT.mif' saved [175871/175871]
+
