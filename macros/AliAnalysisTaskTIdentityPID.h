@@ -27,6 +27,7 @@ class fPIDCombined;
 
 #include "AliAnalysisTaskSE.h"
 #include "AliPIDCombined.h"
+#include "AliTPCdEdxInfo.h"
 #include "THnSparse.h"
 #include "THn.h"
 #include "TCutG.h"
@@ -58,6 +59,22 @@ class AliAnalysisTaskTIdentityPID : public AliAnalysisTaskSE {
     kPrPosPrNeg=8,
     kLaPosLaNeg=9,
   };
+  enum trackCutBit {
+    kNCrossedRowsTPC60=0,
+    kNCrossedRowsTPC80=1,
+    kNCrossedRowsTPC100=2,
+    kMaxChi2PerClusterTPC3=3,
+    kMaxChi2PerClusterTPC4=4,
+    kMaxChi2PerClusterTPC5=5,
+    kMaxDCAToVertexXYPtDepSmall=6,
+    kMaxDCAToVertexXYPtDep=7,
+    kMaxDCAToVertexXYPtDepLarge=8,
+    kRequireITSRefit=9,
+    kClusterRequirementITS=10,
+    kVertexZSmall=11,
+    kVertexZ=12,
+    kVertexZLarge=13,
+  };
 
 // ---------------------------------------------------------------------------------
 //                                    Methods
@@ -88,12 +105,11 @@ class AliAnalysisTaskTIdentityPID : public AliAnalysisTaskSE {
   void   SetRunFastSimulation(const Bool_t ifFastSimul = kFALSE)    {fRunFastSimulation   = ifFastSimul;}
   void   SetFillDnchDeta(const Bool_t ifDnchDetaCal = kFALSE)       {fFillDnchDeta        = ifDnchDetaCal;}
   void   SetIncludeTOF(const Bool_t ifIncludeTOF = kFALSE)          {fIncludeTOF          = ifIncludeTOF;}
-  void   SetAnalysisOnGrid(const Bool_t ifAnalysisOnGRID = kFALSE)  {fAnalysisOnGRID      = ifAnalysisOnGRID;}
+  void   SetUseThnSparse(const Bool_t ifUseThnSparse = kFALSE)    {fUseThnSparse        = ifUseThnSparse;}
+  void   SetUseCouts(const Bool_t ifUseCouts = kFALSE)            {fUseCouts            = ifUseCouts;}  
   void   SetWeakAndMaterial(const Bool_t ifWeakAndMaterial = kFALSE){fWeakAndMaterial     = ifWeakAndMaterial;}
   void   SetFillTIdenTrees(const Bool_t ifTIdentity = kFALSE)       {fTIdentity           = ifTIdentity;}
 
-  
-  
   // Setters for the systematic uncertainty checks
   void   SetSystCentEstimator(const Int_t systCentEstimator = 0)  {fSystCentEstimatetor = systCentEstimator;}
   void   SetSystDCAxy(const Int_t systDCAxy = 0)                  {fSystDCAxy           = systDCAxy;}
@@ -169,7 +185,6 @@ class AliAnalysisTaskTIdentityPID : public AliAnalysisTaskSE {
     }
   }
   
-  
  private:
    
    AliAnalysisTaskTIdentityPID(const AliAnalysisTaskTIdentityPID&); 
@@ -205,6 +220,7 @@ class AliAnalysisTaskTIdentityPID : public AliAnalysisTaskSE {
   AliESDv0Cuts     * fESDtrackCutsV0;         // basic cut variables for V0
   AliESDtrackCuts  * fESDtrackCutsCleanSamp;  // basic cut variables for clean pion and electron form V0s
   AliPIDCombined   * fPIDCombined;            //! combined PID object
+  AliTPCdEdxInfo   * fTPCdEdxInfo;
   
   TTree            * fTree;                   // data Tree for real Data
   TTree            * fIdenTree;               // data tree for TIdentity
@@ -230,6 +246,7 @@ class AliAnalysisTaskTIdentityPID : public AliAnalysisTaskSE {
   THnSparseF       * fhnCleanKa;              // histogram which hold Clean Kaons
   THnSparseF       * fhnCleanDe;              // histogram which hold Clean Deuterons
  
+  UInt_t            fTrackCutBits;           // integer which hold all cut variations as bits
   Int_t             myBin[3];                // binning array to be used for TIdentity module
   Int_t             myBinMC[3];              // binning array to be used for MC TIdentity module
   Double_t          fEtaDown;
@@ -251,6 +268,9 @@ class AliAnalysisTaskTIdentityPID : public AliAnalysisTaskSE {
   Bool_t            fRunFastSimulation;      // when running over galice.root do not fill other objects
   Bool_t            fFillDnchDeta;           // switch on calculation of the dncdeta for fastgens
   Bool_t            fIncludeTOF;             // Include TOF information to investigate the efficiency loss effects on observable
+  Bool_t            fUseThnSparse;           // in case thnsparse is filled
+  Bool_t            fUseCouts;               // for debugging
+
   Int_t             fnMomBins;               // number of mombins --> for 20MeV slice 150 and 10MeV 300
   Float_t           fMomDown;                // bottom limit for the momentum range (default 0.2)
   Float_t           fMomUp;                  // uppper limit for the momentum range (default 3.2)
@@ -357,6 +377,7 @@ class AliAnalysisTaskTIdentityPID : public AliAnalysisTaskSE {
   Int_t              fnMomBinsMC;
   Int_t              fnCentBinsMC;
   Int_t              fnCentbinsData;
+  Float_t            fMissingCl;
   
   // Additional cuts from marian
   Bool_t             fIsITSpixel01;           // if track has hits in innermost 2 pixels of ITS
@@ -375,7 +396,6 @@ class AliAnalysisTaskTIdentityPID : public AliAnalysisTaskSE {
   Bool_t             fHasTrack0FirstITSlayer;
   Bool_t             fHasTrack1FirstITSlayer;
   Bool_t             fHasV0FirstITSlayer;
-  Bool_t             fAnalysisOnGRID;
   
   TCutG              *fPionCutG;
   TCutG              *fAntiProtonCutG;
