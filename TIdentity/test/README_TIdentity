@@ -1,11 +1,11 @@
 How to Run TIdentity:
 
 1) modify stEnv
-   cd /home/marsland/Desktop/schleching/TIdentity/TIdentity_04032018/test
+   cd /home/marsland/Desktop/schleching/TIdentity/TIdentity_05032018/test
    . setEnv
      
 2) compile both test and real versions
-   cd /home/marsland/Desktop/schleching/TIdentity/TIdentity_04032018; make; cd test;
+   cd /home/marsland/Desktop/schleching/TIdentity/TIdentity_05032018; make; cd test;
    make; make -f MakefileTest
    run.sh     
    runTest.sh    

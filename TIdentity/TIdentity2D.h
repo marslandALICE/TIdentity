@@ -127,7 +127,7 @@ private:
     Int_t countVeto;
     Int_t    myBin[3];
     Int_t    evtNum;
-    Double_t myDeDx;
+    Double_t  myDeDx;
     Float_t  momX;
     Float_t  momY;
     Float_t  momZ;

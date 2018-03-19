@@ -161,21 +161,19 @@ void TIdentity2D::GetTree(Long_t &nent, TString idenTreeName)
 {
     
     if (fileName.Contains(".root")) {
-        TIdentityFile = new TFile(inputDir+fileName);
-        cout<<"TIdentity2D::GetTree.Info: We are reading the file "<<inputDir+fileName<<endl;
+        TIdentityFile = new TFile(fileName);
+        cout<<"TIdentity2D::GetTree.Info: We are reading the file "<<fileName<<endl;
         TIdentityTree = (TTree*)TIdentityFile->Get(idenTreeName);
     } else {
-        TIdentityTree = GetTreeFromChain(inputDir+fileName,idenTreeName);
+        TIdentityTree = GetTreeFromChain(fileName,idenTreeName);
     }
     if (!TIdentityTree) cout << "TIdentity2D::GetTree.Error: tree could not be read" << endl;
+    TIdentityTree -> GetListOfBranches()->ls();
     TIdentityTree -> SetBranchAddress("sign",&sign);
     TIdentityTree -> SetBranchAddress("myBin",myBin);
     TIdentityTree -> SetBranchAddress("myDeDx",&myDeDx);
     TIdentityTree -> SetBranchAddress("evtNum",&evtNum);
-    TIdentityTree -> SetBranchAddress("px",&momX);
-    TIdentityTree -> SetBranchAddress("py",&momY);
-    TIdentityTree -> SetBranchAddress("pz",&momZ);
-    nEntries      = (Long_t)TIdentityTree -> GetEntries();
+    nEntries = (Long_t)TIdentityTree -> GetEntries();
     //histoBin  = new TH1D("histoBin","histoBin",150,ffMin,ffMax);
     //debugFile = new TFile(outputDir+"debugFile.root","recreate");
     nent = nEntries;  
@@ -302,11 +300,11 @@ Bool_t TIdentity2D::GetEntry(Int_t i)
     
     /////
     
-    Float_t mom = sqrt(momX*momX + momY*momY + momZ*momZ);
-    Float_t pt  = sqrt(momX*momX + momY*momY);
-    
-    if( mom < minMom || mom > maxMom ) return kFALSE;
-    if( pt  < minPt  || pt > maxPt )   return kFALSE;
+    //     Float_t mom = sqrt(momX*momX + momY*momY + momZ*momZ);
+    //     Float_t pt  = sqrt(momX*momX + momY*momY);
+    //     
+    //     if( mom < minMom || mom > maxMom ) return kFALSE;
+    //     if( pt  < minPt  || pt > maxPt )   return kFALSE;
     
     /////
     
@@ -321,10 +319,7 @@ Bool_t TIdentity2D::GetEntry(Int_t i)
 
 Int_t TIdentity2D::AddEntry(Bool_t &isAdd)
 {
-    //if(myBin[0] == 1 && myBin[1] == 10 && myBin[2] == 6 && myBin[3] == 3)
-    //{
-    //histoBin -> Fill(myDeDx);
-    //}   
+     
     isAdd = kTRUE;
     if(evtNum == prevEvt) 
     {
@@ -381,9 +376,7 @@ void TIdentity2D::AddParticles()
 {
     Double_t mValue[4] = {0.};
     Double_t sumValue = 0;
-    
-    //cout<<"before eval "<<myDeDx<<"  "<<myBin[0]<<"  "<<myBin[1]<<"  "<<myBin[2]<<endl;
-    
+        
     for(Int_t i = 0; i < TSize; i++)
     {	
         
