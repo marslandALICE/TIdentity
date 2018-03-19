@@ -82,8 +82,8 @@ const Int_t fnMomBins      = 150;
 //
 // Look up table related
 const Int_t nBinsLineShape      = 2000;
-Bool_t      fTestMode           = kTRUE;
-Bool_t      lookUpTableForLine  = kTRUE;
+Bool_t      fTestMode           = kFALSE;
+Bool_t      lookUpTableForLine  = kFALSE;
 Int_t       lookUpTableLineMode = 0;     // 0 for TH1D, 1 for TF1
 //
 //
@@ -148,7 +148,7 @@ Int_t fEtaUpBin     = 0;
 //
 // From Anar hoca
 Double_t nEvents = 0;
-Double_t nnorm   = 0;
+Double_t nnorm   = 1.;
 Double_t fCountMean;
 Double_t fCountSecond;
 Double_t fCountMix;
@@ -182,7 +182,6 @@ Int_t fEtaBin, fCentBin, fMomBin, fSignBin;
 UInt_t fCutBit;
 Int_t fUsedBins[fnEtaBins][fnCentBins][fnMomBins][fnSignBins];
 //
-// Tree for the final results
 Double_t prpiNuDyn=0., prkaNuDyn=0., pikaNuDyn=0., pipiNuDyn=0., kakaNuDyn=0., prprNuDyn=0.;
 Double_t el1=0.,  pi1=0.,  ka1=0.,  pr1=0.,  de1=0.,  mu1=0.;
 Double_t el1Int=0.,  pi1Int=0.,  ka1Int=0.,  pr1Int=0;
@@ -271,6 +270,7 @@ int main(int argc, char *argv[])
     //
     if (fTestMode) nEntries = 10000000;
     Float_t bins[7];
+    //
     //     bins[0] = eta;
     //     bins[1] = cent;
     //     bins[2] = ptot;
@@ -278,7 +278,7 @@ int main(int argc, char *argv[])
     //     bins[4] = cutBit;
     //     bins[5] = cRows;
     //     bins[6] = tpcchi2;
-
+    //
     // track by track loop --> read all track info  and add tracks to the iden4 object
     for( Int_t i = 0; i < nEntries; i++ )
     {
@@ -292,17 +292,16 @@ int main(int argc, char *argv[])
         //
         //
         if (!ApplyTreeSelection(fCutBit)) continue;
-
-        fChi2->Fill(bins[6]); fcRows->Fill(bins[5]);
+        fChi2->Fill(bins[6]);
+        fcRows->Fill(bins[5]);
         if (i%1000000==0){
             TString cutBinary = PrintNumInBinary(fCutBit);
             cout << cutBinary << "  "<< bins[0] << "  " << bins[1] << "  " << bins[2] << "  " << bins[3] << "  " << bins[4] << endl;
         }
         //
         //
-        if( fMomBin  > fnMomBins)  continue;
         if( fCentBin != fCentInputBin ) continue;
-        if( fMomBin < momRange[0] || fMomBin > momRange[1] ) continue; //no upper momentum cut;;;
+        if( fMomBin < momRange[0] || fMomBin > momRange[1] ) continue;
         if( fEtaBin < etaRange[0] || fEtaBin > etaRange[1] ) continue;
         fUsedBins[fEtaBin][fCentBin][fMomBin][fSignBin] = 1;
         if (fSignInput==0) fUsedBins[fEtaBin][fCentBin][fMomBin][fSignBin] = 1;
@@ -310,25 +309,9 @@ int main(int argc, char *argv[])
         Bool_t isAdd = kFALSE;
         iden4 -> AddEntry(isAdd);
     }
-    //
-    //
     iden4 -> Finalize();
-    // First Moments
-    el1 = iden4 -> GetMean(electron);
-    pi1 = iden4 -> GetMean(pion);
-    ka1 = iden4 -> GetMean(kaon);
-    pr1 = iden4 -> GetMean(proton);
-    fCountMean   = iden4 -> GetAverCount(0);
-    fCountSecond = iden4 -> GetAverCount(1);
-    fCountMix    = iden4 -> GetAverCount(2);
-
-    el2 = pi2 = ka2 = pr2 = elpi = elka = elpr = pika = pipr = kapr = -10000;
-    el1Int = pi1Int = ka1Int = pr1Int = -1000;
-    nnorm = 1;
-
+    //
     // Calculate 2. order moments only for full range
-    timer.Reset(); timer.Start();
-
     cout << " ==================================" << endl;
     cout << " main.Info: calculating integrals " <<endl;
     timer.Reset(); timer.Start();
@@ -349,15 +332,20 @@ int main(int argc, char *argv[])
             }
         }
     }
-
     iden4 -> CalcMoments();
-
+    //
+    // First Moments
+    el1 = iden4 -> GetMean(electron);
+    pi1 = iden4 -> GetMean(pion);
+    ka1 = iden4 -> GetMean(kaon);
+    pr1 = iden4 -> GetMean(proton);
+    //
     // Second Moments
     el2 = iden4 -> GetSecondMoment(electron);
     pi2 = iden4 -> GetSecondMoment(pion);
     ka2 = iden4 -> GetSecondMoment(kaon);
     pr2 = iden4 -> GetSecondMoment(proton);
-
+    //
     // Mixed Moments
     elpi = iden4 -> GetMixedMoment(electron,pion);
     elka = iden4 -> GetMixedMoment(electron,kaon);
@@ -365,14 +353,14 @@ int main(int argc, char *argv[])
     pika = iden4 -> GetMixedMoment(pion,kaon);
     pipr = iden4 -> GetMixedMoment(pion,proton);
     kapr = iden4 -> GetMixedMoment(kaon,proton);
-
+    //
     //Integrals:
     el1Int = iden4 -> GetMeanI(electron);
     pi1Int = iden4 -> GetMeanI(pion);
     ka1Int = iden4 -> GetMeanI(kaon);
     pr1Int = iden4 -> GetMeanI(proton);
     //
-    //
+    // Printing
     nnorm     = pi1/pi1Int;
     nEvents   = iden4 -> GetNEvents();
     cout << " =============================== first moments =============================== "<<endl;
@@ -381,8 +369,6 @@ int main(int argc, char *argv[])
     cout << " pion        : "<< pi1   <<" int: "<< pi1Int*nnorm << "  ratio: " << pi1/(pi1Int*nnorm) << endl;
     cout << " kaon        : "<< ka1   <<" int: "<< ka1Int*nnorm << "  ratio: " << ka1/(ka1Int*nnorm) << endl;
     cout << " proton      : "<< pr1   <<" int: "<< pr1Int*nnorm << "  ratio: " << pr1/(pr1Int*nnorm) << endl;
-    cout << " fCountMean   : "<<fCountMean<<endl;
-    cout << " fCountSecond : "<<fCountSecond<<endl;
     cout << " electron2   : "<< el2  <<endl;
     cout << " pion2       : "<< pi2  <<endl;
     cout << " kaon2       : "<< ka2  <<endl;
@@ -757,7 +743,8 @@ Bool_t ApplyTreeSelection(UInt_t cut)
 
 }
 // -----------------------------------------------------------------------------------------
-Double_t fitFunctionGenGaus(Double_t *x, Double_t *par){
+Double_t fitFunctionGenGaus(Double_t *x, Double_t *par)
+{
     // Generalised gauss function --> "[0]*exp(-(TMath::Abs(x-[1])/[2])**[3])*(1+TMath::Erf([4]*(x-[1])/[2]/TMath::Sqrt(2)))";
     // Skew-normal distribution   --> "[0]*exp(-0.5*((x-[1])/[2])**2)*(1+TMath::Erf([3]*(x-[1])/[2]/TMath::Sqrt(2)))";
     // par[0] --> Amplitude

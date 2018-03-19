@@ -1,23 +1,36 @@
 How to Run TIdentity:
 
 1) modify stEnv
-   cd /u/marsland/PHD/macros/marsland_EbyeRatios/schleching/TIdentity/TIdentity/test
-   . setEnv
+   . /u/marsland/PHD/macros/marsland_EbyeRatios/schleching/TIdentity/TIdentity/test/setEnv
 
 2) compile both test and real versions
-   cd /u/marsland/PHD/macros/marsland_EbyeRatios/schleching/TIdentity/TIdentity; make; cd test;
-   make; make -f MakefileTest
+   cd /u/marsland/PHD/macros/marsland_EbyeRatios/schleching/TIdentity/TIdentity; make;
+   cd test; make;
    run.sh
+
+   make -f MakefileTest
    runTest.sh
 
-
-
+====================================================================================================
+====================================================================================================
+====================================================================================================
 
 How to commit changes to git
 
-cd /lustre/nyx/alice/users/marsland/TIdentity
+main location to git repo:   /lustre/nyx/alice/users/marsland/TIdentity
+development dir GSI:         /u/marsland/PHD/macros/marsland_EbyeRatios/schleching/TIdentity/TIdentity
+development dir local linux: /home/marsland/mac_sf
+development dir local MAC:   /Users/marsland/Desktop/ubuntu_sf/schleching/TIdentity/TIdentity
 
-0) to install 
+
+*********
+
+cd /lustre/nyx/alice/users/marsland/TIdentity
+meld /Users/marsland/Desktop/ubuntu_sf/schleching/TIdentity/TIdentity /u/marsland/PHD/macros/marsland_EbyeRatios/schleching/TIdentity/TIdentity
+meld /lustre/nyx/alice/users/marsland/TIdentity/TIdentity /u/marsland/PHD/macros/marsland_EbyeRatios/schleching/TIdentity/TIdentity
+
+
+0) to install
    git clone https://github.com/marslandALICE/TIdentity
 
 1) git status
