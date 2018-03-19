@@ -1,0 +1,17 @@
+How to Run TIdentity:
+
+1) modify stEnv
+   cd /lustre/nyx/alice/users/marsland/TIdentity/TIdentity/test
+   . setEnv
+     
+2) compile both test and real versions
+   cd /lustre/nyx/alice/users/marsland/TIdentity/TIdentity; make; cd test;
+   make; make -f MakefileTest
+   run.sh     
+   runTest.sh    
+
+
+   
+   
+   
+
