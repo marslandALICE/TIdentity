@@ -50,7 +50,7 @@ public:
     void GetTree(Long_t &n, TString idenTreeName = "DATA");
     TTree *GetTreeFromChain(TString treeList, TString treeName);
     void Finalize();
-    void GetBins(Int_t *);
+    void GetBins(Float_t *);
     
     Float_t GetMomX() { return momX; }
     Float_t GetMomY() { return momY; }
@@ -65,9 +65,7 @@ public:
     void SetEffPion(Float_t _effPion )      {effPion = _effPion; }
     void SetEffKaon(Float_t _effKaon )      {effKaon = _effKaon; }
     void SetEffProton(Float_t _effProton )  {effProton = _effProton;}
-    
-    Int_t GetSign() { return sign; }
-    
+        
     void InitFunctions();
     //Int_t makeDebug();
     void ResetValues();
@@ -127,7 +125,12 @@ private:
     Int_t countVeto;
     Int_t    myBin[3];
     Int_t    evtNum;
-    Double_t  myDeDx;
+    Float_t  myDeDx;
+    Float_t  eta;
+    Float_t  cent;
+    Float_t  ptot;
+    UInt_t cutBit;
+    Double_t cRows,tpcchi2;
     Float_t  momX;
     Float_t  momY;
     Float_t  momZ;
