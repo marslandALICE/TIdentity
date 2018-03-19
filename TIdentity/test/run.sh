@@ -6,11 +6,8 @@
 
 # ./testIden PbPb/Real/RUN1/PHD/Systematics_cRows_80_16EtaBin_mombin20MeV/SubSamples/cent_0.0/SubSample_cent0.00_ss1.root PbPb/Real/RUN1/PHD/Systematics_cRows_80_16EtaBin_mombin20MeV/ParamTrees/LineShapes_6.root 0 1 6 0 0 1 0  0 0
 
-# ./testIden PbPb/Real/RUN1/PHD/Systematics_cRows_80_16EtaBin_mombin20MeV/SubSamples/cent_0.0/SubSample_cent0.00_ss1.root PbPb/Real/RUN1/PHD/Systematics_cRows_80_16EtaBin_mombin20MeV/ParamTrees/LineShapes_ClonesArray_hist.root 0 1 6 1     0 1 0  0 0
-
-# ./testIden PbPb/Real/RUN1/PHD/Systematics_cRows_80_16EtaBin_mombin20MeV/SubSamples/cent_0.0/SubSample_cent0.00_ss1.root PbPb/Real/RUN1/PHD/Systematics_cRows_80_16EtaBin_mombin20MeV/ParamTrees/LineShapes_ClonesArray_func.root 0 1 6 1     0 1 0  0 0
-
-./testIden PbPb/Real/RUN1/PHD/Systematics_cRows_80_16EtaBin_mombin20MeV/SubSamples/cent_0.0/SubSample_cent0.00_ss1.root PbPb/Real/RUN1/PHD/Systematics_cRows_80_16EtaBin_mombin20MeV/ParamTrees/LineShapes_ClonesArray.root 0 1 6 1     0 1 0  0 0
+# ./testIden trees/SubSample_cent0.00_ss1.root trees/LineShapes_ClonesArray.root 0 1 6 1     0 1 0  0 0
+ ./testIden trees/SubSample_cent0.00_ss1.root trees/FitResults_piS0.7_kaS0.5_prS0.5_pikaprKauto.root 0 1 6 1     0 1 0  0 0
 
 
 #./testIdenTest PbPb/Real/PbPb_cRows_80_16EtaBin_mombin20MeV_TightCuts_PxPyPz/SubSamples/cent_40.0/SubSample_cent40.00_ss0.root PbPb/Real/PbPb_cRows_80_16EtaBin_mombin20MeV_TightCuts/ParamTrees/ParamTree_piS0.7_kaS0.5_prS0.5_Kurtosis2_fullStat.root 40 1 6 -0.8 0.8 -1

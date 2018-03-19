@@ -1,4 +1,3 @@
-#include "iostream"
 #include "TIdentity2D.h"
 #include "TClonesArray.h"
 #include "TStopwatch.h"
@@ -15,6 +14,7 @@
 #include "TH1D.h"
 #include "TMath.h"
 #include <iomanip>
+#include "iostream"
 #include "TH3F.h"
 #include "TLorentzVector.h"
 #include "TNtuple.h"
@@ -50,7 +50,7 @@ const Int_t fnMomBins       = 150;
 const Float_t fMomRangeDown = 0.2;
 const Float_t fMomRangeUp   = 3.2;
 const Int_t fnCentBins  = 9;
-Float_t     xCentBins[] = {0, 5,  10,  20, 30, 40, 50, 60, 70, 80};
+Float_t xCentBins[] = {0, 5,  10,  20, 30, 40, 50, 60, 70, 80};
 
 Int_t charge           = -100;
 Bool_t fpp             = kFALSE;
@@ -61,15 +61,15 @@ TString treeIdentityMC = "fIdenTreeMC";
 TString fitFunctionGenGausStr = "[0]*exp(-(abs(x-[1])/[2])**[3])*(1+TMath::Erf([4]*(x-[1])/[2]/1.414213))";
 
 
-Int_t nBinsLineShape   = 4000;
+Int_t nBinsLineShape   = 2000;
 const Int_t nParticles = 4;   // keep it always 4
 const Int_t nCent      = 9;
 const Int_t nEta       = 16;
 const Int_t nMom      = 65;
-const Int_t nSign      = 3; 
+const Int_t nSign      = 3;
 
 Bool_t test = kFALSE;
-Bool_t lookUpTableForLine = kTRUE;
+Bool_t lookUpTableForLine = kFALSE;
 Int_t lookUpTableLineMode = 0;     // 0 for TH1D, 1 for TF1
 
 
@@ -87,7 +87,7 @@ TFile *fLineShapesLookUpTable = NULL;
 TClonesArray *cloneArrHist=NULL;
 TClonesArray *cloneArrFunc=NULL;
 TTree *treeLookUp = NULL;
-TString inDir("/lustre/nyx/alice/users/marsland/pFluct/files/analysis/Data/");
+TString inDir("/home/marsland/Desktop/schleching/data/");
 TString outDir("./");
 TTree *momTree = NULL;
 TH1D *fhPtot   = NULL;
@@ -121,7 +121,7 @@ Float_t fptDown  = 0.;
 Float_t fptUp    = 15;
 
 Int_t fcentInputBin = 0;
-Int_t fpDownBin     = 0;
+Int_t fpDownBin    = 0;
 Int_t fpUpBin       = 200;
 Int_t fetaDownBin   = 0;
 Int_t fetaUpBin     = 32;  
@@ -261,7 +261,7 @@ void readFitParams(TString paramTreeName, Int_t analyseIter)
                             //
                             //
                             htemp->SetName(objName);
-                            hLineShape[ipart][icent][ieta][imom][isign] = htemp; 
+                            hLineShape[ipart][icent][ieta][imom][isign] = htemp;                        
                             if (counter%2000==0 && counter>0){ 
                                 cout << counter << " par  = " << ipart << " ------ input function = " << tmp->GetMaximum();
                                 cout << " new function = "    << fLineShape[ipart][icent][ieta][imom][isign]->GetMaximum();
@@ -278,7 +278,7 @@ void readFitParams(TString paramTreeName, Int_t analyseIter)
         timer.Stop(); timer.Print();
         cout << "==================================" << endl;
         
-    } else{
+    } else {
         //
         cout << " Read lane shapes from ttree " << endl;
         treeLookUp = (TTree*)fLineShapesLookUpTable->Get(treeLineShapes);
@@ -486,9 +486,9 @@ Double_t EvalFitValue(Int_t particle, Double_t x)
 {
     
     if (lookUpTableForLine){
-        Int_t bin = hLineShape[particle][fCentBin][fEtaBin][fMomBin][fCharge]->FindBin(x);
+         Int_t bin = hLineShape[particle][fCentBin][fEtaBin][fMomBin][fCharge]->FindBin(x);
         if (lookUpTableLineMode==0){ 
-            return hLineShape[particle][fCentBin][fEtaBin][fMomBin][fCharge]->GetBinContent(bin);
+         return hLineShape[particle][fCentBin][fEtaBin][fMomBin][fCharge]->GetBinContent(bin);
         }
         if (lookUpTableLineMode==1){ 
             return fLineShape[particle][fCentBin][fEtaBin][fMomBin][fCharge]->Eval(x);
@@ -518,14 +518,14 @@ int main(int argc, char *argv[])
         sprintf(fileName,"%s",argv[1]);
         sprintf(fitFileName,"%s",argv[2]);
         fcentInput    = atoi(argv[3]);
-        subsample     = atoi(argv[4]);
-        analyseIter   = atoi(argv[5]);
-        charge        = atoi(argv[6]);
-        systematics   = atoi(argv[7]);
-        isIntegrated  = atoi(argv[8]);
-        rapInterval   = atoi(argv[9]);
-        momInterval   = atoi(argv[10]);
-        isSim         = atoi(argv[11]);
+        subsample    = atoi(argv[4]);
+        analyseIter  = atoi(argv[5]);
+        charge       = atoi(argv[6]);
+        systematics  = atoi(argv[7]);
+        isIntegrated = atoi(argv[8]);
+        rapInterval  = atoi(argv[9]);
+        momInterval  = atoi(argv[10]);
+        isSim        = atoi(argv[11]);
         cout<<"main.Info: read file names from input"<<endl;
     }
     else
@@ -659,6 +659,13 @@ int main(int argc, char *argv[])
                 fCentBin = bins[1];
                 fMomBin  = bins[2];
                 fCharge = iden4 -> GetSign();
+                
+                if (i%100000==0) {
+                    cout << fEtaBin << "  " << fCentBin << "  " << fMomBin << endl;
+                    cout << bins[0] << "  " << bins[1]  << "  " << bins[2] << endl;
+                    cout << "  =========  "  << endl;
+                }
+
                 //cout<<"testting sign "<<fCharge<<endl;
                 if( fCharge == -1) fCharge = 0;
                 if( fEtaBin < 0 || fCentBin < 0 || fMomBin < 0 ) 
@@ -695,7 +702,7 @@ int main(int argc, char *argv[])
             timer.Reset(); timer.Start();
             
             cout << "==================================" << endl;
-            cout << " main.Info: calculating integrals " << endl;
+            cout<<" main.Info: calculating integrals " <<endl;                        
             timer.Reset(); timer.Start();
             cout << "==================================" << endl;
             for(Int_t i = 0; i < fnEtaBins; i++)

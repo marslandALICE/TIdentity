@@ -47,7 +47,8 @@ public:
     Int_t GetIndex(Int_t, Int_t&, Int_t&);
     Int_t AddEntry(Bool_t &);
     Bool_t GetEntry(Int_t);
-    void GetTree(Long_t &n, TString MC = "DATA");
+    void GetTree(Long_t &n, TString idenTreeName = "DATA");
+    TTree *GetTreeFromChain(TString treeList, TString treeName);
     void Finalize();
     void GetBins(Int_t *);
     
