@@ -30,15 +30,33 @@ TString   PrintNumInBinary(UInt_t num);
 Bool_t    ApplyTreeSelection(UInt_t cut, Int_t syst);
 Double_t  fitFunctionGenGaus(Double_t *x, Double_t *par);
 void      InitializeObjects();
-void      readFitParams(TString paramTreeName, Int_t fNthFitIteration);
+void      ReadFitParamsFromLineShapes(TString paramTreeName);
+void      ReadFitParamsFromTree(TString paramTreeName, Int_t fitIter);
 Double_t  EvalFitValue(Int_t particle, Double_t x);
 void      RetrieveMoments(TIdentity2D *tidenObj, TVectorF *vecMom, TVectorF *vecInt);
+void      PrintInitInfo();
+
 //
 // =======================================================================================================
 //
 // enums
 enum particles{electron=0, pion=1, kaon=2, proton=3};
-enum momentType {kPi=0,kKa=1,kPr=2,kPiPi=3,kKaKa=4,kPrPr=5,kPiKa=6,kPiPr=7,kKaPr=8,kEl=9,kElEl=10,kElPi=11,kElKa=12,kElPr=12};
+enum momentType {
+  kEl=0,
+  kPi=1,
+  kKa=2,
+  kPr=3,
+  kElEl=4,
+  kPiPi=5,
+  kKaKa=6,
+  kPrPr=7,
+  kElPi=8,
+  kElKa=9,
+  kElPr=10,
+  kPiKa=11,
+  kPiPr=12,
+  kKaPr=13,
+};
 enum trackCutBit {
   kCRows60=0,
   kCRows80=1,
@@ -85,7 +103,7 @@ Int_t xSignBins[] = {-1,1,0}; // coding of signs
 //
 Int_t   fNthFitIteration = 6;
 TString treeLineShapes   = "treeId";
-TString treeIdentity     = "tracks";   // for data "fIdenTree",    for MC "fIdenTreeMC"  , new data "tracks"
+TString treeIdentity     = "fIdenTree";   // for data "fIdenTree",    for MC "fIdenTreeMC"  , new data "tracks"
 //
 //
 // =======================================================================================================
@@ -168,15 +186,17 @@ int main(int argc, char *argv[])
     fEtaUpInput      = atof(argv[9]);
     fSystematic      = atoi(argv[10]);
     cout<<" main.Info: read file names from input "<<endl;
+    TString outPutFileNAme = Form("TIMoments_sub%d_cent_%3.2f_mom_%3.2f_%3.2f_eta_%3.2f_%3.2f.root"
+    ,fSubsample,fCentInput,fpDownInput,fpUpInput,fEtaDownInput,fEtaUpInput);
+    outFile = new TFile(outPutFileNAme,"recreate");
+    cout << " main.Info: write output into:    " << outPutFileNAme << endl;
   }
   else
   {
     cout<<" main.Error: wrong input list"<<endl;
   }
-  // OutputFile
-  outFile = new TFile(Form("TIMoments_sub%d_cent_%3.2f_mom_%3.2f_%3.2f_eta_%3.2f_%3.2f.root",fSubsample,fCentInput,fpDownInput,fpUpInput,fEtaDownInput,fEtaUpInput),"recreate");
   //
-  // Initialize objects and get the bin information
+  //
   InitializeObjects();
   fileNameDataTree   = inputfileNameDataTree;
   fileNameLineShapes = inputfileNameLineShapes;
@@ -188,29 +208,14 @@ int main(int argc, char *argv[])
   Int_t etaRange[2] = {fEtaDownBin,fEtaUpBin};
   Int_t momRange[2] = {fpDownBin,fpUpBin};
   //
-  //
+  // Initialize objects and get the bin information
   TROOT IdentityMethod("IdentityMethod","compiled identity method");
-  cout << " ================================================================================= " << endl;
-  cout << " main.Info: Inputs: " << endl;
-  cout << " main.Info: data Tree             = " << fileNameDataTree       << endl;
-  cout << " main.Info: Line Shapes           = " << fileNameLineShapes     << endl;
-  cout << " main.Info: Centrality            = " << fCentInput      << endl;
-  cout << " main.Info: Subsample index       = " << fSubsample      << endl;
-  cout << " main.Info: Eta Range             = " << fEtaDownInput       << " - " <<  fEtaUpInput << endl;
-  cout << " main.Info: Momentum Range        = " << fpDownInput         << " - " <<  fpUpInput << endl;
-  cout << " main.Info: Fit iteration         = " << fNthFitIteration    << endl;
-  cout << " main.Info: Charge                = " << fSignInput         << endl;
-  cout << " ================================================================================= " << endl;
-  cout << " main.Info: Centrality (Bin)      = " << fCentInputBin      << endl;
-  cout << " main.Info: Eta Range (Bin)       = " << etaRange[0]    << " - " <<  etaRange[1] << endl;
-  cout << " main.Info: Momentum Range (Bin)  = " << momRange[0]    << " - " <<  momRange[1] << endl;
-  cout << " ================================================================================= " << endl;
-  //
-  //
-  readFitParams(fileNameLineShapes,fNthFitIteration);
-  fgengaus = new TF1("fgengaus",fitFunctionGenGaus,0,1020,5);
+  PrintInitInfo();
+  if (lookUpTableForLine) ReadFitParamsFromLineShapes(fileNameLineShapes);
+  else  ReadFitParamsFromTree(fileNameLineShapes,fNthFitIteration);
   //
   // Create the TIdentity2D object and start analysis
+  fgengaus = new TF1("fgengaus",fitFunctionGenGaus,0,1020,5);
   TIdentity2D *iden4 = new TIdentity2D(4);      // Set the number of particles to 4
   iden4 -> SetFileName(fileNameDataTree);
   iden4 -> SetFunctionPointers(EvalFitValue);
@@ -221,32 +226,31 @@ int main(int argc, char *argv[])
   iden4 -> GetTree(nEntries,treeIdentity);
   iden4 -> Reset();
   //
-  //
-  if (fTestMode) nEntries = 10000000;
-  Float_t bins[7];
-  //
-  //     bins[0] = eta;
-  //     bins[1] = cent;
-  //     bins[2] = ptot;
-  //     bins[3] = sign;
-  //     bins[4] = cutBit;
-  //     bins[5] = cRows;
-  //     bins[6] = tpcchi2;
-  //
   // track by track loop --> read all track info  and add tracks to the iden4 object
+  //
+  Float_t bins[7]; // [0]=eta; [1]=cent; [2]=ptot; [3]=sign; [4]=cutBit; [5]=cRows; [6]=tpcchi2;
+  if (fTestMode) nEntries = 10000000;
   for( Int_t i = 0; i < nEntries; i++ )
   {
     if( !iden4 ->  GetEntry(i) ) continue;
     iden4      ->  GetBins( bins );    // reads identity tree and retrives mybin[] info
-    fEtaBin  = fhEta  -> FindBin(bins[0] + 0.0000001) -1;
-    fCentBin = fhCent -> FindBin(bins[1] + 0.0000001) -1;
-    fMomBin  = fhPtot -> FindBin(bins[2] + 0.0000001) -1;
-    fSignBin = (Int_t)bins[3]+1;  // neg --> 0, neutrol --> 1, pos --> 2
-    fCutBit  = (UInt_t)bins[4];
     //
-    //
-    if (!ApplyTreeSelection(fCutBit,fSystematic)) continue;
-    fChi2->Fill(bins[6]); fcRows->Fill(bins[5]);
+    // Choose which kind of tree input is used
+    if (treeIdentity=="fIdenTree"){
+      fEtaBin  = Int_t(bins[0]);
+      fCentBin = Int_t(bins[1]);
+      fMomBin  = Int_t(bins[2]);
+      fSignBin = (Int_t)bins[3]+1;  // neg --> 0, neutrol --> 1, pos --> 2
+    }
+    if(treeIdentity=="tracks") {
+      fEtaBin  = fhEta  -> FindBin(bins[0] + 0.0000001) -1;
+      fCentBin = fhCent -> FindBin(bins[1] + 0.0000001) -1;
+      fMomBin  = fhPtot -> FindBin(bins[2] + 0.0000001) -1;
+      fSignBin = (Int_t)bins[3]+1;  // neg --> 0, neutrol --> 1, pos --> 2
+      fCutBit  = (UInt_t)bins[4];
+      if (!ApplyTreeSelection(fCutBit,fSystematic)) continue;
+      fChi2->Fill(bins[6]); fcRows->Fill(bins[5]);
+    }
     //
     //
     if( fCentBin != fCentInputBin ) continue;
@@ -284,9 +288,9 @@ int main(int argc, char *argv[])
   iden4 -> CalcMoments();
   //
   // Retrive Moments
-  if (fSignInput=0)  RetrieveMoments(iden4,fMmoments,fIntegrals);
-  if (fSignInput=1)  RetrieveMoments(iden4,fMmomentsPos,fIntegrals);
-  if (fSignInput=-1) RetrieveMoments(iden4,fMmomentsNeg,fIntegrals);
+  if (fSignInput==0)  RetrieveMoments(iden4,fMmoments,fIntegrals);
+  if (fSignInput==1)  RetrieveMoments(iden4,fMmomentsPos,fIntegrals);
+  if (fSignInput==-1) RetrieveMoments(iden4,fMmomentsNeg,fIntegrals);
   cout << "====================================" << endl;
   cout << " main.Info: calculation is finished " << endl;
   timer.Stop(); timer.Print();
@@ -399,188 +403,166 @@ Bool_t ApplyTreeSelection(UInt_t cut, Int_t syst)
 
 }
 // -----------------------------------------------------------------------------------------
-void readFitParams(TString paramTreeName, Int_t fNthFitIteration)
+void ReadFitParamsFromLineShapes(TString paramTreeName)
 {
   //
   // Read the fit parameters from the paramtree file "ParamTree.root" which comes from PID FITS
   //
-  /*
-
-  TFile f("/lustre/nyx/alice/users/marsland/pFluct/files/analysis/Data/PbPb/Real/RUN1/PHD/Systematics_cRows_80_16EtaBin_mombin20MeV/ParamTrees/LineShapes_ClonesArray.root")
-  // TFile f("LineShapes_ClonesArray.root")
-  cloneArrFunc   = (TObjArray*)f->Get("funcLineShapes");
-  cloneArrHist   = (TClonesArray*)f->Get("histLineShapes");
-
-  hPi  = (TH1D*)cloneArrHist->FindObject("particle_1_bin_0_bin_0_bin_0_bin_0");
-  fPi  = (TF1*)cloneArrFunc->FindObject("particle_1_bin_0_bin_0_bin_0_bin_0");
-  hPi->Draw();
-  fPi->Draw("same");
-
-  TF1 *uu = new TF1("uu","[0]*exp(-(TMath::Abs(x-[1])/[2])**[3])*(1+TMath::Erf([4]*(x-[1])/[2]/TMath::Sqrt(2)))",20.,1020.);
-  Double_t *par = fPi->GetParameters();
-  uu->SetParameters(par[0],par[1],par[2],par[3],par[4]);
-  uu->SetNpx(4000);
-  uu->SetLineColor(kBlack);
-  uu->Draw("same");
-
-  TH1D *k = (TH1D*)uu->GetHistogram()->Clone();
-  k->SetLineColor(kMagenta);
-  k->Draw("same");
-
-
-  */
-
   // Open the lookup table and initialize array
   fLineShapesLookUpTable = new TFile(paramTreeName);
-  if (lookUpTableForLine){
-    //
-    cloneArrFunc   = (TClonesArray*)fLineShapesLookUpTable->Get("funcLineShapes");
-    cloneArrHist   = (TClonesArray*)fLineShapesLookUpTable->Get("histLineShapes");
-    if (!cloneArrFunc) cout << " Error:: cloneArrFunc is empty " << endl;
-    if (!cloneArrHist) cout << " Error:: cloneArrFunc is empty " << endl;
-    Int_t centBinRange[2] = {TMath::Max(fCentInputBin-1,0), TMath::Min(fCentInputBin+1,fnCentBins)};
-    Int_t etaBinRange[2]  = {TMath::Max(fEtaDownBin-1,0), TMath::Min(fEtaUpBin+1,fnEtaBins)};
-    Int_t momBinRange[2]  = {TMath::Max(fpDownBin-1,0), TMath::Min(fpUpBin+1,fnMomBins)};
-    cout << "==================================" << endl;
-    cout << "   Reading the file is started " << endl;
-    cout << "==================================" << endl;
-    cout << "cent Bin window = " << centBinRange[0] << "  " << centBinRange[1] << endl;
-    cout << "eta  Bin window = " << etaBinRange[0]  << "  " << etaBinRange[1] << endl;
-    cout << "mom  Bin window = " << momBinRange[0]  << "  " << momBinRange[1] << endl;
-    cout << "==================================" << endl;
-    //
-    //
-    timer.Start();
-    Int_t counter = 0;
-    for (Int_t ipart = 0; ipart<fnParticleBins; ipart++){
-      for (Int_t icent = centBinRange[0]; icent< centBinRange[1]; icent++){
-        for (Int_t ieta = etaBinRange[0]; ieta<etaBinRange[1]; ieta++){
-          for (Int_t imom = momBinRange[0]; imom<momBinRange[1]; imom++){
-            for (Int_t isign = 0; isign<fnSignBins; isign++){
-              //
-              //
-              TString objName = Form("particle_%d_bin_%d_bin_%d_bin_%d_bin_%d",ipart,icent,ieta,imom,isign);
-              TString tmpName = Form("tmp_%d_bin_%d_bin_%d_bin_%d_bin_%d",ipart,icent,ieta,imom,isign);
-              //
-              // recreate the function while reading !!! there is a bug in TClonesArray
-              TF1 *tmp = (TF1*)cloneArrFunc->FindObject(objName); tmp->SetName(tmpName);
-              Double_t *par = tmp->GetParameters();
-              fLineShape[ipart][icent][ieta][imom][isign] = new TF1(objName,fitFunctionGenGausStr,20.,1020.);
-              fLineShape[ipart][icent][ieta][imom][isign]->SetParameters(par[0],par[1],par[2],par[3],par[4]);
-              fLineShape[ipart][icent][ieta][imom][isign]->SetNpx(nBinsLineShape);
-              //
-              //
-              TH1D *htemp = NULL;
-              htemp = (TH1D*)fLineShape[ipart][icent][ieta][imom][isign]->GetHistogram();
-              if (!htemp) {
-                cout << "testIdentity::Error: " << objName << " failed during fitting " << endl;
-                htemp = (TH1D*)fLineShape[ipart][icent][ieta][(Int_t)TMath::Max(0,imom-1)][isign]->GetHistogram();
-              }
-              if (!htemp) htemp = (TH1D*)fLineShape[ipart][icent][ieta][(Int_t)TMath::Min(fnMomBins,imom+1)][isign]->GetHistogram();
-              //
-              //
-              htemp->SetName(objName);
-              hLineShape[ipart][icent][ieta][imom][isign] = htemp;
-              if (counter%2000==0 && counter>0){
-                cout << counter << " par  = " << ipart << " ------ input function = " << tmp->GetMaximum();
-                cout << " new function = "    << fLineShape[ipart][icent][ieta][imom][isign]->GetMaximum();
-                cout << " final histogram = " << hLineShape[ipart][icent][ieta][imom][isign]->GetMaximum() << endl;
-              }
-              counter++;
+  cloneArrFunc   = (TClonesArray*)fLineShapesLookUpTable->Get("funcLineShapes");
+  cloneArrHist   = (TClonesArray*)fLineShapesLookUpTable->Get("histLineShapes");
+  if (!cloneArrFunc) cout << " Error:: cloneArrFunc is empty " << endl;
+  if (!cloneArrHist) cout << " Error:: cloneArrFunc is empty " << endl;
+  Int_t centBinRange[2] = {TMath::Max(fCentInputBin-1,0), TMath::Min(fCentInputBin+1,fnCentBins)};
+  Int_t etaBinRange[2]  = {TMath::Max(fEtaDownBin-1,0), TMath::Min(fEtaUpBin+1,fnEtaBins)};
+  Int_t momBinRange[2]  = {TMath::Max(fpDownBin-1,0), TMath::Min(fpUpBin+1,fnMomBins)};
+  cout << "==================================" << endl;
+  cout << "   Reading the file is started " << endl;
+  cout << "==================================" << endl;
+  cout << "cent Bin window = " << centBinRange[0] << "  " << centBinRange[1] << endl;
+  cout << "eta  Bin window = " << etaBinRange[0]  << "  " << etaBinRange[1] << endl;
+  cout << "mom  Bin window = " << momBinRange[0]  << "  " << momBinRange[1] << endl;
+  cout << "==================================" << endl;
+  //
+  //
+  timer.Start();
+  Int_t counter = 0;
+  for (Int_t ipart = 0; ipart<fnParticleBins; ipart++){
+    for (Int_t icent = centBinRange[0]; icent< centBinRange[1]; icent++){
+      for (Int_t ieta = etaBinRange[0]; ieta<etaBinRange[1]; ieta++){
+        for (Int_t imom = momBinRange[0]; imom<momBinRange[1]; imom++){
+          for (Int_t isign = 0; isign<fnSignBins; isign++){
+            //
+            //
+            TString objName = Form("particle_%d_bin_%d_bin_%d_bin_%d_bin_%d",ipart,icent,ieta,imom,isign);
+            TString tmpName = Form("tmp_%d_bin_%d_bin_%d_bin_%d_bin_%d",ipart,icent,ieta,imom,isign);
+            //
+            // recreate the function while reading !!! there is a bug in TClonesArray
+            TF1 *tmp = (TF1*)cloneArrFunc->FindObject(objName); tmp->SetName(tmpName);
+            Double_t *par = tmp->GetParameters();
+            fLineShape[ipart][icent][ieta][imom][isign] = new TF1(objName,fitFunctionGenGausStr,20.,1020.);
+            fLineShape[ipart][icent][ieta][imom][isign]->SetParameters(par[0],par[1],par[2],par[3],par[4]);
+            fLineShape[ipart][icent][ieta][imom][isign]->SetNpx(nBinsLineShape);
+            //
+            //
+            TH1D *htemp = NULL;
+            htemp = (TH1D*)fLineShape[ipart][icent][ieta][imom][isign]->GetHistogram();
+            if (!htemp) {
+              cout << "testIdentity::Error: " << objName << " failed during fitting " << endl;
+              htemp = (TH1D*)fLineShape[ipart][icent][ieta][(Int_t)TMath::Max(0,imom-1)][isign]->GetHistogram();
             }
+            if (!htemp) htemp = (TH1D*)fLineShape[ipart][icent][ieta][(Int_t)TMath::Min(fnMomBins,imom+1)][isign]->GetHistogram();
+            //
+            //
+            htemp->SetName(objName);
+            hLineShape[ipart][icent][ieta][imom][isign] = htemp;
+            if (counter%2000==0 && counter>0){
+              cout << counter << " par  = " << ipart << " ------ input function = " << tmp->GetMaximum();
+              cout << " new function = "    << fLineShape[ipart][icent][ieta][imom][isign]->GetMaximum();
+              cout << " final histogram = " << hLineShape[ipart][icent][ieta][imom][isign]->GetMaximum() << endl;
+            }
+            counter++;
           }
         }
       }
     }
-    cout << "==================================" << endl;
-    cout << "   Read both histogram and function lookuptable  " << endl;
-    timer.Stop(); timer.Print();
-    cout << "==================================" << endl;
-
-  } else {
-    //
-    cout << " Read line shapes from ttree " << endl;
-    treeLookUp = (TTree*)fLineShapesLookUpTable->Get(treeLineShapes);
-    Int_t nent = treeLookUp -> GetEntries();
-    cout << nent <<  "   tree is fine go ahead " << endl;
-
-    Int_t sign       = 0;
-    Int_t it         = 0;
-    Int_t sl         = 0;
-    Int_t signBin = -100;
-
-    Int_t myBin[3]  = {0};  // 0; eta, 1;cent, 2;ptot
-
-    Double_t elA  = 0., elM  = 0., elSi = 0., elK = 0., elSk = 0.;
-    Double_t piA  = 0., piM  = 0., piSi = 0., piK = 0., piSk = 0.;
-    Double_t kaA  = 0., kaM  = 0., kaSi = 0., kaK = 0., kaSk = 0.;
-    Double_t prA  = 0., prM  = 0., prSi = 0., prK = 0., prSk = 0.;
-
-    treeLookUp->SetBranchAddress("sign"   ,&sign);
-    treeLookUp->SetBranchAddress("it"     ,&it);
-    treeLookUp->SetBranchAddress("sl"     ,&sl);
-    treeLookUp->SetBranchAddress("myBin"  ,myBin);
-
-    treeLookUp->SetBranchAddress("elM" ,&elM);
-    treeLookUp->SetBranchAddress("piM" ,&piM);
-    treeLookUp->SetBranchAddress("kaM" ,&kaM);
-    treeLookUp->SetBranchAddress("prM" ,&prM);
-
-    treeLookUp->SetBranchAddress("elSi" ,&elSi);
-    treeLookUp->SetBranchAddress("piSi" ,&piSi);
-    treeLookUp->SetBranchAddress("kaSi" ,&kaSi);
-    treeLookUp->SetBranchAddress("prSi" ,&prSi);
-
-    treeLookUp->SetBranchAddress("elA" ,&elA);
-    treeLookUp->SetBranchAddress("piA" ,&piA);
-    treeLookUp->SetBranchAddress("kaA" ,&kaA);
-    treeLookUp->SetBranchAddress("prA" ,&prA);
-
-    treeLookUp->SetBranchAddress("elSk" ,&elSk);
-    treeLookUp->SetBranchAddress("piSk" ,&piSk);
-    treeLookUp->SetBranchAddress("kaSk" ,&kaSk);
-    treeLookUp->SetBranchAddress("prSk" ,&prSk);
-
-    treeLookUp->SetBranchAddress("elK" ,&elK);
-    treeLookUp->SetBranchAddress("piK" ,&piK);
-    treeLookUp->SetBranchAddress("kaK" ,&kaK);
-    treeLookUp->SetBranchAddress("prK" ,&prK);
-
-    for(Int_t i = 0; i < nent; ++i)
-    {
-      // myBin[0] --> Eta, myBin[1]--> Centrality, myBin[2]-->Momentum
-      treeLookUp -> GetEntry(i);
-      signBin = sign+1;
-
-      // Analyse only 4 iteration of the iterative fitting procedure
-      if (it != fNthFitIteration) continue;
-      fAmpArr[myBin[0]][myBin[1]][myBin[2]][electron][signBin]      = elA;
-      fAmpArr[myBin[0]][myBin[1]][myBin[2]][pion][signBin]          = piA;
-      fAmpArr[myBin[0]][myBin[1]][myBin[2]][kaon][signBin]          = kaA;
-      fAmpArr[myBin[0]][myBin[1]][myBin[2]][proton][signBin]        = prA;
-
-      fMeanArr[myBin[0]][myBin[1]][myBin[2]][electron][signBin]     = elM;
-      fMeanArr[myBin[0]][myBin[1]][myBin[2]][pion][signBin]         = piM;
-      fMeanArr[myBin[0]][myBin[1]][myBin[2]][kaon][signBin]         = kaM;
-      fMeanArr[myBin[0]][myBin[1]][myBin[2]][proton][signBin]       = prM;
-
-      fSigmaArr[myBin[0]][myBin[1]][myBin[2]][electron][signBin]    = elSi;
-      fSigmaArr[myBin[0]][myBin[1]][myBin[2]][pion][signBin]        = piSi;
-      fSigmaArr[myBin[0]][myBin[1]][myBin[2]][kaon][signBin]        = kaSi;
-      fSigmaArr[myBin[0]][myBin[1]][myBin[2]][proton][signBin]      = prSi;
-
-      fSkewArr[myBin[0]][myBin[1]][myBin[2]][electron][signBin]     = elSk;
-      fSkewArr[myBin[0]][myBin[1]][myBin[2]][pion][signBin]         = piSk;
-      fSkewArr[myBin[0]][myBin[1]][myBin[2]][kaon][signBin]         = kaSk;
-      fSkewArr[myBin[0]][myBin[1]][myBin[2]][proton][signBin]       = prSk;
-
-      fKurtosisArr[myBin[0]][myBin[1]][myBin[2]][electron][signBin] = elK;
-      fKurtosisArr[myBin[0]][myBin[1]][myBin[2]][pion][signBin]     = piK;
-      fKurtosisArr[myBin[0]][myBin[1]][myBin[2]][kaon][signBin]     = kaK;
-      fKurtosisArr[myBin[0]][myBin[1]][myBin[2]][proton][signBin]   = prK;
-
-    }
   }
+  cout << "==================================" << endl;
+  cout << "   Read both histogram and function lookuptable  " << endl;
+  timer.Stop(); timer.Print();
+  cout << "==================================" << endl;
+}
+// -----------------------------------------------------------------------------------------
+void ReadFitParamsFromTree(TString paramTreeName, Int_t fitIter)
+{
+  //
+  // Read the fit parameters from the paramtree file "ParamTree.root" which comes from PID FITS
+  //
+  // Open the lookup table and initialize array
+  fLineShapesLookUpTable = new TFile(paramTreeName);
+  cout << " ReadFitParamsFromTree.Info: Read line shapes from ttree " << endl;
+  treeLookUp = (TTree*)fLineShapesLookUpTable->Get(treeLineShapes);
+  Int_t nent = treeLookUp -> GetEntries();
+  cout << nent <<  " ReadFitParamsFromTree.Info: tree is fine go ahead " << endl;
+
+  Int_t sign       = 0;
+  Int_t it         = 0;
+  Int_t sl         = 0;
+  Int_t signBin = -100;
+
+  Int_t myBin[3]  = {0};  // 0; eta, 1;cent, 2;ptot
+
+  Double_t elA  = 0., elM  = 0., elSi = 0., elK = 0., elSk = 0.;
+  Double_t piA  = 0., piM  = 0., piSi = 0., piK = 0., piSk = 0.;
+  Double_t kaA  = 0., kaM  = 0., kaSi = 0., kaK = 0., kaSk = 0.;
+  Double_t prA  = 0., prM  = 0., prSi = 0., prK = 0., prSk = 0.;
+
+  treeLookUp->SetBranchAddress("sign"   ,&sign);
+  treeLookUp->SetBranchAddress("it"     ,&it);
+  treeLookUp->SetBranchAddress("sl"     ,&sl);
+  treeLookUp->SetBranchAddress("myBin"  ,myBin);
+
+  treeLookUp->SetBranchAddress("elM" ,&elM);
+  treeLookUp->SetBranchAddress("piM" ,&piM);
+  treeLookUp->SetBranchAddress("kaM" ,&kaM);
+  treeLookUp->SetBranchAddress("prM" ,&prM);
+
+  treeLookUp->SetBranchAddress("elSi" ,&elSi);
+  treeLookUp->SetBranchAddress("piSi" ,&piSi);
+  treeLookUp->SetBranchAddress("kaSi" ,&kaSi);
+  treeLookUp->SetBranchAddress("prSi" ,&prSi);
+
+  treeLookUp->SetBranchAddress("elA" ,&elA);
+  treeLookUp->SetBranchAddress("piA" ,&piA);
+  treeLookUp->SetBranchAddress("kaA" ,&kaA);
+  treeLookUp->SetBranchAddress("prA" ,&prA);
+
+  treeLookUp->SetBranchAddress("elSk" ,&elSk);
+  treeLookUp->SetBranchAddress("piSk" ,&piSk);
+  treeLookUp->SetBranchAddress("kaSk" ,&kaSk);
+  treeLookUp->SetBranchAddress("prSk" ,&prSk);
+
+  treeLookUp->SetBranchAddress("elK" ,&elK);
+  treeLookUp->SetBranchAddress("piK" ,&piK);
+  treeLookUp->SetBranchAddress("kaK" ,&kaK);
+  treeLookUp->SetBranchAddress("prK" ,&prK);
+
+  for(Int_t i = 0; i < nent; ++i)
+  {
+    // myBin[0] --> Eta, myBin[1]--> Centrality, myBin[2]-->Momentum
+    treeLookUp -> GetEntry(i);
+    signBin = sign+1;
+
+    // Analyse only 4 iteration of the iterative fitting procedure
+    if (it != fitIter) continue;
+    fAmpArr[myBin[0]][myBin[1]][myBin[2]][electron][signBin]      = elA;
+    fAmpArr[myBin[0]][myBin[1]][myBin[2]][pion][signBin]          = piA;
+    fAmpArr[myBin[0]][myBin[1]][myBin[2]][kaon][signBin]          = kaA;
+    fAmpArr[myBin[0]][myBin[1]][myBin[2]][proton][signBin]        = prA;
+
+    fMeanArr[myBin[0]][myBin[1]][myBin[2]][electron][signBin]     = elM;
+    fMeanArr[myBin[0]][myBin[1]][myBin[2]][pion][signBin]         = piM;
+    fMeanArr[myBin[0]][myBin[1]][myBin[2]][kaon][signBin]         = kaM;
+    fMeanArr[myBin[0]][myBin[1]][myBin[2]][proton][signBin]       = prM;
+
+    fSigmaArr[myBin[0]][myBin[1]][myBin[2]][electron][signBin]    = elSi;
+    fSigmaArr[myBin[0]][myBin[1]][myBin[2]][pion][signBin]        = piSi;
+    fSigmaArr[myBin[0]][myBin[1]][myBin[2]][kaon][signBin]        = kaSi;
+    fSigmaArr[myBin[0]][myBin[1]][myBin[2]][proton][signBin]      = prSi;
+
+    fSkewArr[myBin[0]][myBin[1]][myBin[2]][electron][signBin]     = elSk;
+    fSkewArr[myBin[0]][myBin[1]][myBin[2]][pion][signBin]         = piSk;
+    fSkewArr[myBin[0]][myBin[1]][myBin[2]][kaon][signBin]         = kaSk;
+    fSkewArr[myBin[0]][myBin[1]][myBin[2]][proton][signBin]       = prSk;
+
+    fKurtosisArr[myBin[0]][myBin[1]][myBin[2]][electron][signBin] = elK;
+    fKurtosisArr[myBin[0]][myBin[1]][myBin[2]][pion][signBin]     = piK;
+    fKurtosisArr[myBin[0]][myBin[1]][myBin[2]][kaon][signBin]     = kaK;
+    fKurtosisArr[myBin[0]][myBin[1]][myBin[2]][proton][signBin]   = prK;
+
+  }
+
 
 }
 // -----------------------------------------------------------------------------------------
@@ -609,8 +591,6 @@ Double_t EvalFitValue(Int_t particle, Double_t x)
 // -----------------------------------------------------------------------------------------
 void InitializeObjects()
 {
-
-  //
   //
   fChi2   = new TH1D("fChi2" ,"fChi2",200 ,0, 10 );
   fcRows  = new TH1D("fcRows","fcRows",200 ,0, 200 );
@@ -722,6 +702,7 @@ TString PrintNumInBinary(UInt_t num)
 // -----------------------------------------------------------------------------------------
 Double_t fitFunctionGenGaus(Double_t *x, Double_t *par)
 {
+  //
   // Generalised gauss function --> "[0]*exp(-(TMath::Abs(x-[1])/[2])**[3])*(1+TMath::Erf([4]*(x-[1])/[2]/TMath::Sqrt(2)))";
   // Skew-normal distribution   --> "[0]*exp(-0.5*((x-[1])/[2])**2)*(1+TMath::Erf([3]*(x-[1])/[2]/TMath::Sqrt(2)))";
   // par[0] --> Amplitude
@@ -769,6 +750,7 @@ void RetrieveMoments(TIdentity2D *tidenObj, TVectorF *vecMom, TVectorF *vecInt)
   nEvents   = tidenObj -> GetNEvents();
   cout << " =============================== Summary of Moments =============================== "<<endl;
   cout << " events      : "<< nEvents << endl;
+  cout << " sign        : "<< fSignInput << endl;
   cout << " ================================================================================== "<<endl;
   cout << " electron    : "<< (*vecMom)[kEl]   <<" int: "<< (*vecInt)[kEl]*nnorm << "  ratio: " << (*vecMom)[kEl]/((*vecInt)[kEl]*nnorm) << endl;
   cout << " pion        : "<< (*vecMom)[kPi]   <<" int: "<< (*vecInt)[kPi]*nnorm << "  ratio: " << (*vecMom)[kPi]/((*vecInt)[kPi]*nnorm) << endl;
@@ -779,5 +761,55 @@ void RetrieveMoments(TIdentity2D *tidenObj, TVectorF *vecMom, TVectorF *vecInt)
   cout << " kaon2       : "<< (*vecMom)[kKaKa]  <<endl;
   cout << " proton2     : "<< (*vecMom)[kPrPr]  <<endl;
 
-
 }
+// -----------------------------------------------------------------------------------------
+void PrintInitInfo(){
+
+  //
+  cout << " ================================================================================= " << endl;
+  cout << " InitializeObjects.Info: treeLineShapes        = " << treeLineShapes       << endl;
+  cout << " InitializeObjects.Info: treeIdentity          = " << treeIdentity       << endl;
+  cout << " ================================================================================= " << endl;
+  cout << " InitializeObjects.Info: Inputs: " << endl;
+  cout << " InitializeObjects.Info: data Tree             = " << fileNameDataTree       << endl;
+  cout << " InitializeObjects.Info: Line Shapes           = " << fileNameLineShapes     << endl;
+  cout << " InitializeObjects.Info: Centrality            = " << fCentInput      << endl;
+  cout << " InitializeObjects.Info: Subsample index       = " << fSubsample      << endl;
+  cout << " InitializeObjects.Info: Eta Range             = " << fEtaDownInput       << " - " <<  fEtaUpInput << endl;
+  cout << " InitializeObjects.Info: Momentum Range        = " << fpDownInput         << " - " <<  fpUpInput << endl;
+  cout << " InitializeObjects.Info: Fit iteration         = " << fNthFitIteration    << endl;
+  cout << " InitializeObjects.Info: Charge                = " << fSignInput         << endl;
+  cout << " ================================================================================= " << endl;
+  cout << " InitializeObjects.Info: Centrality (Bin)      = " << fCentInputBin      << endl;
+  cout << " InitializeObjects.Info: Eta Range (Bin)       = " << fEtaDownBin    << " - " <<  fEtaUpBin << endl;
+  cout << " InitializeObjects.Info: Momentum Range (Bin)  = " << fpDownBin    << " - " <<  fpUpBin << endl;
+  cout << " ================================================================================= " << endl;
+  //
+}
+
+
+/*
+
+TFile f("/lustre/nyx/alice/users/marsland/pFluct/files/analysis/Data/PbPb/Real/RUN1/PHD/Systematics_cRows_80_16EtaBin_mombin20MeV/ParamTrees/LineShapes_ClonesArray.root")
+// TFile f("LineShapes_ClonesArray.root")
+cloneArrFunc   = (TObjArray*)f->Get("funcLineShapes");
+cloneArrHist   = (TClonesArray*)f->Get("histLineShapes");
+
+hPi  = (TH1D*)cloneArrHist->FindObject("particle_1_bin_0_bin_0_bin_0_bin_0");
+fPi  = (TF1*)cloneArrFunc->FindObject("particle_1_bin_0_bin_0_bin_0_bin_0");
+hPi->Draw();
+fPi->Draw("same");
+
+TF1 *uu = new TF1("uu","[0]*exp(-(TMath::Abs(x-[1])/[2])**[3])*(1+TMath::Erf([4]*(x-[1])/[2]/TMath::Sqrt(2)))",20.,1020.);
+Double_t *par = fPi->GetParameters();
+uu->SetParameters(par[0],par[1],par[2],par[3],par[4]);
+uu->SetNpx(4000);
+uu->SetLineColor(kBlack);
+uu->Draw("same");
+
+TH1D *k = (TH1D*)uu->GetHistogram()->Clone();
+k->SetLineColor(kMagenta);
+k->Draw("same");
+
+
+*/
