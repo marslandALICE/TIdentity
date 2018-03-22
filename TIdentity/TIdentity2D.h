@@ -128,7 +128,7 @@ private:
     Int_t    myBin[3];
     Int_t    evtNum;
     Double_t  myDeDx;
-    //Float_t  myDeDx;
+    Float_t  dEdx;
     Float_t  eta;
     Float_t  cent;
     Float_t  ptot;

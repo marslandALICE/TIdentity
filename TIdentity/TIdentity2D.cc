@@ -54,6 +54,9 @@ void TIdentity2D::InitIden2D(Int_t size)
     sign = -1000;
     myBinBrach=0x0;
     countVeto = 0;
+    myDeDx=-1000.;
+    dEdx=-1000.;
+
     prevEvtVeto = -1;
     TSize = size;
     TSizeMixed = size*(size-1)/2;
@@ -174,7 +177,7 @@ void TIdentity2D::GetTree(Long_t &nent, TString idenTreeName)
       TIdentityTree -> SetBranchAddress("eta"    ,&eta);
       TIdentityTree -> SetBranchAddress("cent"   ,&cent);
       TIdentityTree -> SetBranchAddress("ptot"   ,&ptot);
-      TIdentityTree -> SetBranchAddress("dEdx"   ,&myDeDx);
+      TIdentityTree -> SetBranchAddress("dEdx"   ,&dEdx);
       TIdentityTree -> SetBranchAddress("event"  ,&evtNum);
       TIdentityTree -> SetBranchAddress("cutBit" ,&cutBit);
       TIdentityTree -> SetBranchAddress("sign"   ,&sign);
@@ -309,6 +312,7 @@ Bool_t TIdentity2D::GetEntry(Int_t i)
     TIdentityTree -> GetEntry(i);
     if( evtNum != prevEvtVeto && prevEvtVeto >0) {countVeto++;}
     prevEvtVeto = evtNum;
+    if ( dEdx>-1 ) myDeDx=dEdx;
     if ( (myDeDx < ffMin || myDeDx > ffMax) && myDeDx > 0 ) return kFALSE;
     // secure the usage of sign=0 which is sum of + and - particles
     if( !(sign == useSign || useSign == 0) ) return kFALSE;
