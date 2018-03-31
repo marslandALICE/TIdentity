@@ -54,18 +54,18 @@ void GetIdenTree(TString idenlist, TString datalist);
 Bool_t MCclosure      = kFALSE;
 Bool_t pp             = kFALSE;
 Bool_t test           = kFALSE;
-Int_t nSubsample      = 21;  
+Int_t nSubsample      = 20;  
 Int_t rangeCleanPions = 0; // 100: full centrality is taken, 0: centrality bins are taken into account 
 
 Double_t dEdxMin    = 20;
 Double_t dEdxMax    = 1020;
-Double_t dEdxNbins  = 2000;
+Double_t dEdxNbins  = 1000;
 Double_t ptMin      = 0.2;
 Double_t ptMax      = 3.2;
-Double_t ptNbins    = 600;   // mostly for real data analysis
+Double_t ptNbins    = 150;   // mostly for real data analysis
 Double_t etaMin     = -1;
 Double_t etaMax     = 1;
-Int_t nEtabins      = 10;
+Int_t nEtabins      = 20;
 
 // Double_t dEdxMin    = 20;
 // Double_t dEdxMax    = 1020;
@@ -93,11 +93,13 @@ TH2D *h2Dall, *h2Dpos, *h2Dneg;
  
 
 
-void CreateAllTIDENHists(Int_t tidenSwitch, Int_t centBin, Int_t subsample, const TString idenTreeName,const TString idenTreeFile, const TString dataTreeFile, const TString mcFile, const TString histFile, const Double_t etaLow, const Double_t etaUp, const Float_t centLow, const Float_t centUp){
+void CreateAllTIDENHists(Int_t tidenSwitch, Int_t centBin, Int_t subsample, const TString idenTreeName,const TString idenTreeFile, const TString dataTreeFile, const TString mcFile, const TString histFile, const Double_t etaLow, const Double_t etaUp, const Float_t centLow, const Float_t centUp)
+{
   //
   // Produce all hists form MC and Real data
   
   /*
+
   cd /lustre/nyx/alice/users/marsland/pFluct/files/analysis/Data/PbPb/MC/MC_PbPb_Reference/Hists
   
   aliroot -l
@@ -242,7 +244,7 @@ void RealDataHists(const TString dataTreeFile, const TString histFile, const Dou
   TFile fhist(histFile);
   TList * list  = (TList*)fhist.Get("cleanHists");
   THnSparse *fhnExpected = (THnSparse*)list->FindObject("fhnExpected");
-  THnSparse *fhnCleanEl  = (THnSparse*)list->FindObject("fhnCleanEl");
+  //   THnSparse *fhnCleanEl  = (THnSparse*)list->FindObject("fhnCleanEl");
   THnSparse *fhnCleanKa  = (THnSparse*)list->FindObject("fhnCleanKa");
   TH2D *hArmPod          = (TH2D*)list->FindObject("fHistArmPod");
 
@@ -251,8 +253,8 @@ void RealDataHists(const TString dataTreeFile, const TString histFile, const Dou
   fhnExpected->GetAxis(3)->SetRangeUser(etaLow,etaUp);     // eta
   fhnExpected->GetAxis(5)->SetRangeUser(2.,60.);          // sigma
   fhnExpected->GetAxis(6)->SetRangeUser(25.,1000.);        // mean
-  fhnCleanEl->GetAxis(1)->SetRangeUser(centLow,centUp);    // centrality
-  fhnCleanEl->GetAxis(2)->SetRangeUser(etaLow,etaUp);      // eta
+  //   fhnCleanEl->GetAxis(1)->SetRangeUser(centLow,centUp);    // centrality
+  //   fhnCleanEl->GetAxis(2)->SetRangeUser(etaLow,etaUp);      // eta
   fhnCleanKa->GetAxis(1)->SetRangeUser(centLow,centUp);    // centrality
   fhnCleanKa->GetAxis(2)->SetRangeUser(etaLow,etaUp);      // eta
   
@@ -272,7 +274,7 @@ void RealDataHists(const TString dataTreeFile, const TString histFile, const Dou
   
   std::cout << " make clean Kaon Electron " << std::endl; 
   // Clean Kaon and Electron
-  TH2D * h2CleanEl = (TH2D*)fhnCleanEl->Projection(4,3); h2CleanEl->SetName("h2CleanEl");
+  //   TH2D * h2CleanEl = (TH2D*)fhnCleanEl->Projection(4,3); h2CleanEl->SetName("h2CleanEl");
   TH2D * h2CleanKa = (TH2D*)fhnCleanKa->Projection(4,3); h2CleanKa->SetName("h2CleanKa");
   timer.Stop(); timer.Print();
   
@@ -306,7 +308,7 @@ void RealDataHists(const TString dataTreeFile, const TString histFile, const Dou
   h2ExpectedSigmaKa -> Write("h2ExpectedSigmaKa");
   h2ExpectedSigmaPr -> Write("h2ExpectedSigmaPr");
   if (!MCclosure){
-    h2CleanEl         -> Write("h2CleanElectron");
+      //     h2CleanEl         -> Write("h2CleanElectron");
     h2CleanPi         -> Write("h2CleanPion");
     h2CleanKa         -> Write("h2CleanKaon");
     h2CleanPr         -> Write("h2CleanProton");
@@ -326,6 +328,7 @@ void RealDataHistsFromThnSparse(const TString cleanFile, const TString histFile,
   // Produce expected, real data, clean sample histograms 
   //
   /*
+  /lustre/nyx/alice/users/marsland/alice-tpc-notes/JIRA/ATO-123/code/SAMPAesds.C
   cd /lustre/nyx/alice/users/marsland/pFluct/files/analysis/Data/PbPb/Real/Syst_LooseCuts_cRows_80_16EtaBin_mombin20MeV_largeDCAxy/testMacros
   aliroot -l
   .L /u/marsland/PHD/macros/marsland_EbyeRatios/CreateAllTIDENHists.C+
@@ -348,9 +351,9 @@ void RealDataHistsFromThnSparse(const TString cleanFile, const TString histFile,
   TList * list  = (TList*)fhist.Get("cleanHists");
   THnSparse *fhndEdx     = (THnSparse*)list->FindObject("hdEdx");
   THnSparse *fhnExpected = (THnSparse*)list->FindObject("hExpected");
-  THnSparse *fhnCleanEl  = (THnSparse*)list->FindObject("hCleanEl");
+  //   THnSparse *fhnCleanEl  = (THnSparse*)list->FindObject("hCleanEl");
   THnSparse *fhnCleanKa  = (THnSparse*)list->FindObject("hCleanKa");
-  THnSparse *fhnCleanDe  = (THnSparse*)list->FindObject("hCleanDe");
+  //   THnSparse *fhnCleanDe  = (THnSparse*)list->FindObject("hCleanDe");
   TH2D *hArmPod          = (TH2D*)list->FindObject("hArmPod");
 
   // ================================
@@ -369,12 +372,12 @@ void RealDataHistsFromThnSparse(const TString cleanFile, const TString histFile,
   fhnExpected->GetAxis(3)->SetRangeUser(etaLow+BSF,etaUp-BSF);     // eta
   fhnExpected->GetAxis(5)->SetRangeUser(2.+BSF,60.-BSF);           // sigma
   fhnExpected->GetAxis(6)->SetRangeUser(25.+BSF,1000.-BSF);        // mean
-  fhnCleanEl->GetAxis(1)->SetRangeUser(centLow+BSF,centUp-BSF);    // centrality
-  fhnCleanEl->GetAxis(2)->SetRangeUser(etaLow+BSF,etaUp-BSF);      // eta
+  //   fhnCleanEl->GetAxis(1)->SetRangeUser(centLow+BSF,centUp-BSF);    // centrality
+  //   fhnCleanEl->GetAxis(2)->SetRangeUser(etaLow+BSF,etaUp-BSF);      // eta
   fhnCleanKa->GetAxis(1)->SetRangeUser(centLow+BSF,centUp-BSF);    // centrality
   fhnCleanKa->GetAxis(2)->SetRangeUser(etaLow+BSF,etaUp-BSF);      // eta
-  fhnCleanDe->GetAxis(1)->SetRangeUser(centLow+BSF,centUp-BSF);    // centrality
-  fhnCleanDe->GetAxis(2)->SetRangeUser(etaLow+BSF,etaUp-BSF);      // eta
+  //   fhnCleanDe->GetAxis(1)->SetRangeUser(centLow+BSF,centUp-BSF);    // centrality
+  //   fhnCleanDe->GetAxis(2)->SetRangeUser(etaLow+BSF,etaUp-BSF);      // eta
   
   // ================================
   // get each particle PID response
@@ -397,9 +400,9 @@ void RealDataHistsFromThnSparse(const TString cleanFile, const TString histFile,
   // ================================
   // Clean Kaon and Electron
   std::cout << " make clean Kaon Electron " << std::endl; 
-  TH2D * h2CleanEl = (TH2D*)fhnCleanEl->Projection(4,3); h2CleanEl->SetName("h2CleanEl");
   TH2D * h2CleanKa = (TH2D*)fhnCleanKa->Projection(4,3); h2CleanKa->SetName("h2CleanKa");
-  TH2D * h2CleanDe = (TH2D*)fhnCleanDe->Projection(4,3); h2CleanDe->SetName("h2CleanDe");
+  //   TH2D * h2CleanDe = (TH2D*)fhnCleanDe->Projection(4,3); h2CleanDe->SetName("h2CleanDe");
+  //   TH2D * h2CleanEl = (TH2D*)fhnCleanEl->Projection(4,3); h2CleanEl->SetName("h2CleanEl");
 
   // ================================
   std::cout << " ========= make clean pions and protons from TTree ========= " << std::endl; 
@@ -418,10 +421,10 @@ void RealDataHistsFromThnSparse(const TString cleanFile, const TString histFile,
     cleanPionTree   = (TTree*)fClean.Get("pionTree");
     cleanProtonTree = (TTree*)fClean.Get("protonTree");
     Double_t narmTreeEntries = (test) ? testEntries : cleanPionTree->GetEntries();
-    h2CleanPi = new TH2D("h2CleanPi","h2CleanPi",ptNbins,ptMin,ptMax,dEdxNbins,dEdxMin,dEdxMax);
+    h2CleanPi      = new TH2D("h2CleanPi","h2CleanPi",ptNbins,ptMin,ptMax,dEdxNbins,dEdxMin,dEdxMax);
     h2CleanPiTight = new TH2D("h2CleanPiTight","h2CleanPiTight",ptNbins,ptMin,ptMax,dEdxNbins,dEdxMin,dEdxMax);
-    h2CleanPiTOF = new TH2D("h2CleanPiTOF","h2CleanPiTOF",ptNbins,ptMin,ptMax,dEdxNbins,dEdxMin,dEdxMax);
-    h2CleanPr = new TH2D("h2CleanPr","h2CleanPr",ptNbins,ptMin,ptMax,dEdxNbins,dEdxMin,dEdxMax);
+    h2CleanPiTOF   = new TH2D("h2CleanPiTOF","h2CleanPiTOF",ptNbins,ptMin,ptMax,dEdxNbins,dEdxMin,dEdxMax);
+    h2CleanPr      = new TH2D("h2CleanPr","h2CleanPr",ptNbins,ptMin,ptMax,dEdxNbins,dEdxMin,dEdxMax);
     
     cleanPionTree   -> Project("h2CleanPi"      ,"dEdx:ptot",etaCentCut+piK0cut,"",narmTreeEntries);
     cleanPionTree   -> Project("h2CleanPiTight" ,"dEdx:ptot",etaCentCut+piK0cut+piPixedcut,"",narmTreeEntries);
@@ -447,17 +450,18 @@ void RealDataHistsFromThnSparse(const TString cleanFile, const TString histFile,
     h2Dall            -> Write("h2Dall"); 
     h2Dpos            -> Write("h2Dpos");
     h2Dneg            -> Write("h2Dneg");
-    h2CleanEl         -> Write("h2CleanElectron");
-    h2CleanPiTight    -> Write("h2CleanPionTight");
-    h2CleanPi         -> Write("h2CleanPion");
-    h2CleanPiTOF      -> Write("h2CleanPionTOF");
-    h2CleanKa         -> Write("h2CleanKaon");
-    h2CleanPr         -> Write("h2CleanProton");
-    h2CleanDe         -> Write("h2CleanDeuteron");
+    //     h2CleanEl         -> Write("h2CleanElectron");
+    //     if (h2CleanPiTight) h2CleanPiTight-> Write("h2CleanPionTight");
+    //     if (h2CleanPi)      h2CleanPi     -> Write("h2CleanPion");
+    //     if (h2CleanPiTOF)   h2CleanPiTOF  -> Write("h2CleanPionTOF");
+    //     if (h2CleanKa)      h2CleanKa     -> Write("h2CleanKaon");
+    //     if (h2CleanPr)      h2CleanPr     -> Write("h2CleanProton");
+    //     if (h2CleanDe)      h2CleanDe     -> Write("h2CleanDeuteron");
+    //     if (hArmPod)        hArmPod       -> Write("hArmPod");
     antiProtonCutG    -> Write();
     protonCutG        -> Write();
     pionCutG          -> Write();
-    hArmPod           -> Write("hArmPod");
+    
   }
   
      
@@ -575,7 +579,7 @@ void IdenDataHists(const TString idenTreeFile, const TString dataTreeFile, const
   TFile fhist(histFile);
   TList * list  = (TList*)fhist.Get("cleanHists");
   THnSparse *fhnExpected = (THnSparse*)list->FindObject("fhnExpected");
-  THnSparse *fhnCleanEl  = (THnSparse*)list->FindObject("fhnCleanEl");
+  //   THnSparse *fhnCleanEl  = (THnSparse*)list->FindObject("fhnCleanEl");
   THnSparse *fhnCleanKa  = (THnSparse*)list->FindObject("fhnCleanKa");
   TH2D *hArmPod          = (TH2D*)list->FindObject("fHistArmPod");
 
@@ -584,8 +588,8 @@ void IdenDataHists(const TString idenTreeFile, const TString dataTreeFile, const
   fhnExpected->GetAxis(3)->SetRangeUser(etaLow,etaUp);     // eta
   fhnExpected->GetAxis(5)->SetRangeUser(2.,60.);          // sigma
   fhnExpected->GetAxis(6)->SetRangeUser(25.,1000.);        // mean
-  fhnCleanEl->GetAxis(1)->SetRangeUser(centLow,centUp);    // centrality
-  fhnCleanEl->GetAxis(2)->SetRangeUser(etaLow,etaUp);      // eta
+  //   fhnCleanEl->GetAxis(1)->SetRangeUser(centLow,centUp);    // centrality
+  //   fhnCleanEl->GetAxis(2)->SetRangeUser(etaLow,etaUp);      // eta
   fhnCleanKa->GetAxis(1)->SetRangeUser(centLow,centUp);    // centrality
   fhnCleanKa->GetAxis(2)->SetRangeUser(etaLow,etaUp);      // eta
   
@@ -605,7 +609,7 @@ void IdenDataHists(const TString idenTreeFile, const TString dataTreeFile, const
   
   std::cout << " make clean Kaon Electron " << std::endl; 
   // Clean Kaon and Electron
-  TH2D * h2CleanEl = (TH2D*)fhnCleanEl->Projection(4,3); h2CleanEl->SetName("h2CleanEl");
+  //   TH2D * h2CleanEl = (TH2D*)fhnCleanEl->Projection(4,3); h2CleanEl->SetName("h2CleanEl");
   TH2D * h2CleanKa = (TH2D*)fhnCleanKa->Projection(4,3); h2CleanKa->SetName("h2CleanKa");
   timer.Stop(); timer.Print();
   
@@ -642,7 +646,7 @@ void IdenDataHists(const TString idenTreeFile, const TString dataTreeFile, const
   h2ExpectedSigmaKa -> Write("h2ExpectedSigmaKa");
   h2ExpectedSigmaPr -> Write("h2ExpectedSigmaPr");
   if (!MCclosure){
-    h2CleanEl         -> Write("h2CleanElectron");
+      //     h2CleanEl         -> Write("h2CleanElectron");
     h2CleanPi         -> Write("h2CleanPion");
     h2CleanKa         -> Write("h2CleanKaon");
     h2CleanPr         -> Write("h2CleanProton");
@@ -655,7 +659,8 @@ void IdenDataHists(const TString idenTreeFile, const TString dataTreeFile, const
   delete tmpFile;
 }
 //____________________________________________________________________________________________________________
-void MCDataHists(const TString mcFile, const Double_t etaLow, const Double_t etaUp, const Float_t centLow, const Float_t centUp){
+void MCDataHists(const TString mcFile, const Double_t etaLow, const Double_t etaUp, const Float_t centLow, const Float_t centUp)
+{
   
   //
   // Produce MC sample histograms 
@@ -668,8 +673,15 @@ void MCDataHists(const TString mcFile, const Double_t etaLow, const Double_t eta
   TCut parNeg    = "sign<0.";
   TCut elCut = "el>0", piCut = "pi>0", kaCut = "ka>0", prCut = "pr>0", allCut = "dEdx>0";
   
-  TFile f(mcFile);
-  tree  = (TTree*)f.Get("fTreeMC");
+  
+  TTree *tree=NULL; 
+  if (mcFile.Contains(".root")){
+      TFile * fInputFile = TFile::Open(mcFile);
+      tree               = (TTree*)fInputFile->Get("fTreeMC");
+  } else {
+      tree=(TTree*)AliXRDPROOFtoolkit::MakeChain(mcFile, "fTreeMC", 0, 1000000000,0,1);
+  }
+
   if (tree->GetEntries()<10) { 
     std::cout << " === upss MC tree is empty === " << std::endl; return;
   }
@@ -1302,7 +1314,7 @@ void CreateCleanSamples(TString cleanSamplesTreeList)
    
   */
   InitInitials();
-  TCut momDeDx    = "ptot<3.2 && ptot>0.2 && dEdx>30 && dEdx<200";
+  TCut momDeDx    = "ptot<3.1 && ptot>0.1 && dEdx>30 && dEdx<200";
   //   TCut cleanCutPi = "abs(piTOFnSigma)<2.  && abs(alfa)<0.5  && pionCutG";
   //   TCut cleanCutPr = "abs(prTOFnSigma)<2.  && qt>0.07 && qt<0.11 && (antiProtonCutG||protonCutG)";
   TCut cleanCutPi = "abs(alfa)<0.5 && pionCutG";
