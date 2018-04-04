@@ -46,7 +46,7 @@ public:
     void SetOutputDir(TString _outputDir)  { outputDir = _outputDir; }
     void SetFileName(TString  _fileName)   { fileName  = _fileName;  }
     Int_t GetIndex(Int_t, Int_t&, Int_t&);
-    Int_t AddEntry(Bool_t &);
+    Int_t AddEntry();
     Bool_t GetEntry(Int_t);
     void GetTree(Long_t &n, TString idenTreeName);
     TTree *GetTreeFromChain(TString treeList, TString treeName);

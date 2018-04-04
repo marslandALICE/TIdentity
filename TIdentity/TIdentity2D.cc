@@ -174,15 +174,23 @@ void TIdentity2D::GetTree(Long_t &nent, TString idenTreeName)
     myBinBrach = (TBranch*)TIdentityTree->FindBranch("myBin");
     cout<<"TIdentity2D::GetTree.Info: ======================== "<<endl;
     if (!myBinBrach){ // new version of tree format
-      TIdentityTree -> SetBranchAddress("eta"    ,&eta);
-      TIdentityTree -> SetBranchAddress("cent"   ,&cent);
-      TIdentityTree -> SetBranchAddress("ptot"   ,&ptot);
+      TIdentityTree -> SetBranchAddress("gid"    ,&evtNum);
       TIdentityTree -> SetBranchAddress("dEdx"   ,&dEdx);
-      TIdentityTree -> SetBranchAddress("event"  ,&evtNum);
-      TIdentityTree -> SetBranchAddress("cutBit" ,&cutBit);
       TIdentityTree -> SetBranchAddress("sign"   ,&sign);
-      TIdentityTree -> SetBranchAddress("cRows" ,&cRows);
-      TIdentityTree -> SetBranchAddress("tpcchi2" ,&tpcchi2);
+      TIdentityTree -> SetBranchAddress("cutBit" ,&cutBit);
+      for (Int_t i=0;i<fNBranches;i++){
+        TIdentityTree -> SetBranchAddress(fBranchNames[i] ,&fBranchVariables[i]);
+      }
+      //
+      // TIdentityTree -> SetBranchAddress("event"  ,&evtNum);
+      // TIdentityTree -> SetBranchAddress("cutBit" ,&cutBit);
+      // TIdentityTree -> SetBranchAddress("dEdx"   ,&dEdx);
+      // TIdentityTree -> SetBranchAddress("sign"   ,&sign);
+      // TIdentityTree -> SetBranchAddress("eta"    ,&eta);
+      // TIdentityTree -> SetBranchAddress("cent"   ,&cent);
+      // TIdentityTree -> SetBranchAddress("ptot"   ,&ptot);
+      // TIdentityTree -> SetBranchAddress("cRows"  ,&cRows);
+      // TIdentityTree -> SetBranchAddress("tpcchi2",&tpcchi2);
     } else { // old version of tree format
       TIdentityTree -> SetBranchAddress("sign",&sign);
       TIdentityTree -> SetBranchAddress("myBin",myBin);
@@ -319,10 +327,10 @@ Bool_t TIdentity2D::GetEntry(Int_t i)
     return kTRUE;
 }
 
-Int_t TIdentity2D::AddEntry(Bool_t &isAdd)
+Int_t TIdentity2D::AddEntry()
 {
 
-    isAdd = kTRUE;
+    Bool_t isAdd = kTRUE;
     if(evtNum == prevEvt)
     {
         AddParticles();
@@ -438,14 +446,23 @@ void TIdentity2D::Finalize()
 
 void TIdentity2D::GetBins(Float_t *bins)
 {
+  // TString branchNames[nBranches]={"eta","cent","ptot","cRows","tpcchi2"};
   if (!myBinBrach){
-    bins[0] = eta;
-    bins[1] = cent;
-    bins[2] = ptot;
+    bins[0] = fBranchVariables[0];
+    bins[1] = fBranchVariables[1];
+    bins[2] = fBranchVariables[2];
     bins[3] = sign;
     bins[4] = cutBit;
-    bins[5] = cRows;
-    bins[6] = tpcchi2;
+    bins[5] = fBranchVariables[3];
+    bins[6] = fBranchVariables[4];
+    //
+    // bins[0] = eta;
+    // bins[1] = cent;
+    // bins[2] = ptot;
+    // bins[3] = sign;
+    // bins[4] = cutBit;
+    // bins[5] = cRows;
+    // bins[6] = tpcchi2;
   } else{
     bins[0] = myBin[0];
     bins[1] = myBin[1];

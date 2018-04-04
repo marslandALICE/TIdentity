@@ -9,7 +9,7 @@ How to Run TIdentity:
    run.sh
 
    make -f MakefileTest
-   runTest.sh
+   rtest.sh
 
 ====================================================================================================
 ====================================================================================================
@@ -22,12 +22,11 @@ development dir GSI:         /u/marsland/PHD/macros/marsland_EbyeRatios/schlechi
 development dir local linux: /home/marsland/mac_sf
 development dir local MAC:   /Users/marsland/Desktop/ubuntu_sf/schleching/TIdentity/TIdentity
 
-
 *********
 
 cd /lustre/nyx/alice/users/marsland/TIdentity
-meld /Users/marsland/Desktop/ubuntu_sf/schleching/TIdentity/TIdentity /u/marsland/PHD/macros/marsland_EbyeRatios/schleching/TIdentity/TIdentity
-meld /lustre/nyx/alice/users/marsland/TIdentity/TIdentity /u/marsland/PHD/macros/marsland_EbyeRatios/schleching/TIdentity/TIdentity
+meld /Users/marsland/Desktop/ubuntu_sf/schleching/TIdentity/TIdentity /u/marsland/PHD/macros/marsland_EbyeRatios/schleching/TIdentity/TIdentity &
+meld /lustre/nyx/alice/users/marsland/TIdentity/TIdentity /u/marsland/PHD/macros/marsland_EbyeRatios/schleching/TIdentity/TIdentity &
 
 
 0) to install

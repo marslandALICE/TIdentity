@@ -5,19 +5,13 @@
 #include "TFile.h"
 #include "TTree.h"
 #include "TVectorF.h"
-#include "TChain.h"
 #include "TSystem.h"
-#include "TObjArray.h"
 #include "TObject.h"
 #include "TH1D.h"
 #include "TF1.h"
-#include "TH1D.h"
 #include "TMath.h"
 #include <iomanip>
 #include "iostream"
-#include "TH3F.h"
-#include "TLorentzVector.h"
-#include "TNtuple.h"
 #include "string"
 
 using namespace std;
@@ -99,11 +93,16 @@ const Float_t fMomRangeDown = 0.2;
 const Float_t fMomRangeUp   = 3.2;
 Float_t xCentBins[] = {0, 5, 10, 20, 30, 40, 50, 60, 70, 80};
 Int_t xSignBins[] = {-1,1,0}; // coding of signs
+
+// Default braches are --> ULong64_t ("gid"); Float_t ("dEdx"), Int_t ("sign"), UInt_t ("cutBit")
+// the rest of them can be given as an array
+const Int_t nBranches = 5;
+TString branchNames[nBranches]={"eta","cent","ptot","cRows","chi2TPC"};
 //
 //
 Int_t   fNthFitIteration = 6;
 TString treeLineShapes   = "treeId";
-TString treeIdentity     = "fIdenTree";   // for data "fIdenTree",    for MC "fIdenTreeMC"  , new data "tracks"
+TString treeIdentity     = "tracks";   // for data "fIdenTree",    for MC "fIdenTreeMC"  , new data "tracks"
 //
 //
 // =======================================================================================================
@@ -217,6 +216,7 @@ int main(int argc, char *argv[])
   // Create the TIdentity2D object and start analysis
   fgengaus = new TF1("fgengaus",fitFunctionGenGaus,0,1020,5);
   TIdentity2D *iden4 = new TIdentity2D(4);      // Set the number of particles to 4
+  iden4 -> SetBranchNames(nBranches,branchNames);
   iden4 -> SetFileName(fileNameDataTree);
   iden4 -> SetFunctionPointers(EvalFitValue);
   iden4 -> SetLimits(0.,1020.,10.); // --> (dEdxMin,dEdxMax,binwidth), if slice histograms are scaled wrt binwidth, then binwidth=1
@@ -258,9 +258,7 @@ int main(int argc, char *argv[])
     if( fEtaBin < etaRange[0] || fEtaBin > etaRange[1] ) continue;
     fUsedBins[fEtaBin][fCentBin][fMomBin][fSignBin] = 1;
     if (fSignInput==0) fUsedBins[fEtaBin][fCentBin][fMomBin][fSignBin] = 1;
-    //
-    Bool_t isAdd = kFALSE;
-    iden4 -> AddEntry(isAdd);
+    iden4 -> AddEntry();
   }
   iden4 -> Finalize();
   //
