@@ -42,16 +42,15 @@ TString fileNameLineShapes = "";
 //
 Double_t nEvents = 0;
 Double_t nnorm   = 1.;
-const Int_t nMoments = 15;
+const Int_t nMoments = 14;
 TVectorF *fIntegrals;
 TVectorF *fMmoments;
 TFile *fLineShapesLookUpTable = NULL;
 TClonesArray *cloneArrFunc=NULL;
 TH1D **hLineShape;
 TF1 **fLineShape;
-enum particles{electron=0, pion=1, kaon=2, proton=3};
-enum momentType{kEl=0,kPi=1,kKa=2,kPr=3,kElEl=4,kPiPi=5,kKaKa=6,kPrPr=7,
-  kElPi=8,kElKa=9,kElPr=10,kPiKa=11,kPiPr=12,kKaPr=13,};
+enum momentType{kEl=0,kPi=1,kKa=2,kPr=3,kElEl=4,kPiPi=5,kKaKa=6,kPrPr=7,kElPi=8,kElKa=9,kElPr=10,kPiKa=11,kPiPr=12,kKaPr=13,};
+TString momNames[14] = {"El1","Pi1","Ka1","Pr1","El2","Pi2","Ka2","Pr2","ElPi","ElKa","ElPr","PiKa","PiPr","KaPr"};
 //
 // =======================================================================================================
 // =======================================================================================================
@@ -158,30 +157,30 @@ void InitializeObjects()
 void RetrieveMoments(TIdentity2D *tidenObj, TVectorF *vecMom, TVectorF *vecInt)
 {
 
-  (*vecMom)[kEl] = tidenObj -> GetMean(electron);
-  (*vecMom)[kPi] = tidenObj -> GetMean(pion);
-  (*vecMom)[kKa] = tidenObj -> GetMean(kaon);
-  (*vecMom)[kPr] = tidenObj -> GetMean(proton);
+  (*vecMom)[kEl] = tidenObj -> GetMean(kEl);
+  (*vecMom)[kPi] = tidenObj -> GetMean(kPi);
+  (*vecMom)[kKa] = tidenObj -> GetMean(kKa);
+  (*vecMom)[kPr] = tidenObj -> GetMean(kPr);
   //
   // Second Moments
-  (*vecMom)[kElEl] = tidenObj -> GetSecondMoment(electron);
-  (*vecMom)[kPiPi] = tidenObj -> GetSecondMoment(pion);
-  (*vecMom)[kKaKa] = tidenObj -> GetSecondMoment(kaon);
-  (*vecMom)[kPrPr] = tidenObj -> GetSecondMoment(proton);
+  (*vecMom)[kElEl] = tidenObj -> GetSecondMoment(kEl);
+  (*vecMom)[kPiPi] = tidenObj -> GetSecondMoment(kPi);
+  (*vecMom)[kKaKa] = tidenObj -> GetSecondMoment(kKa);
+  (*vecMom)[kPrPr] = tidenObj -> GetSecondMoment(kPr);
   //
   // Mixed Moments
-  (*vecMom)[kElPi] = tidenObj -> GetMixedMoment(electron,pion);
-  (*vecMom)[kElKa] = tidenObj -> GetMixedMoment(electron,kaon);
-  (*vecMom)[kElPr] = tidenObj -> GetMixedMoment(electron,proton);
-  (*vecMom)[kPiKa] = tidenObj -> GetMixedMoment(pion,kaon);
-  (*vecMom)[kPiPr] = tidenObj -> GetMixedMoment(pion,proton);
-  (*vecMom)[kKaPr] = tidenObj -> GetMixedMoment(kaon,proton);
+  (*vecMom)[kElPi] = tidenObj -> GetMixedMoment(kEl,kPi);
+  (*vecMom)[kElKa] = tidenObj -> GetMixedMoment(kEl,kKa);
+  (*vecMom)[kElPr] = tidenObj -> GetMixedMoment(kEl,kPr);
+  (*vecMom)[kPiKa] = tidenObj -> GetMixedMoment(kPi,kKa);
+  (*vecMom)[kPiPr] = tidenObj -> GetMixedMoment(kPi,kPr);
+  (*vecMom)[kKaPr] = tidenObj -> GetMixedMoment(kKa,kPr);
   //
   //Integrals:
-  (*vecInt)[kEl] = tidenObj -> GetMeanI(electron);
-  (*vecInt)[kPi] = tidenObj -> GetMeanI(pion);
-  (*vecInt)[kKa] = tidenObj -> GetMeanI(kaon);
-  (*vecInt)[kPr] = tidenObj -> GetMeanI(proton);
+  (*vecInt)[kEl] = tidenObj -> GetMeanI(kEl);
+  (*vecInt)[kPi] = tidenObj -> GetMeanI(kPi);
+  (*vecInt)[kKa] = tidenObj -> GetMeanI(kKa);
+  (*vecInt)[kPr] = tidenObj -> GetMeanI(kPr);
   //
   // Printing
   nnorm     = (*vecMom)[kPi]/(*vecInt)[kPi];
@@ -197,5 +196,34 @@ void RetrieveMoments(TIdentity2D *tidenObj, TVectorF *vecMom, TVectorF *vecInt)
   cout << " pion2       : "<< (*vecMom)[kPiPi]  <<endl;
   cout << " kaon2       : "<< (*vecMom)[kKaKa]  <<endl;
   cout << " proton2     : "<< (*vecMom)[kPrPr]  <<endl;
+
+  TFile *fGen = new TFile("toyMC_Moments_Gen.root");
+  TH1D *hGen   = (TH1D*)fGen->Get("hGen");
+  TH1D *hRec   = (TH1D*)hGen->Clone();   hRec->SetName("hRec");
+  TH1D *hRatio = (TH1D*)hGen->Clone();   hRatio->SetName("hRatio");
+  for (Int_t i=1;i<15;i++) {
+    cout << momNames[i-1] << "  " << (*vecMom)[i-1] << endl;
+    hRec->SetBinContent(i,(*vecMom)[i-1]);
+  }
+
+  // Read generated histogram
+  for (Int_t i=1;i<15;i++) {
+    Double_t gen = hGen->GetBinContent(i);
+    Double_t rec = hRec->GetBinContent(i);
+    Double_t ratio = hGen->GetBinContent(i)/hRec->GetBinContent(i);
+    cout << std::setw(10) << momNames[i-1] << " -->  gen:   ";
+    cout << std::setw(10) << gen           << " -->  ";
+    cout << std::setw(10) << rec           << "    ///  ";
+    cout << std::setw(10) << ratio << endl;
+    hRatio->SetBinContent(i,ratio);
+  }
+
+  TFile *outFile = new TFile("toyMC_Gen_vs_Rec.root","recreate");
+  hRec->Write();
+  hGen->Write();
+  hRatio->Write();
+  outFile -> Close();
+  delete outFile; //yeni eklave etdim.
+
 
 }

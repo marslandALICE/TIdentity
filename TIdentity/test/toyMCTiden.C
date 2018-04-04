@@ -2,13 +2,20 @@
 #include "TH1.h"
 #include "TF1.h"
 #include "TRandom.h"
+#include "TVectorF.h"
 #include "TClonesArray.h"
 #include "TTreeStream.h"
 #include <fstream>
 #include <iostream>
 #include <iomanip>
+
 using namespace std;
 using std::cout;
+using std::setw;
+
+
+void PrintMoments();
+
 
 /*
 
@@ -45,9 +52,12 @@ TH1D *hFirstMoms[4];
 TF1 *fParticles[4];
 UInt_t cutBit=0;
 Int_t sign=0;
-ULong64_t nEvents=10000000;
+ULong64_t nEvents=2000000;
 const Int_t colors[]   = {kBlack, kRed+1 , kBlue+1, kGreen+3, kMagenta+1, kOrange-1,kCyan+2,kYellow+2, kRed, kGreen};
 TClonesArray funcLineShapesCArr("TF1",50000);
+enum momentType{kEl=0,kPi=1,kKa=2,kPr=3,kElEl=4,kPiPi=5,kKaKa=6,kPrPr=7,kElPi=8,kElKa=9,kElPr=10,kPiKa=11,kPiPr=12,kKaPr=13,};
+TString momNames[14] = {"El1","Pi1","Ka1","Pr1","El2","Pi2","Ka2","Pr2","ElPi","ElKa","ElPr","PiKa","PiPr","KaPr"};
+
 //
 //
 // ================================================================================================
@@ -66,6 +76,10 @@ void toyMCTiden(){
 
   Double_t pidVar = 0;
   TRandom randomGen;
+  const Int_t nMoments = 14;
+  TVectorF recMoments(nMoments);
+  for(Int_t i=0;i<nMoments; i++) recMoments[i]=0.;
+
   for (ULong64_t ievent=0;ievent<nEvents;ievent++){
 
     for (Int_t i=0;i<1000;i++) trackdEdx[i]=0.;
@@ -117,9 +131,32 @@ void toyMCTiden(){
         "\n";
       }
     }
+    //
+    // Calculate Moments
+    recMoments[kEl]=Float_t(nEl);
+    recMoments[kPi]=Float_t(nPi);
+    recMoments[kKa]=Float_t(nKa);
+    recMoments[kPr]=Float_t(nPr);
+    recMoments[kElEl]=recMoments[kEl]*recMoments[kEl];
+    recMoments[kPiPi]=recMoments[kPi]*recMoments[kPi];
+    recMoments[kKaKa]=recMoments[kKa]*recMoments[kKa];
+    recMoments[kPrPr]=recMoments[kPr]*recMoments[kPr];
+    recMoments[kElPi]=recMoments[kEl]*recMoments[kPi];
+    recMoments[kElKa]=recMoments[kEl]*recMoments[kKa];
+    recMoments[kElPr]=recMoments[kEl]*recMoments[kPr];
+    recMoments[kPiKa]=recMoments[kPi]*recMoments[kKa];
+    recMoments[kPiPr]=recMoments[kPi]*recMoments[kPr];
+    recMoments[kKaPr]=recMoments[kKa]*recMoments[kPr];
+    //
+    // Dump moments to tree
+    outputData->GetFile()->cd();
+    *outputData << "events"
+    << "gid=" << ievent <<
+    "moment.=" << &recMoments <<             // second moments for particle+antiparticle
+    "\n";
 
+    //
   } // event loop ends
-
   //
   // dump line shapes
   for (Int_t i=0;i<4;i++) {
@@ -139,5 +176,32 @@ void toyMCTiden(){
   // for (Int_t i=0;i<4;i++) fParticles[i] -> Write();
   delete outputFits;
   delete outputData;
+
+  PrintMoments();
+
+}
+
+void PrintMoments(){
+
+  cout << " ================================================================================== "<<endl;
+  cout << " ================================================================================== "<<endl;
+  TFile *f = new TFile("dataTree.root");
+  TTree *tree = (TTree*)f->Get("events");
+  TH1D *h = new TH1D("hGen","hGen",14,0.,14.);
+  TH1D *htemp[14];
+  for (Int_t i=1;i<15;i++) {
+    tree->Draw(Form("moment.fElements[%d]",i-1),"","goff");
+    htemp[i-1] = (TH1D*)tree->GetHistogram()->Clone();
+    htemp[i-1]->SetName(Form("htmp_%d",i-1));
+    cout << momNames[i-1] << "  " << htemp[i-1]->GetMean() << endl;
+    h->SetBinContent(i,htemp[i-1]->GetMean());
+  }
+  cout << " ================================================================================== "<<endl;
+  cout << " ================================================================================== "<<endl;
+  for (Int_t i=1;i<15;i++) h->GetXaxis()->SetBinLabel(i,momNames[i-1]);
+  TFile *outFile = new TFile("toyMC_Moments_Gen.root","recreate");
+  h->Write();
+  outFile -> Close();
+  delete outFile; //yeni eklave etdim.
 
 }
