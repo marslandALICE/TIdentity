@@ -41,10 +41,11 @@ Double_t kaParams[]={12.,1.5};
 Double_t prParams[]={20.,1.6};
 Float_t trackdEdx[1000]={0.};
 TH1D *hParticles[4];
+TH1D *hFirstMoms[4];
 TF1 *fParticles[4];
 UInt_t cutBit=0;
 Int_t sign=0;
-ULong64_t nEvents=1000000;
+ULong64_t nEvents=10000000;
 const Int_t colors[]   = {kBlack, kRed+1 , kBlue+1, kGreen+3, kMagenta+1, kOrange-1,kCyan+2,kYellow+2, kRed, kGreen};
 TClonesArray funcLineShapesCArr("TF1",50000);
 //
@@ -58,7 +59,8 @@ void toyMCTiden(){
   TTreeSRedirector *outputFits = new TTreeSRedirector("LineShapes.root", "recreate");
   funcLineShapesCArr.SetOwner(kTRUE);
   for (Int_t i=0;i<4;i++) {
-    hParticles[i] = new TH1D(Form("hist_%d",i),Form("hist_%d",i),600,0.,30.);
+    hParticles[i] = new TH1D(Form("hist_%d",i),Form("hist_%d",i),900,0.,30.);
+    hFirstMoms[i] = new TH1D(Form("mom1_%d",i),Form("mom1_%d",i),900,0.,30.);
     fParticles[i] = new TF1(Form("particle_%d",i),"gaus",0,30);
   }
 
@@ -68,10 +70,10 @@ void toyMCTiden(){
 
     for (Int_t i=0;i<1000;i++) trackdEdx[i]=0.;
     Int_t trCount=0;
-    Int_t nEl = randomGen.Poisson(elMean);
-    Int_t nPi = randomGen.Poisson(piMean);
-    Int_t nKa = randomGen.Poisson(kaMean);
-    Int_t nPr = randomGen.Poisson(prMean);
+    Int_t nEl = randomGen.Poisson(elMean);  hFirstMoms[0]->Fill(nEl);
+    Int_t nPi = randomGen.Poisson(piMean);  hFirstMoms[1]->Fill(nPi);
+    Int_t nKa = randomGen.Poisson(kaMean);  hFirstMoms[2]->Fill(nKa);
+    Int_t nPr = randomGen.Poisson(prMean);  hFirstMoms[3]->Fill(nPr);
     //
     // Generate electron dEdx
     for (Int_t i=0; i<nEl;i++){
@@ -122,6 +124,7 @@ void toyMCTiden(){
   // dump line shapes
   for (Int_t i=0;i<4;i++) {
     hParticles[i] -> SetLineColor(colors[i+1]);
+    hFirstMoms[i] -> SetLineColor(colors[i+1]);
     fParticles[i] -> SetLineColor(colors[i+1]);
     fParticles[i] -> SetLineWidth(2);
     fParticles[i]->SetNpx(1000);
@@ -132,6 +135,7 @@ void toyMCTiden(){
   funcLineShapesCArr . Write("funcLineShapesCArr",TObject::kSingleKey);
   funcLineShapesCArr.Clear("C");
   for (Int_t i=0;i<4;i++) hParticles[i] -> Write();
+  for (Int_t i=0;i<4;i++) hFirstMoms[i] -> Write();
   // for (Int_t i=0;i<4;i++) fParticles[i] -> Write();
   delete outputFits;
   delete outputData;

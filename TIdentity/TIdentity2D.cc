@@ -46,6 +46,11 @@ void TIdentity2D::InitIden2D(Int_t size)
     cout<<"|_________________________________________________________________________________|"<<endl;
     cout<<" "<<endl;
 
+    debugFile = new TFile("TIdenDebug.root","recreate");
+    for (Int_t i=0;i<4;i++) {
+      fHistWs[i]     = new TH1D(Form("hW_%d",i),Form("hW_%d",i),900,0.,30.);
+      fHistOmegas[i] = new TH1D(Form("hOmega_%d",i),Form("hOmega_%d",i),500,0.,1.);
+    }
     countPart    = 0;
     countPartNeg = 0;
     countPartPos = 0;
@@ -316,7 +321,7 @@ void TIdentity2D::Run()
 
 Bool_t TIdentity2D::GetEntry(Int_t i)
 {
-    if(i%5000000 == 0) cout<<" TIdentity2D::GetEntry.Info: event "<<i<<" of "<<nEntries <<endl;
+    if(i%5000000 == 0) cout<<" TIdentity2D::GetEntry.Info: track "<<i<<" of "<<nEntries <<endl;
     TIdentityTree -> GetEntry(i);
     if( evtNum != prevEvtVeto && prevEvtVeto >0) {countVeto++;}
     prevEvtVeto = evtNum;
@@ -348,6 +353,10 @@ Int_t TIdentity2D::AddEntry()
                 W[m].push_back(W_sum[m]);
                 W2[m].push_back(W_sum[m]*W_sum[m]);
             }
+            fHistWs[0]->Fill(W[0][W[0].size()-1]);
+            fHistWs[1]->Fill(W[1][W[1].size()-1]);
+            fHistWs[2]->Fill(W[2][W[2].size()-1]);
+            fHistWs[3]->Fill(W[3][W[3].size()-1]);
             Int_t t = 0;
             for(Int_t m = 0; m < TSize-1; m++)
                 for(Int_t n = m+1; n < TSize; n++)
@@ -397,6 +406,11 @@ void TIdentity2D::AddParticles()
         wPion   = mValue[1]/sumValue;
     }
 
+    fHistOmegas[0]->Fill(mValue[0]/sumValue);
+    fHistOmegas[1]->Fill(mValue[1]/sumValue);
+    fHistOmegas[2]->Fill(mValue[2]/sumValue);
+    fHistOmegas[3]->Fill(mValue[3]/sumValue);
+
     countPart += 1;
     if(sign == -1)
     {
@@ -415,13 +429,14 @@ void TIdentity2D::AddParticles()
             W_sum[i] += mValue[i]/sumValue; ;
         }
     }
+
 }
 
 void TIdentity2D::Finalize()
 {
     cout<<" "<<endl;
     cout<<" TIdentity2D::Finalize.Info: ***************************************************"<<endl;
-    cout<<" TIdentity2D::Finalize.Info: ************ number of analyzed events: "<<countVeto<<" ******"<<endl;
+    cout<<" TIdentity2D::Finalize.Info: ************ number of analyzed events: "<<countVeto+1<<" ******"<<endl;
     cout<<" TIdentity2D::Finalize.Info: ***************************************************"<<endl;
     cout<<" "<<endl;
 
@@ -441,6 +456,17 @@ void TIdentity2D::Finalize()
         averCount[0] = accumulate(countVec.begin(),  countVec.end(), 0.0)/countVeto;
     averCount[1] = accumulate(countVec2.begin(),  countVec2.end(), 0.0)/countVeto;
     averCount[2] = accumulate(countVecMix.begin(),  countVecMix.end(), 0.0)/countVeto;
+
+    //
+    // Write some output to data
+    debugFile->cd();
+    for (Int_t i=0;i<4;i++) {
+      fHistWs[i]     ->Write();
+      fHistOmegas[i] ->Write();
+    }
+    debugFile -> Close();
+    delete debugFile;
+    //
 
 }
 

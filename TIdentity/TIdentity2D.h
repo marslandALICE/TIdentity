@@ -88,6 +88,16 @@ public:
     void SetMinPt(Float_t _minPt) {minPt = _minPt;}
     void SetMaxMom(Float_t _maxMom) {maxMom = _maxMom; }
     void SetMinMom(Float_t _minMom) {minMom = _minMom; }
+    void SetBranchNames(const Int_t tmpNBranches, TString tmpBranchNameArr[])
+    {
+      fNBranches = tmpNBranches;
+      fBranchNames = new TString[fNBranches];
+      fBranchVariables = new Float_t[fNBranches];
+      for (Int_t i=0; i<fNBranches; i++){
+        fBranchNames[i] = tmpBranchNameArr[i];
+        fBranchVariables[i] = 0.;
+      }
+    }
 
     Double_t GetAverCount(Int_t i) { return averCount[i]; }
 
@@ -122,11 +132,11 @@ private:
     Double_t *averMixed;
     Double_t *aver2;
     Double_t *averI;
-    Int_t prevEvt;
-    Int_t prevEvtVeto;
+    ULong64_t prevEvt;
+    ULong64_t prevEvtVeto;
     Int_t countVeto;
     Int_t    myBin[3];
-    Int_t    evtNum;
+    ULong64_t  evtNum;
     Double_t  myDeDx;
     Float_t  dEdx;
     Float_t  eta;
@@ -147,6 +157,8 @@ private:
     TFile*   debugFile;
     TTree*   TIdentityTree;
     TH1D*    histoBin;
+    TH1D    *fHistWs[4];
+    TH1D    *fHistOmegas[4];
     TString  inputDir;
     TString  outputDir;
     TString  fileName;
@@ -171,6 +183,10 @@ private:
     std::vector<double> countVecMix;
 
     Double_t averCount[3];
+
+    Int_t fNBranches;
+    TString *fBranchNames;
+    Float_t *fBranchVariables;
 
 
     ClassDef(TIdentity2D,0)

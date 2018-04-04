@@ -761,7 +761,8 @@ void RetrieveMoments(TIdentity2D *tidenObj, TVectorF *vecMom, TVectorF *vecInt)
 
 }
 // -----------------------------------------------------------------------------------------
-void PrintInitInfo(){
+void PrintInitInfo()
+{
 
   //
   cout << " ================================================================================= " << endl;
