@@ -353,10 +353,10 @@ Int_t TIdentity2D::AddEntry()
                 W[m].push_back(W_sum[m]);
                 W2[m].push_back(W_sum[m]*W_sum[m]);
             }
-            fHistWs[0]->Fill(W[0][W[0].size()-1]);
-            fHistWs[1]->Fill(W[1][W[1].size()-1]);
-            fHistWs[2]->Fill(W[2][W[2].size()-1]);
-            fHistWs[3]->Fill(W[3][W[3].size()-1]);
+            //
+            // Debug hists
+            for(Int_t i = 0; i < TSize; i++) fHistWs[i]->Fill(W[i][W[i].size()-1]);
+            //
             Int_t t = 0;
             for(Int_t m = 0; m < TSize-1; m++)
                 for(Int_t n = m+1; n < TSize; n++)
@@ -405,12 +405,10 @@ void TIdentity2D::AddParticles()
         wKaon   = mValue[3]/sumValue;
         wPion   = mValue[1]/sumValue;
     }
-
-    fHistOmegas[0]->Fill(mValue[0]/sumValue);
-    fHistOmegas[1]->Fill(mValue[1]/sumValue);
-    fHistOmegas[2]->Fill(mValue[2]/sumValue);
-    fHistOmegas[3]->Fill(mValue[3]/sumValue);
-
+    //
+    // Debug hists
+    for(Int_t i = 0; i < TSize; i++) fHistOmegas[i]->Fill(mValue[i]/sumValue);
+    //
     countPart += 1;
     if(sign == -1)
     {
@@ -460,35 +458,23 @@ void TIdentity2D::Finalize()
     //
     // Write some output to data
     debugFile->cd();
-    for (Int_t i=0;i<4;i++) {
-      fHistWs[i]     ->Write();
-      fHistOmegas[i] ->Write();
-    }
+    for (Int_t i=0;i<4;i++) fHistWs[i]     ->Write();
+    for (Int_t i=0;i<4;i++) fHistOmegas[i] ->Write();
     debugFile -> Close();
     delete debugFile;
     //
 
 }
 
-void TIdentity2D::GetBins(Float_t *bins)
+void TIdentity2D::GetBins(const Int_t nExtraBins, Double_t *bins)
 {
   // TString branchNames[nBranches]={"eta","cent","ptot","cRows","tpcchi2"};
   if (!myBinBrach){
-    bins[0] = fBranchVariables[0];
-    bins[1] = fBranchVariables[1];
-    bins[2] = fBranchVariables[2];
-    bins[3] = sign;
-    bins[4] = cutBit;
-    bins[5] = fBranchVariables[3];
-    bins[6] = fBranchVariables[4];
-    //
-    // bins[0] = eta;
-    // bins[1] = cent;
-    // bins[2] = ptot;
-    // bins[3] = sign;
-    // bins[4] = cutBit;
-    // bins[5] = cRows;
-    // bins[6] = tpcchi2;
+    bins[0] = evtNum;
+    bins[1] = dEdx;
+    bins[2] = sign;
+    bins[3] = cutBit;
+    for (Int_t i=0;i<nExtraBins;i++) bins[i+4] = fBranchVariables[i];
   } else{
     bins[0] = myBin[0];
     bins[1] = myBin[1];

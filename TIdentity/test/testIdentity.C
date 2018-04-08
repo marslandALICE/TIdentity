@@ -93,9 +93,12 @@ const Float_t fMomRangeDown = 0.2;
 const Float_t fMomRangeUp   = 3.2;
 Float_t xCentBins[] = {0, 5, 10, 20, 30, 40, 50, 60, 70, 80};
 Int_t xSignBins[] = {-1,1,0}; // coding of signs
-
+//
 // Default braches are --> ULong64_t ("gid"); Float_t ("dEdx"), Int_t ("sign"), UInt_t ("cutBit")
 // the rest of them can be given as an array
+//
+// fixed tree branches --> [0]=event; [1]=dEdx; [2]=sign; [3]=cutBit; ||||  [4]=eta; [5]=cent; [6]=ptot; [7]=cRows; [8]=tpcchi2;
+Double_t fTreeVariablesArray[9];
 const Int_t nBranches = 5;
 TString branchNames[nBranches]={"eta","cent","ptot","cRows","chi2TPC"};
 //
@@ -222,34 +225,32 @@ int main(int argc, char *argv[])
   iden4 -> SetLimits(0.,1020.,10.); // --> (dEdxMin,dEdxMax,binwidth), if slice histograms are scaled wrt binwidth, then binwidth=1
   iden4 -> SetUseSign(fSignInput);  // pass input sign value to TIdentity module
   Long_t nEntries;
-  cout<<" main.Info: Running for data"<<endl;
   iden4 -> GetTree(nEntries,treeIdentity);
   iden4 -> Reset();
   //
   // track by track loop --> read all track info  and add tracks to the iden4 object
   //
-  Float_t bins[7]; // [0]=eta; [1]=cent; [2]=ptot; [3]=sign; [4]=cutBit; [5]=cRows; [6]=tpcchi2;
   if (fTestMode) nEntries = 10000000;
   for( Int_t i = 0; i < nEntries; i++ )
   {
     if( !iden4 ->  GetEntry(i) ) continue;
-    iden4      ->  GetBins( bins );    // reads identity tree and retrives mybin[] info
+    iden4      ->  GetBins(nBranches, fTreeVariablesArray);    // reads identity tree and retrives mybin[] info
     //
     // Choose which kind of tree input is used
     if (treeIdentity=="fIdenTree"){
-      fEtaBin  = Int_t(bins[0]);
-      fCentBin = Int_t(bins[1]);
-      fMomBin  = Int_t(bins[2]);
-      fSignBin = (Int_t)bins[3]+1;  // neg --> 0, neutrol --> 1, pos --> 2
+      fEtaBin  = Int_t(fTreeVariablesArray[0]);
+      fCentBin = Int_t(fTreeVariablesArray[1]);
+      fMomBin  = Int_t(fTreeVariablesArray[2]);
+      fSignBin = (Int_t)fTreeVariablesArray[3]+1;  // neg --> 0, neutrol --> 1, pos --> 2
     }
     if(treeIdentity=="tracks") {
-      fEtaBin  = fhEta  -> FindBin(bins[0] + 0.0000001) -1;
-      fCentBin = fhCent -> FindBin(bins[1] + 0.0000001) -1;
-      fMomBin  = fhPtot -> FindBin(bins[2] + 0.0000001) -1;
-      fSignBin = (Int_t)bins[3]+1;  // neg --> 0, neutrol --> 1, pos --> 2
-      fCutBit  = (UInt_t)bins[4];
+      fSignBin = (Int_t)fTreeVariablesArray[2]+1;  // neg --> 0, neutrol --> 1, pos --> 2
+      fCutBit  = (UInt_t)fTreeVariablesArray[3];
+      fEtaBin  = fhEta  -> FindBin(fTreeVariablesArray[4] + 0.0000001) -1;
+      fCentBin = fhCent -> FindBin(fTreeVariablesArray[5] + 0.0000001) -1;
+      fMomBin  = fhPtot -> FindBin(fTreeVariablesArray[6] + 0.0000001) -1;
       if (!ApplyTreeSelection(fCutBit,fSystematic)) continue;
-      fChi2->Fill(bins[6]); fcRows->Fill(bins[5]);
+      fChi2->Fill(fTreeVariablesArray[8]); fcRows->Fill(fTreeVariablesArray[7]);
     }
     //
     //

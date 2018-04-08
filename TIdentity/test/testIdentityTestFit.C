@@ -31,6 +31,11 @@ const Int_t nBinsLineShape      = 2000;
 Bool_t      fTestMode           = kFALSE;
 Bool_t      lookUpTableForLine  = kFALSE;
 Int_t       lookUpTableLineMode = 0;
+//
+// fixed tree branches --> [0]=event; [1]=dEdx; [2]=sign; [3]=cutBit; ||||  [4]=cent;
+Double_t fTreeVariablesArray[5];
+const Int_t nBranches = 1;
+TString branchNames[nBranches]={"cent"};
 // =======================================================================================================
 //
 // Inputs
@@ -80,8 +85,9 @@ int main(int argc, char *argv[])
   ReadFitParamsFromLineShapes(fileNameLineShapes);
   //
   // Create the TIdentity2D object and start analysis
-  TIdentity2D *iden4 = new TIdentity2D(4);      // Set the number of particles to 4
+  TIdentity2D *iden4 = new TIdentity2D(fnParticleBins);      // Set the number of particles to 4
   iden4 -> SetFileName(fileNameDataTree);
+  iden4 -> SetBranchNames(nBranches,branchNames);
   iden4 -> SetFunctionPointers(EvalFitValue);
   iden4 -> SetLimits(0.,1020.,10.); // --> (dEdxMin,dEdxMax,binwidth), if slice histograms are scaled wrt binwidth, then binwidth=1
   iden4 -> SetUseSign(0);  // pass input sign value to TIdentity module
@@ -94,6 +100,11 @@ int main(int argc, char *argv[])
   for( Int_t i = 0; i < nEntries; i++ )
   {
     if( !iden4 ->  GetEntry(i) ) continue;
+    iden4 -> GetBins(nBranches, fTreeVariablesArray);    // reads identity tree and retrives mybin[] info
+    if(i%1000000==0) {
+      cout << i << "  " << fTreeVariablesArray[0] << " " <<  fTreeVariablesArray[1] << " ";
+      cout << fTreeVariablesArray[2] << "  " << fTreeVariablesArray[3] << "  " << fTreeVariablesArray[4] << endl;
+    }
     iden4 -> AddEntry();
   }
   iden4 -> Finalize();
@@ -186,7 +197,7 @@ void RetrieveMoments(TIdentity2D *tidenObj, TVectorF *vecMom, TVectorF *vecInt)
   nnorm     = (*vecMom)[kPi]/(*vecInt)[kPi];
   nEvents   = tidenObj -> GetNEvents();
   cout << " =============================== Summary of Moments =============================== "<<endl;
-  cout << " events      : "<< nEvents << endl;
+  cout << " events      : "<< nEvents+1 << endl;
   cout << " ================================================================================== "<<endl;
   cout << " electron    : "<< (*vecMom)[kEl]   <<" int: "<< (*vecInt)[kEl]*nnorm << "  ratio: " << (*vecMom)[kEl]/((*vecInt)[kEl]*nnorm) << endl;
   cout << " pion        : "<< (*vecMom)[kPi]   <<" int: "<< (*vecInt)[kPi]*nnorm << "  ratio: " << (*vecMom)[kPi]/((*vecInt)[kPi]*nnorm) << endl;

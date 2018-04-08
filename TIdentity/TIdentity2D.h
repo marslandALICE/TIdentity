@@ -51,7 +51,7 @@ public:
     void GetTree(Long_t &n, TString idenTreeName);
     TTree *GetTreeFromChain(TString treeList, TString treeName);
     void Finalize();
-    void GetBins(Float_t *);
+    void GetBins(const Int_t nExtraBins, Double_t *);
 
     Float_t GetMomX() { return momX; }
     Float_t GetMomY() { return momY; }
