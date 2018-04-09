@@ -25,9 +25,9 @@ Double_t  EvalFitValue(Int_t particle, Double_t x);
 // =======================================================================================================
 //
 // ======= Modification Part =============================================================================
-const Int_t fnParticleBins      = 4;
+const Int_t fnParticleBins      = 3;
 TString treeIdentity            = "tracks";
-const Int_t nBinsLineShape      = 2000;
+const Int_t nBinsLineShape      = 10000;
 Bool_t      fTestMode           = kFALSE;
 Bool_t      lookUpTableForLine  = kFALSE;
 Int_t       lookUpTableLineMode = 0;
@@ -101,10 +101,6 @@ int main(int argc, char *argv[])
   {
     if( !iden4 ->  GetEntry(i) ) continue;
     iden4 -> GetBins(nBranches, fTreeVariablesArray);    // reads identity tree and retrives mybin[] info
-    if(i%1000000==0) {
-      cout << i << "  " << fTreeVariablesArray[0] << " " <<  fTreeVariablesArray[1] << " ";
-      cout << fTreeVariablesArray[2] << "  " << fTreeVariablesArray[3] << "  " << fTreeVariablesArray[4] << endl;
-    }
     iden4 -> AddEntry();
   }
   iden4 -> Finalize();
@@ -127,6 +123,7 @@ void ReadFitParamsFromLineShapes(TString paramTreeName)
     TString objName = Form("particle_%d",ipart);
     fLineShape[ipart] = (TF1*)cloneArrFunc->FindObject(objName);
     fLineShape[ipart]->SetName(objName);
+    fLineShape[ipart]->SetNpx(nBinsLineShape);
     hLineShape[ipart] = (TH1D*)fLineShape[ipart]->GetHistogram();
     hLineShape[ipart]->SetName(objName);
   }
@@ -197,7 +194,8 @@ void RetrieveMoments(TIdentity2D *tidenObj, TVectorF *vecMom, TVectorF *vecInt)
   nnorm     = (*vecMom)[kPi]/(*vecInt)[kPi];
   nEvents   = tidenObj -> GetNEvents();
   cout << " =============================== Summary of Moments =============================== "<<endl;
-  cout << " events      : "<< nEvents+1 << endl;
+  cout << " #Particles  : " << fnParticleBins << endl;
+  cout << " events      : " << nEvents+1 << endl;
   cout << " ================================================================================== "<<endl;
   cout << " electron    : "<< (*vecMom)[kEl]   <<" int: "<< (*vecInt)[kEl]*nnorm << "  ratio: " << (*vecMom)[kEl]/((*vecInt)[kEl]*nnorm) << endl;
   cout << " pion        : "<< (*vecMom)[kPi]   <<" int: "<< (*vecInt)[kPi]*nnorm << "  ratio: " << (*vecMom)[kPi]/((*vecInt)[kPi]*nnorm) << endl;

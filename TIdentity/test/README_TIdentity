@@ -8,6 +8,7 @@ How to Run TIdentity:
    cd test; make;
    run.sh
 
+   make clean -f MakefileTest
    make -f MakefileTest
    rtest.sh
 

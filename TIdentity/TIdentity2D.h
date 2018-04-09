@@ -57,12 +57,6 @@ public:
     Float_t GetMomY() { return momY; }
     Float_t GetMomZ() { return momZ; }
 
-    Float_t GetwProton() { return wProton; }
-    Float_t GetwKaon()   { return wKaon;   }
-    Float_t GetwPion()   { return wPion;   }
-
-
-
     void SetEffPion(Float_t _effPion )      {effPion = _effPion; }
     void SetEffKaon(Float_t _effKaon )      {effKaon = _effKaon; }
     void SetEffProton(Float_t _effProton )  {effProton = _effProton;}
@@ -105,9 +99,6 @@ private:
 
     Float_t maxPt, minPt, maxMom, minMom;
 
-    Float_t wProton;
-    Float_t wKaon;
-    Float_t wPion;
     Float_t ffMin, ffMax;
     Double_t ffBW;
     TMatrixD *A;
@@ -132,6 +123,10 @@ private:
     Double_t *averMixed;
     Double_t *aver2;
     Double_t *averI;
+
+    static Int_t fNParticles;
+    static Int_t fNMixParticles;
+
     ULong64_t prevEvt;
     ULong64_t prevEvtVeto;
     Int_t countVeto;

@@ -12,6 +12,9 @@
 using namespace std;
 ClassImp(TIdentity2D)
 
+Int_t TIdentity2D::fNParticles=4;
+Int_t TIdentity2D::fNMixParticles=6;
+
 TIdentityFunctions* TIdentity2D::functions = NULL;
 
 TIdentity2D::TIdentity2D()
@@ -47,7 +50,7 @@ void TIdentity2D::InitIden2D(Int_t size)
     cout<<" "<<endl;
 
     debugFile = new TFile("TIdenDebug.root","recreate");
-    for (Int_t i=0;i<4;i++) {
+    for (Int_t i=0;i<size;i++) {
       fHistWs[i]     = new TH1D(Form("hW_%d",i),Form("hW_%d",i),900,0.,30.);
       fHistOmegas[i] = new TH1D(Form("hOmega_%d",i),Form("hOmega_%d",i),500,0.,1.);
     }
@@ -76,6 +79,9 @@ void TIdentity2D::InitIden2D(Int_t size)
     aver2 = new Double_t [TSize];
     averI = new Double_t [TSize];
     averMixed = new Double_t [TSizeMixed];
+
+    fNParticles = TSize;
+    fNMixParticles = TSizeMixed;
 
     size_size = 3000;
     for(Int_t i = 0; i < 10; i++)
@@ -186,16 +192,6 @@ void TIdentity2D::GetTree(Long_t &nent, TString idenTreeName)
       for (Int_t i=0;i<fNBranches;i++){
         TIdentityTree -> SetBranchAddress(fBranchNames[i] ,&fBranchVariables[i]);
       }
-      //
-      // TIdentityTree -> SetBranchAddress("event"  ,&evtNum);
-      // TIdentityTree -> SetBranchAddress("cutBit" ,&cutBit);
-      // TIdentityTree -> SetBranchAddress("dEdx"   ,&dEdx);
-      // TIdentityTree -> SetBranchAddress("sign"   ,&sign);
-      // TIdentityTree -> SetBranchAddress("eta"    ,&eta);
-      // TIdentityTree -> SetBranchAddress("cent"   ,&cent);
-      // TIdentityTree -> SetBranchAddress("ptot"   ,&ptot);
-      // TIdentityTree -> SetBranchAddress("cRows"  ,&cRows);
-      // TIdentityTree -> SetBranchAddress("tpcchi2",&tpcchi2);
     } else { // old version of tree format
       TIdentityTree -> SetBranchAddress("sign",&sign);
       TIdentityTree -> SetBranchAddress("myBin",myBin);
@@ -235,16 +231,16 @@ Double_t TIdentity2D::GetFunctions(Double_t *xx, Double_t *par)
     Int_t j = (Int_t)par[0];
     Int_t i = (Int_t)par[1];
     Int_t k = (Int_t)par[2];
-    Double_t val[4];
+    Double_t val[fNParticles];
     Double_t sumVal = 0;
-    for(Int_t ii = 0; ii < 4; ii++)
+    for(Int_t ii = 0; ii < fNParticles; ii++)
     {
         val[ii] = functions -> GetValue(ii, xx[0]);
         sumVal += val[ii];
     }
-    Double_t relVal[4];
+    Double_t relVal[fNParticles];
     if(sumVal < 1e-15) return 0.;
-    for(Int_t m = 0; m < 4; m++)
+    for(Int_t m = 0; m < fNParticles; m++)
     {
         relVal[m] = val[m]/sumVal;
         if( k == 2) relVal[m] *= relVal[m];
@@ -256,18 +252,18 @@ Double_t TIdentity2D::GetFunctionsMix(Double_t *xx, Double_t *par)
 {
     Int_t j = (Int_t)par[0];
     Int_t k = (Int_t)par[1];
-    Double_t val[4];
+    Double_t val[fNParticles];
     Double_t sumVal = 0;
-    for(Int_t ii = 0; ii < 4; ii++)
+    for(Int_t ii = 0; ii < fNParticles; ii++)
     {
         val[ii] = functions -> GetValue(ii, xx[0]);
         sumVal += val[ii];
     }
     if(sumVal < 1e-15) return 0.;
-    Double_t myVal[6];
+    Double_t myVal[fNMixParticles];
     Int_t t = 0;
-    for(Int_t m = 0; m < 3; m++)
-        for(Int_t n = m+1; n < 4; n++)
+    for(Int_t m = 0; m < fNParticles-1; m++)
+        for(Int_t n = m+1; n < fNParticles; n++)
         {
             myVal[t] = val[m]*val[n]/sumVal/sumVal;
             t++;
@@ -387,7 +383,7 @@ void TIdentity2D::ResetValues()
 
 void TIdentity2D::AddParticles()
 {
-    Double_t mValue[4] = {0.};
+    Double_t mValue[fNParticles] = {0.};
     Double_t sumValue = 0;
 
     for(Int_t i = 0; i < TSize; i++)
@@ -398,15 +394,7 @@ void TIdentity2D::AddParticles()
         sumValue += mValue[i];
     }
     //
-    wProton = wKaon = wPion = -100.;
-    if(sumValue > 1e-10)
-    {
-        wProton = mValue[2]/sumValue;
-        wKaon   = mValue[3]/sumValue;
-        wPion   = mValue[1]/sumValue;
-    }
-    //
-    // Debug hists
+    // Debug hists for omega values
     for(Int_t i = 0; i < TSize; i++) fHistOmegas[i]->Fill(mValue[i]/sumValue);
     //
     countPart += 1;
@@ -458,8 +446,8 @@ void TIdentity2D::Finalize()
     //
     // Write some output to data
     debugFile->cd();
-    for (Int_t i=0;i<4;i++) fHistWs[i]     ->Write();
-    for (Int_t i=0;i<4;i++) fHistOmegas[i] ->Write();
+    for (Int_t i=0;i<TSize;i++) fHistWs[i]     ->Write();
+    for (Int_t i=0;i<TSize;i++) fHistOmegas[i] ->Write();
     debugFile -> Close();
     delete debugFile;
     //
@@ -604,11 +592,11 @@ void TIdentity2D::CalcMoments()
         Int_t indA, indB;
         for(Int_t kk = 0; kk < TSizeMixed; kk++)
         {
-            B[kk+4] = averMixed[kk];
+            B[kk+TSize] = averMixed[kk];
             GetIndex(kk, indA, indB);
             for(Int_t m = 0; m < TSize; m++)
             {
-                B[kk+4] -= aver[m]*(GetWI(kk,m,0)-GetWI(indA,m,1)*GetWI(indB,m,1));
+                B[kk+TSize] -= aver[m]*(GetWI(kk,m,0)-GetWI(indA,m,1)*GetWI(indB,m,1));
             }
         }
 
