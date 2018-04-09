@@ -331,7 +331,6 @@ Bool_t TIdentity2D::GetEntry(Int_t i)
 Int_t TIdentity2D::AddEntry()
 {
 
-    Bool_t isAdd = kTRUE;
     if(evtNum == prevEvt)
     {
         AddParticles();
@@ -360,7 +359,6 @@ Int_t TIdentity2D::AddEntry()
                     Wmixed[t].push_back(W_sum[m]*W_sum[n]);
                     t++;
                 }
-                isAdd = kFALSE;
         }
         ResetValues();
         count = 0;

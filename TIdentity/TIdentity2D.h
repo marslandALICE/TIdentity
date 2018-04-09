@@ -57,10 +57,6 @@ public:
     Float_t GetMomY() { return momY; }
     Float_t GetMomZ() { return momZ; }
 
-    void SetEffPion(Float_t _effPion )      {effPion = _effPion; }
-    void SetEffKaon(Float_t _effKaon )      {effKaon = _effKaon; }
-    void SetEffProton(Float_t _effProton )  {effProton = _effProton;}
-
     void InitFunctions();
     //Int_t makeDebug();
     void ResetValues();
@@ -142,10 +138,6 @@ private:
     Float_t  momX;
     Float_t  momY;
     Float_t  momZ;
-
-    Float_t effPion;
-    Float_t effProton;
-    Float_t effKaon;
 
     Long_t    nEntries;
     TFile*   TIdentityFile;
