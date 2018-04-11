@@ -52,7 +52,7 @@ void TIdentity2D::InitIden2D(Int_t size)
     debugFile = new TFile("TIdenDebug.root","recreate");
     for (Int_t i=0;i<size;i++) {
       fHistWs[i]     = new TH1D(Form("hW_%d",i),Form("hW_%d",i),900,0.,30.);
-      fHistOmegas[i] = new TH1D(Form("hOmega_%d",i),Form("hOmega_%d",i),500,0.,1.);
+      fHistOmegas[i] = new TH1D(Form("hOmega_%d",i),Form("hOmega_%d",i),200,0.,1.);
     }
     countPart    = 0;
     countPartNeg = 0;

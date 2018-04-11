@@ -26,8 +26,8 @@ Double_t  EvalFitValue(Int_t particle, Double_t x);
 //
 // ======= Modification Part =============================================================================
 const Int_t fnParticleBins      = 3;
-TString treeIdentity            = "tracks";
-const Int_t nBinsLineShape      = 10000;
+TString     treeIdentity        = "tracks";
+const Int_t nBinsLineShape      = 1000;
 Bool_t      fTestMode           = kFALSE;
 Bool_t      lookUpTableForLine  = kFALSE;
 Int_t       lookUpTableLineMode = 0;
@@ -47,15 +47,24 @@ TString fileNameLineShapes = "";
 //
 Double_t nEvents = 0;
 Double_t nnorm   = 1.;
-const Int_t nMoments = 14;
+const Int_t nMoments = 19;
 TVectorF *fIntegrals;
 TVectorF *fMmoments;
 TFile *fLineShapesLookUpTable = NULL;
 TClonesArray *cloneArrFunc=NULL;
 TH1D **hLineShape;
 TF1 **fLineShape;
-enum momentType{kEl=0,kPi=1,kKa=2,kPr=3,kElEl=4,kPiPi=5,kKaKa=6,kPrPr=7,kElPi=8,kElKa=9,kElPr=10,kPiKa=11,kPiPr=12,kKaPr=13,};
-TString momNames[14] = {"El1","Pi1","Ka1","Pr1","El2","Pi2","Ka2","Pr2","ElPi","ElKa","ElPr","PiKa","PiPr","KaPr"};
+TFile *outFile;
+enum momentType{kEl=0,kPi=1,kKa=2,kPr=3,kDe=4,
+  kElEl=5,kPiPi=6,kKaKa=7,kPrPr=8,kDeDe=9,
+  kElPi=10,kElKa=11,kElPr=12,kElDe=13,
+  kPiKa=14,kPiPr=15,kPiDe=16,
+  kKaPr=17,kKaDe=18,};
+TString momNames[nMoments] = {"kEl","kPi","kKa","kPr","kDe",
+  "kElEl","kPiPi","kKaKa","kPrPr","kDeDe",
+  "kElPi","kElKa","kElPr","kElDe",
+  "kPiKa","kPiPr","kPiDe",
+  "kKaPr","kKaDe"};
 //
 // =======================================================================================================
 // =======================================================================================================
@@ -126,6 +135,9 @@ void ReadFitParamsFromLineShapes(TString paramTreeName)
     fLineShape[ipart]->SetNpx(nBinsLineShape);
     hLineShape[ipart] = (TH1D*)fLineShape[ipart]->GetHistogram();
     hLineShape[ipart]->SetName(objName);
+    outFile->cd();
+    fLineShape[ipart]->Write();
+    hLineShape[ipart]->Write();
   }
 
 }
@@ -148,6 +160,8 @@ void InitializeObjects()
   cout << " InitializeObjects.Info: Line Shapes           = " << inputfileNameLineShapes     << endl;
   cout << " ================================================================================= " << endl;
   //
+  outFile = new TFile("toyMC_Gen_vs_Rec.root","recreate");
+  //
   fMmoments  = new TVectorF(nMoments);
   fIntegrals = new TVectorF(nMoments);
   for(Int_t i=0;i<nMoments; i++){
@@ -169,26 +183,35 @@ void RetrieveMoments(TIdentity2D *tidenObj, TVectorF *vecMom, TVectorF *vecInt)
   (*vecMom)[kPi] = tidenObj -> GetMean(kPi);
   (*vecMom)[kKa] = tidenObj -> GetMean(kKa);
   (*vecMom)[kPr] = tidenObj -> GetMean(kPr);
+  (*vecMom)[kDe] = tidenObj -> GetMean(kDe);
   //
   // Second Moments
   (*vecMom)[kElEl] = tidenObj -> GetSecondMoment(kEl);
   (*vecMom)[kPiPi] = tidenObj -> GetSecondMoment(kPi);
   (*vecMom)[kKaKa] = tidenObj -> GetSecondMoment(kKa);
   (*vecMom)[kPrPr] = tidenObj -> GetSecondMoment(kPr);
+  (*vecMom)[kDeDe] = tidenObj -> GetSecondMoment(kDe);
   //
   // Mixed Moments
   (*vecMom)[kElPi] = tidenObj -> GetMixedMoment(kEl,kPi);
   (*vecMom)[kElKa] = tidenObj -> GetMixedMoment(kEl,kKa);
   (*vecMom)[kElPr] = tidenObj -> GetMixedMoment(kEl,kPr);
+  (*vecMom)[kElDe] = tidenObj -> GetMixedMoment(kEl,kDe);
+
   (*vecMom)[kPiKa] = tidenObj -> GetMixedMoment(kPi,kKa);
   (*vecMom)[kPiPr] = tidenObj -> GetMixedMoment(kPi,kPr);
+  (*vecMom)[kPiDe] = tidenObj -> GetMixedMoment(kPi,kDe);
+
   (*vecMom)[kKaPr] = tidenObj -> GetMixedMoment(kKa,kPr);
+  (*vecMom)[kKaDe] = tidenObj -> GetMixedMoment(kKa,kDe);
+
   //
   //Integrals:
   (*vecInt)[kEl] = tidenObj -> GetMeanI(kEl);
   (*vecInt)[kPi] = tidenObj -> GetMeanI(kPi);
   (*vecInt)[kKa] = tidenObj -> GetMeanI(kKa);
   (*vecInt)[kPr] = tidenObj -> GetMeanI(kPr);
+  (*vecInt)[kDe] = tidenObj -> GetMeanI(kDe);
   //
   // Printing
   nnorm     = (*vecMom)[kPi]/(*vecInt)[kPi];
@@ -210,13 +233,13 @@ void RetrieveMoments(TIdentity2D *tidenObj, TVectorF *vecMom, TVectorF *vecInt)
   TH1D *hGen   = (TH1D*)fGen->Get("hGen");
   TH1D *hRec   = (TH1D*)hGen->Clone();   hRec->SetName("hRec");
   TH1D *hRatio = (TH1D*)hGen->Clone();   hRatio->SetName("hRatio");
-  for (Int_t i=1;i<15;i++) {
+  for (Int_t i=1;i<nMoments+1;i++) {
     cout << momNames[i-1] << "  " << (*vecMom)[i-1] << endl;
     hRec->SetBinContent(i,(*vecMom)[i-1]);
   }
 
   // Read generated histogram
-  for (Int_t i=1;i<15;i++) {
+  for (Int_t i=1;i<nMoments+1;i++) {
     Double_t gen = hGen->GetBinContent(i);
     Double_t rec = hRec->GetBinContent(i);
     Double_t ratio = hGen->GetBinContent(i)/hRec->GetBinContent(i);
@@ -227,7 +250,7 @@ void RetrieveMoments(TIdentity2D *tidenObj, TVectorF *vecMom, TVectorF *vecInt)
     hRatio->SetBinContent(i,ratio);
   }
 
-  TFile *outFile = new TFile("toyMC_Gen_vs_Rec.root","recreate");
+  outFile->cd();
   hRec->Write();
   hGen->Write();
   hRatio->Write();
