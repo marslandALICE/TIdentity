@@ -25,12 +25,14 @@ Double_t  EvalFitValue(Int_t particle, Double_t x);
 // =======================================================================================================
 //
 // ======= Modification Part =============================================================================
-const Int_t fnParticleBins      = 3;
-TString     treeIdentity        = "tracks";
-const Int_t nBinsLineShape      = 1000;
-Bool_t      fTestMode           = kFALSE;
-Bool_t      lookUpTableForLine  = kFALSE;
-Int_t       lookUpTableLineMode = 0;
+const Int_t fnParticleBins       = 5;
+Int_t       fnSignBins           = 2;
+TString     treeIdentity         = "tracks";
+TString     lookUpCloneArrayName = "funcLineShapesCArr";
+const Int_t nBinsLineShape       = 1000;
+Bool_t      fTestMode            = kFALSE;
+Bool_t      lookUpTableForLine   = kFALSE;
+Int_t       lookUpTableLineMode  = 0;
 //
 // fixed tree branches --> [0]=event; [1]=dEdx; [2]=sign; [3]=cutBit; ||||  [4]=cent;
 Double_t fTreeVariablesArray[5];
@@ -47,13 +49,15 @@ TString fileNameLineShapes = "";
 //
 Double_t nEvents = 0;
 Double_t nnorm   = 1.;
+Int_t fUsedSign;
+Int_t fSignBin;
 const Int_t nMoments = 19;
 TVectorF *fIntegrals;
 TVectorF *fMmoments;
 TFile *fLineShapesLookUpTable = NULL;
 TClonesArray *cloneArrFunc=NULL;
-TH1D **hLineShape;
-TF1 **fLineShape;
+TH1D ***hLineShape;
+TF1 ***fLineShape;
 TFile *outFile;
 enum momentType{kEl=0,kPi=1,kKa=2,kPr=3,kDe=4,
   kElEl=5,kPiPi=6,kKaKa=7,kPrPr=8,kDeDe=9,
@@ -74,10 +78,11 @@ int main(int argc, char *argv[])
 {
   //  Arguments: $dataTree $lineShapes
   cout << " main.Info: NUMBER OF ARGUMENTS "<<argc<<endl;
-  if(argc == 3)
+  if(argc == 4)
   {
     sprintf(inputfileNameDataTree,"%s",argv[1]);
     sprintf(inputfileNameLineShapes,"%s",argv[2]);
+    fUsedSign = atoi(argv[3]);
     cout<<" main.Info: read file names from input "<<endl;
   }
   else
@@ -99,21 +104,43 @@ int main(int argc, char *argv[])
   iden4 -> SetBranchNames(nBranches,branchNames);
   iden4 -> SetFunctionPointers(EvalFitValue);
   iden4 -> SetLimits(0.,1020.,10.); // --> (dEdxMin,dEdxMax,binwidth), if slice histograms are scaled wrt binwidth, then binwidth=1
-  iden4 -> SetUseSign(0);  // pass input sign value to TIdentity module
+  iden4 -> SetUseSign(fUsedSign);  // pass input sign value to TIdentity module
   Long_t nEntries;
   iden4 -> GetTree(nEntries,treeIdentity);
   iden4 -> Reset();
   //
   // track by track loop --> read all track info  and add tracks to the iden4 object
   if (fTestMode) nEntries = 10000000;
+  Int_t fUsedBins[fnSignBins]={0};
+  Int_t countEntry = 0;
   for( Int_t i = 0; i < nEntries; i++ )
   {
+    //
+    // Read the entries and corresponding bins
     if( !iden4 ->  GetEntry(i) ) continue;
     iden4 -> GetBins(nBranches, fTreeVariablesArray);    // reads identity tree and retrives mybin[] info
-    iden4 -> AddEntry();
+    //
+    if (fTreeVariablesArray[2]==-1) fSignBin=0;
+    if (fTreeVariablesArray[2]== 1) fSignBin=1;
+    //
+    // tag the bins an read only required bins
+    if (fUsedSign==0) { fUsedBins[fSignBin] = 1; iden4 -> AddEntry(); countEntry++;}
+    else { fUsedBins[fSignBin] = 1; iden4 -> AddEntry(); countEntry++;}
+    //
+    if(i%1000000==0) cout << "used sign  =  " << fSignBin << "   " << fTreeVariablesArray[2] << endl;
+
   }
+  cout << "Total number of tracks processed = " << countEntry << endl;
   iden4 -> Finalize();
-  iden4 -> AddIntegrals(0); // real sign information passed for the check with real data tree
+  //
+  // Calculate 2. order moments only for full range
+  for(Int_t isign = 0; isign < fnSignBins; isign++) {
+    if(fUsedBins[isign] != 1) continue;
+    cout << "used sign  =  " << isign << endl;
+    fSignBin = isign;     // to be used in retrival of obj from the lookup table
+    iden4  -> AddIntegrals(fUsedSign); // real sign information passed for the check with real data tree
+  }
+  //
   iden4 -> CalcMoments();
   RetrieveMoments(iden4,fMmoments,fIntegrals);
   delete iden4;
@@ -126,18 +153,20 @@ void ReadFitParamsFromLineShapes(TString paramTreeName)
 {
 
   fLineShapesLookUpTable = new TFile(paramTreeName);
-  cloneArrFunc   = (TClonesArray*)fLineShapesLookUpTable->Get("funcLineShapesCArr");
+  cloneArrFunc   = (TClonesArray*)fLineShapesLookUpTable->Get(lookUpCloneArrayName);
   if (!cloneArrFunc) cout << " Error:: cloneArrFunc is empty " << endl;
   for (Int_t ipart = 0; ipart<fnParticleBins; ipart++){
-    TString objName = Form("particle_%d",ipart);
-    fLineShape[ipart] = (TF1*)cloneArrFunc->FindObject(objName);
-    fLineShape[ipart]->SetName(objName);
-    fLineShape[ipart]->SetNpx(nBinsLineShape);
-    hLineShape[ipart] = (TH1D*)fLineShape[ipart]->GetHistogram();
-    hLineShape[ipart]->SetName(objName);
-    outFile->cd();
-    fLineShape[ipart]->Write();
-    hLineShape[ipart]->Write();
+    for (Int_t isign = 0; isign<fnSignBins; isign++){
+      TString objName = Form("particle_%d_bin_%d",ipart,isign);
+      fLineShape[ipart][isign] = (TF1*)cloneArrFunc->FindObject(objName);
+      fLineShape[ipart][isign]->SetName(objName);
+      fLineShape[ipart][isign]->SetNpx(nBinsLineShape);
+      hLineShape[ipart][isign] = (TH1D*)fLineShape[ipart][isign]->GetHistogram();
+      hLineShape[ipart][isign]->SetName(objName);
+      outFile->cd();
+      fLineShape[ipart][isign]->Write();
+      hLineShape[ipart][isign]->Write();
+    }
   }
 
 }
@@ -145,9 +174,9 @@ void ReadFitParamsFromLineShapes(TString paramTreeName)
 Double_t EvalFitValue(Int_t particle, Double_t x)
 {
 
-  Int_t bin = hLineShape[particle]->FindBin(x);
-  if (lookUpTableLineMode==0) return hLineShape[particle]->GetBinContent(bin);
-  if (lookUpTableLineMode==1) return fLineShape[particle]->Eval(x);
+  Int_t bin = hLineShape[particle][fSignBin]->FindBin(x);
+  if (lookUpTableLineMode==0) return hLineShape[particle][fSignBin]->GetBinContent(bin);
+  if (lookUpTableLineMode==1) return fLineShape[particle][fSignBin]->Eval(x);
 
 }
 // =======================================================================================================
@@ -155,6 +184,7 @@ void InitializeObjects()
 {
 
   cout << " ================================================================================= " << endl;
+  cout << " Input sign                                    = " << fUsedSign                   << endl;
   cout << " InitializeObjects.Info: treeIdentity          = " << treeIdentity                << endl;
   cout << " InitializeObjects.Info: data Tree             = " << inputfileNameDataTree       << endl;
   cout << " InitializeObjects.Info: Line Shapes           = " << inputfileNameLineShapes     << endl;
@@ -169,10 +199,21 @@ void InitializeObjects()
     (*fIntegrals)[i]=0.;
   }
   //
-  hLineShape = new TH1D *[fnParticleBins];
-  fLineShape = new TF1 *[fnParticleBins];
-  for (Int_t ipart = 0; ipart<fnParticleBins; ipart++) hLineShape[ipart] = NULL;
-  for (Int_t ipart = 0; ipart<fnParticleBins; ipart++) fLineShape[ipart] = NULL;
+  // Initialize pointers to lookup table
+  fLineShape = new TF1 **[fnParticleBins];
+  for (Int_t ipart = 0; ipart<fnParticleBins; ipart++){
+    fLineShape[ipart] = new TF1*[fnSignBins];
+    for (Int_t isign = 0; isign<fnSignBins; isign++){
+      fLineShape[ipart][isign] = NULL;
+    }
+  }
+  hLineShape = new TH1D **[fnParticleBins];
+  for (Int_t ipart = 0; ipart<fnParticleBins; ipart++){
+    hLineShape[ipart] = new TH1D*[fnSignBins];
+    for (Int_t isign = 0; isign<fnSignBins; isign++){
+      hLineShape[ipart][isign] = NULL;
+    }
+  }
 
 }
 // =======================================================================================================

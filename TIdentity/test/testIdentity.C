@@ -92,7 +92,6 @@ const Float_t fEtaRangeUp   = 0.8;
 const Float_t fMomRangeDown = 0.2;
 const Float_t fMomRangeUp   = 3.2;
 Float_t xCentBins[] = {0, 5, 10, 20, 30, 40, 50, 60, 70, 80};
-Int_t xSignBins[] = {-1,1,0}; // coding of signs
 //
 // Default braches are --> ULong64_t ("gid"); Float_t ("dEdx"), Int_t ("sign"), UInt_t ("cutBit")
 // the rest of them can be given as an array
