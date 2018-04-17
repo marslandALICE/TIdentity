@@ -30,7 +30,7 @@ Int_t       fnSignBins           = 2;
 TString     treeIdentity         = "tracks";
 TString     lookUpCloneArrayName = "funcLineShapesCArr";
 const Int_t nBinsLineShape       = 1000;
-Bool_t      fTestMode            = kFALSE;
+Int_t       fnTestEntries        = 0;
 Bool_t      lookUpTableForLine   = kFALSE;
 Int_t       lookUpTableLineMode  = 0;
 //
@@ -110,7 +110,7 @@ int main(int argc, char *argv[])
   iden4 -> Reset();
   //
   // track by track loop --> read all track info  and add tracks to the iden4 object
-  if (fTestMode) nEntries = 10000000;
+  if (fnTestEntries>0) nEntries = fnTestEntries;
   Int_t fUsedBins[fnSignBins]={0};
   Int_t countEntry = 0;
   for( Int_t i = 0; i < nEntries; i++ )
@@ -127,16 +127,16 @@ int main(int argc, char *argv[])
     if (fUsedSign==0) { fUsedBins[fSignBin] = 1; iden4 -> AddEntry(); countEntry++;}
     else { fUsedBins[fSignBin] = 1; iden4 -> AddEntry(); countEntry++;}
     //
-    if(i%1000000==0) cout << "used sign  =  " << fSignBin << "   " << fTreeVariablesArray[2] << endl;
+    if(i%1000000==0) cout << "main.Info: used sign  =  " << fSignBin << "   " << fTreeVariablesArray[2] << endl;
 
   }
-  cout << "Total number of tracks processed = " << countEntry << endl;
+  cout << "main.Info: Total number of tracks processed = " << countEntry << endl;
   iden4 -> Finalize();
   //
   // Calculate 2. order moments only for full range
   for(Int_t isign = 0; isign < fnSignBins; isign++) {
     if(fUsedBins[isign] != 1) continue;
-    cout << "used sign  =  " << isign << endl;
+    cout << "main.Info: used sign  =  " << isign << endl;
     fSignBin = isign;     // to be used in retrival of obj from the lookup table
     iden4  -> AddIntegrals(fUsedSign); // real sign information passed for the check with real data tree
   }
@@ -154,7 +154,7 @@ void ReadFitParamsFromLineShapes(TString paramTreeName)
 
   fLineShapesLookUpTable = new TFile(paramTreeName);
   cloneArrFunc   = (TClonesArray*)fLineShapesLookUpTable->Get(lookUpCloneArrayName);
-  if (!cloneArrFunc) cout << " Error:: cloneArrFunc is empty " << endl;
+  if (!cloneArrFunc) cout << " ReadFitParamsFromLineShapes.Error: cloneArrFunc is empty " << endl;
   for (Int_t ipart = 0; ipart<fnParticleBins; ipart++){
     for (Int_t isign = 0; isign<fnSignBins; isign++){
       TString objName = Form("particle_%d_bin_%d",ipart,isign);
@@ -184,7 +184,7 @@ void InitializeObjects()
 {
 
   cout << " ================================================================================= " << endl;
-  cout << " Input sign                                    = " << fUsedSign                   << endl;
+  cout << " InitializeObjects.Info: Input sign            = " << fUsedSign                   << endl;
   cout << " InitializeObjects.Info: treeIdentity          = " << treeIdentity                << endl;
   cout << " InitializeObjects.Info: data Tree             = " << inputfileNameDataTree       << endl;
   cout << " InitializeObjects.Info: Line Shapes           = " << inputfileNameLineShapes     << endl;

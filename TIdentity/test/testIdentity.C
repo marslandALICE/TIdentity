@@ -34,7 +34,6 @@ void      PrintInitInfo();
 // =======================================================================================================
 //
 // enums
-enum particles{electron=0, pion=1, kaon=2, proton=3};
 enum momentType {
   kEl=0,
   kPi=1,
@@ -51,6 +50,11 @@ enum momentType {
   kPiPr=12,
   kKaPr=13,
 };
+TString momNames[14] = {"kEl","kPi","kKa","kPr",
+  "kElEl","kPiPi","kKaKa","kPrPr",
+  "kElPi","kElKa","kElPr",
+  "kPiKa","kPiPr",
+  "kKaPr"};
 enum trackCutBit {
   kCRows60=0,
   kCRows80=1,
@@ -73,16 +77,16 @@ enum trackCutBit {
 //
 //
 // ======= Modification Part =============================================================================
-const Int_t fnSignBins     = 3;
+const Int_t fnSignBins     = 2;
 const Int_t fnEtaBins      = 16;  // MC: 8, Data:16
 const Int_t fnCentBins     = 9;
-const Int_t fnParticleBins = 4;   // keep it always 4
+const Int_t fnParticleBins = 4;
 const Int_t fnMomBins      = 150;
 //
 //
 // Look up table related
 const Int_t nBinsLineShape      = 2000;
-Bool_t      fTestMode           = kFALSE;
+Int_t       fnTestEntries       = 0;
 Bool_t      lookUpTableForLine  = kFALSE;
 Int_t       lookUpTableLineMode = 0;     // 0 for TH1D, 1 for TF1
 //
@@ -104,7 +108,7 @@ TString branchNames[nBranches]={"eta","cent","ptot","cRows","chi2TPC"};
 //
 Int_t   fNthFitIteration = 6;
 TString treeLineShapes   = "treeId";
-TString treeIdentity     = "tracks";   // for data "fIdenTree",    for MC "fIdenTreeMC"  , new data "tracks"
+TString treeIdentity     = "fIdenTree";   // for data "fIdenTree",    for MC "fIdenTreeMC"  , new data "tracks"
 //
 //
 // =======================================================================================================
@@ -217,7 +221,7 @@ int main(int argc, char *argv[])
   //
   // Create the TIdentity2D object and start analysis
   fgengaus = new TF1("fgengaus",fitFunctionGenGaus,0,1020,5);
-  TIdentity2D *iden4 = new TIdentity2D(4);      // Set the number of particles to 4
+  TIdentity2D *iden4 = new TIdentity2D(fnParticleBins);
   iden4 -> SetBranchNames(nBranches,branchNames);
   iden4 -> SetFileName(fileNameDataTree);
   iden4 -> SetFunctionPointers(EvalFitValue);
@@ -229,9 +233,11 @@ int main(int argc, char *argv[])
   //
   // track by track loop --> read all track info  and add tracks to the iden4 object
   //
-  if (fTestMode) nEntries = 10000000;
+  if (fnTestEntries>0) nEntries = fnTestEntries;
+  Int_t countEntry=0;
   for( Int_t i = 0; i < nEntries; i++ )
   {
+    //
     if( !iden4 ->  GetEntry(i) ) continue;
     iden4      ->  GetBins(nBranches, fTreeVariablesArray);    // reads identity tree and retrives mybin[] info
     //
@@ -240,10 +246,12 @@ int main(int argc, char *argv[])
       fEtaBin  = Int_t(fTreeVariablesArray[0]);
       fCentBin = Int_t(fTreeVariablesArray[1]);
       fMomBin  = Int_t(fTreeVariablesArray[2]);
-      fSignBin = (Int_t)fTreeVariablesArray[3]+1;  // neg --> 0, neutrol --> 1, pos --> 2
+      if (Int_t(fTreeVariablesArray[2])==-1) fSignBin=0;
+      if (Int_t(fTreeVariablesArray[2])== 1) fSignBin=1;
     }
     if(treeIdentity=="tracks") {
-      fSignBin = (Int_t)fTreeVariablesArray[2]+1;  // neg --> 0, neutrol --> 1, pos --> 2
+      if (Int_t(fTreeVariablesArray[2])==-1) fSignBin=0;
+      if (Int_t(fTreeVariablesArray[2])== 1) fSignBin=1;
       fCutBit  = (UInt_t)fTreeVariablesArray[3];
       fEtaBin  = fhEta  -> FindBin(fTreeVariablesArray[4] + 0.0000001) -1;
       fCentBin = fhCent -> FindBin(fTreeVariablesArray[5] + 0.0000001) -1;
@@ -256,10 +264,12 @@ int main(int argc, char *argv[])
     if( fCentBin != fCentInputBin ) continue;
     if( fMomBin < momRange[0] || fMomBin > momRange[1] ) continue;
     if( fEtaBin < etaRange[0] || fEtaBin > etaRange[1] ) continue;
-    fUsedBins[fEtaBin][fCentBin][fMomBin][fSignBin] = 1;
-    if (fSignInput==0) fUsedBins[fEtaBin][fCentBin][fMomBin][fSignBin] = 1;
-    iden4 -> AddEntry();
+    //
+    if (fSignInput==0) { fUsedBins[fEtaBin][fCentBin][fMomBin][fSignBin] = 1; iden4 -> AddEntry(); countEntry++;}
+    else { fUsedBins[fEtaBin][fCentBin][fMomBin][fSignBin] = 1; iden4 -> AddEntry(); countEntry++;}
+    //
   }
+  cout << "main.Info: Total number of tracks processed = " << countEntry << endl;
   iden4 -> Finalize();
   //
   // Calculate 2. order moments only for full range
@@ -534,30 +544,30 @@ void ReadFitParamsFromTree(TString paramTreeName, Int_t fitIter)
 
     // Analyse only 4 iteration of the iterative fitting procedure
     if (it != fitIter) continue;
-    fAmpArr[myBin[0]][myBin[1]][myBin[2]][electron][signBin]      = elA;
-    fAmpArr[myBin[0]][myBin[1]][myBin[2]][pion][signBin]          = piA;
-    fAmpArr[myBin[0]][myBin[1]][myBin[2]][kaon][signBin]          = kaA;
-    fAmpArr[myBin[0]][myBin[1]][myBin[2]][proton][signBin]        = prA;
+    fAmpArr[myBin[0]][myBin[1]][myBin[2]][kEl][signBin] = elA;
+    fAmpArr[myBin[0]][myBin[1]][myBin[2]][kPi][signBin] = piA;
+    fAmpArr[myBin[0]][myBin[1]][myBin[2]][kKa][signBin] = kaA;
+    fAmpArr[myBin[0]][myBin[1]][myBin[2]][kPr][signBin] = prA;
 
-    fMeanArr[myBin[0]][myBin[1]][myBin[2]][electron][signBin]     = elM;
-    fMeanArr[myBin[0]][myBin[1]][myBin[2]][pion][signBin]         = piM;
-    fMeanArr[myBin[0]][myBin[1]][myBin[2]][kaon][signBin]         = kaM;
-    fMeanArr[myBin[0]][myBin[1]][myBin[2]][proton][signBin]       = prM;
+    fMeanArr[myBin[0]][myBin[1]][myBin[2]][kEl][signBin] = elM;
+    fMeanArr[myBin[0]][myBin[1]][myBin[2]][kPi][signBin] = piM;
+    fMeanArr[myBin[0]][myBin[1]][myBin[2]][kKa][signBin] = kaM;
+    fMeanArr[myBin[0]][myBin[1]][myBin[2]][kPr][signBin] = prM;
 
-    fSigmaArr[myBin[0]][myBin[1]][myBin[2]][electron][signBin]    = elSi;
-    fSigmaArr[myBin[0]][myBin[1]][myBin[2]][pion][signBin]        = piSi;
-    fSigmaArr[myBin[0]][myBin[1]][myBin[2]][kaon][signBin]        = kaSi;
-    fSigmaArr[myBin[0]][myBin[1]][myBin[2]][proton][signBin]      = prSi;
+    fSigmaArr[myBin[0]][myBin[1]][myBin[2]][kEl][signBin] = elSi;
+    fSigmaArr[myBin[0]][myBin[1]][myBin[2]][kPi][signBin] = piSi;
+    fSigmaArr[myBin[0]][myBin[1]][myBin[2]][kKa][signBin] = kaSi;
+    fSigmaArr[myBin[0]][myBin[1]][myBin[2]][kPr][signBin] = prSi;
 
-    fSkewArr[myBin[0]][myBin[1]][myBin[2]][electron][signBin]     = elSk;
-    fSkewArr[myBin[0]][myBin[1]][myBin[2]][pion][signBin]         = piSk;
-    fSkewArr[myBin[0]][myBin[1]][myBin[2]][kaon][signBin]         = kaSk;
-    fSkewArr[myBin[0]][myBin[1]][myBin[2]][proton][signBin]       = prSk;
+    fSkewArr[myBin[0]][myBin[1]][myBin[2]][kEl][signBin] = elSk;
+    fSkewArr[myBin[0]][myBin[1]][myBin[2]][kPi][signBin] = piSk;
+    fSkewArr[myBin[0]][myBin[1]][myBin[2]][kKa][signBin] = kaSk;
+    fSkewArr[myBin[0]][myBin[1]][myBin[2]][kPr][signBin] = prSk;
 
-    fKurtosisArr[myBin[0]][myBin[1]][myBin[2]][electron][signBin] = elK;
-    fKurtosisArr[myBin[0]][myBin[1]][myBin[2]][pion][signBin]     = piK;
-    fKurtosisArr[myBin[0]][myBin[1]][myBin[2]][kaon][signBin]     = kaK;
-    fKurtosisArr[myBin[0]][myBin[1]][myBin[2]][proton][signBin]   = prK;
+    fKurtosisArr[myBin[0]][myBin[1]][myBin[2]][kEl][signBin] = elK;
+    fKurtosisArr[myBin[0]][myBin[1]][myBin[2]][kPi][signBin] = piK;
+    fKurtosisArr[myBin[0]][myBin[1]][myBin[2]][kKa][signBin] = kaK;
+    fKurtosisArr[myBin[0]][myBin[1]][myBin[2]][kPr][signBin] = prK;
 
   }
 
@@ -718,30 +728,30 @@ Double_t fitFunctionGenGaus(Double_t *x, Double_t *par)
 void RetrieveMoments(TIdentity2D *tidenObj, TVectorF *vecMom, TVectorF *vecInt)
 {
 
-  (*vecMom)[kEl] = tidenObj -> GetMean(electron);
-  (*vecMom)[kPi] = tidenObj -> GetMean(pion);
-  (*vecMom)[kKa] = tidenObj -> GetMean(kaon);
-  (*vecMom)[kPr] = tidenObj -> GetMean(proton);
+  (*vecMom)[kEl] = tidenObj -> GetMean(kEl);
+  (*vecMom)[kPi] = tidenObj -> GetMean(kPi);
+  (*vecMom)[kKa] = tidenObj -> GetMean(kKa);
+  (*vecMom)[kPr] = tidenObj -> GetMean(kPr);
   //
   // Second Moments
-  (*vecMom)[kElEl] = tidenObj -> GetSecondMoment(electron);
-  (*vecMom)[kPiPi] = tidenObj -> GetSecondMoment(pion);
-  (*vecMom)[kKaKa] = tidenObj -> GetSecondMoment(kaon);
-  (*vecMom)[kPrPr] = tidenObj -> GetSecondMoment(proton);
+  (*vecMom)[kElEl] = tidenObj -> GetSecondMoment(kEl);
+  (*vecMom)[kPiPi] = tidenObj -> GetSecondMoment(kPi);
+  (*vecMom)[kKaKa] = tidenObj -> GetSecondMoment(kKa);
+  (*vecMom)[kPrPr] = tidenObj -> GetSecondMoment(kPr);
   //
   // Mixed Moments
-  (*vecMom)[kElPi] = tidenObj -> GetMixedMoment(electron,pion);
-  (*vecMom)[kElKa] = tidenObj -> GetMixedMoment(electron,kaon);
-  (*vecMom)[kElPr] = tidenObj -> GetMixedMoment(electron,proton);
-  (*vecMom)[kPiKa] = tidenObj -> GetMixedMoment(pion,kaon);
-  (*vecMom)[kPiPr] = tidenObj -> GetMixedMoment(pion,proton);
-  (*vecMom)[kKaPr] = tidenObj -> GetMixedMoment(kaon,proton);
+  (*vecMom)[kElPi] = tidenObj -> GetMixedMoment(kEl,kPi);
+  (*vecMom)[kElKa] = tidenObj -> GetMixedMoment(kEl,kKa);
+  (*vecMom)[kElPr] = tidenObj -> GetMixedMoment(kEl,kPr);
+  (*vecMom)[kPiKa] = tidenObj -> GetMixedMoment(kPi,kKa);
+  (*vecMom)[kPiPr] = tidenObj -> GetMixedMoment(kPi,kPr);
+  (*vecMom)[kKaPr] = tidenObj -> GetMixedMoment(kKa,kPr);
   //
   //Integrals:
-  (*vecInt)[kEl] = tidenObj -> GetMeanI(electron);
-  (*vecInt)[kPi] = tidenObj -> GetMeanI(pion);
-  (*vecInt)[kKa] = tidenObj -> GetMeanI(kaon);
-  (*vecInt)[kPr] = tidenObj -> GetMeanI(proton);
+  (*vecInt)[kEl] = tidenObj -> GetMeanI(kEl);
+  (*vecInt)[kPi] = tidenObj -> GetMeanI(kPi);
+  (*vecInt)[kKa] = tidenObj -> GetMeanI(kKa);
+  (*vecInt)[kPr] = tidenObj -> GetMeanI(kPr);
   //
   // Printing
   nnorm     = (*vecMom)[kPi]/(*vecInt)[kPi];
@@ -758,6 +768,11 @@ void RetrieveMoments(TIdentity2D *tidenObj, TVectorF *vecMom, TVectorF *vecInt)
   cout << " pion2       : "<< (*vecMom)[kPiPi]  <<endl;
   cout << " kaon2       : "<< (*vecMom)[kKaKa]  <<endl;
   cout << " proton2     : "<< (*vecMom)[kPrPr]  <<endl;
+  //
+  //
+  for (Int_t i=1;i<nMoments+1;i++) cout << momNames[i-1] << "  " << (*vecMom)[i-1] << endl;
+
+
 
 }
 // -----------------------------------------------------------------------------------------

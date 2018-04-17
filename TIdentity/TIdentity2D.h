@@ -69,15 +69,11 @@ public:
     Double_t GetWI(Int_t, Int_t, Int_t);
     void SetLimits(Float_t, Float_t, Double_t);
     Int_t GetNEvents() const {return countVeto;}
-    void SetUseSign(Int_t _useSign) {useSign = _useSign;}
+    void SetUseSign(Int_t _useSign) {fUseSign = _useSign;}
     void Reset();
 
     Double_t GetDeDx() { return myDeDx; }
 
-    void SetMaxPt(Float_t _maxPt) {maxPt = _maxPt;}
-    void SetMinPt(Float_t _minPt) {minPt = _minPt;}
-    void SetMaxMom(Float_t _maxMom) {maxMom = _maxMom; }
-    void SetMinMom(Float_t _minMom) {minMom = _minMom; }
     void SetBranchNames(const Int_t tmpNBranches, TString tmpBranchNameArr[])
     {
       fNBranches = tmpNBranches;
@@ -93,16 +89,14 @@ public:
 
 private:
 
-    Float_t maxPt, minPt, maxMom, minMom;
-
     Float_t ffMin, ffMax;
     Double_t ffBW;
     TMatrixD *A;
     //TMatrixD invA;
     Double_t *B;
     Double_t *recMoments;
-    Int_t useSign;
-    Int_t    sign;
+    Int_t fUseSign;
+    Int_t    fSign;
     TBranch *myBinBrach;  // just to check which kind of tree is used
 
     Double_t WI[10][10];
@@ -128,6 +122,7 @@ private:
     Int_t countVeto;
     Int_t    myBin[3];
     ULong64_t  evtNum;
+    Int_t  evtNumOldVersion;
     Double_t  myDeDx;
     Float_t  dEdx;
     Float_t  eta;
