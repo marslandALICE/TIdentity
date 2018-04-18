@@ -42,8 +42,6 @@ public:
     Double_t GetMeanI(Int_t);
     virtual void SetFunctionPointers(fptr);
     virtual void Run();
-    void SetInputDir(TString  _inputDir)   { inputDir  = _inputDir;  }
-    void SetOutputDir(TString _outputDir)  { outputDir = _outputDir; }
     void SetFileName(TString  _fileName)   { fileName  = _fileName;  }
     Int_t GetIndex(Int_t, Int_t&, Int_t&);
     Int_t AddEntry();
@@ -52,10 +50,6 @@ public:
     TTree *GetTreeFromChain(TString treeList, TString treeName);
     void Finalize();
     void GetBins(const Int_t nExtraBins, Double_t *);
-
-    Float_t GetMomX() { return momX; }
-    Float_t GetMomY() { return momY; }
-    Float_t GetMomZ() { return momZ; }
 
     void InitFunctions();
     //Int_t makeDebug();
@@ -68,11 +62,11 @@ public:
     void AddIntegrals(Int_t);
     Double_t GetWI(Int_t, Int_t, Int_t);
     void SetLimits(Float_t, Float_t, Double_t);
-    Int_t GetNEvents() const {return countVeto;}
+    Int_t GetNEvents() const {return fCountVeto;}
     void SetUseSign(Int_t _useSign) {fUseSign = _useSign;}
     void Reset();
 
-    Double_t GetDeDx() { return myDeDx; }
+    Double_t GetDeDx() { return fMyDeDx; }
 
     void SetBranchNames(const Int_t tmpNBranches, TString tmpBranchNameArr[])
     {
@@ -85,64 +79,54 @@ public:
       }
     }
 
-    Double_t GetAverCount(Int_t i) { return averCount[i]; }
+    Double_t GetAverCount(Int_t i) { return fAverCount[i]; }
 
 private:
 
-    Float_t ffMin, ffMax;
-    Double_t ffBW;
-    TMatrixD *A;
+    Float_t       ffMin;
+    Float_t       ffMax;
+    Double_t      ffBW;
+    TMatrixD     *A;
     //TMatrixD invA;
-    Double_t *B;
-    Double_t *recMoments;
-    Int_t fUseSign;
-    Int_t    fSign;
-    TBranch *myBinBrach;  // just to check which kind of tree is used
+    Double_t     *B;
+    Double_t     *fRecMoments;
+    Int_t         fUseSign;
+    Int_t         fSign;
+    TBranch      *fMyBinBrach;  // just to check which kind of tree is used
 
-    Double_t WI[10][10];
-    Double_t WI2[10][10];
-    Double_t WIMix[10][10];
-    Int_t size_size;
-    Int_t TSize;
-    Int_t sizeMatrix;
-    Int_t TSizeMixed;
-    Int_t    count;
-    Double_t myMom, myPt;
-    Double_t *W_sum;
-    Double_t *aver;
-    Double_t *averMixed;
-    Double_t *aver2;
-    Double_t *averI;
+    Double_t      WI[10][10];
+    Double_t      WI2[10][10];
+    Double_t      WIMix[10][10];
+    Int_t         fSize_size;
+    Int_t         fTSize;
+    Int_t         fSizeMatrix;
+    Int_t         fTSizeMixed;
+    Int_t         fCount;
+    Double_t     *fW_sum;
+    Double_t     *fAver;
+    Double_t     *fAverMixed;
+    Double_t     *fAver2;
+    Double_t     *fAverI;
 
-    static Int_t fNParticles;
-    static Int_t fNMixParticles;
+    static Int_t  fNParticles;
+    static Int_t  fNMixParticles;
 
-    ULong64_t prevEvt;
-    ULong64_t prevEvtVeto;
-    Int_t countVeto;
-    Int_t    myBin[3];
-    ULong64_t  evtNum;
-    Int_t  evtNumOldVersion;
-    Double_t  myDeDx;
-    Float_t  dEdx;
-    Float_t  eta;
-    Float_t  cent;
-    Float_t  ptot;
-    UInt_t cutBit;
-    Double_t cRows,tpcchi2;
-    Float_t  momX;
-    Float_t  momY;
-    Float_t  momZ;
+    ULong64_t     fPrevEvt;
+    ULong64_t     fPrevEvtVeto;
+    Int_t         fCountVeto;
+    Int_t         fMyBin[3];
+    ULong64_t     fEventNum;
+    Int_t         fEventNumOldVersion;
+    Double_t      fMyDeDx;
+    Float_t       fDEdx;
+    UInt_t        fCutBit;
+    Long_t        fTreeEntries;
 
-    Long_t    nEntries;
-    TFile*   TIdentityFile;
-    TFile*   debugFile;
-    TTree*   TIdentityTree;
-    TH1D*    histoBin;
-    TH1D    *fHistWs[4];
-    TH1D    *fHistOmegas[4];
-    TString  inputDir;
-    TString  outputDir;
+    TFile        *TIdentityFile;
+    TFile        *debugFile;
+    TTree        *TIdentityTree;
+    TH1D         *fHistWs[4];
+    TH1D         *fHistOmegas[4];
     TString  fileName;
     Char_t TFunctionsName[255];
     TF1 *TFunctions[10];
@@ -156,15 +140,15 @@ private:
     std::vector<double> *W2;
     std::vector<double> *Wmixed;
 
-    Int_t countPart;
-    Int_t countPartNeg;
-    Int_t countPartPos;
+    Int_t fCountPart;
+    Int_t fCountPartNeg;
+    Int_t fCountPartPos;
 
-    std::vector<double> countVec;
-    std::vector<double> countVec2;
-    std::vector<double> countVecMix;
+    std::vector<double> fCountVec;
+    std::vector<double> fCountVec2;
+    std::vector<double> fCountVecMix;
 
-    Double_t averCount[3];
+    Double_t fAverCount[3];
 
     Int_t fNBranches;
     TString *fBranchNames;

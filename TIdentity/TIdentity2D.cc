@@ -54,36 +54,36 @@ void TIdentity2D::InitIden2D(Int_t size)
     fHistWs[i]     = new TH1D(Form("hW_%d",i),Form("hW_%d",i),900,0.,30.);
     fHistOmegas[i] = new TH1D(Form("hOmega_%d",i),Form("hOmega_%d",i),200,0.,1.);
   }
-  countPart    = 0;
-  countPartNeg = 0;
-  countPartPos = 0;
+  fCountPart    = 0;
+  fCountPartNeg = 0;
+  fCountPartPos = 0;
 
   fUseSign = -1000;
   fSign = -1000;
-  myBinBrach=0x0;
-  countVeto = 0;
-  myDeDx=0.;
-  dEdx=0.;
+  fMyBinBrach=0x0;
+  fCountVeto = 0;
+  fMyDeDx=0.;
+  fDEdx=0.;
 
-  prevEvtVeto = -1;
-  TSize = size;
-  TSizeMixed = size*(size-1)/2;
-  sizeMatrix = TSize + TSizeMixed;
-  W         = new vector<double>     [TSize];
-  W2        = new vector<double>     [TSize];
-  Wmixed    = new vector<double> [TSizeMixed];
+  fPrevEvtVeto = -1;
+  fTSize = size;
+  fTSizeMixed = size*(size-1)/2;
+  fSizeMatrix = fTSize + fTSizeMixed;
+  W         = new vector<double>     [fTSize];
+  W2        = new vector<double>     [fTSize];
+  Wmixed    = new vector<double> [fTSizeMixed];
   if(!functions) functions = new TIdentityFunctions();
-  W_sum = new Double_t [TSize];
-  prevEvt = -1000;
-  aver = new Double_t [TSize];
-  aver2 = new Double_t [TSize];
-  averI = new Double_t [TSize];
-  averMixed = new Double_t [TSizeMixed];
+  fW_sum = new Double_t [fTSize];
+  fPrevEvt = -1000;
+  fAver = new Double_t [fTSize];
+  fAver2 = new Double_t [fTSize];
+  fAverI = new Double_t [fTSize];
+  fAverMixed = new Double_t [fTSizeMixed];
 
-  fNParticles = TSize;
-  fNMixParticles = TSizeMixed;
+  fNParticles = fTSize;
+  fNMixParticles = fTSizeMixed;
 
-  size_size = 3000;
+  fSize_size = 3000;  // ???
   for(Int_t i = 0; i < 10; i++){
     for(Int_t j = 0; j < 10; j++)
     {
@@ -92,47 +92,47 @@ void TIdentity2D::InitIden2D(Int_t size)
       WIMix[i][j] = 0.;
     }
   }
-  for(Int_t i = 0; i < TSize; i++ )
+  for(Int_t i = 0; i < fTSize; i++ )
   {
-    averI[i] = 0;
+    fAverI[i] = 0;
   }
-  A = new TMatrixD(sizeMatrix,sizeMatrix);
-  B = new Double_t [sizeMatrix];
-  recMoments = new Double_t [sizeMatrix];
-  for(Int_t i = 0; i < sizeMatrix; i++)
+  A = new TMatrixD(fSizeMatrix,fSizeMatrix);
+  B = new Double_t [fSizeMatrix];
+  fRecMoments = new Double_t [fSizeMatrix];
+  for(Int_t i = 0; i < fSizeMatrix; i++)
   {
-    recMoments[i] = 0.;
+    fRecMoments[i] = 0.;
   }
 }
 
 void TIdentity2D::Reset()
 {
-  countVec.clear();
-  countVec2.clear();
-  countVecMix.clear();
-  countPart = countPartNeg = countPartPos = 0;
+  fCountVec.clear();
+  fCountVec2.clear();
+  fCountVecMix.clear();
+  fCountPart = fCountPartNeg = fCountPartPos = 0;
 
-  for (Int_t i = 0; i < TSize; i++)
+  for (Int_t i = 0; i < fTSize; i++)
   {
     cout<<" TIdentity2D::Reset.Info: resetting vectors"<<endl;
     W[i].clear();
     W2[i].clear();
-    aver[i]  = 0;
-    aver2[i] = 0;
-    averI[i] = 0;
-    W_sum[i] = 0;
+    fAver[i]  = 0;
+    fAver2[i] = 0;
+    fAverI[i] = 0;
+    fW_sum[i] = 0;
   }
 
-  for (Int_t i = 0; i < TSizeMixed; i++)
+  for (Int_t i = 0; i < fTSizeMixed; i++)
   {
     Wmixed[i].clear();
-    averMixed[i] = 0;
+    fAverMixed[i] = 0;
   }
 
-  countVeto = 0;
-  prevEvtVeto = -1;
+  fCountVeto = 0;
+  fPrevEvtVeto = -1;
 
-  prevEvt = -1000;
+  fPrevEvt = -1000;
   for(Int_t i = 0; i < 10; i++){
     for(Int_t j = 0; j < 10; j++)
     {
@@ -141,14 +141,14 @@ void TIdentity2D::Reset()
       WIMix[i][j] = 0.;
     }
   }
-  for(Int_t i = 0; i < TSize; i++ )
+  for(Int_t i = 0; i < fTSize; i++ )
   {
-    averI[i] = 0;
+    fAverI[i] = 0;
   }
 
-  for(Int_t i = 0; i < sizeMatrix; i++)
+  for(Int_t i = 0; i < fSizeMatrix; i++)
   {
-    recMoments[i] = 0.;
+    fRecMoments[i] = 0.;
     B[i] = 0;
   }
 
@@ -160,12 +160,12 @@ TIdentity2D::~TIdentity2D()
     if(W) {delete [] W; W = 0;}
     if(W2){ delete [] W2; W2 = 0;}
     if(Wmixed) {delete [] Wmixed; Wmixed = 0; }
-    if(W_sum) delete [] W_sum;
-    if(aver) delete [] aver;
-    if(aver2) delete [] aver2;
-    if(averI) delete [] averI;
-    if(averMixed) delete [] averMixed;
-    if(recMoments) delete [] recMoments;
+    if(fW_sum) delete [] fW_sum;
+    if(fAver) delete [] fAver;
+    if(fAver2) delete [] fAver2;
+    if(fAverI) delete [] fAverI;
+    if(fAverMixed) delete [] fAverMixed;
+    if(fRecMoments) delete [] fRecMoments;
     if(A) delete A;
     if(B) delete [] B;
 
@@ -184,24 +184,24 @@ void TIdentity2D::GetTree(Long_t &nent, TString idenTreeName)
   if (!TIdentityTree) cout << "TIdentity2D::GetTree.Error: tree could not be read" << endl;
   cout<<"TIdentity2D::GetTree.Info: ======================== "<<endl;
   TIdentityTree -> GetListOfBranches()->ls();
-  myBinBrach = (TBranch*)TIdentityTree->FindBranch("myBin");
+  fMyBinBrach = (TBranch*)TIdentityTree->FindBranch("myBin");
   cout<<"TIdentity2D::GetTree.Info: ======================== "<<endl;
-  if (!myBinBrach){ // new version of tree format
-    TIdentityTree -> SetBranchAddress("gid"    ,&evtNum);
-    TIdentityTree -> SetBranchAddress("dEdx"   ,&dEdx);
+  if (!fMyBinBrach){ // new version of tree format
+    TIdentityTree -> SetBranchAddress("gid"    ,&fEventNum);
+    TIdentityTree -> SetBranchAddress("dEdx"   ,&fDEdx);
     TIdentityTree -> SetBranchAddress("sign"   ,&fSign);
-    TIdentityTree -> SetBranchAddress("cutBit" ,&cutBit);
+    TIdentityTree -> SetBranchAddress("cutBit" ,&fCutBit);
     for (Int_t i=0;i<fNBranches;i++){
       TIdentityTree -> SetBranchAddress(fBranchNames[i] ,&fBranchVariables[i]);
     }
   } else { // old version of tree format
     TIdentityTree -> SetBranchAddress("sign",&fSign);
-    TIdentityTree -> SetBranchAddress("myBin",myBin);
-    TIdentityTree -> SetBranchAddress("myDeDx",&myDeDx);
-    TIdentityTree -> SetBranchAddress("evtNum",&evtNumOldVersion);
+    TIdentityTree -> SetBranchAddress("myBin",fMyBin);
+    TIdentityTree -> SetBranchAddress("myDeDx",&fMyDeDx);
+    TIdentityTree -> SetBranchAddress("evtNum",&fEventNumOldVersion);
   }
-  nEntries = (Long_t)TIdentityTree -> GetEntries();
-  nent = nEntries;
+  fTreeEntries = (Long_t)TIdentityTree -> GetEntries();
+  nent = fTreeEntries;
   InitFunctions();
 }
 
@@ -276,15 +276,15 @@ Double_t TIdentity2D::GetFunctionsMix(Double_t *xx, Double_t *par)
 
 void TIdentity2D::InitFunctions()
 {
-  for(Int_t i = 0; i < TSize+1; i++)
+  for(Int_t i = 0; i < fTSize+1; i++)
   {
     sprintf(TFunctionsName,"func[%d]",i);
     TFunctions[i] = new TF1(TFunctionsName,GetValue, ffMin, ffMax,1);
     TFunctions[i] -> SetParameter(0,i);
   }
 
-  for(Int_t i = 0; i < TSize; i++){
-    for(Int_t j = 0; j < TSize; j++)
+  for(Int_t i = 0; i < fTSize; i++){
+    for(Int_t j = 0; j < fTSize; j++)
     {
       sprintf(TFunctionsName,"Ifunc[%d][%d]",i,j);
       IFunctions[i][j] = new TF1(TFunctionsName,GetFunctions,ffMin,ffMax,3);
@@ -299,8 +299,8 @@ void TIdentity2D::InitFunctions()
       IFunctions2[i][j] -> SetParameter(2,2);
     }
   }
-  for(Int_t i = 0; i < TSizeMixed; i++){
-    for(Int_t j = 0; j < TSize; j++)
+  for(Int_t i = 0; i < fTSizeMixed; i++){
+    for(Int_t j = 0; j < fTSize; j++)
     {
       sprintf(TFunctionsName,"IfuncMix[%d][%d]",i,j);
       IFunctionsMix[i][j] = new TF1(TFunctionsName,GetFunctionsMix,ffMin,ffMax,2);
@@ -322,13 +322,13 @@ void TIdentity2D::Run()
 
 Bool_t TIdentity2D::GetEntry(Int_t i)
 {
-  if(i%5000000 == 0) cout<<" TIdentity2D::GetEntry.Info: track "<<i<<" of "<<nEntries <<endl;
+  if(i%5000000 == 0) cout<<" TIdentity2D::GetEntry.Info: track "<<i<<" of "<<fTreeEntries <<endl;
   TIdentityTree -> GetEntry(i);
-  if ( myBinBrach ) evtNum=evtNumOldVersion;
-  if ( evtNum != prevEvtVeto && prevEvtVeto >0) {countVeto++;}
-  prevEvtVeto = evtNum;
-  if ( dEdx!=0 ) myDeDx=dEdx;
-  if ( (myDeDx < ffMin || myDeDx > ffMax) && myDeDx > 0 ) return kFALSE;
+  if ( fMyBinBrach ) fEventNum=fEventNumOldVersion;
+  if ( fEventNum != fPrevEvtVeto && fPrevEvtVeto >0) {fCountVeto++;}
+  fPrevEvtVeto = fEventNum;
+  if ( fDEdx!=0 ) fMyDeDx=fDEdx;
+  if ( (fMyDeDx < ffMin || fMyDeDx > ffMax) && fMyDeDx > 0 ) return kFALSE;
   // secure the usage of sign=0 which is sum of + and - particles
   if( !(fSign == fUseSign || fUseSign == 0) ) return kFALSE;
   return kTRUE;
@@ -337,53 +337,53 @@ Bool_t TIdentity2D::GetEntry(Int_t i)
 Int_t TIdentity2D::AddEntry()
 {
 
-  if(evtNum == prevEvt)
+  if(fEventNum == fPrevEvt)
   {
     AddParticles();
   }
   else
   {
-    if(count != 0)
+    if(fCount != 0)
     {
-      countVec.push_back(countPart);
-      countVec2.push_back(countPart*countPart);
-      countVecMix.push_back(countPartNeg*countPartPos);
+      fCountVec.push_back(fCountPart);
+      fCountVec2.push_back(fCountPart*fCountPart);
+      fCountVecMix.push_back(fCountPartNeg*fCountPartPos);
 
-      for(Int_t m = 0; m < TSize; m++)
+      for(Int_t m = 0; m < fTSize; m++)
       {
-        W[m].push_back(W_sum[m]);
-        W2[m].push_back(W_sum[m]*W_sum[m]);
+        W[m].push_back(fW_sum[m]);
+        W2[m].push_back(fW_sum[m]*fW_sum[m]);
       }
       //
       // Debug hists
-      for(Int_t i = 0; i < TSize; i++) fHistWs[i]->Fill(W[i][W[i].size()-1]);
+      for(Int_t i = 0; i < fTSize; i++) fHistWs[i]->Fill(W[i][W[i].size()-1]);
       //
       Int_t t = 0;
-      for(Int_t m = 0; m < TSize-1; m++){
-        for(Int_t n = m+1; n < TSize; n++)
+      for(Int_t m = 0; m < fTSize-1; m++){
+        for(Int_t n = m+1; n < fTSize; n++)
         {
-          Wmixed[t].push_back(W_sum[m]*W_sum[n]);
+          Wmixed[t].push_back(fW_sum[m]*fW_sum[n]);
           t++;
         }
       }
     }
     ResetValues();
-    count = 0;
+    fCount = 0;
     AddParticles();
   }
-  prevEvt = evtNum;
+  fPrevEvt = fEventNum;
   return 1;
 }
 
 void TIdentity2D::ResetValues()
 {
-  for(Int_t s = 0; s < TSize; s++)
+  for(Int_t s = 0; s < fTSize; s++)
   {
-    W_sum[s] = 0.;
+    fW_sum[s] = 0.;
   }
-  countPart    = 0;
-  countPartNeg = 0;
-  countPartPos = 0;
+  fCountPart    = 0;
+  fCountPartNeg = 0;
+  fCountPartPos = 0;
 }
 
 void TIdentity2D::AddParticles()
@@ -391,33 +391,33 @@ void TIdentity2D::AddParticles()
   Double_t mValue[fNParticles] = {0.};
   Double_t sumValue = 0;
 
-  for(Int_t i = 0; i < TSize; i++)
+  for(Int_t i = 0; i < fTSize; i++)
   {
 
-    if( myDeDx < 0 ) { mValue[i] = 0; count++; continue; }
-    mValue[i] = TFunctions[i] -> Eval(myDeDx);
+    if( fMyDeDx < 0 ) { mValue[i] = 0; fCount++; continue; }
+    mValue[i] = TFunctions[i] -> Eval(fMyDeDx);
     sumValue += mValue[i];
   }
   //
   // Debug hists for omega values
-  for(Int_t i = 0; i < TSize; i++) fHistOmegas[i]->Fill(mValue[i]/sumValue);
+  for(Int_t i = 0; i < fTSize; i++) fHistOmegas[i]->Fill(mValue[i]/sumValue);
   //
-  countPart += 1;
+  fCountPart += 1;
   if(fSign == -1)
   {
-    countPartNeg += 1;
+    fCountPartNeg += 1;
   }
   if(fSign == 1)
   {
-    countPartPos += 1;
+    fCountPartPos += 1;
   }
 
   if(sumValue > 1e-10)
   {
-    count++;
-    for(Int_t i = 0; i < TSize; i++)
+    fCount++;
+    for(Int_t i = 0; i < fTSize; i++)
     {
-      W_sum[i] += mValue[i]/sumValue; ;
+      fW_sum[i] += mValue[i]/sumValue; ;
     }
   }
 
@@ -427,33 +427,33 @@ void TIdentity2D::Finalize()
 {
   cout<<" "<<endl;
   cout<<" TIdentity2D::Finalize.Info: ***************************************************"<<endl;
-  cout<<" TIdentity2D::Finalize.Info: ************ number of analyzed events: "<<countVeto+1<<" ******"<<endl;
+  cout<<" TIdentity2D::Finalize.Info: ************ number of analyzed events: "<<fCountVeto+1<<" ******"<<endl;
   cout<<" TIdentity2D::Finalize.Info: ***************************************************"<<endl;
   cout<<" "<<endl;
 
-  for(Int_t m = 0; m < TSize; m++)
+  for(Int_t m = 0; m < fTSize; m++)
   {
-    aver[m]  = accumulate(W[m].begin(),  W[m].end(), 0.0)/countVeto;
-    aver2[m] = accumulate(W2[m].begin(), W2[m].end(), 0.0)/countVeto;
+    fAver[m]  = accumulate(W[m].begin(),  W[m].end(), 0.0)/fCountVeto;
+    fAver2[m] = accumulate(W2[m].begin(), W2[m].end(), 0.0)/fCountVeto;
   }
   Int_t t = 0;
-  for(Int_t m = 0; m < TSize-1; m++){
-    for(Int_t n = m+1; n < TSize; n++)
+  for(Int_t m = 0; m < fTSize-1; m++){
+    for(Int_t n = m+1; n < fTSize; n++)
     {
-      averMixed[t] = accumulate(Wmixed[t].begin(), Wmixed[t].end(), 0.0)/countVeto;
+      fAverMixed[t] = accumulate(Wmixed[t].begin(), Wmixed[t].end(), 0.0)/fCountVeto;
       t++;
     }
   }
 
-  averCount[0] = accumulate(countVec.begin(),  countVec.end(), 0.0)/countVeto;
-  averCount[1] = accumulate(countVec2.begin(),  countVec2.end(), 0.0)/countVeto;
-  averCount[2] = accumulate(countVecMix.begin(),  countVecMix.end(), 0.0)/countVeto;
+  fAverCount[0] = accumulate(fCountVec.begin(),  fCountVec.end(), 0.0)/fCountVeto;
+  fAverCount[1] = accumulate(fCountVec2.begin(),  fCountVec2.end(), 0.0)/fCountVeto;
+  fAverCount[2] = accumulate(fCountVecMix.begin(),  fCountVecMix.end(), 0.0)/fCountVeto;
 
   //
   // Write some output to data
   debugFile->cd();
-  for (Int_t i=0;i<TSize;i++) fHistWs[i]     ->Write();
-  for (Int_t i=0;i<TSize;i++) fHistOmegas[i] ->Write();
+  for (Int_t i=0;i<fTSize;i++) fHistWs[i]     ->Write();
+  for (Int_t i=0;i<fTSize;i++) fHistOmegas[i] ->Write();
   debugFile -> Close();
   delete debugFile;
   //
@@ -463,16 +463,16 @@ void TIdentity2D::Finalize()
 void TIdentity2D::GetBins(const Int_t nExtraBins, Double_t *bins)
 {
   // TString branchNames[nBranches]={"eta","cent","ptot","cRows","tpcchi2"};
-  if (!myBinBrach){
-    bins[0] = evtNum;
-    bins[1] = dEdx;
+  if (!fMyBinBrach){
+    bins[0] = fEventNum;
+    bins[1] = fDEdx;
     bins[2] = fSign;
-    bins[3] = cutBit;
+    bins[3] = fCutBit;
     for (Int_t i=0;i<nExtraBins;i++) bins[i+4] = fBranchVariables[i];
   } else{
-    bins[0] = myBin[0];
-    bins[1] = myBin[1];
-    bins[2] = myBin[2];
+    bins[0] = fMyBin[0];
+    bins[1] = fMyBin[1];
+    bins[2] = fMyBin[2];
     bins[3] = fSign;
   }
 }
@@ -503,8 +503,8 @@ Double_t TIdentity2D::myIntegral(TF1 *Fun)
 {
 
   Double_t xx, sum = 0;
-  Double_t step = (ffMax-ffMin)/(2*size_size);
-  for(Int_t i = 1; i < 2*size_size+1; i++)
+  Double_t step = (ffMax-ffMin)/(2*fSize_size);
+  for(Int_t i = 1; i < 2*fSize_size+1; i++)
   {
     xx  = ffMin + step*i;
     sum += Fun -> Eval(xx);
@@ -516,46 +516,46 @@ void TIdentity2D::AddIntegrals(Int_t lsign)
 {
   if(fUseSign != lsign) return;
 
-  for(Int_t i = 0; i < TSize; i++){
-    for(Int_t j = 0; j < TSize; j++)
+  for(Int_t i = 0; i < fTSize; i++){
+    for(Int_t j = 0; j < fTSize; j++)
     {
       WI[i][j]  += GetIntegral(i,j,1);
       WI2[i][j] += GetIntegral(i,j,2);
     }
   }
 
-  for(Int_t t = 0; t < TSizeMixed; t++){
-    for(Int_t j = 0; j < TSize; j++)
+  for(Int_t t = 0; t < fTSizeMixed; t++){
+    for(Int_t j = 0; j < fTSize; j++)
     {
       WIMix[t][j] +=  GetIntegralMix(t,j);
     }
   }
 
-  for(Int_t i = 0; i < TSize; i++)
+  for(Int_t i = 0; i < fTSize; i++)
   {
-    averI[i] += myIntegral(TFunctions[i])/ffBW;
+    fAverI[i] += myIntegral(TFunctions[i])/ffBW;
   }
 }
 
 Double_t TIdentity2D::GetWI(Int_t i, Int_t j, Int_t k)
 {
-  if(k == 1) return WI[i][j]/averI[j]/ffBW;
-  else if(k ==2) return WI2[i][j]/averI[j]/ffBW;
-  else return WIMix[i][j]/averI[j]/ffBW;
+  if(k == 1) return WI[i][j]/fAverI[j]/ffBW;
+  else if(k ==2) return WI2[i][j]/fAverI[j]/ffBW;
+  else return WIMix[i][j]/fAverI[j]/ffBW;
 }
 
 void TIdentity2D::CalcMoments()
 {
-  Int_t t  = TSize;
-  Int_t tt = TSize;
-  for(Int_t i = 0; i < TSize; i++)
+  Int_t t  = fTSize;
+  Int_t tt = fTSize;
+  for(Int_t i = 0; i < fTSize; i++)
   {
-    t = TSize;
-    for(Int_t j = 0; j < TSize; j++)
+    t = fTSize;
+    for(Int_t j = 0; j < fTSize; j++)
     {
       (*A)(i,j) = GetWI(i,j,1)*GetWI(i,j,1);
-      if(j == TSize -1) continue;
-      for(Int_t k = j+1; k < TSize; k++)
+      if(j == fTSize -1) continue;
+      for(Int_t k = j+1; k < fTSize; k++)
       {
         (*A)(i,t) = 2.*GetWI(i,j,1)*GetWI(i,k,1);
         t++;
@@ -563,17 +563,17 @@ void TIdentity2D::CalcMoments()
     }
   }
 
-  t = TSize;
-  for(Int_t i = 0; i < TSize-1; i++)
+  t = fTSize;
+  for(Int_t i = 0; i < fTSize-1; i++)
   {
-    for(Int_t j = i+1; j < TSize; j++)
+    for(Int_t j = i+1; j < fTSize; j++)
     {
-      tt = TSize;
-      for(Int_t k = 0; k < TSize; k++)
+      tt = fTSize;
+      for(Int_t k = 0; k < fTSize; k++)
       {
         (*A)(t,k) = GetWI(i,k,1)*GetWI(j,k,1);
-        if(k == TSize-1) continue;
-        for(Int_t kk = k+1; kk < TSize; kk++)
+        if(k == fTSize-1) continue;
+        for(Int_t kk = k+1; kk < fTSize; kk++)
         {
           (*A)(t,tt) = GetWI(i,k,1)*GetWI(j,kk,1) + GetWI(i,kk,1)*GetWI(j,k,1);
           tt++;
@@ -585,29 +585,29 @@ void TIdentity2D::CalcMoments()
 
   TMatrixD invA = (*A).Invert();
 
-  for(Int_t i = 0; i < TSize; i++)
+  for(Int_t i = 0; i < fTSize; i++)
   {
-    B[i] = aver2[i];
-    for(Int_t j = 0; j < TSize; j++)
+    B[i] = fAver2[i];
+    for(Int_t j = 0; j < fTSize; j++)
     {
-      B[i] -= aver[j]*(GetWI(i,j,2) - GetWI(i,j,1)*GetWI(i,j,1));
+      B[i] -= fAver[j]*(GetWI(i,j,2) - GetWI(i,j,1)*GetWI(i,j,1));
     }
   }
   Int_t indA, indB;
-  for(Int_t kk = 0; kk < TSizeMixed; kk++)
+  for(Int_t kk = 0; kk < fTSizeMixed; kk++)
   {
-    B[kk+TSize] = averMixed[kk];
+    B[kk+fTSize] = fAverMixed[kk];
     GetIndex(kk, indA, indB);
-    for(Int_t m = 0; m < TSize; m++)
+    for(Int_t m = 0; m < fTSize; m++)
     {
-      B[kk+TSize] -= aver[m]*(GetWI(kk,m,0)-GetWI(indA,m,1)*GetWI(indB,m,1));
+      B[kk+fTSize] -= fAver[m]*(GetWI(kk,m,0)-GetWI(indA,m,1)*GetWI(indB,m,1));
     }
   }
 
-  for(Int_t k = 0; k < sizeMatrix; k++){
-    for(Int_t tt = 0; tt < sizeMatrix; tt++)
+  for(Int_t k = 0; k < fSizeMatrix; k++){
+    for(Int_t tt = 0; tt < fSizeMatrix; tt++)
     {
-      recMoments[k]  += invA(k,tt)*B[tt];
+      fRecMoments[k]  += invA(k,tt)*B[tt];
     }
   }
 }
@@ -619,49 +619,49 @@ void TIdentity2D::GetMoments()
 
 Double_t TIdentity2D::GetSecondMoment(Int_t i)
 {
-  if(i >= sizeMatrix)
+  if(i >= fSizeMatrix)
   {
     cout<<"TIdentity2D::GetSecondMoment.Info: out of bound"<<endl;
     return -1000.;
   }
-  return recMoments[i];
+  return fRecMoments[i];
 }
 
 Double_t TIdentity2D::GetMixedMoment(Int_t i, Int_t j)
 {
   Int_t tmp = i;
-  Int_t ind = TSize-1;
+  Int_t ind = fTSize-1;
   if( i > j) {i = j; j = tmp;}
-  for(Int_t k = 0; k < TSize -1; k++)
+  for(Int_t k = 0; k < fTSize -1; k++)
   {
-    for(Int_t kk = k+1; kk < TSize; kk++)
+    for(Int_t kk = k+1; kk < fTSize; kk++)
     {
       ind++;
       if (i == k && j == kk) break;
     }
     if(i == k) break;
   }
-  return recMoments[ind];
+  return fRecMoments[ind];
 }
 
 Double_t TIdentity2D::GetMean(Int_t i)
 {
-  if(i >= TSize)
+  if(i >= fTSize)
   {
     cout<<"TIdentity2D::GetMean.Info: out of bound"<<endl;
     return -1000.;
   }
-  return aver[i];
+  return fAver[i];
 }
 
 Double_t TIdentity2D::GetMeanI(Int_t i)
 {
-  if(i >= TSize)
+  if(i >= fTSize)
   {
     cout<<"TIdentity2D::GetMeanI.Info: out of bound"<<endl;
     return -1000.;
   }
-  return averI[i];
+  return fAverI[i];
 }
 
 Double_t TIdentity2D::GetNuDyn(Int_t i, Int_t j)
@@ -676,8 +676,8 @@ Double_t TIdentity2D::GetNuDyn(Int_t i, Int_t j)
 Int_t TIdentity2D::GetIndex(Int_t k, Int_t &a, Int_t &b)
 {
   Int_t t = 0;
-  for(Int_t m = 0; m < TSize-1; m++){
-    for(Int_t n = m+1; n < TSize; n++)
+  for(Int_t m = 0; m < fTSize-1; m++){
+    for(Int_t n = m+1; n < fTSize; n++)
     {
       if(t == k) { a = m; b = n; return 1;}
       t++;
