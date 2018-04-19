@@ -15,7 +15,7 @@ ClassImp(TIdentity2D)
 Int_t TIdentity2D::fNParticles=4;
 Int_t TIdentity2D::fNMixParticles=6;
 
-TIdentityFunctions* TIdentity2D::functions = NULL;
+TIdentityFunctions* TIdentity2D::fFunctions = NULL;
 
 TIdentity2D::TIdentity2D()
 {
@@ -49,7 +49,7 @@ void TIdentity2D::InitIden2D(Int_t size)
   cout<<"|_________________________________________________________________________________|"<<endl;
   cout<<" "<<endl;
 
-  debugFile = new TFile("TIdenDebug.root","recreate");
+  fDebugFile = new TFile("TIdenDebug.root","recreate");
   for (Int_t i=0;i<size;i++) {
     fHistWs[i]     = new TH1D(Form("hW_%d",i),Form("hW_%d",i),900,0.,30.);
     fHistOmegas[i] = new TH1D(Form("hOmega_%d",i),Form("hOmega_%d",i),200,0.,1.);
@@ -72,7 +72,7 @@ void TIdentity2D::InitIden2D(Int_t size)
   W         = new vector<double>     [fTSize];
   W2        = new vector<double>     [fTSize];
   Wmixed    = new vector<double> [fTSizeMixed];
-  if(!functions) functions = new TIdentityFunctions();
+  if(!fFunctions) fFunctions = new TIdentityFunctions();
   fW_sum = new Double_t [fTSize];
   fPrevEvt = -1000;
   fAver = new Double_t [fTSize];
@@ -174,33 +174,33 @@ TIdentity2D::~TIdentity2D()
 void TIdentity2D::GetTree(Long_t &nent, TString idenTreeName)
 {
 
-  if (fileName.Contains(".root")) {
-    TIdentityFile = new TFile(fileName);
-    cout<<"TIdentity2D::GetTree.Info: We are reading the file "<<fileName<<endl;
-    TIdentityTree = (TTree*)TIdentityFile->Get(idenTreeName);
+  if (fTIdenFileName.Contains(".root")) {
+    fTIdentityFile = new TFile(fTIdenFileName);
+    cout<<"TIdentity2D::GetTree.Info: We are reading the file "<<fTIdenFileName<<endl;
+    fTIdentityTree = (TTree*)fTIdentityFile->Get(idenTreeName);
   } else {
-    TIdentityTree = GetTreeFromChain(fileName,idenTreeName);
+    fTIdentityTree = GetTreeFromChain(fTIdenFileName,idenTreeName);
   }
-  if (!TIdentityTree) cout << "TIdentity2D::GetTree.Error: tree could not be read" << endl;
+  if (!fTIdentityTree) cout << "TIdentity2D::GetTree.Error: tree could not be read" << endl;
   cout<<"TIdentity2D::GetTree.Info: ======================== "<<endl;
-  TIdentityTree -> GetListOfBranches()->ls();
-  fMyBinBrach = (TBranch*)TIdentityTree->FindBranch("myBin");
+  fTIdentityTree -> GetListOfBranches()->ls();
+  fMyBinBrach = (TBranch*)fTIdentityTree->FindBranch("myBin");
   cout<<"TIdentity2D::GetTree.Info: ======================== "<<endl;
   if (!fMyBinBrach){ // new version of tree format
-    TIdentityTree -> SetBranchAddress("gid"    ,&fEventNum);
-    TIdentityTree -> SetBranchAddress("dEdx"   ,&fDEdx);
-    TIdentityTree -> SetBranchAddress("sign"   ,&fSign);
-    TIdentityTree -> SetBranchAddress("cutBit" ,&fCutBit);
+    fTIdentityTree -> SetBranchAddress("gid"    ,&fEventNum);
+    fTIdentityTree -> SetBranchAddress("dEdx"   ,&fDEdx);
+    fTIdentityTree -> SetBranchAddress("sign"   ,&fSign);
+    fTIdentityTree -> SetBranchAddress("cutBit" ,&fCutBit);
     for (Int_t i=0;i<fNBranches;i++){
-      TIdentityTree -> SetBranchAddress(fBranchNames[i] ,&fBranchVariables[i]);
+      fTIdentityTree -> SetBranchAddress(fBranchNames[i] ,&fBranchVariables[i]);
     }
   } else { // old version of tree format
-    TIdentityTree -> SetBranchAddress("sign",&fSign);
-    TIdentityTree -> SetBranchAddress("myBin",fMyBin);
-    TIdentityTree -> SetBranchAddress("myDeDx",&fMyDeDx);
-    TIdentityTree -> SetBranchAddress("evtNum",&fEventNumOldVersion);
+    fTIdentityTree -> SetBranchAddress("sign",&fSign);
+    fTIdentityTree -> SetBranchAddress("myBin",fMyBin);
+    fTIdentityTree -> SetBranchAddress("myDeDx",&fMyDeDx);
+    fTIdentityTree -> SetBranchAddress("evtNum",&fEventNumOldVersion);
   }
-  fTreeEntries = (Long_t)TIdentityTree -> GetEntries();
+  fTreeEntries = (Long_t)fTIdentityTree -> GetEntries();
   nent = fTreeEntries;
   InitFunctions();
 }
@@ -225,7 +225,7 @@ Double_t TIdentity2D::GetValue(Double_t *xval, Double_t *par)
 {
   Double_t xx = xval[0];
   Int_t index = (Int_t)par[0];
-  return functions -> GetValue(index, xx);
+  return fFunctions -> GetValue(index, xx);
 }
 
 Double_t TIdentity2D::GetFunctions(Double_t *xx, Double_t *par)
@@ -237,7 +237,7 @@ Double_t TIdentity2D::GetFunctions(Double_t *xx, Double_t *par)
   Double_t sumVal = 0;
   for(Int_t ii = 0; ii < fNParticles; ii++)
   {
-    val[ii] = functions -> GetValue(ii, xx[0]);
+    val[ii] = fFunctions -> GetValue(ii, xx[0]);
     sumVal += val[ii];
   }
   Double_t relVal[fNParticles];
@@ -258,7 +258,7 @@ Double_t TIdentity2D::GetFunctionsMix(Double_t *xx, Double_t *par)
   Double_t sumVal = 0;
   for(Int_t ii = 0; ii < fNParticles; ii++)
   {
-    val[ii] = functions -> GetValue(ii, xx[0]);
+    val[ii] = fFunctions -> GetValue(ii, xx[0]);
     sumVal += val[ii];
   }
   if(sumVal < 1e-15) return 0.;
@@ -278,41 +278,41 @@ void TIdentity2D::InitFunctions()
 {
   for(Int_t i = 0; i < fTSize+1; i++)
   {
-    sprintf(TFunctionsName,"func[%d]",i);
-    TFunctions[i] = new TF1(TFunctionsName,GetValue, ffMin, ffMax,1);
-    TFunctions[i] -> SetParameter(0,i);
+    sprintf(fTFunctionsName,"func[%d]",i);  // ??? function names ???
+    fTFunctions[i] = new TF1(fTFunctionsName,GetValue, ffMin, ffMax,1);
+    fTFunctions[i] -> SetParameter(0,i);
   }
 
   for(Int_t i = 0; i < fTSize; i++){
     for(Int_t j = 0; j < fTSize; j++)
     {
-      sprintf(TFunctionsName,"Ifunc[%d][%d]",i,j);
-      IFunctions[i][j] = new TF1(TFunctionsName,GetFunctions,ffMin,ffMax,3);
-      IFunctions[i][j] -> SetParameter(0,i);
-      IFunctions[i][j] -> SetParameter(1,j);
-      IFunctions[i][j] -> SetParameter(2,1);
+      sprintf(fTFunctionsName,"Ifunc[%d][%d]",i,j);
+      fIFunctions[i][j] = new TF1(fTFunctionsName,GetFunctions,ffMin,ffMax,3);
+      fIFunctions[i][j] -> SetParameter(0,i);
+      fIFunctions[i][j] -> SetParameter(1,j);
+      fIFunctions[i][j] -> SetParameter(2,1);
 
-      sprintf(TFunctionsName,"Ifunc2[%d][%d]",i,j);
-      IFunctions2[i][j] = new TF1(TFunctionsName,GetFunctions,ffMin,ffMax,3);
-      IFunctions2[i][j] -> SetParameter(0,i);
-      IFunctions2[i][j] -> SetParameter(1,j);
-      IFunctions2[i][j] -> SetParameter(2,2);
+      sprintf(fTFunctionsName,"Ifunc2[%d][%d]",i,j);
+      fIFunctions2[i][j] = new TF1(fTFunctionsName,GetFunctions,ffMin,ffMax,3);
+      fIFunctions2[i][j] -> SetParameter(0,i);
+      fIFunctions2[i][j] -> SetParameter(1,j);
+      fIFunctions2[i][j] -> SetParameter(2,2);
     }
   }
   for(Int_t i = 0; i < fTSizeMixed; i++){
     for(Int_t j = 0; j < fTSize; j++)
     {
-      sprintf(TFunctionsName,"IfuncMix[%d][%d]",i,j);
-      IFunctionsMix[i][j] = new TF1(TFunctionsName,GetFunctionsMix,ffMin,ffMax,2);
-      IFunctionsMix[i][j] -> SetParameter(0,i);
-      IFunctionsMix[i][j] -> SetParameter(1,j);
+      sprintf(fTFunctionsName,"IfuncMix[%d][%d]",i,j);
+      fIFunctionsMix[i][j] = new TF1(fTFunctionsName,GetFunctionsMix,ffMin,ffMax,2);
+      fIFunctionsMix[i][j] -> SetParameter(0,i);
+      fIFunctionsMix[i][j] -> SetParameter(1,j);
     }
   }
 }
 
 void TIdentity2D::SetFunctionPointers(fptr fun)
 {
-    functions -> funs = fun;
+    fFunctions -> funs = fun;
 }
 
 void TIdentity2D::Run()
@@ -323,7 +323,7 @@ void TIdentity2D::Run()
 Bool_t TIdentity2D::GetEntry(Int_t i)
 {
   if(i%5000000 == 0) cout<<" TIdentity2D::GetEntry.Info: track "<<i<<" of "<<fTreeEntries <<endl;
-  TIdentityTree -> GetEntry(i);
+  fTIdentityTree -> GetEntry(i);
   if ( fMyBinBrach ) fEventNum=fEventNumOldVersion;
   if ( fEventNum != fPrevEvtVeto && fPrevEvtVeto >0) {fCountVeto++;}
   fPrevEvtVeto = fEventNum;
@@ -395,7 +395,7 @@ void TIdentity2D::AddParticles()
   {
 
     if( fMyDeDx < 0 ) { mValue[i] = 0; fCount++; continue; }
-    mValue[i] = TFunctions[i] -> Eval(fMyDeDx);
+    mValue[i] = fTFunctions[i] -> Eval(fMyDeDx);
     sumValue += mValue[i];
   }
   //
@@ -451,11 +451,11 @@ void TIdentity2D::Finalize()
 
   //
   // Write some output to data
-  debugFile->cd();
+  fDebugFile->cd();
   for (Int_t i=0;i<fTSize;i++) fHistWs[i]     ->Write();
   for (Int_t i=0;i<fTSize;i++) fHistOmegas[i] ->Write();
-  debugFile -> Close();
-  delete debugFile;
+  fDebugFile -> Close();
+  delete fDebugFile;
   //
 
 }
@@ -481,15 +481,15 @@ Double_t TIdentity2D::GetIntegral(Int_t i, Int_t j, Int_t k)
 {
   if(k == 1)
   {
-    return myIntegral(IFunctions[i][j]);
+    return myIntegral(fIFunctions[i][j]);
   }
   else
-  return myIntegral(IFunctions2[i][j]);
+  return myIntegral(fIFunctions2[i][j]);
 }
 
 Double_t TIdentity2D::GetIntegralMix(Int_t i, Int_t j)
 {
-  return myIntegral(IFunctionsMix[i][j]);
+  return myIntegral(fIFunctionsMix[i][j]);
 }
 
 void TIdentity2D::SetLimits(Float_t min, Float_t max, Double_t BW)
@@ -533,7 +533,7 @@ void TIdentity2D::AddIntegrals(Int_t lsign)
 
   for(Int_t i = 0; i < fTSize; i++)
   {
-    fAverI[i] += myIntegral(TFunctions[i])/ffBW;
+    fAverI[i] += myIntegral(fTFunctions[i])/ffBW;
   }
 }
 

@@ -29,45 +29,52 @@ public:
     TIdentity2D();
     TIdentity2D(Int_t size);
     virtual ~TIdentity2D();
+    //
+    //
     static Double_t GetValue(Double_t *, Double_t *);
     static Double_t GetFunctions(Double_t *, Double_t *);
     static Double_t GetFunctionsMix(Double_t *, Double_t *);
-    void InitIden2D(Int_t );
-    void CalcMoments();
-    void GetMoments();
-    Double_t GetSecondMoment(Int_t);
-    Double_t GetMixedMoment(Int_t, Int_t);
-    Double_t GetNuDyn(Int_t, Int_t);
-    Double_t GetMean(Int_t);
-    Double_t GetMeanI(Int_t);
-    virtual void SetFunctionPointers(fptr);
-    virtual void Run();
-    void SetFileName(TString  _fileName)   { fileName  = _fileName;  }
-    Int_t GetIndex(Int_t, Int_t&, Int_t&);
-    Int_t AddEntry();
-    Bool_t GetEntry(Int_t);
-    void GetTree(Long_t &n, TString idenTreeName);
-    TTree *GetTreeFromChain(TString treeList, TString treeName);
-    void Finalize();
-    void GetBins(const Int_t nExtraBins, Double_t *);
-
-    void InitFunctions();
-    //Int_t makeDebug();
-    void ResetValues();
-    void AddParticles();
-    static TIdentityFunctions *functions;
-
-    Double_t GetIntegral(Int_t, Int_t, Int_t);
-    Double_t GetIntegralMix(Int_t, Int_t);
-    void AddIntegrals(Int_t);
-    Double_t GetWI(Int_t, Int_t, Int_t);
-    void SetLimits(Float_t, Float_t, Double_t);
-    Int_t GetNEvents() const {return fCountVeto;}
-    void SetUseSign(Int_t _useSign) {fUseSign = _useSign;}
-    void Reset();
-
-    Double_t GetDeDx() { return fMyDeDx; }
-
+    static TIdentityFunctions *fFunctions;
+    //
+    //
+    void            InitIden2D(Int_t );
+    void            CalcMoments();
+    void            GetMoments();
+    void            SetFileName(TString  _fileName)   { fTIdenFileName  = _fileName;  }
+    void            GetTree(Long_t &n, TString idenTreeName);
+    void            Finalize();
+    void            GetBins(const Int_t nExtraBins, Double_t *);
+    void            InitFunctions();
+    void            ResetValues();
+    void            AddParticles();
+    void            AddIntegrals(Int_t);
+    void            SetLimits(Float_t, Float_t, Double_t);
+    void            SetUseSign(Int_t _useSign) {fUseSign = _useSign;}
+    void            Reset();
+    //
+    //
+    virtual void    SetFunctionPointers(fptr);
+    virtual void    Run();
+    //
+    //
+    Double_t        GetSecondMoment(Int_t);
+    Double_t        GetMixedMoment(Int_t, Int_t);
+    Double_t        GetNuDyn(Int_t, Int_t);
+    Double_t        GetMean(Int_t);
+    Double_t        GetMeanI(Int_t);
+    Double_t        myIntegral(TF1*);
+    Double_t        GetIntegral(Int_t, Int_t, Int_t);
+    Double_t        GetIntegralMix(Int_t, Int_t);
+    Double_t        GetWI(Int_t, Int_t, Int_t);
+    Double_t        GetDeDx() { return fMyDeDx; }
+    Double_t        GetAverCount(Int_t i) { return fAverCount[i]; }
+    Int_t           GetIndex(Int_t, Int_t&, Int_t&);
+    Int_t           AddEntry();
+    Int_t           GetNEvents() const {return fCountVeto;}
+    Bool_t          GetEntry(Int_t);
+    TTree          *GetTreeFromChain(TString treeList, TString treeName);
+    //
+    //
     void SetBranchNames(const Int_t tmpNBranches, TString tmpBranchNameArr[])
     {
       fNBranches = tmpNBranches;
@@ -79,7 +86,6 @@ public:
       }
     }
 
-    Double_t GetAverCount(Int_t i) { return fAverCount[i]; }
 
 private:
 
@@ -122,19 +128,17 @@ private:
     UInt_t        fCutBit;
     Long_t        fTreeEntries;
 
-    TFile        *TIdentityFile;
-    TFile        *debugFile;
-    TTree        *TIdentityTree;
+    TFile        *fTIdentityFile;
+    TFile        *fDebugFile;
+    TTree        *fTIdentityTree;
     TH1D         *fHistWs[4];
     TH1D         *fHistOmegas[4];
-    TString  fileName;
-    Char_t TFunctionsName[255];
-    TF1 *TFunctions[10];
-    TF1 *IFunctions[50][50];
-    TF1 *IFunctions2[50][50];
-    TF1 *IFunctionsMix[50][50];
-
-    Double_t myIntegral(TF1*);
+    TString       fTIdenFileName;
+    Char_t        fTFunctionsName[255];
+    TF1          *fTFunctions[10];
+    TF1          *fIFunctions[50][50];
+    TF1          *fIFunctions2[50][50];
+    TF1          *fIFunctionsMix[50][50];
 
     std::vector<double> *W;
     std::vector<double> *W2;

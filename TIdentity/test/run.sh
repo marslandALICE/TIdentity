@@ -6,7 +6,7 @@
 lineShapes=/u/marsland/PHD/macros/marsland_EbyeRatios/schleching/data/trees/FitResults_piS0.7_kaS0.5_prS0.5_pikaprKauto.root
 
 # ./testIden $dataTree $lineShapes $fSubsample $fSign $fCent $fpDown $fpUp $fEtaDown $fEtaUp $fSystematic
-./testIden   $dataTree $lineShapes      1        0       0     0.2     1.    -0.8      0.8         0
+./testIden   $dataTree $lineShapes      1        1       0     0.2     1.    -0.8      0.8         0
 
 
 # $fSystematic
