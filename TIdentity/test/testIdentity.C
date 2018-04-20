@@ -140,7 +140,7 @@ Double_t nnorm   = 1.;
 Int_t fEtaBin, fCentBin, fMomBin, fSignBin;
 Int_t fUsedBins[fnEtaBins][fnCentBins][fnMomBins][fnSignBins];
 UInt_t fCutBit;
-const Int_t nMoments = 15;
+const Int_t nMoments = 14;
 TVectorF *fIntegrals, *fIntegralsPos, *fIntegralsNeg;
 TVectorF *fMmoments,  *fMmomentsPos,  *fMmomentsNeg;
 //
@@ -240,14 +240,22 @@ int main(int argc, char *argv[])
     //
     if( !iden4 ->  GetEntry(i) ) continue;
     iden4      ->  GetBins(nBranches, fTreeVariablesArray);    // reads identity tree and retrives mybin[] info
+    if(i%2000000 == 0) {
+      cout << " main.Info: track " << i << " of " << nEntries;
+      cout << " -- bin 0 =  " << fTreeVariablesArray[0];
+      cout << " -- bin 1 =  " << fTreeVariablesArray[1];
+      cout << " -- bin 2 =  " << fTreeVariablesArray[2];
+      cout << " -- bin 3 =  " << fTreeVariablesArray[3] << endl;
+    }
     //
     // Choose which kind of tree input is used
     if (treeIdentity=="fIdenTree"){
+      // Dikkkkaaaaat this is for backward compatibility
       fEtaBin  = Int_t(fTreeVariablesArray[0]);
       fCentBin = Int_t(fTreeVariablesArray[1]);
       fMomBin  = Int_t(fTreeVariablesArray[2]);
-      if (Int_t(fTreeVariablesArray[2])==-1) fSignBin=0;
-      if (Int_t(fTreeVariablesArray[2])== 1) fSignBin=1;
+      if (Int_t(fTreeVariablesArray[3])==-1) fSignBin=0;
+      if (Int_t(fTreeVariablesArray[3])== 1) fSignBin=1;
     }
     if(treeIdentity=="tracks") {
       if (Int_t(fTreeVariablesArray[2])==-1) fSignBin=0;
@@ -257,7 +265,8 @@ int main(int argc, char *argv[])
       fCentBin = fhCent -> FindBin(fTreeVariablesArray[5] + 0.0000001) -1;
       fMomBin  = fhPtot -> FindBin(fTreeVariablesArray[6] + 0.0000001) -1;
       if (!ApplyTreeSelection(fCutBit,fSystematic)) continue;
-      fChi2->Fill(fTreeVariablesArray[8]); fcRows->Fill(fTreeVariablesArray[7]);
+      fChi2->Fill(fTreeVariablesArray[8]);
+      fcRows->Fill(fTreeVariablesArray[7]);
     }
     //
     //
@@ -296,8 +305,8 @@ int main(int argc, char *argv[])
   iden4 -> CalcMoments();
   //
   // Retrive Moments
-  if (fSignInput==0)  RetrieveMoments(iden4,fMmoments,fIntegrals);
-  if (fSignInput==1)  RetrieveMoments(iden4,fMmomentsPos,fIntegrals);
+  if (fSignInput== 0)  RetrieveMoments(iden4,fMmoments,fIntegrals);
+  if (fSignInput== 1)  RetrieveMoments(iden4,fMmomentsPos,fIntegrals);
   if (fSignInput==-1) RetrieveMoments(iden4,fMmomentsNeg,fIntegrals);
   cout << "====================================" << endl;
   cout << " main.Info: calculation is finished " << endl;
@@ -305,11 +314,15 @@ int main(int argc, char *argv[])
   cout << "====================================" << endl;
   //
   // Fill output tree
+  cout << " main.Info: fill tree " << endl;
   momTree -> Fill();
   //
   // Close file and clear memory
+  cout << " main.Info: dump output " << endl;
   outFile -> cd();
-  fChi2->Write("fChi2"); fcRows->Write("fcRows"); momTree -> Write();
+  fChi2   -> Write("fChi2");
+  fcRows  -> Write("fcRows");
+  momTree -> Write();
   outFile -> Close();
   delete outFile; //yeni eklave etdim.
   delete iden4;
@@ -408,6 +421,8 @@ Bool_t ApplyTreeSelection(UInt_t cut, Int_t syst)
   for (Int_t i=0;i<fnCutBins;i++){
     if( ((cut >> fCutArr[i]) & 1) == 0 ) return kFALSE;
   }
+
+  return kTRUE;
 
 }
 // -----------------------------------------------------------------------------------------
@@ -540,7 +555,9 @@ void ReadFitParamsFromTree(TString paramTreeName, Int_t fitIter)
   {
     // myBin[0] --> Eta, myBin[1]--> Centrality, myBin[2]-->Momentum
     treeLookUp -> GetEntry(i);
-    signBin = sign+1;
+    // signBin = sign+1;
+    if (sign==-1) signBin=0;
+    if (sign== 1) signBin=1;
 
     // Analyse only 4 iteration of the iterative fitting procedure
     if (it != fitIter) continue;

@@ -26,11 +26,11 @@ Double_t  EvalFitValue(Int_t particle, Double_t x);
 //
 // ======= Modification Part =============================================================================
 const Int_t fnParticleBins       = 5;
-Int_t       fnSignBins           = 2;
+Int_t       fnSignBins           = 3;
 TString     treeIdentity         = "tracks";
 TString     lookUpCloneArrayName = "funcLineShapesCArr";
-const Int_t nBinsLineShape       = 1000;
-Int_t       fnTestEntries        = 0;
+const Int_t nBinsLineShape       = 100;
+Int_t       fnTestEntries        = 10000;
 Bool_t      lookUpTableForLine   = kFALSE;
 Int_t       lookUpTableLineMode  = 0;
 //
@@ -59,6 +59,8 @@ TClonesArray *cloneArrFunc=NULL;
 TH1D ***hLineShape;
 TF1 ***fLineShape;
 TFile *outFile;
+TH1D *hDedxDebug;
+static TH1D *hDedxDebugLineShapes[fnParticleBins];
 enum momentType{kEl=0,kPi=1,kKa=2,kPr=3,kDe=4,
   kElEl=5,kPiPi=6,kKaKa=7,kPrPr=8,kDeDe=9,
   kElPi=10,kElKa=11,kElPr=12,kElDe=13,
@@ -103,7 +105,7 @@ int main(int argc, char *argv[])
   iden4 -> SetFileName(fileNameDataTree);
   iden4 -> SetBranchNames(nBranches,branchNames);
   iden4 -> SetFunctionPointers(EvalFitValue);
-  iden4 -> SetLimits(0.,1020.,10.); // --> (dEdxMin,dEdxMax,binwidth), if slice histograms are scaled wrt binwidth, then binwidth=1
+  iden4 -> SetLimits(0.,50.,50./1500.); // --> (dEdxMin,dEdxMax,binwidth), if slice histograms are scaled wrt binwidth, then binwidth=1
   iden4 -> SetUseSign(fUsedSign);  // pass input sign value to TIdentity module
   Long_t nEntries;
   iden4 -> GetTree(nEntries,treeIdentity);
@@ -119,30 +121,42 @@ int main(int argc, char *argv[])
     // Read the entries and corresponding bins
     if( !iden4 ->  GetEntry(i) ) continue;
     iden4 -> GetBins(nBranches, fTreeVariablesArray);    // reads identity tree and retrives mybin[] info
+    if(i%2000000 == 0) {
+      cout << " main.Info: track " << i << " of " << nEntries;
+      cout << " -- used sign  =  " << fSignBin << "   " << fTreeVariablesArray[2] << endl;
+    }
     //
     if (fTreeVariablesArray[2]==-1) fSignBin=0;
     if (fTreeVariablesArray[2]== 1) fSignBin=1;
     //
     // tag the bins an read only required bins
-    if (fUsedSign==0) { fUsedBins[fSignBin] = 1; iden4 -> AddEntry(); countEntry++;}
-    else { fUsedBins[fSignBin] = 1; iden4 -> AddEntry(); countEntry++;}
-    //
-    if(i%1000000==0) cout << "main.Info: used sign  =  " << fSignBin << "   " << fTreeVariablesArray[2] << endl;
+    if (fUsedSign==0) { fUsedBins[fSignBin] = 1; iden4 -> AddEntry(); countEntry++; hDedxDebug->Fill(fTreeVariablesArray[1]);}
+    else { fUsedBins[fSignBin] = 1; iden4 -> AddEntry(); countEntry++; hDedxDebug->Fill(fTreeVariablesArray[1]); }
 
   }
   cout << "main.Info: Total number of tracks processed = " << countEntry << endl;
   iden4 -> Finalize();
   //
   // Calculate 2. order moments only for full range
-  for(Int_t isign = 0; isign < fnSignBins; isign++) {
+  for(Int_t isign = 0; isign < fnSignBins-1; isign++) {
     if(fUsedBins[isign] != 1) continue;
-    cout << "main.Info: used sign  =  " << isign << endl;
+    cout << " main.Info: used sign Bin  =  " << isign << endl;
+    if (fUsedSign==0) fSignBin=2;
     fSignBin = isign;     // to be used in retrival of obj from the lookup table
     iden4  -> AddIntegrals(fUsedSign); // real sign information passed for the check with real data tree
   }
   //
   iden4 -> CalcMoments();
   RetrieveMoments(iden4,fMmoments,fIntegrals);
+  outFile->cd();
+  for (Int_t i=0;i<fnParticleBins;i++){
+    hDedxDebugLineShapes[i] = (TH1D*)hLineShape[i][fSignBin]->Clone();
+    hDedxDebugLineShapes[i]->SetName(Form("debug_%d",i));
+    hDedxDebugLineShapes[i]->Write();
+  }
+  hDedxDebug->Write();
+  outFile -> Close();
+  delete outFile; //yeni eklave etdim.
   delete iden4;
   return 1;
 }
@@ -163,9 +177,19 @@ void ReadFitParamsFromLineShapes(TString paramTreeName)
       fLineShape[ipart][isign]->SetNpx(nBinsLineShape);
       hLineShape[ipart][isign] = (TH1D*)fLineShape[ipart][isign]->GetHistogram();
       hLineShape[ipart][isign]->SetName(objName);
-      outFile->cd();
-      fLineShape[ipart][isign]->Write();
+    }
+  }
+  //
+  // save lookup for debugging
+  outFile->cd();
+  for (Int_t ipart = 0; ipart<fnParticleBins; ipart++){
+    for (Int_t isign = 0; isign<fnSignBins; isign++){
       hLineShape[ipart][isign]->Write();
+    }
+  }
+  for (Int_t ipart = 0; ipart<fnParticleBins; ipart++){
+    for (Int_t isign = 0; isign<fnSignBins; isign++){
+      fLineShape[ipart][isign]->Write();
     }
   }
 
@@ -191,6 +215,7 @@ void InitializeObjects()
   cout << " ================================================================================= " << endl;
   //
   outFile = new TFile("toyMC_Gen_vs_Rec.root","recreate");
+  hDedxDebug = new TH1D("hDedxDebug","hDedxDebug",1500,0.,50.);
   //
   fMmoments  = new TVectorF(nMoments);
   fIntegrals = new TVectorF(nMoments);
@@ -261,6 +286,11 @@ void RetrieveMoments(TIdentity2D *tidenObj, TVectorF *vecMom, TVectorF *vecInt)
   cout << " #Particles  : " << fnParticleBins << endl;
   cout << " events      : " << nEvents+1 << endl;
   cout << " ================================================================================== "<<endl;
+  cout << " electron    : "<< (*vecMom)[kEl]   <<" int: "<< (*vecInt)[kEl] << "  ratio: " << (*vecMom)[kEl]/((*vecInt)[kEl]) << endl;
+  cout << " pion        : "<< (*vecMom)[kPi]   <<" int: "<< (*vecInt)[kPi] << "  ratio: " << (*vecMom)[kPi]/((*vecInt)[kPi]) << endl;
+  cout << " kaon        : "<< (*vecMom)[kKa]   <<" int: "<< (*vecInt)[kKa] << "  ratio: " << (*vecMom)[kKa]/((*vecInt)[kKa]) << endl;
+  cout << " proton      : "<< (*vecMom)[kPr]   <<" int: "<< (*vecInt)[kPr] << "  ratio: " << (*vecMom)[kPr]/((*vecInt)[kPr]) << endl;
+  cout << " ================================================================================== "<<endl;
   cout << " electron    : "<< (*vecMom)[kEl]   <<" int: "<< (*vecInt)[kEl]*nnorm << "  ratio: " << (*vecMom)[kEl]/((*vecInt)[kEl]*nnorm) << endl;
   cout << " pion        : "<< (*vecMom)[kPi]   <<" int: "<< (*vecInt)[kPi]*nnorm << "  ratio: " << (*vecMom)[kPi]/((*vecInt)[kPi]*nnorm) << endl;
   cout << " kaon        : "<< (*vecMom)[kKa]   <<" int: "<< (*vecInt)[kKa]*nnorm << "  ratio: " << (*vecMom)[kKa]/((*vecInt)[kKa]*nnorm) << endl;
@@ -271,9 +301,9 @@ void RetrieveMoments(TIdentity2D *tidenObj, TVectorF *vecMom, TVectorF *vecInt)
   cout << " proton2     : "<< (*vecMom)[kPrPr]  <<endl;
 
   TFile *fGen = new TFile("toyMC_Moments_Gen.root");
-  TH1D *hGen   = (TH1D*)fGen->Get("hGen");
-  TH1D *hRec   = (TH1D*)hGen->Clone();   hRec->SetName("hRec");
-  TH1D *hRatio = (TH1D*)hGen->Clone();   hRatio->SetName("hRatio");
+  TH1D *hGen   = (TH1D*)fGen->Get("hGen"); hGen->SetLineColor(kBlack);
+  TH1D *hRec   = (TH1D*)hGen->Clone();   hRec->SetName("hRec"); hRec->SetLineColor(kRed+1);
+  TH1D *hRatio = (TH1D*)hGen->Clone();   hRatio->SetName("hRatio"); hRatio->GetYaxis()->SetTitle("gen/rec");
   for (Int_t i=1;i<nMoments+1;i++) {
     cout << momNames[i-1] << "  " << (*vecMom)[i-1] << endl;
     hRec->SetBinContent(i,(*vecMom)[i-1]);
@@ -295,8 +325,5 @@ void RetrieveMoments(TIdentity2D *tidenObj, TVectorF *vecMom, TVectorF *vecInt)
   hRec->Write();
   hGen->Write();
   hRatio->Write();
-  outFile -> Close();
-  delete outFile; //yeni eklave etdim.
-
 
 }

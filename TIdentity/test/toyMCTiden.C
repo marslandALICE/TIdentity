@@ -2,6 +2,7 @@
 #include "TH1.h"
 #include "TF1.h"
 #include "TRandom.h"
+#include "TCanvas.h"
 #include "TVectorF.h"
 #include "TClonesArray.h"
 #include "TTreeStream.h"
@@ -16,8 +17,7 @@ using std::setw;
 
 void PrintMoments();
 void PlotdEdx(Int_t sign);
-
-
+void PlotWs();
 
 /*
 
@@ -25,12 +25,13 @@ cd /u/marsland/PHD/macros/marsland_EbyeRatios/schleching/TIdentity/TIdentity/tes
 aliroot -l
 .L toyMCTiden.C+
 toyMCTiden()
-
 PlotdEdx(0)
+
+PlotWs()
 
 */
 Int_t switchOffParticle=-100;   // default = -100 for 4 particles
-Int_t fUsedSign = 1;
+Int_t fUsedSign = -1;
 const Int_t nParticles=5;
 const Int_t nSignBins =3;
 const Int_t nMoments = 19;
@@ -332,5 +333,51 @@ void PlotdEdx(Int_t sign){
   for (Int_t ipart = 0; ipart<nParticles; ipart++){
     fShape[ipart]->Draw("same");
   }
+
+}
+
+void PlotWs(){
+
+
+  TFile *f = new TFile("dataTree_10M.root");
+  TTree *tree = (TTree*)f->Get("tracks");
+  TFile *g = new TFile("LineShapes_10M.root");
+  TFile *h = new TFile("TIdenDebug_10M.root");
+  TClonesArray *cloneArrFunc = (TClonesArray*)g->Get("funcLineShapesCArr");
+  TF1 *fShape[4];
+  TH1D *hW[4];
+  TH1D *hN[4];
+
+  for (Int_t ipart = 0; ipart<4; ipart++) {
+    TString objName = Form("particle_%d",ipart);
+    fShape[ipart] = (TF1*)cloneArrFunc->FindObject(objName);
+    hN[ipart]     = (TH1D*)g->Get(Form("mom1_%d",ipart));
+    hW[ipart]     = (TH1D*)h->Get(Form("hW_%d",ipart));
+
+    hW[ipart] -> SetLineColor(colors[ipart+1]);
+    hN[ipart] -> SetLineColor(colors[ipart+1]);
+  }
+  //
+  // tree->Draw("dEdx>>h(900,0,30)");
+  // for (Int_t ipart = 0; ipart<4; ipart++){
+  //   fShape[ipart]->Draw("same");
+  // }
+
+  TCanvas *can = new TCanvas("can", "can", 1200, 600);
+  can->Divide(4,2);
+  can->cd(1); hW[0] -> Draw();
+  can->cd(5); hN[0] -> Draw();
+
+  can->cd(2); hW[1] -> Draw();
+  can->cd(6); hN[1] -> Draw();
+
+  can->cd(3); hW[2] -> Draw();
+  can->cd(7); hN[2] -> Draw();
+
+  can->cd(4); hW[3] -> Draw();
+  can->cd(8); hN[3] -> Draw();
+
+
+
 
 }
