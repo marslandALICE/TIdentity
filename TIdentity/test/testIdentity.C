@@ -225,7 +225,7 @@ int main(int argc, char *argv[])
   iden4 -> SetBranchNames(nBranches,branchNames);
   iden4 -> SetFileName(fileNameDataTree);
   iden4 -> SetFunctionPointers(EvalFitValue);
-  iden4 -> SetLimits(0.,1020.,10.); // --> (dEdxMin,dEdxMax,binwidth), if slice histograms are scaled wrt binwidth, then binwidth=1
+  iden4 -> SetLimits(20.,1020.,250.,1500.,10); // --> (dEdxMin,dEdxMax,binwidth), if slice histograms are scaled wrt binwidth, then binwidth=1
   iden4 -> SetUseSign(fSignInput);  // pass input sign value to TIdentity module
   Long_t nEntries;
   iden4 -> GetTree(nEntries,treeIdentity);

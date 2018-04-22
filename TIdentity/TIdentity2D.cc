@@ -12,8 +12,8 @@
 using namespace std;
 ClassImp(TIdentity2D)
 
-Int_t TIdentity2D::fNParticles=4;
-Int_t TIdentity2D::fNMixParticles=6;
+Int_t TIdentity2D::fNParticles;
+Int_t TIdentity2D::fNMixParticles;
 
 TIdentityFunctions* TIdentity2D::fFunctions = NULL;
 
@@ -49,11 +49,7 @@ void TIdentity2D::InitIden2D(Int_t size)
   cout<<"|_________________________________________________________________________________|"<<endl;
   cout<<" "<<endl;
 
-  fDebugFile = new TFile("TIdenDebug.root","recreate");
-  for (Int_t i=0;i<size;i++) {
-    fHistWs[i]     = new TH1D(Form("hW_%d",i),Form("hW_%d",i),900,0.,30.);
-    fHistOmegas[i] = new TH1D(Form("hOmega_%d",i),Form("hOmega_%d",i),200,0.,1.);
-  }
+  fDebugFile    = new TFile("TIdenDebug.root","recreate");
   fCountPart    = 0;
   fCountPartNeg = 0;
   fCountPartPos = 0;
@@ -372,7 +368,9 @@ Int_t TIdentity2D::AddEntry()
       }
       //
       // Debug hists
-      for(Int_t i = 0; i < fTSize; i++) fHistWs[i]->Fill(fW[i][fW[i].size()-1]);
+      for(Int_t i = 0; i < fTSize; i++) {
+        fHistWs[i]->Fill(fW[i][fW[i].size()-1]);
+      }
       //
       Int_t t = 0;
       for(Int_t m = 0; m < fTSize-1; m++){
@@ -404,7 +402,7 @@ void TIdentity2D::ResetValues()
 
 void TIdentity2D::AddParticles()
 {
-  Double_t mValue[fNParticles] = {0.};
+  Double_t mValue[fTSize] = {0.};
   Double_t sumValue = 0;
 
   for(Int_t i = 0; i < fTSize; i++)
@@ -416,7 +414,9 @@ void TIdentity2D::AddParticles()
   }
   //
   // Debug hists for omega values
-  for(Int_t i = 0; i < fTSize; i++) fHistOmegas[i]->Fill(mValue[i]/sumValue);
+  for(Int_t i = 0; i < fTSize; i++) {
+    fHistOmegas[i]->Fill(mValue[i]/sumValue);
+  }
   //
   fCountPart += 1;
   if(fSign == -1)
@@ -468,8 +468,8 @@ void TIdentity2D::Finalize()
   //
   // Write some output to data
   fDebugFile->cd();
-  for (Int_t i=0;i<fTSize;i++) fHistWs[i]     ->Write();
-  for (Int_t i=0;i<fTSize;i++) fHistOmegas[i] ->Write();
+  for (Int_t i=0; i<fTSize; i++) fHistWs[i] -> Write();
+  for (Int_t i=0; i<fTSize; i++) fHistOmegas[i] ->Write();
   fDebugFile -> Close();
   delete fDebugFile;
   //
@@ -509,11 +509,22 @@ Double_t TIdentity2D::GetIntegralMix(Int_t i, Int_t j)
   return MyIntegral(fIFunctionsMix[i][j]);
 }
 
-void TIdentity2D::SetLimits(Float_t min, Float_t max, Double_t BW)
+void TIdentity2D::SetLimits(Float_t min, Float_t max, Double_t BW, Double_t nParticlesMax, Int_t wDistResol)
 {
   fMindEdx = min;
   fMaxdEdx = max;
-  fDedxBinWidth = BW;
+  fDedxBinWidth = (max-min)/BW;
+  //
+  //
+  Int_t nBinsNparticles = nParticlesMax*wDistResol;
+  cout << " TIdentity2D::SetLimits.Info: dEdx histogram bin range is being set for " << fTSize <<   " particle " << endl;
+  fHistWs     = new TH1D*[fTSize];
+  fHistOmegas = new TH1D*[fTSize];
+  for (Int_t i=0;i<fTSize;i++) {
+    fHistWs[i]     = new TH1D(Form("hW_%d",i)    ,Form("hW_%d",i)    ,nBinsNparticles,0.,nParticlesMax);
+    fHistOmegas[i] = new TH1D(Form("hOmega_%d",i),Form("hOmega_%d",i),100,0.,1.);
+    cout << Form("hW_%d",i) << "   " << Form("hOmega_%d",i) << endl;
+  }
 }
 
 Double_t TIdentity2D::MyIntegral(TF1 *Fun)

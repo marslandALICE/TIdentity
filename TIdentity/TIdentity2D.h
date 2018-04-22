@@ -52,7 +52,7 @@ public:
   void ResetValues();
   void AddParticles();
   void AddIntegrals(Int_t);
-  void SetLimits(Float_t, Float_t, Double_t);
+  void SetLimits(Float_t, Float_t, Double_t, Double_t, Int_t);
   void SetUseSign(Int_t _useSign) {fUseSign = _useSign;}
   void Reset();
   void SetBranchNames(const Int_t tmpNBranches, TString tmpBranchNameArr[])
@@ -139,8 +139,8 @@ private:
   TFile        *fTIdentityFile;
   TFile        *fDebugFile;
   TTree        *fTIdentityTree;
-  TH1D         *fHistWs[4];
-  TH1D         *fHistOmegas[4];
+  TH1D         **fHistWs;
+  TH1D         **fHistOmegas;
   TF1          *fTFunctions[10];
   TF1          *fIFunctions[50][50];
   TF1          *fIFunctions2[50][50];

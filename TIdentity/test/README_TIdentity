@@ -1,6 +1,6 @@
 How to Run TIdentity:
 
-1) modify stEnv
+1) modify setEnv
    . /u/marsland/PHD/macros/marsland_EbyeRatios/schleching/TIdentity/TIdentity/test/setEnv
 
 2) compile both test and real versions
@@ -39,3 +39,11 @@ meld /lustre/nyx/alice/users/marsland/TIdentity/TIdentity /u/marsland/PHD/macros
 4) git push
     Username for 'https://github.com': marslandALICE
     Password for 'https://marslandALICE@github.com': --> (pass hint: modified bachelor)
+
+*) to view history with gui
+  gitk TIdentity/TIdentity2D.cc
+
+*) to view history
+git log --pretty=format:"%H - %an, %ar : %s"
+git show 0563194bdba9160a30d433b270608350ee15fea5:TIdentity/TIdentity2D.cc
+git difftool 0563194bdba9160a30d433b270608350ee15fea5 -- ./TIdentity/TIdentity2D.cc

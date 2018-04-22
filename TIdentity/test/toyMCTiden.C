@@ -31,11 +31,12 @@ PlotWs()
 
 */
 Int_t switchOffParticle=-100;   // default = -100 for 4 particles
-Int_t fUsedSign = -1;
+Int_t fUsedSign = 0;
+ULong64_t nEvents=2000000;
 const Int_t nParticles=5;
 const Int_t nSignBins =3;
 const Int_t nMoments = 19;
-Int_t elMean = 6, piMean=10, kaMean=6, prMean=8, deMean=4;
+Int_t elMean = 8, piMean=12, kaMean=8, prMean=10, deMean=8;
 Int_t nTracksPerEventArr[nSignBins][nParticles]={0};
 Double_t elParams[]={8.,1.5};
 Double_t piParams[]={4.,1.};
@@ -52,7 +53,6 @@ TF1 *fParticles[nSignBins][nParticles];
 UInt_t cutBit=0;
 Int_t sign=0;
 Int_t signBin=-100;
-ULong64_t nEvents=500000;
 const Int_t colors[]   = {kBlack, kRed+1 , kBlue+1, kGreen+3, kMagenta+1, kOrange-1,kCyan+2,kYellow+2, kRed, kGreen};
 TClonesArray funcLineShapesCArr("TF1",50000);
 enum momentType{kEl=0,kPi=1,kKa=2,kPr=3,kDe=4,
