@@ -3,14 +3,20 @@ How to Run TIdentity:
 1) modify setEnv
    . /u/marsland/PHD/macros/marsland_EbyeRatios/schleching/TIdentity/TIdentity/test/setEnv
 
-2) compile both test and real versions
+2) compile test version for real data
    cd /u/marsland/PHD/macros/marsland_EbyeRatios/schleching/TIdentity/TIdentity; make;
    cd test; make;
    run.sh
 
-   make clean -f MakefileTest
-   make -f MakefileTest
-   rtest.sh
+3) Compile and run test verison with sign options
+   make clean -f MakefileTest exe=testIden_NetParticles
+   make -f MakefileTest macro=testIdentity_NetParticles.C exe=testIden_NetParticles
+   rtest.sh 0
+
+4) Compile and run test verison for netparticles
+   make clean -f MakefileTest exe=testIdenTest
+   make -f MakefileTest macro=testIdentityTestFit.C exe=testIdenTest
+   rtest_NetParticles.sh 0
 
 ====================================================================================================
 ====================================================================================================

@@ -305,8 +305,8 @@ int main(int argc, char *argv[])
   iden4 -> CalcMoments();
   //
   // Retrive Moments
-  if (fSignInput== 0)  RetrieveMoments(iden4,fMmoments,fIntegrals);
-  if (fSignInput== 1)  RetrieveMoments(iden4,fMmomentsPos,fIntegrals);
+  if (fSignInput== 0) RetrieveMoments(iden4,fMmoments,fIntegrals);
+  if (fSignInput== 1) RetrieveMoments(iden4,fMmomentsPos,fIntegrals);
   if (fSignInput==-1) RetrieveMoments(iden4,fMmomentsNeg,fIntegrals);
   cout << "====================================" << endl;
   cout << " main.Info: calculation is finished " << endl;

@@ -340,7 +340,7 @@ Bool_t TIdentity2D::GetEntry(Int_t i)
   if ( fEventNum != fPrevEvtVeto && fPrevEvtVeto >0) {fCountVeto++;}
   fPrevEvtVeto = fEventNum;
   if ( fDEdx!=0 ) fMyDeDx=fDEdx;
-  if ( (fMyDeDx < fMindEdx || fMyDeDx > fMaxdEdx) && fMyDeDx > 0 ) return kFALSE;
+  if ( (fMyDeDx < fMindEdx || fMyDeDx > fMaxdEdx) || fMyDeDx == 0 ) return kFALSE;
   // secure the usage of sign=0 which is sum of + and - particles
   if( !(fSign == fUseSign || fUseSign == 0) ) return kFALSE;
   return kTRUE;
@@ -408,7 +408,7 @@ void TIdentity2D::AddParticles()
   for(Int_t i = 0; i < fTSize; i++)
   {
 
-    if( fMyDeDx < 0 ) { mValue[i] = 0; fCount++; continue; }
+    if( fMyDeDx == 0 ) { mValue[i] = 0; fCount++; continue; }
     mValue[i] = fTFunctions[i] -> Eval(fMyDeDx);
     sumValue += mValue[i];
   }
