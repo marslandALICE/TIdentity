@@ -32,21 +32,51 @@ aliroot -l
 toyMCTiden_3rd_mom()
 PlotdEdx()
 
+pr=10.;
+pi=14.;
+k=8.+7;
+{
+cout << " pr3 " << pr*pr*pr+3*pr*pr+pr << "  " << pr*pr+pr << endl;
+cout << " pi3 " << pi*pi*pi+3*pi*pi+pi << "  " << pi*pi+pi << endl;
+cout << " K3  " << k*k*k+3*k*k+k << "  " << k*k+k << endl;
+cout << " Pr2Pi  " << (pr*pr + pr)*pi << endl;
+cout << " Pr2K   " << (pr*pr + pr)*k << endl;
+cout << " Pi2K   " << (pi*pi + pi)*k << endl;
+cout << " Pi2Pr  " << (pi*pi + pi)*pr << endl;
+cout << " K2Pr   " << (k*k + k)*pr << endl;
+cout << " K2Pi   " << (k*k + k)*pi << endl;
+cout << " PiPrK  " << pi*pr*k << endl;
+}
 
-n=10.; cout << n*n*n+3*n*n+n << "  " << n*n+n << endl;
-n=14.; cout << n*n*n+3*n*n+n << "  " << n*n+n << endl;
-n=8.;  cout << n*n*n+3*n*n+n << "  " << n*n+n << endl;
+pr3 1310  110
+pi3 3346  210
+K3  712  72
+Pr2Pi  1540
+Pr2K   880
+Pi2K   1680
+Pi2Pr  2100
+K2Pr   720
+K2Pi   1008
+PiPrK  1120
 
-1310  110  -->  1308.51  109.914
-3346  210  -->  3344.59  209.864
-712  72    -->  711.713  71.986
+
+ pr3 1310  110
+ pi3 3346  210
+ K3  4065  240
+ Pr2Pi  1540
+ Pr2K   1650
+ Pi2K   3150
+ Pi2Pr  2100
+ K2Pr   2400
+ K2Pi   3360
+ PiPrK  2100
 
 */
 
 Int_t fUsedSign = 0;
-ULong64_t nEvents=300000;
+ULong64_t nEvents=500000;
 const Int_t nParticles=4;
-Int_t elMean  = 0, piMean =14, kaMean =8, prMean =10;
+Int_t piMean =14, kaMean =8, prMean =10, elMean  = 0;
 
 Int_t nTracksPerEventArr[nParticles]={0};
 Double_t elParams[]={8.,1.5};
@@ -66,10 +96,11 @@ Int_t trackSign[nMaxTracksPerEvent]={0};
 TH1D *hParticles[nParticles];
 TH1D *hFirstMoms[nParticles];
 TF1 *fParticles[nParticles];
+TF1 *fSumElKa;
 UInt_t cutBit=0;
 const Int_t colors[]   = {kBlack, kRed+1 , kBlue+1, kGreen+3, kMagenta+1, kOrange-1,kCyan+2,kYellow+2, kRed, kGreen};
 TClonesArray funcLineShapesCArr("TF1",50000);
-enum momentType{kEl=0,kPi=1,kKa=2,kPr=3,};
+enum momentType{kPr=0,kPi=1,kKa=2,kEl=3,};
 //
 //
 // ================================================================================================
@@ -101,20 +132,21 @@ void toyMCTiden_3rd_mom()
     //
     Float_t cent=randomGen.Uniform(0,10);
     Int_t trCount=0;
-    nTracksPerEventArr[kEl] = randomGen.Poisson(elMean);
+    nTracksPerEventArr[kPr] = randomGen.Poisson(prMean);
     nTracksPerEventArr[kPi] = randomGen.Poisson(piMean);
     nTracksPerEventArr[kKa] = randomGen.Poisson(kaMean);
-    nTracksPerEventArr[kPr] = randomGen.Poisson(prMean);
+    nTracksPerEventArr[kEl] = randomGen.Poisson(elMean);
+
     //
     // put extra correlation
     // nTracksPerEventArr[kEl]=nTracksPerEventArr[kKa];
 
     if(ievent%10000==0) {
       cout << " event = " << ievent << "  ----  " << trCount;
-      cout <<  "  " << nTracksPerEventArr[kEl] ;
+      cout <<  "  " << nTracksPerEventArr[kPr] ;
       cout <<  "  " << nTracksPerEventArr[kPi] ;
       cout <<  "  " << nTracksPerEventArr[kKa] ;
-      cout <<  "  " << nTracksPerEventArr[kPr] ;
+      cout <<  "  " << nTracksPerEventArr[kEl] ;
       cout << endl;
     }
 
@@ -124,10 +156,10 @@ void toyMCTiden_3rd_mom()
 
       for (Int_t i=0; i<nTracksPerEventArr[ipart];i++){
 
-        if (ipart == kEl) {trackdEdx[trCount] = randomGen.Gaus(elParams[0],elParams[1]); hParticles[ipart]->Fill(trackdEdx[trCount]);}
+        if (ipart == kPr) {trackdEdx[trCount] = randomGen.Gaus(prParams[0],prParams[1]); hParticles[ipart]->Fill(trackdEdx[trCount]);}
         if (ipart == kPi) {trackdEdx[trCount] = randomGen.Gaus(piParams[0],piParams[1]); hParticles[ipart]->Fill(trackdEdx[trCount]);}
         if (ipart == kKa) {trackdEdx[trCount] = randomGen.Gaus(kaParams[0],kaParams[1]); hParticles[ipart]->Fill(trackdEdx[trCount]);}
-        if (ipart == kPr) {trackdEdx[trCount] = randomGen.Gaus(prParams[0],prParams[1]); hParticles[ipart]->Fill(trackdEdx[trCount]);}
+        if (ipart == kEl) {trackdEdx[trCount] = randomGen.Gaus(elParams[0],elParams[1]); hParticles[ipart]->Fill(trackdEdx[trCount]);}
         // hParticles[ipart]->Fill(trackdEdx[trCount]);
         trackSign[trCount]= 1;
         trCount++;
@@ -155,7 +187,6 @@ void toyMCTiden_3rd_mom()
   } // event loop ends
   //
   // dump line shape
-  Int_t objcounter=0;
   for (Int_t i=0;i<nParticles;i++) {
     hParticles[i] -> SetLineColor(colors[i+1]);
     hFirstMoms[i] -> SetLineColor(colors[i+1]);
@@ -169,14 +200,24 @@ void toyMCTiden_3rd_mom()
     fParticles[i]->SetNpx(1000);
     fParticles[i]->SetParameters(hParticles[i]->GetMean(),hParticles[i]->GetRMS());
     if (hParticles[i]) hParticles[i] -> Fit(fParticles[i],"QN");
-    funcLineShapesCArr[objcounter] = (TF1*)fParticles[i];
+
+  }
+
+  Int_t objcounter=0;
+  for (Int_t i=0;i<nParticles;i++) {
+
+    if (i==2 && elMean>0) {
+      fSumElKa = new TF1("particle_2","particle_2+particle_3",0,50);
+      funcLineShapesCArr[objcounter] = (TF1*)fSumElKa;
+    } else {
+      funcLineShapesCArr[objcounter] = (TF1*)fParticles[i];
+    }
     objcounter++;
   }
 
   outputFits->GetFile()->cd();
   funcLineShapesCArr.Write("funcLineShapesCArr",TObject::kSingleKey);
   funcLineShapesCArr.Clear("C");
-
   for (Int_t i=0;i<nParticles;i++) { hParticles[i] -> Write(); hFirstMoms[i] -> Write();}
 
   delete outputFits;

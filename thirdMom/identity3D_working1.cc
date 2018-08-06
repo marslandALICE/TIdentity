@@ -32,38 +32,19 @@
 
 using namespace std;
 
-Double_t RapPion;
-Double_t RapKaon;
-Double_t RapElectron;
-
-TFile *fitHists = NULL;
-Double_t step_M;
-const Int_t my_size = 2;
-
-Double_t electronArray[my_size];
-Double_t pionArray[my_size];
-Double_t kaonArray[my_size];
-Double_t protonArray[my_size];
-
-TH1D *hElectron;
-TH1D *hPion;
-TH1D *hKaon;
-TH1D *hProton;
-
 Int_t wrongCount = 0;
 Float_t meanKaon;
 Float_t meanProton;
 Float_t meanPion;
-Float_t meanElectron;
 
 Int_t numAllEvents;
 Int_t numAllCutEvents;
 
-TF1 *funProton, *funKaon, *funPion, *funElectron, *funSum;
-TF1 *funProtonAV, *funKaonAV, *funPionAV, *funElectronAV;
+TF1 *funProton, *funKaon, *funPion, *funSum;
+TF1 *funProtonAV, *funKaonAV, *funPionAV;
 
 Double_t evtNumber;
-Double_t WK_sum, WP_sum, WPi_sum, WEl_sum, WMult_sum;
+Double_t WK_sum, WP_sum, WPi_sum, WMult_sum;
 Int_t multEv;
 
 vector<int> sumMult;
@@ -90,14 +71,13 @@ vector<double> WK2Pr_sum_vec;
 vector<double> WK2Pi_sum_vec;
 
 Double_t twopiroot;
-
 Double_t sigmaProtonF;
 Double_t sigmaKaonF;
 Double_t sigmaPionF;
 
 TFile *outFile = NULL;
 
-Double_t recP2_av, recPi2_av, recEl2_av, recK2_av, recPPi_av, recPK_av, recPEl_av, recPiK_av, recKEl_av, recPiEl_av;
+Double_t recP2_av, recPi2_av, recK2_av, recPPi_av, recPK_av, recPiK_av;
 Double_t wP_P, wK_P, wPi_P, wP_P2, wK_P2, wPi_P2, wP_P3, wK_P3, wPi_P3, wP_K, wK_K, wPi_K, wP_K2, wK_K2, wPi_K2;
 Double_t wP_K3, wK_K3, wPi_K3, wP_Pi, wK_Pi, wPi_Pi, wP_Pi2, wK_Pi2, wPi_Pi2, wP_Pi3, wK_Pi3, wPi_Pi3;
 
@@ -105,12 +85,12 @@ Double_t wP_K3, wK_K3, wPi_K3, wP_Pi, wK_Pi, wPi_Pi, wP_Pi2, wK_Pi2, wPi_Pi2, wP
 Double_t wPK_P, wPPi_P, wPiK_P, wPK_K, wPPi_K, wPiK_K, wPK_Pi, wPPi_Pi, wPiK_Pi, wP2Pi_P, wP2Pi_Pi, wP2Pi_K, wPi2P_P, wPi2P_Pi;
 Double_t wPi2P_K, wP2K_P, wP2K_Pi, wP2K_K, wK2P_P, wK2P_Pi, wK2P_K, wPi2K_P, wPi2K_Pi, wPi2K_K, wK2Pi_P, wK2Pi_Pi, wK2Pi_K, wPiPrK_Pr, wPiPrK_K, wPiPrK_Pi;
 //
-TF1 *funP_P = NULL, *funK_P = NULL, *funPi_P = NULL, *funP_P2 = NULL, *funK_P2 = NULL, *funPi_P2 = NULL, *funP_P3 = NULL, *funK_P3 = NULL, *funPi_P3 = NULL;
-TF1 *funP_K = NULL, *funK_K = NULL, *funPi_K = NULL, *funP_K2 = NULL, *funK_K2 = NULL, *funPi_K2 = NULL, *funP_K3 = NULL, *funK_K3 = NULL, *funPi_K3 = NULL;
-TF1 *funP_Pi = NULL, *funK_Pi = NULL, *funPi_Pi = NULL, *funP_Pi2 = NULL, *funK_Pi2 = NULL, *funPi_Pi2 = NULL, *funP_Pi3 = NULL, *funK_Pi3 = NULL, *funPi_Pi3 = NULL;
-TF1 *funPK_P = NULL, *funPPi_P = NULL, *funPiK_P = NULL, *funPK_K = NULL, *funPPi_K = NULL, *funPiK_K = NULL, *funPK_Pi = NULL, *funPPi_Pi = NULL, *funPiK_Pi = NULL;
-TF1 *funP2Pi_P = NULL, *funP2Pi_Pi = NULL, *funP2Pi_K = NULL, *funPi2P_P = NULL, *funPi2P_Pi = NULL, *funPi2P_K = NULL, *funP2K_P = NULL, *funP2K_Pi = NULL, *funP2K_K = NULL;
-TF1 *funK2P_P = NULL, *funK2P_Pi = NULL, *funK2P_K = NULL, *funPi2K_P = NULL, *funPi2K_Pi = NULL, *funPi2K_K = NULL, *funK2Pi_P = NULL, *funK2Pi_Pi = NULL;
+TF1 *funP_P = NULL,    *funK_P = NULL,     *funPi_P = NULL,    *funP_P2 = NULL,   *funK_P2 = NULL,    *funPi_P2 = NULL,  *funP_P3 = NULL,   *funK_P3 = NULL,   *funPi_P3 = NULL;
+TF1 *funP_K = NULL,    *funK_K = NULL,     *funPi_K = NULL,    *funP_K2 = NULL,   *funK_K2 = NULL,    *funPi_K2 = NULL,  *funP_K3 = NULL,   *funK_K3 = NULL,   *funPi_K3 = NULL;
+TF1 *funP_Pi = NULL,   *funK_Pi = NULL,    *funPi_Pi = NULL,   *funP_Pi2 = NULL,  *funK_Pi2 = NULL,   *funPi_Pi2 = NULL, *funP_Pi3 = NULL,  *funK_Pi3 = NULL,  *funPi_Pi3 = NULL;
+TF1 *funPK_P = NULL,   *funPPi_P = NULL,   *funPiK_P = NULL,   *funPK_K = NULL,   *funPPi_K = NULL,   *funPiK_K = NULL,  *funPK_Pi = NULL,  *funPPi_Pi = NULL, *funPiK_Pi = NULL;
+TF1 *funP2Pi_P = NULL, *funP2Pi_Pi = NULL, *funP2Pi_K = NULL,  *funPi2P_P = NULL, *funPi2P_Pi = NULL, *funPi2P_K = NULL, *funP2K_P = NULL,  *funP2K_Pi = NULL, *funP2K_K = NULL;
+TF1 *funK2P_P = NULL,  *funK2P_Pi = NULL,  *funK2P_K = NULL,   *funPi2K_P = NULL, *funPi2K_Pi = NULL, *funPi2K_K = NULL, *funK2Pi_P = NULL, *funK2Pi_Pi = NULL;
 TF1 *funK2Pi_K = NULL, *funPiPrK_P = NULL, *funPiPrK_K = NULL, *funPiPrK_Pi = NULL;
 ////////////////////////////
 
@@ -129,7 +109,6 @@ Float_t wmix[3][3];
 vector<double> WPM_sum_vec;
 vector<double> WKM_sum_vec;
 vector<double> WPiM_sum_vec;
-vector<double> WElM_sum_vec;
 
 // =======================================================================================================
 // =======================================================================================================
@@ -157,11 +136,9 @@ TH1D *hDedxDebug;
 static TH1D *hDedxDebugLineShapes[fnParticleBins];
 enum momentType
 {
-  kEl = 0,
-  kPi = 1,
-  kKa = 2,
-  kPr = 3,
-  kDe = 4,
+  kPi = 0,
+  kKa = 1,
+  kPr = 2,
 };
 
 void InitializeObjects()
@@ -202,14 +179,9 @@ void ReadFitParamsFromLineShapes(TString paramTreeName)
     hLineShape[ipart]->SetName(objName);
   }
 
-  hElectron = hLineShape[0];
-  hPion = hLineShape[1];
-  hKaon = hLineShape[2];
-  hProton = hLineShape[3];
-  funElectron = fLineShape[0];
+  funProton = fLineShape[0];
   funPion = fLineShape[1];
   funKaon = fLineShape[2];
-  funProton = fLineShape[3];
 }
 // =======================================================================================================
 // =======================================================================================================
@@ -224,7 +196,6 @@ void setpars(TF1 *fun, Double_t a, Double_t b, Double_t c)
 
 Double_t getW2(Int_t mix, Int_t a, Int_t b, Int_t c, Int_t i, Int_t l)
 {
-
   return (wmix[mix][i] * wmean[c][l] - wmean[a][i] * wmean[b][i] * wmean[c][l]);
 }
 
@@ -239,41 +210,6 @@ Double_t myIntegral(TF1 *fun, Double_t min = 0., Double_t max = 50.)
     sum += fun->Eval(xx);
   }
   return sum * step;
-}
-
-Double_t setFunParam(Double_t x, Int_t i)
-{
-  Int_t my_bin_num = (Int_t)((x - fMin) / step_M);
-  Double_t elValue = electronArray[my_bin_num];
-  Double_t piValue = pionArray[my_bin_num];
-  Double_t kValue = kaonArray[my_bin_num];
-  Double_t prValue = protonArray[my_bin_num];
-
-  if (i == 0)
-  {
-    return elValue;
-  }
-  else if (i == 1)
-    return piValue;
-  else if (i == 2)
-    return kValue;
-  else if (i == 3)
-  {
-    return prValue;
-  }
-  else
-    return (elValue + piValue + kValue + prValue);
-}
-
-void resetArrays()
-{
-  for (Int_t m = 0; m < my_size; m++)
-  {
-    electronArray[m] = 0.;
-    pionArray[m] = 0.;
-    kaonArray[m] = 0.;
-    protonArray[m] = 0.;
-  }
 }
 
 Double_t getFunctions(Double_t *xx, Double_t *par)
@@ -448,6 +384,7 @@ void initFunctions()
   setpars(funPPi_Pi, 1, 2, -10);
   funPiK_Pi = new TF1("funPiK_Pi", getFunctionsMix, fMin, fMax, 3);
   setpars(funPiK_Pi, 2, 2, -10);
+
   funP2Pi_P = new TF1("funP2Pi_P", getFunctionsMix2, fMin, fMax, 3);
   setpars(funP2Pi_P, 0, 2, 0);
   funP2Pi_Pi = new TF1("funP2Pi_Pi", getFunctionsMix2, fMin, fMax, 3);
@@ -492,12 +429,11 @@ void initFunctions()
   setpars(funPiPrK_Pi, 2, -100, -100);
 }
 
-void calcIntegrals(TF1 *funP, TF1 *funK, TF1 *funPi, TF1 *funEl, Float_t *normme)
+void calcIntegrals(TF1 *funP, TF1 *funK, TF1 *funPi, Float_t *normme)
 {
   Double_t nkNorm = normme[2];  /// * 0.01;
   Double_t npNorm = normme[0];  // * 0.01;
   Double_t npiNorm = normme[1]; /// * 0.01;
-  Double_t nelNorm = normme[3]; //// * 0.01;
 
   if (nkNorm == 0)
     nkNorm = 1;
@@ -505,12 +441,11 @@ void calcIntegrals(TF1 *funP, TF1 *funK, TF1 *funPi, TF1 *funEl, Float_t *normme
     npNorm = 1;
   if (npiNorm == 0)
     npiNorm = 1;
-  if (nelNorm == 0)
-    nelNorm = 1;
 
   wP_P += myIntegral(funP_P, fMin, fMax) / npNorm;
   wK_P += myIntegral(funK_P, fMin, fMax) / npNorm;
   wPi_P += myIntegral(funPi_P, fMin, fMax) / npNorm;
+
   wP_P2 += myIntegral(funP_P2, fMin, fMax) / npNorm;
   wK_P2 += myIntegral(funK_P2, fMin, fMax) / npNorm;
   wPi_P2 += myIntegral(funPi_P2, fMin, fMax) / npNorm;
@@ -522,6 +457,7 @@ void calcIntegrals(TF1 *funP, TF1 *funK, TF1 *funPi, TF1 *funEl, Float_t *normme
   wP_K += myIntegral(funP_K, fMin, fMax) / nkNorm;
   wK_K += myIntegral(funK_K, fMin, fMax) / nkNorm;
   wPi_K += myIntegral(funPi_K, fMin, fMax) / nkNorm;
+
   wP_K2 += myIntegral(funP_K2, fMin, fMax) / nkNorm;
   wK_K2 += myIntegral(funK_K2, fMin, fMax) / nkNorm;
   wPi_K2 += myIntegral(funPi_K2, fMin, fMax) / nkNorm;
@@ -533,6 +469,7 @@ void calcIntegrals(TF1 *funP, TF1 *funK, TF1 *funPi, TF1 *funEl, Float_t *normme
   wP_Pi += myIntegral(funP_Pi, fMin, fMax) / npiNorm;
   wK_Pi += myIntegral(funK_Pi, fMin, fMax) / npiNorm;
   wPi_Pi += myIntegral(funPi_Pi, fMin, fMax) / npiNorm;
+
   wP_Pi2 += myIntegral(funP_Pi2, fMin, fMax) / npiNorm;
   wK_Pi2 += myIntegral(funK_Pi2, fMin, fMax) / npiNorm;
   wPi_Pi2 += myIntegral(funPi_Pi2, fMin, fMax) / npiNorm;
@@ -590,62 +527,40 @@ void calcIntegrals(TF1 *funP, TF1 *funK, TF1 *funPi, TF1 *funEl, Float_t *normme
 template <class T>
 Float_t Sum(vector<T> &v)
 {
-
   return accumulate(v.begin(), v.end(), 0.0);
-}
-
-template <class T>
-void setMultipl(T np, T nk, T npi)
-{
-  funProton->SetParameter(0, np / (twopiroot * sigmaProtonF));
-  funKaon->SetParameter(0, nk / (twopiroot * sigmaKaonF));
-  funPion->SetParameter(0, npi / (twopiroot * sigmaPionF));
-}
-
-template <class T>
-void setMultiplAV(T np, T nk, T npi)
-{
-  funProtonAV->SetParameter(0, np / (twopiroot * sigmaProtonF));
-  funKaonAV->SetParameter(0, nk / (twopiroot * sigmaKaonF));
-  funPionAV->SetParameter(0, npi / (twopiroot * sigmaPionF));
 }
 
 void resetValues()
 {
-  WP_sum = WK_sum = WPi_sum = WEl_sum = WMult_sum = 0.;
+  WP_sum = WK_sum = WPi_sum = WMult_sum = 0.;
 }
 
 void addParticles(Float_t mVal, Int_t &count)
 {
-  Double_t kValue, prValue, piValue, elValue;
-  Double_t WP1, WK1, WPi1, WEl1;
+  Double_t kValue, prValue, piValue;
+  Double_t WP1, WK1, WPi1;
   prValue = funProton->Eval(mVal);
   kValue = funKaon->Eval(mVal);
   piValue = funPion->Eval(mVal);
-  elValue = funElectron->Eval(mVal);
-  // elValue = 0.;
 
-  Double_t sumValue = prValue + kValue + piValue + elValue;
+  Double_t sumValue = prValue + kValue + piValue;
   if (sumValue == 0)
   {
     cout << "why:   " << mVal << endl;
     wrongCount++;
-    WP1 = WK1 = WPi1 = WEl1 = 0;
+    WP1 = WK1 = WPi1 = 0;
   }
   else
   {
     WP1 = prValue / sumValue;
     WK1 = kValue / sumValue;
     WPi1 = piValue / sumValue;
-    WEl1 = elValue / sumValue;
-    // WEl1 = 0; //elValue / sumValue;
 
     count++;
 
     WP_sum += WP1;
     WK_sum += WK1;
     WPi_sum += WPi1;
-    WEl_sum += WEl1;
     WMult_sum += 1;
   }
 }
@@ -654,7 +569,6 @@ int identity4Particle()
 {
 
   Char_t eName[255], piName[255], kName[255], prName[255];
-  step_M = (fMax - fMin) / (my_size - 1);
 
   TFile *outputFile = new TFile("aaa.root", "recreate");
   cout << "burada " << endl;
@@ -668,12 +582,6 @@ int identity4Particle()
   Int_t prevEvt = -1000;
   cout << "set address" << endl;
   //
-  // Int_t myBin[4];
-  // Double_t myDeDx;
-  // Int_t evtNum;
-  // myTree->SetBranchAddress("myBin", myBin);
-  // myTree->SetBranchAddress("myDeDx", &myDeDx);
-  // myTree->SetBranchAddress("evtNum", &evtNum);
   ULong64_t fEventNum;
   Float_t fDEdx;
   UInt_t fCutBit;
@@ -689,7 +597,6 @@ int identity4Particle()
   meanKaon = 0;
   meanProton = 0;
   meanPion = 0;
-  meanElectron = 0;
 
   numAllEvents = 0;
   numAllCutEvents = 0;
@@ -739,18 +646,19 @@ int identity4Particle()
         if (WMult_sum)
         {
           sumMult.push_back(count);
-          W2P_sum_vec.push_back(WP_sum * WP_sum);
 
           W3P_sum_vec.push_back(TMath::Power(WP_sum, 3));
           W3Pi_sum_vec.push_back(TMath::Power(WPi_sum, 3));
           W3K_sum_vec.push_back(TMath::Power(WK_sum, 3));
+
+          W2P_sum_vec.push_back(WP_sum * WP_sum);
           W2K_sum_vec.push_back(WK_sum * WK_sum);
           W2Pi_sum_vec.push_back(WPi_sum * WPi_sum);
-          //W2El_sum_vec.push_back(WEl_sum*WEl_sum);
+
           WPM_sum_vec.push_back(WP_sum);
           WKM_sum_vec.push_back(WK_sum);
           WPiM_sum_vec.push_back(WPi_sum);
-          // WElM_sum_vec.push_back(WEl_sum);
+
           WPK_sum_vec.push_back(WP_sum * WK_sum);
           WPPi_sum_vec.push_back(WP_sum * WPi_sum);
           WPiK_sum_vec.push_back(WPi_sum * WK_sum);
@@ -794,17 +702,14 @@ int identity4Particle()
   Double_t proton_aver = 0;
   Double_t kaon_aver = 0;
   Double_t pion_aver = 0;
-  Double_t electron_aver = 0;
 
   kaon_aver += meanKaon;
   proton_aver += meanProton;
   pion_aver += meanPion;
-  electron_aver += meanElectron;
 
   Double_t proton_aver_fun = proton_aver * corrFactor;
   Double_t kaon_aver_fun = kaon_aver * corrFactor;
   Double_t pion_aver_fun = pion_aver * corrFactor;
-  Double_t electron_aver_fun = electron_aver * corrFactor;
 
   cout << "***********" << endl;
   cout << "***********" << endl;
@@ -814,12 +719,10 @@ int identity4Particle()
   cout << "proton " << proton_aver * corrFactor << endl;
   cout << "pkaon  " << kaon_aver * corrFactor << endl;
   cout << "pion   " << pion_aver * corrFactor << endl;
-  cout << "electron   " << electron_aver * corrFactor << endl;
 
   proton_aver *= corrFactor;
   kaon_aver *= corrFactor;
   pion_aver *= corrFactor;
-  electron_aver *= corrFactor;
 
   cout << "***********" << endl;
   cout << "***********" << endl;
@@ -835,7 +738,6 @@ int identity4Particle()
   Double_t WPM_aver = Sum<double>(WPM_sum_vec) / nEvents;
   Double_t WKM_aver = Sum<double>(WKM_sum_vec) / nEvents;
   Double_t WPiM_aver = Sum<double>(WPiM_sum_vec) / nEvents;
-  Double_t WElM_aver = Sum<double>(WElM_sum_vec) / nEvents;
 
   Double_t W3P_aver = Sum<double>(W3P_sum_vec) / nEvents;
   Double_t W3Pi_aver = Sum<double>(W3Pi_sum_vec) / nEvents;
@@ -891,13 +793,11 @@ int identity4Particle()
   cout << "WPM_aver " << WPM_aver << " -> " << meanProton << endl;
   cout << "WKM_aver " << WKM_aver << " -> " << meanKaon << endl;
   cout << "WPiM_aver " << WPiM_aver << endl;
-  cout << "WElM_aver " << WElM_aver << endl;
 
   /*
    proton_aver   = WPM_aver;
    kaon_aver     = WKM_aver;
    pion_aver     = WPiM_aver;
-   electron_aver = WElM_aver;
    */
 
   cout << "start to calculate integrals " << endl;
@@ -909,20 +809,11 @@ int identity4Particle()
   wK2Pi_P = 0., wK2Pi_Pi = 0., wK2Pi_K = 0., wPiPrK_Pr = 0., wPiPrK_K = 0., wPiPrK_Pi = 0.;
   Int_t count_pr = 0;
   //Float_t outInt[27] = {0.};
-  Float_t normme[] = {(Float_t)proton_aver, (Float_t)pion_aver, (Float_t)kaon_aver, (Float_t)electron_aver};
+  Float_t normme[] = {(Float_t)proton_aver, (Float_t)pion_aver, (Float_t)kaon_aver};
   ///////////
 
   initFunctions();
-  calcIntegrals(funProton, funKaon, funPion, funElectron, normme);
-
-  // for (Int_t kk = 0; kk < fitEnt_M; kk++)    // ??????????????
-  // {
-  //   count_pr++;
-  //   fitTree_M->GetEntry(kk);
-  //   calcIntegrals(funProton, funKaon, funPion, funElectron, normme);
-  //   if (count_pr % 200 == 0)
-  //     cout << "still calculating integral " << endl;
-  // }
+  calcIntegrals(funProton, funKaon, funPion, normme);
 
   pr_aver = proton_aver;
   pi_aver = pion_aver;
@@ -980,8 +871,6 @@ int identity4Particle()
   proton_aver = WPM_aver;
   kaon_aver = WKM_aver;
   pion_aver = WPiM_aver;
-  electron_aver = WElM_aver;
-  //    }
 
   pr_aver = proton_aver;
   pi_aver = pion_aver;
@@ -1086,9 +975,11 @@ int identity4Particle()
   wmean3[0][0] = wP_P3;
   wmean3[0][1] = wP_Pi3;
   wmean3[0][2] = wP_K3;
+
   wmean3[1][0] = wPi_P3;
   wmean3[1][1] = wPi_Pi3;
   wmean3[1][2] = wPi_K3;
+
   wmean3[2][0] = wK_P3;
   wmean3[2][1] = wK_Pi3;
   wmean3[2][2] = wK_K3;
@@ -1372,7 +1263,8 @@ int identity4Particle()
     {
       rec3mom[i] += invA(i, tt) * B[tt];
     }
-      // N^3+3N^2+N --> poisson 3rd moment
+    // N^3+3N^2+N --> poisson 3rd moment
+    // (A*A+A)*B
     cout << mom3Names[i].Data() << "   :  "  << rec3mom[i] << endl;
   }
 
