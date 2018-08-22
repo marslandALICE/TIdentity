@@ -23,15 +23,14 @@ AliAnalysisTaskTIdentityPID* Config_marsland_TIdentityPID(Int_t settingType, Int
    *    10.) THnSparse: StandardTPCITScuts + Chi2Small  16EtaBin_150pBins_9centBins
    *    11.) THnSparse: StandardTPCITScuts + Chi2Large  16EtaBin_150pBins_9centBins
    *    12.) THnSparse: (REFERENCE settings) + allCuts are filled
-   *    13.) THnSparse: (REFERENCE settings) + Bayesian Probabilities are filled
-   *    14.) THnSparse: (REFERENCE settings) + dEdxTree is filled
-   *    15.) THnSparse: (REFERENCE settings) + 18centBins
-   *    16.) THnSparse: (REFERENCE settings) + centBin 10
-   *    17.) THnSparse: (REFERENCE settings) + centBin 5
-   *    18.) THnSparse: ITS is OFF
-   *    19.) THnSparse: (REFERENCE settings) + THnSparse is used: number of eta bins = 32
-   *    20.) THnSparse: StandardTPCITScuts + TightCuts TPC dEdx preliminary plot
-   *    21.) THnSparse: (REFERENCE settings) + dEdx + allCuts + ArmPodTree filled + eta range extended
+   *    13.) THnSparse: (REFERENCE settings) + dEdxTree is filled
+   *    14.) THnSparse: (REFERENCE settings) + 18centBins
+   *    15.) THnSparse: (REFERENCE settings) + centBin 10
+   *    16.) THnSparse: (REFERENCE settings) + centBin 5
+   *    17.) THnSparse: ITS is OFF
+   *    18.) THnSparse: (REFERENCE settings) + THnSparse is used: number of eta bins = 32
+   *    19.) THnSparse: StandardTPCITScuts + TightCuts TPC dEdx preliminary plot
+   *    20.) THnSparse: (REFERENCE settings) + dEdx + allCuts + ArmPodTree filled + eta range extended
    *
    *    MC data --> settingType =
    *    100.) THnSparse: StandardTPCITScuts 8EtaBin_150pBins_9centBins (REFERENCE settings) MC CLOSURE
@@ -90,7 +89,6 @@ AliAnalysisTaskTIdentityPID* Config_marsland_TIdentityPID(Int_t settingType, Int
       task->SetFillAllCutVariables(kTRUE);
       task->SetFillTIdenTrees(kTRUE);
       task->SetFillArmPodTree(kTRUE);
-      task->SetFillDeDxTree(kFALSE);
       const Int_t tmpCentbins = 17;
       Float_t tmpfxCentBins[tmpCentbins] = {0,5,10,15,20,25,30,35,40,45,50,55,60,65,70,75,80};
       task->SetCentralityBinning(tmpCentbins,tmpfxCentBins);
@@ -113,6 +111,8 @@ AliAnalysisTaskTIdentityPID* Config_marsland_TIdentityPID(Int_t settingType, Int
     case 4:{
       std::cout << settingType << " Info::marsland: (REFERENCE settings) + allCuts + ArmPodTree filled " << std::endl;
       // Real data settings
+      task->SetIsMCtrue(kFALSE);
+      task->SetEffMatrix(kFALSE);
       task->SetNEtabins(10);
       task->SetEtaLowerEdge(-1.);
       task->SetEtaUpperEdge( 1.);
@@ -124,12 +124,22 @@ AliAnalysisTaskTIdentityPID* Config_marsland_TIdentityPID(Int_t settingType, Int
       task->SetDeDxUpperEdge(1020.);
       //
       task->SetRunOnGrid(kFALSE);
-      task->SetUseCouts(kTRUE);
-      task->SetIsMCtrue(kFALSE);
+      task->SetUseCouts(kFALSE);
       task->SetFillAllCutVariables(kTRUE);
-      task->SetFillTIdenTrees(kFALSE);
       task->SetFillArmPodTree(kTRUE);
-      task->SetFillEventInfo(kFALSE);
+    }
+    break;
+    case 5:{
+      std::cout << settingType << " Info::marsland: Marians event tree " << std::endl;
+      // Real data settings
+      task->SetIsMCtrue(kFALSE);
+      task->SetEffMatrix(kFALSE);
+      task->SetRunOnGrid(kTRUE);
+      task->SetFillEventInfo(kTRUE);
+      task->SetUseCouts(kTRUE);
+      task->SetFillAllCutVariables(kFALSE);
+      task->SetFillTIdenTrees(kFALSE);
+      task->SetFillArmPodTree(kFALSE);
     }
     break;
     //
@@ -140,7 +150,6 @@ AliAnalysisTaskTIdentityPID* Config_marsland_TIdentityPID(Int_t settingType, Int
     case 100:{
       std::cout << settingType << " Info::marsland: FullMC: StandardTPCITScuts 8EtaBin_150pBins_9centBins (REFERENCE settings) MC CLOSURE " << std::endl;
       task->SetUseCouts(kTRUE);
-      task->SetFillDeDxTree(kFALSE);
       task->SetIncludeTOF(kFALSE);
       task->SetFillAllCutVariables(kTRUE);
       task->SetIsMCtrue(kTRUE);
@@ -216,7 +225,6 @@ AliAnalysisTaskTIdentityPID* Config_marsland_TIdentityPID(Int_t settingType, Int
       task->SetNEtabins(8);
       task->SetRunFastSimulation(kFALSE);
       task->SetFillArmPodTree(kFALSE);
-      task->SetFillDeDxTree(kFALSE);
       task->SetDeDxCheck(kFALSE);
       const Int_t tmpCentbins  = 10;
       const Int_t tmpEtaBinsMC = 10;
@@ -244,7 +252,6 @@ AliAnalysisTaskTIdentityPID* Config_marsland_TIdentityPID(Int_t settingType, Int
       task->SetNEtabins(8);
       task->SetRunFastSimulation(kFALSE);
       task->SetFillArmPodTree(kFALSE);
-      task->SetFillDeDxTree(kFALSE);
       task->SetDeDxCheck(kFALSE);
       const Int_t tmpCentbins  = 10;
       const Int_t tmpEtaBinsMC = 1;
@@ -267,7 +274,6 @@ AliAnalysisTaskTIdentityPID* Config_marsland_TIdentityPID(Int_t settingType, Int
       task->SetRunFastSimulation(kFALSE);
       task->SetTightCuts(kTRUE);
       task->SetFillArmPodTree(kFALSE);
-      task->SetFillDeDxTree(kFALSE);
       task->SetDeDxCheck(kFALSE);
       const Int_t tmpCentbins  = 10;
       const Int_t tmpEtaBinsMC = 1;
@@ -292,7 +298,6 @@ AliAnalysisTaskTIdentityPID* Config_marsland_TIdentityPID(Int_t settingType, Int
     break;
     case 108:{
       std::cout << settingType << " Info::marsland: THnSparse: StandardTPCITScuts 8EtaBin_150pBins_9centBins (REFERENCE settings) MC CLOSURE with TOF cut " << std::endl;
-      task->SetFillDeDxTree(kFALSE);
       task->SetIncludeTOF(kTRUE);
       task->SetIsMCtrue(kTRUE);
       task->SetEffMatrix(kTRUE);
@@ -312,7 +317,6 @@ AliAnalysisTaskTIdentityPID* Config_marsland_TIdentityPID(Int_t settingType, Int
     break;
     case 109:{
       std::cout << settingType << " Info::marsland: THnSparse: StandardTPCITScuts 8EtaBin_150pBins_9centBins (REFERENCE settings) MC CLOSURE with NO ITS cut " << std::endl;
-      task->SetFillDeDxTree(kFALSE);
       task->SetIncludeTOF(kFALSE);
       task->SetIsMCtrue(kTRUE);
       task->SetEffMatrix(kTRUE);
@@ -649,18 +653,16 @@ void SetDefaults(AliAnalysisTaskTIdentityPID *defaultTask)
   defaultTask->SetMCMomScanArray(tmpMomBinsMC, tmppDownArr,   tmppUpArr);
 
   // Boolians which are by default === ON ===
-  defaultTask->SetRunOnGrid(kTRUE);
+  defaultTask->SetRunOnGrid(kFALSE);
   defaultTask->SetIsMCtrue(kFALSE);
   defaultTask->SetIncludeITScuts(kFALSE);
   defaultTask->SetFillArmPodTree(kFALSE);
-  defaultTask->SetFillDeDxTree(kFALSE);
 
   // Extra Boolians which are by default === OFF ===
   defaultTask->SetTightCuts(kFALSE);
   defaultTask->SetDeDxCheck(kFALSE);
   defaultTask->SetEffMatrix(kFALSE);
   defaultTask->SetCleanSamplesOnly(kFALSE);
-  defaultTask->SetFillBayesianProb(kFALSE);
   defaultTask->SetFillAllCutVariables(kFALSE);
   defaultTask->SetRunFastSimulation(kFALSE);
   defaultTask->SetFillDnchDeta(kFALSE);

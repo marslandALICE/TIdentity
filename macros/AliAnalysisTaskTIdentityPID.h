@@ -62,6 +62,7 @@ public:
     kChPosChNeg=10,
     kBaPosBaNeg=11,
   };
+
   enum trackCutBit {
     kNCrossedRowsTPC60=0,
     kNCrossedRowsTPC80=1,
@@ -78,17 +79,65 @@ public:
     kEventVertexZSmall=12,
     kEventVertexZ=13,
     kEventVertexZLarge=14,
-    kClusterRequirementITS=15,
-    kNewITSCut=16,
-    kActiveZoneSmall=17,
-    kActiveZone=18,
-    kActiveZoneLarge=19,
+    kRequireITSRefit=15,
+    kPixelRequirementITS=16,
+    kNewITSCut=17,
+    kActiveZoneSmall=18,
+    kActiveZone=19,
+    kActiveZoneLarge=20,
+    kTPCSignalNSmall=21,
+    kTPCSignalN=22,
+    kTPCSignalNLarge=23,
+    kTrackProbPiTPC=24,
+    kTrackProbKaTPC=25,
+    kTrackProbPrTPC=26,
+    kTrackProbDeTPC=27,
+    kTrackProbPiTOF=28,
+    kTrackProbKaTOF=29,
+    kTrackProbPrTOF=30,
+    kTrackProbDeTOF=31,
   };
 
+  enum centEst {
+    kV0M=0,
+    kCL0=1,
+    kCL1=2,
+  };
+
+  /*
+   kV0M=0,           // Centrality from V0A+V0C
+   kCL0=1,           // Centrality from Clusters in layer 0
+   kCL1=2,           // Centrality from Clusters in layer 1
+   kTRK=3,           // Centrality from tracks
+   kTKL=4,           // Centrality from tracklets
+   kV0MvsFMD=5,      // Centrality from V0 vs FMD
+   kTKLvsV0M=6,      // Centrality from tracklets vs V0
+   kZEMvsZDC=7,      // Centrality from ZEM vs ZDC
+   kV0A=8,           // Centrality from V0A
+   kV0C=9,           // Centrality from V0C
+   kZNA=10,          // Centrality from ZNA
+   kZNC=11,          // Centrality from ZNC
+   kZPA=12,          // Centrality from ZPA
+   kZPC=13,          // Centrality from ZPC
+   kCND=14,          // Centrality from tracks (candle condition)
+   kFMD=15,          // Centrality from FMD
+   kNPA=16,          // Centrality from Npart (MC)
+   kV0A0=17,         // Centrality from V0A0
+   kV0A123=18,       // Centrality from V0A123
+   kV0A23=19,        // Centrality from V0A23
+   kV0C01=20,        // Centrality from V0C01
+   kV0S=21,          // Centrality from V0S
+   kV0MEq=22,        // Centrality from V0A+V0C equalized channel
+   kV0AEq=23,        // Centrality from V0A equalized channel
+   kV0CEq=24,        // Centrality from V0C equalized channel
+   kSPDClusters=25,  // Centrality from SPD Clusters
+   kSPDTracklets=26, // Centrality from SPD Tracklets
+  */
+  //
   // ---------------------------------------------------------------------------------
   //                                    Methods
   // ---------------------------------------------------------------------------------
-
+  //
   virtual void   UserCreateOutputObjects();            // create output objects
   virtual void   UserExec(Option_t *option);           // run over event-by-event and fill output objects
   virtual void   Terminate(Option_t *);                // run only once and terminate
@@ -110,7 +159,6 @@ public:
   void   SetDeDxCheck(const Bool_t ifDeDxCheck = kFALSE)              {fDEdxCheck           = ifDeDxCheck;}
   void   SetEffMatrix(const Bool_t ifEffMatrix = kFALSE)              {fEffMatrix           = ifEffMatrix;}
   void   SetCleanSamplesOnly(const Bool_t ifSamplesOnly = kFALSE)     {fCleanSamplesOnly    = ifSamplesOnly;}
-  void   SetFillBayesianProb(const Bool_t ifBayesProb = kFALSE)       {fFillBayes           = ifBayesProb;}
   void   SetFillAllCutVariables(const Bool_t ifAllCuts = kFALSE)      {fFillCuts            = ifAllCuts;}
   void   SetFillDeDxTree(const Bool_t ifDeDxTree = kFALSE)            {fFillDeDxTree        = ifDeDxTree;}
   void   SetRunFastSimulation(const Bool_t ifFastSimul = kFALSE)      {fRunFastSimulation   = ifFastSimul;}
@@ -150,9 +198,10 @@ public:
   {
     // Create the histograms to be used in the binning of eta, cent and momentum
     std::cout << " Info::marsland: !!!!!! Centrality binning is being set !!!!!!! " << std::endl;
-    fhEta  =  new TH1F("fhEta" ,"Eta Bins"       ,fNEtaBins        ,fEtaDown, fEtaUp );
-    fhPtot =  new TH1F("fhPtot","Momentum Bins"  ,fNMomBins        ,fMomDown, fMomUp );
-    fhCent =  new TH1F("fhCent","Centrality Bins",tmpCentbins-1    ,tmpfxCentBins );
+    fHistEta  =  new TH1F("fHistEta" ,"Eta Bins"       ,fNEtaBins        ,fEtaDown, fEtaUp );
+    fHistPtot =  new TH1F("fHistPtot","Momentum Bins"  ,fNMomBins        ,fMomDown, fMomUp );
+    fHistCent =  new TH1F("fHistCent","Centrality Bins",tmpCentbins-1    ,tmpfxCentBins );
+    fHistPhi  =  new TH1F("fHistPhi" ,"Phi Bins"       ,36               ,-TMath::Pi(), TMath::Pi());
     // ==========================================
     // prepare real data centrality bins
     fNCentbinsData = tmpCentbins;
@@ -256,23 +305,26 @@ private:
   //                                   Functions
   // ---------------------------------------------------------------------------------
 
-  void  FillTPCdEdxReal();                   // Main function to fill all info + TIden
-  void  FillTPCdEdxCheck();                  // Quick check for the TPC dEdx
-  void  FillTPCdEdxMC();                     // Fill all info + TIdenMC from MC to do MC closure test
-  void  FastGen();                           // Run over galice.root for Fastgen
-  void  CalculateFastGenHigherMoments();     // Run over galice.root for Fastgen and calculate higher moments
-  void  WeakAndMaterial();                   // Look full acceptance, weak decay and material
-  void  FillDnchDeta();                      // Fill dnch/deta values for each cent and eta bin
-  void  FillTPCdEdxMCEffMatrix();            // Prepare efficiency matrix
-  void  FillCleanElectrons();                // Fill Clean Electrons
-  void  FillCleanPions();                    // Fill Clean Pions
-  void  SelectCleanSamplesFromV0s(AliESDv0 *v0, AliESDtrack *track0, AliESDtrack *track1);
-  Bool_t  ApplyDCAcutIfNoITSPixel(AliESDtrack *track);
-  void  CalculateMedianTPCDCAinPhi();
+  void FillTPCdEdxReal();                   // Main function to fill all info + TIden
+  void FillTPCdEdxCheck();                  // Quick check for the TPC dEdx
+  void FillTPCdEdxMC();                     // Fill all info + TIdenMC from MC to do MC closure test
+  void FastGen();                           // Run over galice.root for Fastgen
+  void CalculateFastGenHigherMoments();     // Run over galice.root for Fastgen and calculate higher moments
+  void WeakAndMaterial();                   // Look full acceptance, weak decay and material
+  void FillDnchDeta();                      // Fill dnch/deta values for each cent and eta bin
+  void FillTPCdEdxMCEffMatrix();            // Prepare efficiency matrix
+  void FillCleanSamples();                    // Fill Clean Pions
+  void SelectCleanSamplesFromV0s(AliESDv0 *v0, AliESDtrack *track0, AliESDtrack *track1);
+  void BinLogAxis(TH1 *h);
+  void CalculateEventVariables();
+  void SetCutBitsAndSomeTrackVariables(AliESDtrack *track);
+  void DumpDownScaledTree();
+  void GetExpecteds(AliESDtrack *track, Float_t closestPar[3]);
+  void DumpEventVariables();
+  Bool_t ApplyDCAcutIfNoITSPixel(AliESDtrack *track);
+  Bool_t GetSystematicClassIndex(UInt_t cut,Int_t syst);
   Int_t CountEmptyEvents(Int_t counterBin);  // Just count if there is empty events
-  void  BinLogAxis(TH1 *h);
-  void  CalculateEventVariables();
-
+  Int_t CacheTPCEventInformation();
 
   // ---------------------------------------------------------------------------------
   //                                   Members
@@ -289,7 +341,6 @@ private:
   AliTPCdEdxInfo   * fTPCdEdxInfo;            // detailed dEdx info
   AliStack         * fMCStack;                  // stack object to get Mc info
 
-  TTree            * fTree;                   // data Tree for real Data
   TTree            * fIdenTree;               // data tree for TIdentity
   TTree            * fIdenTreeMC;             // data tree for TIdentity
   TTree            * fArmPodTree;             // Tree for clean pion and proton selection
@@ -299,7 +350,6 @@ private:
   TTree            * fTreeDnchDeta;           // tree for dnch/deta calculation
   TTree            * fTreeMC;                 // tree for mc samples
   TTree            * fTreedEdxCheck;          // tree to check dEdx performance for a small data sample
-  TTree            * fTreeBayes;              // tree to save bayesian probabilities
   TTree            * fTreeCuts;               // tree to save all variables for control plots
   TTree            * fTreeMCFullAcc;          // tree with full acceptance filled with MC
   TTree            * fTreeResonance;          // tree with full acceptance filled with MC
@@ -307,9 +357,14 @@ private:
   TTree            * fTreeEvents;
   TTree            * fTreeDScaled;
 
-  TH1F             * fhEta;                   // helper histogram for TIdentity tree
-  TH1F             * fhCent;                  // helper histogram for TIdentity tree
-  TH1F             * fhPtot;                  // helper histogram for TIdentity tree
+  TH1F             * fHistEta;                   // helper histogram for TIdentity tree
+  TH1F             * fHistCent;                  // helper histogram for TIdentity tree
+  TH1F             * fHistPtot;                  // helper histogram for TIdentity tree
+  TH1F             * fHistPhi;
+  TH1F             * fHistInvK0s;                 // helper histogram for TIdentity tree
+  TH1F             * fHistInvLambda;              // helper histogram for TIdentity tree
+  TH1F             * fHistInvAntiLambda;          // helper histogram for TIdentity tree
+  TH1F             * fHistInvPhoton;              // helper histogram for TIdentity tree
   TH1F             * fHistPhiTPCcounterA;         // helper histogram for TIdentity tree
   TH1F             * fHistPhiTPCcounterC;         // helper histogram for TIdentity tree
   TH1F             * fHistPhiTPCcounterAITS;         // helper histogram for TIdentity tree
@@ -317,14 +372,14 @@ private:
   TH1F             * fHistPhiITScounterA;         // helper histogram for TIdentity tree
   TH1F             * fHistPhiITScounterC;         // helper histogram for TIdentity tree
 
-
   THnSparseF       * fHndEdx;                 // histogram which hold all dEdx info
-  THnSparseF       * fHnExpected;             // histogram which hold all PIDresponse info
-  THnSparseF       * fHnCleanEl;              // histogram which hold Clean Electrons
+  THnSparseF       * fHnExpected[20];         // histogram which hold all PIDresponse info
   THnSparseF       * fHnCleanKa;              // histogram which hold Clean Kaons
   THnSparseF       * fHnCleanDe;              // histogram which hold Clean Deuterons
 
   UInt_t            fTrackCutBits;           // integer which hold all cut variations as bits
+  Int_t             fSystClass;
+  const Int_t       fNSystClass;
   Int_t             myBin[3];                // binning array to be used for TIdentity module
   Int_t             myBinMC[3];              // binning array to be used for MC TIdentity module
   Double_t          fEtaDown;
@@ -342,7 +397,6 @@ private:
   Bool_t            fCleanSamplesOnly;       // flag for only clean sample production
   Bool_t            fTightCuts;              // addtional cuts from jens and Marian
   Bool_t            fIncludeITS;             // decide whether to use ITS or not
-  Bool_t            fFillBayes;              // switch whether to use bayesian PID or not
   Bool_t            fFillCuts;               // switch whether to fill all cut variables
   Bool_t            fFillDeDxTree;           // switch whether to fill dEdx tree
   Bool_t            fFillArmPodTree;         // switch whether to fill clean sample tree
@@ -469,6 +523,35 @@ private:
   Int_t              fEventMult;
   UInt_t             fTimeStamp;
   Float_t            fIntRate;
+  Int_t              fRunNo;
+  Float_t            fBField;
+  TString            fBeamType;
+
+  // Cut variables
+  Double_t fTrackProbElTPC;
+  Double_t fTrackProbPiTPC;
+  Double_t fTrackProbKaTPC;
+  Double_t fTrackProbPrTPC;
+  Double_t fTrackProbDeTPC;
+  Double_t fTrackProbElTOF;
+  Double_t fTrackProbPiTOF;
+  Double_t fTrackProbKaTOF;
+  Double_t fTrackProbPrTOF;
+  Double_t fTrackProbDeTOF;
+
+  Float_t fTrackTPCCrossedRows;
+  Float_t fTrackChi2TPC;
+  Float_t fTrackDCAxy;
+  Float_t fTrackDCAz;
+  Float_t fTrackLengthInActiveZone;
+  Float_t fTrackTPCSignalN;
+  Bool_t fTrackIsFirstITSlayer;
+  Bool_t fTrackIsSecondITSlayer;
+  Bool_t fTrackNewITScut;
+  Bool_t fTrackRequireITSRefit;
+
+
+
 
   // Additional cuts from marian
   Bool_t             fIsITSpixel01;           // if track has hits in innermost 2 pixels of ITS
@@ -543,7 +626,17 @@ private:
   TVectorF         * fCacheTrackNcl;       // ncl counter
   TVectorF         * fCacheTrackChi2;      // chi2 counter
   TVectorF         * fCacheTrackMatchEff;  // matchEff counter
+  TVectorF         * fCentralityEstimates;
   TGraph           * fLumiGraph;           // grap for the interaction rate info for a run
+
+  TH1F *fHisTPCVertexA;
+  TH1F *fHisTPCVertexC;
+  TH1F *fHisTPCVertex;
+  TH1F *fHisTPCVertexACut;
+  TH1F *fHisTPCVertexCCut;
+  TVectorF * fCacheTrackTPCCountersZ; // track counter with DCA z cut
+  static const char*  centEstStr[];              //!centrality types
+
 
 
   ClassDef(AliAnalysisTaskTIdentityPID, 3);
