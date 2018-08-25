@@ -29,8 +29,7 @@ AliAnalysisTaskTIdentityPID* Config_marsland_TIdentityPID(Int_t settingType, Int
    *    16.) THnSparse: (REFERENCE settings) + centBin 5
    *    17.) THnSparse: ITS is OFF
    *    18.) THnSparse: (REFERENCE settings) + THnSparse is used: number of eta bins = 32
-   *    19.) THnSparse: StandardTPCITScuts + TightCuts TPC dEdx preliminary plot
-   *    20.) THnSparse: (REFERENCE settings) + dEdx + allCuts + ArmPodTree filled + eta range extended
+   *    19.) THnSparse: (REFERENCE settings) + dEdx + allCuts + ArmPodTree filled + eta range extended
    *
    *    MC data --> settingType =
    *    100.) THnSparse: StandardTPCITScuts 8EtaBin_150pBins_9centBins (REFERENCE settings) MC CLOSURE
@@ -75,7 +74,6 @@ AliAnalysisTaskTIdentityPID* Config_marsland_TIdentityPID(Int_t settingType, Int
       task->SetUseCouts(kFALSE);
       task->SetIsMCtrue(kFALSE);
       task->SetFillAllCutVariables(kTRUE);
-      task->SetFillTIdenTrees(kTRUE);
       task->SetFillArmPodTree(kTRUE);
       const Int_t tmpCentbins = 9;
       Float_t tmpfxCentBins[tmpCentbins] = {0,10,20,30,40,50,60,70,80};
@@ -87,7 +85,6 @@ AliAnalysisTaskTIdentityPID* Config_marsland_TIdentityPID(Int_t settingType, Int
       task->SetUseCouts(kFALSE);
       task->SetIsMCtrue(kFALSE);
       task->SetFillAllCutVariables(kTRUE);
-      task->SetFillTIdenTrees(kTRUE);
       task->SetFillArmPodTree(kTRUE);
       const Int_t tmpCentbins = 17;
       Float_t tmpfxCentBins[tmpCentbins] = {0,5,10,15,20,25,30,35,40,45,50,55,60,65,70,75,80};
@@ -95,20 +92,6 @@ AliAnalysisTaskTIdentityPID* Config_marsland_TIdentityPID(Int_t settingType, Int
     }
     break;
     case 3:{
-      std::cout << settingType << " Info::marsland: THnSparse: StandardTPCITScuts + TightCuts TPC dEdx preliminary plot  " << std::endl;
-      task->SetTightCuts(kTRUE);
-      task->SetDeDxBinWidth(2.5);
-      task->SetDeDxLowerEdge(20.);
-      task->SetDeDxUpperEdge(1020.);
-      task->SetNEtabins(8);
-      task->SetEtaLowerEdge(-0.8);
-      task->SetEtaUpperEdge(0.8);
-      task->SetNMomBins(200);
-      task->SetMomLowerEdge(0.);
-      task->SetMomUpperEdge(3.);
-    }
-    break;
-    case 4:{
       std::cout << settingType << " Info::marsland: (REFERENCE settings) + allCuts + ArmPodTree filled " << std::endl;
       // Real data settings
       task->SetIsMCtrue(kFALSE);
@@ -129,17 +112,11 @@ AliAnalysisTaskTIdentityPID* Config_marsland_TIdentityPID(Int_t settingType, Int
       task->SetFillArmPodTree(kTRUE);
     }
     break;
-    case 5:{
+    case 4:{
       std::cout << settingType << " Info::marsland: Marians event tree " << std::endl;
-      // Real data settings
-      task->SetIsMCtrue(kFALSE);
-      task->SetEffMatrix(kFALSE);
       task->SetRunOnGrid(kTRUE);
       task->SetFillEventInfo(kTRUE);
       task->SetUseCouts(kTRUE);
-      task->SetFillAllCutVariables(kFALSE);
-      task->SetFillTIdenTrees(kFALSE);
-      task->SetFillArmPodTree(kFALSE);
     }
     break;
     //
@@ -221,7 +198,6 @@ AliAnalysisTaskTIdentityPID* Config_marsland_TIdentityPID(Int_t settingType, Int
       std::cout << settingType << " Info::marsland: FullSimul: StandardTPCITScuts 8EtaBin_150pBins_9centBins EffMatrix " << std::endl;
       task->SetEffMatrix(kTRUE);
       task->SetIsMCtrue(kTRUE);
-      task->SetTightCuts(kFALSE);
       task->SetNEtabins(8);
       task->SetRunFastSimulation(kFALSE);
       task->SetFillArmPodTree(kFALSE);
@@ -248,7 +224,6 @@ AliAnalysisTaskTIdentityPID* Config_marsland_TIdentityPID(Int_t settingType, Int
       std::cout << settingType << " Info::marsland: FullSimul: StandardTPCITScuts 8EtaBin_150pBins_9centBins EffMatrix " << std::endl;
       task->SetEffMatrix(kTRUE);
       task->SetIsMCtrue(kTRUE);
-      task->SetTightCuts(kFALSE);
       task->SetNEtabins(8);
       task->SetRunFastSimulation(kFALSE);
       task->SetFillArmPodTree(kFALSE);
@@ -267,28 +242,6 @@ AliAnalysisTaskTIdentityPID* Config_marsland_TIdentityPID(Int_t settingType, Int
     }
     break;
     case 106:{
-      std::cout << settingType << " Info::marsland: FullSimul: Tight Cuts 8EtaBin_150pBins_9centBins EffMatrix " << std::endl;
-      task->SetEffMatrix(kTRUE);
-      task->SetIsMCtrue(kTRUE);
-      task->SetNEtabins(8);
-      task->SetRunFastSimulation(kFALSE);
-      task->SetTightCuts(kTRUE);
-      task->SetFillArmPodTree(kFALSE);
-      task->SetDeDxCheck(kFALSE);
-      const Int_t tmpCentbins  = 10;
-      const Int_t tmpEtaBinsMC = 1;
-      const Int_t tmpMomBinsMC = 1;
-      Float_t tmpfxCentBins[tmpCentbins] = {0,5,10,20,30,40,50,60,70,80};
-      Float_t tmpetaDownArr[tmpEtaBinsMC] = {-0.8};
-      Float_t tmpetaUpArr[tmpEtaBinsMC]   = { 0.8};
-      Float_t tmppDownArr[tmpMomBinsMC] = { 0.2};
-      Float_t tmppUpArr[tmpMomBinsMC]   = { 3.2};
-      task->SetMCEtaScanArray(tmpEtaBinsMC, tmpetaDownArr, tmpetaUpArr);
-      task->SetMCMomScanArray(tmpMomBinsMC, tmppDownArr,   tmppUpArr);
-      task->SetCentralityBinning(tmpCentbins,tmpfxCentBins);
-    }
-    break;
-    case 107:{
       std::cout << settingType << " Info::marsland: FastSimul: StandardTPCITScuts 8EtaBin_150pBins_9centBins (REFERENCE settings): Fill only DnchDeta " << std::endl;
       task->SetIsMCtrue(kTRUE);
       task->SetNEtabins(8);
@@ -296,7 +249,7 @@ AliAnalysisTaskTIdentityPID* Config_marsland_TIdentityPID(Int_t settingType, Int
       task->SetFillDnchDeta(kTRUE);
     }
     break;
-    case 108:{
+    case 107:{
       std::cout << settingType << " Info::marsland: THnSparse: StandardTPCITScuts 8EtaBin_150pBins_9centBins (REFERENCE settings) MC CLOSURE with TOF cut " << std::endl;
       task->SetIncludeTOF(kTRUE);
       task->SetIsMCtrue(kTRUE);
@@ -315,7 +268,7 @@ AliAnalysisTaskTIdentityPID* Config_marsland_TIdentityPID(Int_t settingType, Int
       task->SetCentralityBinning(tmpCentbins,tmpfxCentBins);
     }
     break;
-    case 109:{
+    case 108:{
       std::cout << settingType << " Info::marsland: THnSparse: StandardTPCITScuts 8EtaBin_150pBins_9centBins (REFERENCE settings) MC CLOSURE with NO ITS cut " << std::endl;
       task->SetIncludeTOF(kFALSE);
       task->SetIsMCtrue(kTRUE);
@@ -334,11 +287,10 @@ AliAnalysisTaskTIdentityPID* Config_marsland_TIdentityPID(Int_t settingType, Int
       task->SetCentralityBinning(tmpCentbins,tmpfxCentBins);
     }
     break;
-    case 110:{
+    case 109:{
       std::cout << settingType << " Info::marsland: FULL MC at GSI --> eta and mom scan + removal of resonances + EffMatrix [0.2,0.6]<p<[1.5,3.2] GeV/c  " << std::endl;
       // FULL MC settings
       task->SetIsMCtrue(kTRUE);
-      task->SetFillTIdenTrees(kTRUE);
       task->SetFillAllCutVariables(kTRUE);
       task->SetEffMatrix(kTRUE);
       task->SetFillArmPodTree(kTRUE);
@@ -659,7 +611,6 @@ void SetDefaults(AliAnalysisTaskTIdentityPID *defaultTask)
   defaultTask->SetFillArmPodTree(kFALSE);
 
   // Extra Boolians which are by default === OFF ===
-  defaultTask->SetTightCuts(kFALSE);
   defaultTask->SetDeDxCheck(kFALSE);
   defaultTask->SetEffMatrix(kFALSE);
   defaultTask->SetCleanSamplesOnly(kFALSE);
@@ -670,7 +621,6 @@ void SetDefaults(AliAnalysisTaskTIdentityPID *defaultTask)
   defaultTask->SetUseThnSparse(kFALSE);
   defaultTask->SetUseCouts(kFALSE);
   defaultTask->SetWeakAndMaterial(kFALSE);
-  defaultTask->SetFillTIdenTrees(kFALSE);
   defaultTask->SetFillEventInfo(kFALSE);
 
 

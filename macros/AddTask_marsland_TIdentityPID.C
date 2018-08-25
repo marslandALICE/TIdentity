@@ -84,7 +84,7 @@ AliAnalysisTask *AddTask_marsland_TIdentityPID(Bool_t getFromAlien=kFALSE,TStrin
   gSystem->Load("libANALYSISalice");
   gSystem->AddIncludePath("-I$ALICE_ROOT/include");
   gSystem->AddIncludePath("-I$ALICE_PHYSICS/include");
-  
+
   AliAnalysisTaskTIdentityPID* task = Config_marsland_TIdentityPID(settingType,lhcPeriod,lookUpTableIndex);
   Bool_t hasMC = (AliAnalysisManager::GetAnalysisManager()->GetMCtruthEventHandler()!=0x0);
   task->SetIsMCtrue(hasMC);
@@ -107,9 +107,9 @@ AliAnalysisTask *AddTask_marsland_TIdentityPID(Bool_t getFromAlien=kFALSE,TStrin
   //
   // ****** Do not forget to "DefineOutput(5, TTree::Class());" In the contructor of the task ******
   //define output containers, please use 'username'_'somename'
-  AliAnalysisDataContainer *cinput,   *coutput1, *coutput2, *coutput3, *coutput4;
+  AliAnalysisDataContainer *cinput, *coutput1, *coutput2, *coutput3, *coutput4;
   AliAnalysisDataContainer *coutput5, *coutput6, *coutput7, *coutput8, *coutput9;
-  AliAnalysisDataContainer *coutput10, *coutput11, *coutput12, *coutput13, *coutput14, *coutput15;
+  AliAnalysisDataContainer *coutput10, *coutput11, *coutput12, *coutput13;
 
   //  find input container // Output files --> File opening order is important
   TString results = "AnalysisResults.root";
@@ -117,20 +117,18 @@ AliAnalysisTask *AddTask_marsland_TIdentityPID(Bool_t getFromAlien=kFALSE,TStrin
   mgr->ConnectInput(task,  0, cinput);
   // Output containers
   coutput1  = mgr->CreateContainer("cleanHists",    TList::Class(), AliAnalysisManager::kOutputContainer ,results.Data());
-  coutput2  = mgr->CreateContainer("tidtree",       TTree::Class(), AliAnalysisManager::kOutputContainer ,results.Data());
-  coutput3  = mgr->CreateContainer("MCtidtree",     TTree::Class(), AliAnalysisManager::kOutputContainer ,results.Data());
-  coutput4  = mgr->CreateContainer("armPodTree",    TTree::Class(), AliAnalysisManager::kOutputContainer ,results.Data());
-  coutput5  = mgr->CreateContainer("mcRec",         TTree::Class(), AliAnalysisManager::kOutputContainer ,results.Data());
-  coutput6  = mgr->CreateContainer("mcGen",         TTree::Class(), AliAnalysisManager::kOutputContainer ,results.Data());
-  coutput7  = mgr->CreateContainer("fTreeMC",       TTree::Class(), AliAnalysisManager::kOutputContainer ,results.Data());
-  coutput8  = mgr->CreateContainer("fTreedEdxCheck",TTree::Class(), AliAnalysisManager::kOutputContainer ,results.Data());
-  coutput9  = mgr->CreateContainer("tracks",        TTree::Class(), AliAnalysisManager::kOutputContainer ,results.Data());
-  coutput10 = mgr->CreateContainer("dnchdeta",      TTree::Class(), AliAnalysisManager::kOutputContainer ,results.Data());
-  coutput11 = mgr->CreateContainer("fullacc",       TTree::Class(), AliAnalysisManager::kOutputContainer ,results.Data());
-  coutput12 = mgr->CreateContainer("resonance",     TTree::Class(), AliAnalysisManager::kOutputContainer ,results.Data());
-  coutput13 = mgr->CreateContainer("mcGenMoms",     TTree::Class(), AliAnalysisManager::kOutputContainer ,results.Data());
-  coutput14 = mgr->CreateContainer("events",        TTree::Class(), AliAnalysisManager::kOutputContainer ,results.Data());
-  coutput15 = mgr->CreateContainer("dscaled",       TTree::Class(), AliAnalysisManager::kOutputContainer ,results.Data());
+  coutput2  = mgr->CreateContainer("armPodTree",    TTree::Class(), AliAnalysisManager::kOutputContainer ,results.Data());
+  coutput3  = mgr->CreateContainer("mcRec",         TTree::Class(), AliAnalysisManager::kOutputContainer ,results.Data());
+  coutput4  = mgr->CreateContainer("mcGen",         TTree::Class(), AliAnalysisManager::kOutputContainer ,results.Data());
+  coutput5  = mgr->CreateContainer("fTreeMC",       TTree::Class(), AliAnalysisManager::kOutputContainer ,results.Data());
+  coutput6  = mgr->CreateContainer("fTreedEdxCheck",TTree::Class(), AliAnalysisManager::kOutputContainer ,results.Data());
+  coutput7  = mgr->CreateContainer("tracks",        TTree::Class(), AliAnalysisManager::kOutputContainer ,results.Data());
+  coutput8  = mgr->CreateContainer("dnchdeta",      TTree::Class(), AliAnalysisManager::kOutputContainer ,results.Data());
+  coutput9  = mgr->CreateContainer("fullacc",       TTree::Class(), AliAnalysisManager::kOutputContainer ,results.Data());
+  coutput10 = mgr->CreateContainer("resonance",     TTree::Class(), AliAnalysisManager::kOutputContainer ,results.Data());
+  coutput11 = mgr->CreateContainer("mcGenMoms",     TTree::Class(), AliAnalysisManager::kOutputContainer ,results.Data());
+  coutput12 = mgr->CreateContainer("events",        TTree::Class(), AliAnalysisManager::kOutputContainer ,results.Data());
+  coutput13 = mgr->CreateContainer("dscaled",       TTree::Class(), AliAnalysisManager::kOutputContainer ,results.Data());
   mgr->ConnectOutput (task,  1, coutput1);
   mgr->ConnectOutput (task,  2, coutput2);
   mgr->ConnectOutput (task,  3, coutput3);
@@ -144,8 +142,6 @@ AliAnalysisTask *AddTask_marsland_TIdentityPID(Bool_t getFromAlien=kFALSE,TStrin
   mgr->ConnectOutput (task,  11, coutput11);
   mgr->ConnectOutput (task,  12, coutput12);
   mgr->ConnectOutput (task,  13, coutput13);
-  mgr->ConnectOutput (task,  14, coutput14);
-  mgr->ConnectOutput (task,  15, coutput15);
 
   std::cout << " Info::marsland: === Containers are ready === " << std::endl;
   return task;

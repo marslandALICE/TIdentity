@@ -155,7 +155,6 @@ public:
   void   SetRunOnGrid(const Bool_t ifRunOnGrid = kTRUE)               {fRunOnGrid           = ifRunOnGrid;}
   void   SetIncludeITScuts(const Bool_t ifITSCuts = kTRUE)            {fIncludeITS          = ifITSCuts;}
   void   SetFillArmPodTree(const Bool_t ifArmpodTree = kTRUE)         {fFillArmPodTree      = ifArmpodTree;}
-  void   SetTightCuts(const Bool_t ifTightCuts = kFALSE)              {fTightCuts           = ifTightCuts;}
   void   SetDeDxCheck(const Bool_t ifDeDxCheck = kFALSE)              {fDEdxCheck           = ifDeDxCheck;}
   void   SetEffMatrix(const Bool_t ifEffMatrix = kFALSE)              {fEffMatrix           = ifEffMatrix;}
   void   SetCleanSamplesOnly(const Bool_t ifSamplesOnly = kFALSE)     {fCleanSamplesOnly    = ifSamplesOnly;}
@@ -168,7 +167,6 @@ public:
   void   SetUseThnSparse(const Bool_t ifUseThnSparse = kFALSE)        {fUseThnSparse        = ifUseThnSparse;}
   void   SetUseCouts(const Bool_t ifUseCouts = kFALSE)                {fUseCouts            = ifUseCouts;}
   void   SetWeakAndMaterial(const Bool_t ifWeakAndMaterial = kFALSE)  {fWeakAndMaterial     = ifWeakAndMaterial;}
-  void   SetFillTIdenTrees(const Bool_t ifTIdentity = kFALSE)         {fTIdentity           = ifTIdentity;}
   void   SetFillEventInfo(const Bool_t ifEventInfo = kFALSE)          {fEventInfo           = ifEventInfo;}
   void   SetPercentageOfEvents(const Int_t nPercentageOfEvents = 0)   {fPercentageOfEvents = nPercentageOfEvents;}
 
@@ -198,8 +196,6 @@ public:
   {
     // Create the histograms to be used in the binning of eta, cent and momentum
     std::cout << " Info::marsland: !!!!!! Centrality binning is being set !!!!!!! " << std::endl;
-    fHistEta  =  new TH1F("fHistEta" ,"Eta Bins"       ,fNEtaBins        ,fEtaDown, fEtaUp );
-    fHistPtot =  new TH1F("fHistPtot","Momentum Bins"  ,fNMomBins        ,fMomDown, fMomUp );
     fHistCent =  new TH1F("fHistCent","Centrality Bins",tmpCentbins-1    ,tmpfxCentBins );
     fHistPhi  =  new TH1F("fHistPhi" ,"Phi Bins"       ,36               ,-TMath::Pi(), TMath::Pi());
     // ==========================================
@@ -341,8 +337,6 @@ private:
   AliTPCdEdxInfo   * fTPCdEdxInfo;            // detailed dEdx info
   AliStack         * fMCStack;                  // stack object to get Mc info
 
-  TTree            * fIdenTree;               // data tree for TIdentity
-  TTree            * fIdenTreeMC;             // data tree for TIdentity
   TTree            * fArmPodTree;             // Tree for clean pion and proton selection
   TTreeSRedirector * fTreeSRedirector;        //! temp tree to dump output
   TTree            * fTreeMCrec;              // tree for reconstructed moments
@@ -357,14 +351,13 @@ private:
   TTree            * fTreeEvents;
   TTree            * fTreeDScaled;
 
-  TH1F             * fHistEta;                   // helper histogram for TIdentity tree
   TH1F             * fHistCent;                  // helper histogram for TIdentity tree
-  TH1F             * fHistPtot;                  // helper histogram for TIdentity tree
   TH1F             * fHistPhi;
   TH1F             * fHistInvK0s;                 // helper histogram for TIdentity tree
   TH1F             * fHistInvLambda;              // helper histogram for TIdentity tree
   TH1F             * fHistInvAntiLambda;          // helper histogram for TIdentity tree
   TH1F             * fHistInvPhoton;              // helper histogram for TIdentity tree
+  //
   TH1F             * fHistPhiTPCcounterA;         // helper histogram for TIdentity tree
   TH1F             * fHistPhiTPCcounterC;         // helper histogram for TIdentity tree
   TH1F             * fHistPhiTPCcounterAITS;         // helper histogram for TIdentity tree
@@ -379,9 +372,6 @@ private:
 
   UInt_t            fTrackCutBits;           // integer which hold all cut variations as bits
   Int_t             fSystClass;
-  const Int_t       fNSystClass;
-  Int_t             myBin[3];                // binning array to be used for TIdentity module
-  Int_t             myBinMC[3];              // binning array to be used for MC TIdentity module
   Double_t          fEtaDown;
   Double_t          fEtaUp;
   Int_t             fNEtaBins;
@@ -389,13 +379,11 @@ private:
 
   Bool_t            fRunOnGrid;              // flag if real data or MC is processed
   Bool_t            fMCtrue;                 // flag if real data or MC is processed
-  Bool_t            fTIdentity;              // flag if tidentity trees are to be filled
   Bool_t            fEventInfo;              // flag if event info and downscaled track tree is filled
   Bool_t            fWeakAndMaterial;        // flag for the Weak and Material analysis
   Bool_t            fEffMatrix;              // flag for efficiency matrix filling
   Bool_t            fDEdxCheck;              // flag to check only the dEdx performance
   Bool_t            fCleanSamplesOnly;       // flag for only clean sample production
-  Bool_t            fTightCuts;              // addtional cuts from jens and Marian
   Bool_t            fIncludeITS;             // decide whether to use ITS or not
   Bool_t            fFillCuts;               // switch whether to fill all cut variables
   Bool_t            fFillDeDxTree;           // switch whether to fill dEdx tree
@@ -499,10 +487,6 @@ private:
   Int_t              fEventMCgen;             // Event id for MC generated
 
   Float_t            fTPCSignal;              // Measured dE/dx
-  Double_t           myDeDx;                  // dEdx for TIdentity module
-  Int_t              signNew;                 // Sign Info for TIdentity module
-  Double_t           myDeDxMC;                  // dEdx for TIdentity module
-  Int_t              signNewMC;                 // Sign Info for TIdentity module
   Float_t            fEta;                    // pseudo rapidity
   Float_t            fNContributors;          // Ntracks
   Float_t            fTheta;                  // theta
@@ -532,12 +516,12 @@ private:
   Double_t fTrackProbPiTPC;
   Double_t fTrackProbKaTPC;
   Double_t fTrackProbPrTPC;
-  Double_t fTrackProbDeTPC;
+  Bool_t fTrackProbDeTPC;
   Double_t fTrackProbElTOF;
   Double_t fTrackProbPiTOF;
   Double_t fTrackProbKaTOF;
   Double_t fTrackProbPrTOF;
-  Double_t fTrackProbDeTOF;
+  Bool_t fTrackProbDeTOF;
 
   Float_t fTrackTPCCrossedRows;
   Float_t fTrackChi2TPC;
@@ -545,10 +529,10 @@ private:
   Float_t fTrackDCAz;
   Float_t fTrackLengthInActiveZone;
   Float_t fTrackTPCSignalN;
-  Bool_t fTrackIsFirstITSlayer;
-  Bool_t fTrackIsSecondITSlayer;
-  Bool_t fTrackNewITScut;
-  Bool_t fTrackRequireITSRefit;
+  Bool_t  fTrackIsFirstITSlayer;
+  Bool_t  fTrackIsSecondITSlayer;
+  Bool_t  fTrackNewITScut;
+  Bool_t  fTrackRequireITSRefit;
 
 
 
@@ -570,12 +554,6 @@ private:
   Bool_t             fHasTrack0FirstITSlayer;
   Bool_t             fHasTrack1FirstITSlayer;
   Bool_t             fHasV0FirstITSlayer;
-
-  TCutG              *fPionCutG;
-  TCutG              *fAntiProtonCutG;
-  TCutG              *fProtonCutG;
-
-
 
   //  Variables for systematic uncertainty checks
   //  B field configurations -->  use default settings and analyse the following set of runs
@@ -602,7 +580,6 @@ private:
   Float_t            *fxCentBins;            //[fNCentbinsData]
   TString            *fResonances;           //[fNResBins]
   Int_t              *fBaryons;              //[fNBarBins]
-
   //
   // control and QA histograms
   //
@@ -610,7 +587,6 @@ private:
   THnF             * fHistNegEffMatrixRec;       // histogram efficiency matrix --> generated traks
   THnF             * fHistPosEffMatrixGen;       // histogram efficiency matrix --> reconstructed pions
   THnF             * fHistNegEffMatrixGen;       // histogram efficiency matrix --> generated pions
-
   TH1F             * fHistEmptyEvent;         // control histogram for empty event
   TH1F             * fHistCentrality;         // control histogram for centrality
   TH1F             * fHistCentralityImpPar;         // control histogram for centrality
@@ -618,7 +594,9 @@ private:
   TH1F             * fHistVertex;             // control histogram for vertexZ
   THnF             * fHistdEdxTPC;            // 5D hist of dEdx from all TPC
   TH2F             * fHistArmPod;             // control histogram for Armanteros Podolanski plot
-
+  //
+  // Counters for Marian
+  //
   TVectorF         * fPhiTPCdcarA;  // track counter
   TVectorF         * fPhiTPCdcarC; // dedx info counter
   TVectorF         * fCacheTrackCounters;  // track counter
@@ -628,13 +606,12 @@ private:
   TVectorF         * fCacheTrackMatchEff;  // matchEff counter
   TVectorF         * fCentralityEstimates;
   TGraph           * fLumiGraph;           // grap for the interaction rate info for a run
-
-  TH1F *fHisTPCVertexA;
-  TH1F *fHisTPCVertexC;
-  TH1F *fHisTPCVertex;
-  TH1F *fHisTPCVertexACut;
-  TH1F *fHisTPCVertexCCut;
-  TVectorF * fCacheTrackTPCCountersZ; // track counter with DCA z cut
+  TH1F             * fHisTPCVertexA;
+  TH1F             * fHisTPCVertexC;
+  TH1F             * fHisTPCVertex;
+  TH1F             * fHisTPCVertexACut;
+  TH1F             * fHisTPCVertexCCut;
+  TVectorF         * fCacheTrackTPCCountersZ; // track counter with DCA z cut
   static const char*  centEstStr[];              //!centrality types
 
 

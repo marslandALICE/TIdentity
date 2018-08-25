@@ -41,6 +41,8 @@
 #include "TFile.h"
 #include "TDatabasePDG.h"
 #include "AliMathBase.h"
+#include "AliESDFMD.h"
+#include "AliFMDFloatMap.h"
 #include "AliAnalysisTaskSE.h"
 #include "AliAnalysisManager.h"
 #include "AliTPCdEdxInfo.h"
@@ -107,8 +109,6 @@ fESDtrackCutsCleanSamp(0),
 fPIDCombined(0x0),
 fTPCdEdxInfo(0x0),
 fMCStack(0x0),
-fIdenTree(0x0),
-fIdenTreeMC(0x0),
 fArmPodTree(0x0),
 fTreeSRedirector(0x0),
 fTreeMCrec(0x0),
@@ -122,9 +122,7 @@ fTreeResonance(0x0),
 fTreeMCgenMoms(0x0),
 fTreeEvents(0x0),
 fTreeDScaled(0x0),
-fHistEta(0),
 fHistCent(0),
-fHistPtot(0),
 fHistPhi(0),
 fHistInvK0s(0),
 fHistInvLambda(0),
@@ -142,20 +140,17 @@ fHnCleanKa(),
 fHnCleanDe(),
 fTrackCutBits(0),
 fSystClass(0),
-fNSystClass(19),
 fEtaDown(0),
 fEtaUp(0),
 fNEtaBins(0),
 fPercentageOfEvents(0),
 fRunOnGrid(kFALSE),
 fMCtrue(kFALSE),
-fTIdentity(kFALSE),
 fEventInfo(kFALSE),
 fWeakAndMaterial(kFALSE),
 fEffMatrix(kFALSE),
 fDEdxCheck(kFALSE),
 fCleanSamplesOnly(kFALSE),
-fTightCuts(kFALSE),
 fIncludeITS(kTRUE),
 fFillCuts(kFALSE),
 fFillDeDxTree(kTRUE),
@@ -244,10 +239,6 @@ fEvent(0),
 fEventMC(0),
 fEventMCgen(0),
 fTPCSignal(0),
-myDeDx(0),
-signNew(0),
-myDeDxMC(0),
-signNewMC(0),
 fEta(0),
 fNContributors(0),
 fTheta(0),
@@ -304,9 +295,6 @@ fCleanProton1FromLambda(0),
 fHasTrack0FirstITSlayer(0),
 fHasTrack1FirstITSlayer(0),
 fHasV0FirstITSlayer(0),
-fPionCutG(0),
-fAntiProtonCutG(0),
-fProtonCutG(0),
 fSystCentEstimatetor(0),
 fSystCrossedRows(0),
 fSystDCAxy(0),
@@ -367,8 +355,6 @@ fESDtrackCutsCleanSamp(0),
 fPIDCombined(0x0),
 fTPCdEdxInfo(0x0),
 fMCStack(0x0),
-fIdenTree(0x0),
-fIdenTreeMC(0x0),
 fArmPodTree(0x0),
 fTreeSRedirector(0x0),
 fTreeMCrec(0x0),
@@ -382,9 +368,7 @@ fTreeResonance(0x0),
 fTreeMCgenMoms(0x0),
 fTreeEvents(0x0),
 fTreeDScaled(0x0),
-fHistEta(0),
 fHistCent(0),
-fHistPtot(0),
 fHistPhi(0),
 fHistInvK0s(0),
 fHistInvLambda(0),
@@ -402,20 +386,17 @@ fHnCleanKa(),
 fHnCleanDe(),
 fTrackCutBits(0),
 fSystClass(0),
-fNSystClass(19),
 fEtaDown(0),
 fEtaUp(0),
 fNEtaBins(0),
 fPercentageOfEvents(0),
 fRunOnGrid(kFALSE),
 fMCtrue(kFALSE),
-fTIdentity(kFALSE),
 fEventInfo(kFALSE),
 fWeakAndMaterial(kFALSE),
 fEffMatrix(kFALSE),
 fDEdxCheck(kFALSE),
 fCleanSamplesOnly(kFALSE),
-fTightCuts(kFALSE),
 fIncludeITS(kTRUE),
 fFillCuts(kFALSE),
 fFillDeDxTree(kTRUE),
@@ -504,10 +485,6 @@ fEvent(0),
 fEventMC(0),
 fEventMCgen(0),
 fTPCSignal(0),
-myDeDx(0),
-signNew(0),
-myDeDxMC(0),
-signNewMC(0),
 fEta(0),
 fNContributors(0),
 fTheta(0),
@@ -564,9 +541,6 @@ fCleanProton1FromLambda(0),
 fHasTrack0FirstITSlayer(0),
 fHasTrack1FirstITSlayer(0),
 fHasV0FirstITSlayer(0),
-fPionCutG(0),
-fAntiProtonCutG(0),
-fProtonCutG(0),
 fSystCentEstimatetor(0),
 fSystCrossedRows(0),
 fSystDCAxy(0),
@@ -646,33 +620,6 @@ fCacheTrackTPCCountersZ(0)
       }
     }
   }
-
-  fPhiTPCdcarA         = new TVectorF(36);
-  fPhiTPCdcarC         = new TVectorF(36);
-  fCacheTrackCounters  = new TVectorF(20);
-  fCacheTrackdEdxRatio = new TVectorF(30);
-  fCacheTrackNcl       = new TVectorF(20);
-  fCacheTrackChi2      = new TVectorF(20);
-  fCacheTrackMatchEff  = new TVectorF(20);
-  fCentralityEstimates  = new TVectorF(3);
-  fCacheTrackTPCCountersZ = new TVectorF(8);
-  //
-  for (Int_t i=0;i<3;i++) (*fCentralityEstimates)[i]=-10.;
-  for (Int_t i=0;i<8;i++) (*fCacheTrackTPCCountersZ)[i]=0.;
-  for (Int_t i=0;i<36;i++){
-    (*fPhiTPCdcarA)[i]=0.;
-    (*fPhiTPCdcarC)[i]=0.;
-  }
-  for (Int_t i=0;i<20;i++){
-    (*fCacheTrackCounters)[i]=0.;
-    (*fCacheTrackdEdxRatio)[i]=0.;
-    (*fCacheTrackNcl)[i]=0.;
-    (*fCacheTrackChi2)[i]=0.;
-    (*fCacheTrackMatchEff)[i]=0.;
-  }
-  for (Int_t i=0;i<20;i++) fHnExpected[i]=NULL;
-  for (Int_t ibin=0;ibin<3;ibin++) myBin[ibin] = 0;
-  for (Int_t ibin=0;ibin<3;ibin++) myBinMC[ibin] = 0;
   //
   // ==========================================
   //
@@ -691,8 +638,6 @@ fCacheTrackTPCCountersZ(0)
   DefineOutput(11, TTree::Class());
   DefineOutput(12, TTree::Class());
   DefineOutput(13, TTree::Class());
-  DefineOutput(14, TTree::Class());
-  DefineOutput(15, TTree::Class());
   // ==========================================
 
 }
@@ -715,9 +660,7 @@ AliAnalysisTaskTIdentityPID::~AliAnalysisTaskTIdentityPID()
   if (fHistImpParam)        delete fHistImpParam;
   if (fHistVertex)          delete fHistVertex;
   if (fHistArmPod)          delete fHistArmPod;
-  if (fHistEta)             delete fHistEta;
   if (fHistCent)            delete fHistCent;
-  if (fHistPtot)            delete fHistPtot;
   if (fHistPhi)             delete fHistPhi;
   if (fHistInvK0s)          delete fHistInvK0s;
   if (fHistInvLambda)       delete fHistInvLambda;
@@ -859,13 +802,19 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
       if (!fPIDResponse) std::cout << " Info::marsland: ======= PIDResponse object was not created ====== " << std::endl;
     }
   }
+  //
+  // ************************************************************************
+  //   OpenFile output --> one can open several files
   // ************************************************************************
   //
-  OpenFile(1);  // OpenFile for hists  ==============================================
+  OpenFile(1);
   fListHist = new TList();
   fListHist->SetOwner(kTRUE);
-
-  // ***************   THnSparseF holding the PIDresponse info   ***********************
+  //
+  // ************************************************************************
+  //   histogram of splines
+  // ************************************************************************
+  //
   Int_t dEdxnBins      = Int_t((fDEdxUp-fDEdxDown)/fDEdxBinWidth);
   Int_t dEdxnBinsClean = Int_t((fDEdxCleanUp-fDEdxDown)/fDEdxBinWidth);
   // 0 --> assumed particle: 0. electron, 1. pion, 2. kaon, 3. proton, 5. deuteron
@@ -891,9 +840,11 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
     }
     fListHist->Add(fHnExpected[i]);
   }
+  //
+  // ************************************************************************
+  //   dEdx histograms
   // ************************************************************************
   //
-  // ************************** dEdx histograms *****************************
   // 0 --> sign
   // 1 --> Centrality
   // 2 --> eta
@@ -917,34 +868,37 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
       fHndEdx   ->GetAxis(iaxis)->SetTitle(axisTitledEdx[iaxis]);
     }
     fListHist->Add(fHndEdx);
+
+    //
+    // Clean Kaons
+    Int_t   binsCleanKa[nhistbins]  = { 2,  fNCentbinsData,  fNEtaBins,   fNMomBins,     dEdxnBinsClean};
+    Double_t xminCleanKa[nhistbins] = {-2,   0.,             fEtaDown,    fMomDown,      fDEdxDown};
+    Double_t xmaxCleanKa[nhistbins] = { 2,  80.,             fEtaUp,      fMomUp,        fDEdxCleanUp};
+    fHnCleanKa = new THnSparseF("hCleanKa","Clean Kaons"    ,nhistbins,binsCleanKa,xminCleanKa,xmaxCleanKa);
+    fHnCleanKa->GetAxis(1)->Set(fNCentbinsData-1,fxCentBins);
+    for (Int_t iaxis=0; iaxis<nhistbins;iaxis++){
+      fHnCleanKa->GetAxis(iaxis)->SetName(axisNamedEdx[iaxis]);
+      fHnCleanKa->GetAxis(iaxis)->SetTitle(axisTitledEdx[iaxis]);
+    }
+    fListHist->Add(fHnCleanKa);
+    //
+    // Clean Deuteron
+    Int_t   binsCleanDe[nhistbins]  = { 2,  fNCentbinsData,  fNEtaBins,   fNMomBins,     dEdxnBinsClean};
+    Double_t xminCleanDe[nhistbins] = {-2,   0.,             fEtaDown,    fMomDown,      fDEdxDown};
+    Double_t xmaxCleanDe[nhistbins] = { 2,  80.,             fEtaUp,      fMomUp,        fDEdxCleanUp};
+    fHnCleanDe = new THnSparseF("hCleanDe","Clean Deuterons",nhistbins,binsCleanDe,xminCleanDe,xmaxCleanDe);
+    fHnCleanDe->GetAxis(1)->Set(fNCentbinsData-1,fxCentBins);
+    for (Int_t iaxis=0; iaxis<nhistbins;iaxis++){
+      fHnCleanDe->GetAxis(iaxis)->SetName(axisNamedEdx[iaxis]);
+      fHnCleanDe->GetAxis(iaxis)->SetTitle(axisTitledEdx[iaxis]);
+    }
+    fListHist->Add(fHnCleanDe);
   }
-  //
-  // Clean Kaons
-  Int_t   binsCleanKa[nhistbins]  = { 2,  fNCentbinsData,  fNEtaBins,   fNMomBins,     dEdxnBinsClean};
-  Double_t xminCleanKa[nhistbins] = {-2,   0.,             fEtaDown,    fMomDown,      fDEdxDown};
-  Double_t xmaxCleanKa[nhistbins] = { 2,  80.,             fEtaUp,      fMomUp,        fDEdxCleanUp};
-  fHnCleanKa = new THnSparseF("hCleanKa","Clean Kaons"    ,nhistbins,binsCleanKa,xminCleanKa,xmaxCleanKa);
-  fHnCleanKa->GetAxis(1)->Set(fNCentbinsData-1,fxCentBins);
-  for (Int_t iaxis=0; iaxis<nhistbins;iaxis++){
-    fHnCleanKa->GetAxis(iaxis)->SetName(axisNamedEdx[iaxis]);
-    fHnCleanKa->GetAxis(iaxis)->SetTitle(axisTitledEdx[iaxis]);
-  }
-  fListHist->Add(fHnCleanKa);
-  // Clean Deuteron
-  Int_t   binsCleanDe[nhistbins]  = { 2,  fNCentbinsData,  fNEtaBins,   fNMomBins,     dEdxnBinsClean};
-  Double_t xminCleanDe[nhistbins] = {-2,   0.,             fEtaDown,    fMomDown,      fDEdxDown};
-  Double_t xmaxCleanDe[nhistbins] = { 2,  80.,             fEtaUp,      fMomUp,        fDEdxCleanUp};
-  fHnCleanDe = new THnSparseF("hCleanDe","Clean Deuterons",nhistbins,binsCleanDe,xminCleanDe,xmaxCleanDe);
-  fHnCleanDe->GetAxis(1)->Set(fNCentbinsData-1,fxCentBins);
-  for (Int_t iaxis=0; iaxis<nhistbins;iaxis++){
-    fHnCleanDe->GetAxis(iaxis)->SetName(axisNamedEdx[iaxis]);
-    fHnCleanDe->GetAxis(iaxis)->SetTitle(axisTitledEdx[iaxis]);
-  }
-  fListHist->Add(fHnCleanDe);
   //
   // ************************************************************************
+  //   Efficiency matrix histograms
+  // ************************************************************************
   //
-  // ****************** Efficiency matrix histograms ************************
   if(fEffMatrix){
     const Int_t ndim=5;
     const Int_t nEtaBins=(fEtaUp-fEtaDown)*20;
@@ -968,10 +922,51 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
     fListHist->Add(fHistPosEffMatrixGen);
     fListHist->Add(fHistNegEffMatrixGen);
   }
+  //
+  // ************************************************************************
+  //   Event histograms
   // ************************************************************************
   //
-  // **************************** Event histograms **************************
+  fHistEmptyEvent        = new TH1F("hEmptyEvent",           "control histogram to count empty events"    , 10,  0., 10.);
+  fHistCentrality        = new TH1F("hCentrality",           "control histogram for centrality"           , 100, 0., 100.);
+  fHistCentralityImpPar  = new TH1F("fHistCentralityImpPar", "control histogram for centrality imppar"    , 100, 0., 100.);
+  fHistImpParam          = new TH1F("hImpParam",             "control histogram for impact parameter"     , 200, 0., 20.);
+  fHistVertex            = new TH1F("hVertex",               "control histogram for vertex Z position"    , 100, -50., 50.);
+  fListHist->Add(fHistEmptyEvent);
+  fListHist->Add(fHistCentrality);
+  fListHist->Add(fHistCentralityImpPar);
+  fListHist->Add(fHistImpParam);
+  fListHist->Add(fHistVertex);
+  //
+  // ************************************************************************
+  //   Marians counters
+  // ************************************************************************
+  //
   if (fEventInfo){
+    // vectors
+    fPhiTPCdcarA         = new TVectorF(36);
+    fPhiTPCdcarC         = new TVectorF(36);
+    fCacheTrackCounters  = new TVectorF(20);
+    fCacheTrackdEdxRatio = new TVectorF(30);
+    fCacheTrackNcl       = new TVectorF(20);
+    fCacheTrackChi2      = new TVectorF(20);
+    fCacheTrackMatchEff  = new TVectorF(20);
+    fCentralityEstimates  = new TVectorF(3);
+    fCacheTrackTPCCountersZ = new TVectorF(8);
+    for (Int_t i=0;i<3;i++) (*fCentralityEstimates)[i]=-10.;
+    for (Int_t i=0;i<8;i++) (*fCacheTrackTPCCountersZ)[i]=0.;
+    for (Int_t i=0;i<36;i++){
+      (*fPhiTPCdcarA)[i]=0.;
+      (*fPhiTPCdcarC)[i]=0.;
+    }
+    for (Int_t i=0;i<20;i++){
+      (*fCacheTrackCounters)[i]=0.;
+      (*fCacheTrackdEdxRatio)[i]=0.;
+      (*fCacheTrackNcl)[i]=0.;
+      (*fCacheTrackChi2)[i]=0.;
+      (*fCacheTrackMatchEff)[i]=0.;
+    }
+    // Hists
     fHistPhiTPCcounterA    = new TH1F("hPhiTPCcounterC",       "control histogram to count tracks on the A side in phi ", 36, 0.,18.);
     fHistPhiTPCcounterC    = new TH1F("hPhiTPCcounterA",       "control histogram to count tracks on the C side in phi ", 36, 0.,18.);
     fHistPhiTPCcounterAITS = new TH1F("hPhiTPCcounterAITS",    "control histogram to count tracks on the A side in phi ", 36, 0.,18.);
@@ -990,6 +985,9 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
     fHisTPCVertexCCut->SetLineColor(6);
   }
   //
+  // ************************************************************************
+  //   Clean sample helper histograms
+  // ************************************************************************
   //
   if (fUseCouts){
     fHistArmPod            = new TH2F("hArmPod",           "Armenteros-Podolanski plot"                     , 100,-1.,1., 110,0.,0.22);
@@ -1004,61 +1002,13 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
     fListHist->Add(fHistArmPod);
   }
   //
-  //
-  fHistEmptyEvent        = new TH1F("hEmptyEvent",           "control histogram to count empty events"    , 10,  0., 10.);
-  fHistCentrality        = new TH1F("hCentrality",           "control histogram for centrality"           , 100, 0., 100.);
-  fHistCentralityImpPar  = new TH1F("fHistCentralityImpPar", "control histogram for centrality imppar"    , 100, 0., 100.);
-  fHistImpParam          = new TH1F("hImpParam",             "control histogram for impact parameter"     , 200, 0., 20.);
-  fHistVertex            = new TH1F("hVertex",               "control histogram for vertex Z position"    , 100, -50., 50.);
-  fListHist->Add(fHistEmptyEvent);
-  fListHist->Add(fHistCentrality);
-  fListHist->Add(fHistCentralityImpPar);
-  fListHist->Add(fHistImpParam);
-  fListHist->Add(fHistVertex);
-  //
-  //   OpenFile(2);  // OpenFile TIden Tree    ==============================================
-  // TIdentity informations
-  fIdenTree = new TTree("fIdenTree",   "Tree for TIdentity analysis");
-  fIdenTree -> Branch("sign"   ,&signNew   ,"signNew/I");
-  fIdenTree -> Branch("myDeDx" ,&myDeDx    ,"myDeDx/D");
-  fIdenTree -> Branch("evtNum" ,&fEventGID);
-  fIdenTree -> Branch("myBin"  ,myBin      ,"myBin[3]/I");
-  fIdenTree -> Branch("cutBit" ,&fTrackCutBits);
-  //
-  //   OpenFile(3);  // OpenFile TIdenMC tree   ==============================================
-  // MC TIdentity informations
-  fIdenTreeMC = new TTree("fIdenTreeMC", "Tree for MC TIdentity analysis");
-  fIdenTreeMC -> Branch("sign"   ,&signNewMC   ,"signNewMC/I");
-  fIdenTreeMC -> Branch("myDeDx" ,&myDeDxMC    ,"myDeDxMC/D");
-  fIdenTreeMC -> Branch("myBin"  ,myBinMC      ,"myBinMC[3]/I");
-  fIdenTreeMC -> Branch("evtNum" ,&fEventGIDMC);
-  fIdenTreeMC -> Branch("cutBit" ,&fTrackCutBits);
-  //
-  //   OpenFile(5);  // OpenFile for armPod tree     ==============================================
-  //   Armpod tree to be able to use graphical cut
-  fArmPodTree  = new TTree("fArmPodTree",  "Tree for Clean Pion and Proton selection");
-  fArmPodTree->Branch("cutBit"        , &fTrackCutBits);
-  fArmPodTree->Branch("dEdx"          , &fArmPodTPCSignal);
-  fArmPodTree->Branch("ptot"          , &fArmPodptot);
-  fArmPodTree->Branch("eta"           , &fArmPodEta);
-  fArmPodTree->Branch("cent"          , &fArmPodCentrality);
-  fArmPodTree->Branch("qt"            , &fQt);
-  fArmPodTree->Branch("alfa"          , &fAlfa);
-  fArmPodTree->Branch("piTOFnSigma"   , &fPiNSigmasTOF);
-  fArmPodTree->Branch("prTOFnSigma"   , &fPrNSigmasTOF);
-  fArmPodTree->Branch("piFromK0"      , &fCleanPionsFromK0);
-  fArmPodTree->Branch("v0haspixel"    , &fHasV0FirstITSlayer);
-  //
-  //   fArmPodTree->Branch("pi1FromK0"     , &fCleanPion1FromK0);
-  //   fArmPodTree->Branch("pi0FromLambda" , &fCleanPion0FromLambda);
-  //   fArmPodTree->Branch("pi1FromLambda" , &fCleanPion1FromLambda);
-  //   fArmPodTree->Branch("pr0FromLambda" , &fCleanProton0FromLambda);
-  //   fArmPodTree->Branch("pr1FromLambda" , &fCleanProton1FromLambda);
-  //   fArmPodTree->Branch("tr0haspixel"   , &fHasTrack0FirstITSlayer);
-  //   fArmPodTree->Branch("tr1haspixel"   , &fHasTrack1FirstITSlayer);
+  // ************************************************************************
+  //   Trees
+  // ************************************************************************
   //
   //   OpenFile(6);
   fTreeSRedirector = new TTreeSRedirector();
+  fArmPodTree    = ((*fTreeSRedirector)<<"fArmPodTree").GetTree();
   fTreeMCrec     = ((*fTreeSRedirector)<<"mcRec").GetTree();
   fTreeMCgen     = ((*fTreeSRedirector)<<"mcGen").GetTree();
   fTreeDnchDeta  = ((*fTreeSRedirector)<<"dnchdeta").GetTree();
@@ -1071,22 +1021,23 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
   fTreeEvents    = ((*fTreeSRedirector)<<"events").GetTree();
   fTreeDScaled   = ((*fTreeSRedirector)<<"dscaled").GetTree();
   //
-  //  Send data to container
+  // ************************************************************************
+  //   Send output objects to container
+  // ************************************************************************
+  //
   PostData(1, fListHist);
-  PostData(2, fIdenTree);
-  PostData(3, fIdenTreeMC);
-  PostData(4, fArmPodTree);
-  PostData(5, fTreeMCrec);
-  PostData(6, fTreeMCgen);
-  PostData(7, fTreeMC);
-  PostData(8, fTreedEdxCheck);
-  PostData(9, fTreeCuts);
-  PostData(10, fTreeDnchDeta);
-  PostData(11, fTreeMCFullAcc);
-  PostData(12, fTreeResonance);
-  PostData(13, fTreeMCgenMoms);
-  PostData(14, fTreeEvents);
-  PostData(15, fTreeDScaled);
+  PostData(2, fArmPodTree);
+  PostData(3, fTreeMCrec);
+  PostData(4, fTreeMCgen);
+  PostData(5, fTreeMC);
+  PostData(6, fTreedEdxCheck);
+  PostData(7, fTreeCuts);
+  PostData(8, fTreeDnchDeta);
+  PostData(9, fTreeMCFullAcc);
+  PostData(10, fTreeResonance);
+  PostData(11, fTreeMCgenMoms);
+  PostData(12, fTreeEvents);
+  PostData(13, fTreeDScaled);
 
   std::cout << " Info::marsland: ===== Out of UserCreateOutputObjects ===== " << std::endl;
 
@@ -1132,12 +1083,12 @@ void AliAnalysisTaskTIdentityPID::UserExec(Option_t *)
     else ocdb = "raw://";
     fRunNo     = fESD->GetRunNumber();
     fLumiGraph = (TGraph*)AliLumiTools::GetLumiFromCTP(fRunNo,ocdb);
+    fTimeStamp = fESD->GetTimeStampCTPBCCorr();
     fIntRate   = fLumiGraph->Eval(fTimeStamp); delete fLumiGraph;
     fEventMult = fESD->GetNumberOfTracks();
     fBField    = fESD->GetMagneticField();
     fEvent     = fESD->GetEventNumberInFile();
     fBeamType  = fESD->GetBeamType();
-    fTimeStamp = fESD->GetTimeStampCTPBCCorr();
     //
     // Global id for the event --> which is made with Hashing
     //
@@ -1324,7 +1275,7 @@ void AliAnalysisTaskTIdentityPID::UserExec(Option_t *)
     FillCleanSamples();
   }
   //
-  if (fUseCouts)  cout << " Info::marsland:  End of Filling part = " << fEventCountInFile << endl;
+  if (fUseCouts)  std::cout << " Info::marsland:  End of Filling part = " << fEventCountInFile << std::endl;
 
 }
 //________________________________________________________________________
@@ -1357,8 +1308,12 @@ void AliAnalysisTaskTIdentityPID::DumpEventVariables()
   }
   //
   // Additional counters for ITS TPC V0 and T0
+  // AliESDFMD* esdFMD = fESD->GetFMDData();
+  // AliFMDFloatMap fmdMult = esdFMD->MultiplicityMap();
   const AliESDTZERO *esdTzero = fESD->GetESDTZERO();
   const Double32_t *t0amp=esdTzero->GetT0amplitude();
+
+
   for (Int_t i=0;i<24;i++) { tzeroMult[i] = t0amp[i]; }
   for (Int_t i=0;i<64;i++) { vzeroMult[i] = fESD->GetVZEROData()-> GetMultiplicity(i); }
   for (Int_t i=0;i<6;i++)  { itsClustersPerLayer[i] = multObj->GetNumberOfITSClusters(i); }
@@ -1381,6 +1336,7 @@ void AliAnalysisTaskTIdentityPID::DumpEventVariables()
   "tpcClusterMult="       << tpcClusterMultiplicity <<  // tpc cluster multiplicity
   "itsTracklets="         << itsNumberOfTracklets   <<  // number of ITS tracklets
   //
+  // "fmdMult.="             << &fmdMult               <<  // T0 multiplicity
   "tzeroMult.="           << &tzeroMult             <<  // T0 multiplicity
   "vzeroMult.="           << &vzeroMult             <<  // V0 multiplicity
   "itsClustersPerLayer.=" << &itsClustersPerLayer   <<  // its clusters per layer
@@ -1610,7 +1566,7 @@ void AliAnalysisTaskTIdentityPID::CalculateEventVariables()
         //
         Float_t closestPar[3];    // closestPar[0] --> closest spline, Int_t(closestPar[1]) --> particle index,  closestPar[2] --> corresponding particle mass
         GetExpecteds(track,closestPar);
-        // cout << " aaaaaaaa  " << tpcdEdx << "     "  << closestPar[0] << "    " << closestPar[1] << "      " << closestPar[2]  << "   " << ptotTPC << endl;
+        // std::cout << " aaaaaaaa  " << tpcdEdx << "     "  << closestPar[0] << "    " << closestPar[1] << "      " << closestPar[2]  << "   " << ptotTPC << std::endl;
         (*fCacheTrackdEdxRatio)[10]+=TMath::Log(tpcdEdx/closestPar[0]);    // ???
         (*fCacheTrackdEdxRatio)[11]+=TMath::Log((tpcdEdxInfo.GetSignalMax(0)/50.)/AliExternalTrackParam::BetheBlochAleph(ptotTPC/closestPar[2]));
         (*fCacheTrackdEdxRatio)[12]+=TMath::Log((tpcdEdxInfo.GetSignalMax(1)/50.)/AliExternalTrackParam::BetheBlochAleph(ptotTPC/closestPar[2]));
@@ -1925,25 +1881,17 @@ void AliAnalysisTaskTIdentityPID::FillTPCdEdxReal()
   AliTPCdEdxInfo tpcdEdxInfo;
   for (Int_t itrack=0;itrack<event->GetNumberOfTracks();++itrack) {   // Track loop
 
-    fDEdxEl=-10.; fSigmaEl=-10.;
-    fDEdxPi=-10.; fSigmaPi=-10.;
-    fDEdxKa=-10.; fSigmaKa=-10.;
-    fDEdxPr=-10.; fSigmaPr=-10.;
-    fDEdxDe=-10.; fSigmaDe=-10.;
-    //
-    // --------------------------------------------------------------
-    // Get the track and check if it is in the TPC
     AliESDtrack *track = fESD->GetTrack(itrack);
     //
     // --------------------------------------------------------------
     //      Get relevant track info and set cut bits
     // --------------------------------------------------------------
     //
-    if (!track->GetInnerParam()) {fTrackCutBits=0; continue;}               // Ask if track is in TPC
+    if (!track->GetInnerParam()) {fTrackCutBits=0; continue;}               // Ask if track is in the TPC
     if (!fESDtrackCuts->AcceptTrack(track)) {fTrackCutBits=0; continue;}    // Default loose cuts   ???
-    SetCutBitsAndSomeTrackVariables(track);
     Float_t closestPar[3];
     GetExpecteds(track,closestPar);
+    SetCutBitsAndSomeTrackVariables(track);
     //
     // --------------------------------------------------------------
     //  Some print out
@@ -1959,21 +1907,12 @@ void AliAnalysisTaskTIdentityPID::FillTPCdEdxReal()
     //   Fill the trees
     // --------------------------------------------------------------
     //
-    myDeDx   = fTPCSignal;
-    myBin[0] = fHistEta ->FindBin(fEta)-1;
-    myBin[1] = fHistCent->FindBin(fCentrality)-1;
-    myBin[2] = fHistPtot->FindBin(fPtot)-1;
-    signNew  = fSign;
-    //
     // define acceptance of interest
     Bool_t etaAcc  = (fEta >=fEtaDown       && fEta<=fEtaUp);
     Bool_t centAcc = (fCentrality>1e-15     && fCentrality<=80);
     Bool_t momAcc  = (fPtot>=fMomDown       && fPtot<=fMomUp);
     Bool_t dEdxAcc = (fTPCSignal>=fDEdxDown && fTPCSignal<=fDEdxUp);
     Bool_t fAcceptance = (etaAcc && centAcc && momAcc && dEdxAcc);
-    //
-    // Fill tiden tree
-    if (!fCleanSamplesOnly && fTIdentity && fAcceptance)  fIdenTree -> Fill();
     //
     //  Fill the tracks tree
     if (fFillCuts)
@@ -2006,58 +1945,52 @@ void AliAnalysisTaskTIdentityPID::FillTPCdEdxReal()
     }
     //
     // --------------------------------------------------------------
-    //  Fil the dEdx histograms
+    //  Fill the THnSparseF for the Expected values form PID response
     // --------------------------------------------------------------
     //
-    // Fill the THnSparseF for the inclusive spectra
-    Double_t trackdEdx[5] = {Double_t(fSign),fCentrality, fEta,fPtot, fTPCSignal};
-    if(fUseThnSparse) fHndEdx->Fill(trackdEdx);
-    //
-    // Fill the THnSparseF for the Expected values form PID response
-    for (Int_t i=0; i<20; i++)
-    {
-      if (GetSystematicClassIndex(fTrackCutBits,i))
-      {
-
-        // Fill the histograms
-        Double_t exMean[5]  = {fDEdxEl,  fDEdxPi,  fDEdxKa,  fDEdxPr,  fDEdxDe};
-        Double_t exSigma[5] = {fSigmaEl, fSigmaPi, fSigmaKa, fSigmaPr, fSigmaDe};
-        if (fDEdxEl>20 || fDEdxPi>20 || fDEdxKa>20 || fDEdxPr>20 || fDEdxDe>20)
+    if(!fEffMatrix && fAcceptance){
+      for (Int_t i=0; i<20; i++) {
+        if (GetSystematicClassIndex(fTrackCutBits,i))
         {
-          for (Int_t iPart = 0; iPart< 5; iPart++){
-            Double_t weightExpected[7] = {Double_t(iPart),Double_t(fSign),fCentrality,fEta,fPtot, exSigma[iPart], exMean[iPart]};
-            if(!fEffMatrix && fAcceptance) fHnExpected[i]->Fill(weightExpected);
+          Double_t exMean[5]  = {fDEdxEl,  fDEdxPi,  fDEdxKa,  fDEdxPr,  fDEdxDe};
+          Double_t exSigma[5] = {fSigmaEl, fSigmaPi, fSigmaKa, fSigmaPr, fSigmaDe};
+          if (fDEdxEl>20 || fDEdxPi>20 || fDEdxKa>20 || fDEdxPr>20 || fDEdxDe>20)
+          {
+            for (Int_t iPart = 0; iPart< 5; iPart++){
+              Double_t weightExpected[7] = {Double_t(iPart),Double_t(fSign),fCentrality,fEta,fPtot, exSigma[iPart], exMean[iPart]};
+              fHnExpected[i]->Fill(weightExpected);
+            }
           }
         }
-
       }
     }
     //
     // --------------------------------------------------------------
-    //  Fill clean kaons
+    //  Fill thnsparse for inclusive data and clean kaons & deuterons
     // --------------------------------------------------------------
     //
-    Float_t nSigmasKaTOF = fPIDResponse->NumberOfSigmasTOF(track, AliPID::kKaon);
-    if ((TMath::Abs(nSigmasKaTOF)<=1.2)) {
-      Double_t nclsTRD      = (Float_t)track->GetTRDncls();
-      Double_t TOFSignalDx  = track->GetTOFsignalDx();
-      Double_t TOFSignalDz  = track->GetTOFsignalDz();
-      if (TOFSignalDz<1.2 && TOFSignalDx<1.2 && nclsTRD>80) {
-        Double_t weightCleanKa[5] = {Double_t(fSign),fCentrality,fEta,fPtot, fTPCSignal};
-        fHnCleanKa->Fill(weightCleanKa);
+    if (fUseThnSparse){
+      // Fill the THnSparseF for the inclusive spectra
+      Double_t trackdEdx[5] = {Double_t(fSign),fCentrality, fEta,fPtot, fTPCSignal};
+      if(fUseThnSparse) fHndEdx->Fill(trackdEdx);
+      //  Fill clean kaons
+      Float_t nSigmasKaTOF = fPIDResponse->NumberOfSigmasTOF(track, AliPID::kKaon);
+      if ((TMath::Abs(nSigmasKaTOF)<=1.2)) {
+        Double_t nclsTRD      = (Float_t)track->GetTRDncls();
+        Double_t TOFSignalDx  = track->GetTOFsignalDx();
+        Double_t TOFSignalDz  = track->GetTOFsignalDz();
+        if (TOFSignalDz<1.2 && TOFSignalDx<1.2 && nclsTRD>80) {
+          Double_t weightCleanKa[5] = {Double_t(fSign),fCentrality,fEta,fPtot, fTPCSignal};
+          fHnCleanKa->Fill(weightCleanKa);
+        }
+      }
+      //  Fill clean Deuterons
+      Float_t nSigmasDeTOF = fPIDResponse->NumberOfSigmasTOF(track, AliPID::kDeuteron);
+      if ((TMath::Abs(nSigmasDeTOF)<=3) && TMath::Abs(fNSigmasDeTPC)<3 && (!fMCtrue)) {
+        Double_t weightCleanDe[5] = {Double_t(fSign),fCentrality,fEta,fPtot, fTPCSignal};
+        fHnCleanDe->Fill(weightCleanDe);
       }
     }
-    //
-    // --------------------------------------------------------------
-    //  Fill clean Deuterons
-    // --------------------------------------------------------------
-    //
-    Float_t nSigmasDeTOF = fPIDResponse->NumberOfSigmasTOF(track, AliPID::kDeuteron);
-    if ((TMath::Abs(nSigmasDeTOF)<=3) && TMath::Abs(fNSigmasDeTPC)<3 && (!fMCtrue)) {
-      Double_t weightCleanDe[5] = {Double_t(fSign),fCentrality,fEta,fPtot, fTPCSignal};
-      fHnCleanDe->Fill(weightCleanDe);
-    }
-    // --------------------------------------------------------------
     //
     fTrackCutBits=0;  // reset the bits for the next track
   } // end of track loop
@@ -2067,38 +2000,44 @@ void AliAnalysisTaskTIdentityPID::FillTPCdEdxReal()
 void AliAnalysisTaskTIdentityPID::GetExpecteds(AliESDtrack *track, Float_t closestPar[3])
 {
 
+  //
+  // --------------------------------------------------------------
+  //  CAlculates expected sigma and dEdx for a given track and returns colesest expected particle and its index
+  // --------------------------------------------------------------
+  //
   fNSigmasElTPC = fPIDResponse->NumberOfSigmasTPC(track, AliPID::kElectron);
   fNSigmasPiTPC = fPIDResponse->NumberOfSigmasTPC(track, AliPID::kPion);
   fNSigmasKaTPC = fPIDResponse->NumberOfSigmasTPC(track, AliPID::kKaon);
   fNSigmasPrTPC = fPIDResponse->NumberOfSigmasTPC(track, AliPID::kProton);
   fNSigmasDeTPC = fPIDResponse->NumberOfSigmasTPC(track, AliPID::kDeuteron);
-
+  Int_t nSigmaTmp = (fEventInfo) ? 10000 : 3;
+  //
   // Electron Expected mean and sigma within 2nsigmaTPC
-  if (TMath::Abs(fNSigmasElTPC)<2) {
+  if (TMath::Abs(fNSigmasElTPC)<nSigmaTmp) {
     fDEdxEl  = fPIDResponse->GetTPCResponse().GetExpectedSignal(track, AliPID::kElectron, AliTPCPIDResponse::kdEdxDefault,fPIDResponse->UseTPCEtaCorrection(),fPIDResponse->UseTPCMultiplicityCorrection());
     fSigmaEl = fPIDResponse->GetTPCResponse().GetExpectedSigma(track, AliPID::kElectron, AliTPCPIDResponse::kdEdxDefault,fPIDResponse->UseTPCEtaCorrection(),fPIDResponse->UseTPCMultiplicityCorrection());
   }
-
+  //
   // Pion Expected mean and sigma within 2nsigmaTPC
-  if (TMath::Abs(fNSigmasPiTPC)<2) {
+  if (TMath::Abs(fNSigmasPiTPC)<nSigmaTmp) {
     fDEdxPi  = fPIDResponse->GetTPCResponse().GetExpectedSignal(track, AliPID::kPion,     AliTPCPIDResponse::kdEdxDefault,fPIDResponse->UseTPCEtaCorrection(),fPIDResponse->UseTPCMultiplicityCorrection());
     fSigmaPi = fPIDResponse->GetTPCResponse().GetExpectedSigma(track, AliPID::kPion,     AliTPCPIDResponse::kdEdxDefault,fPIDResponse->UseTPCEtaCorrection(),fPIDResponse->UseTPCMultiplicityCorrection());
   }
-
+  //
   // Kaon Expected mean and sigma within 2nsigmaTPC
-  if (TMath::Abs(fNSigmasKaTPC)<2) {
+  if (TMath::Abs(fNSigmasKaTPC)<nSigmaTmp) {
     fDEdxKa  = fPIDResponse->GetTPCResponse().GetExpectedSignal(track, AliPID::kKaon,  AliTPCPIDResponse::kdEdxDefault,fPIDResponse->UseTPCEtaCorrection(),fPIDResponse->UseTPCMultiplicityCorrection());
     fSigmaKa = fPIDResponse->GetTPCResponse().GetExpectedSigma(track, AliPID::kKaon,   AliTPCPIDResponse::kdEdxDefault,fPIDResponse->UseTPCEtaCorrection(),fPIDResponse->UseTPCMultiplicityCorrection());
   }
-
+  //
   // Proton Expected mean and sigma within 2nsigmaTPC
-  if (TMath::Abs(fNSigmasPrTPC)<2) {
+  if (TMath::Abs(fNSigmasPrTPC)<nSigmaTmp) {
     fDEdxPr  = fPIDResponse->GetTPCResponse().GetExpectedSignal(track, AliPID::kProton, AliTPCPIDResponse::kdEdxDefault,fPIDResponse->UseTPCEtaCorrection(),fPIDResponse->UseTPCMultiplicityCorrection());
     fSigmaPr = fPIDResponse->GetTPCResponse().GetExpectedSigma(track,  AliPID::kProton, AliTPCPIDResponse::kdEdxDefault,fPIDResponse->UseTPCEtaCorrection(),fPIDResponse->UseTPCMultiplicityCorrection());
   }
-
+  //
   // Deuteron Expected mean and sigma within 2nsigmaTPC
-  if (TMath::Abs(fNSigmasDeTPC)<2) {
+  if (TMath::Abs(fNSigmasDeTPC)<nSigmaTmp) {
     fDEdxDe  = fPIDResponse->GetTPCResponse().GetExpectedSignal(track, AliPID::kDeuteron, AliTPCPIDResponse::kdEdxDefault,fPIDResponse->UseTPCEtaCorrection(),fPIDResponse->UseTPCMultiplicityCorrection());
     fSigmaDe = fPIDResponse->GetTPCResponse().GetExpectedSigma(track,  AliPID::kDeuteron, AliTPCPIDResponse::kdEdxDefault,fPIDResponse->UseTPCEtaCorrection(),fPIDResponse->UseTPCMultiplicityCorrection());
   }
@@ -2186,12 +2125,6 @@ void AliAnalysisTaskTIdentityPID::FillTPCdEdxMC()
       if (!fTrackNewITScut)                                    continue;
       if (!trackReal -> GetInnerParam())                 continue;
       if (!fESDtrackCuts -> AcceptTrack(trackReal))      continue;  // real track cuts
-      //
-      // if tight cuts are needed
-      if (fTightCuts){
-        if (trackReal->GetTPCsignalN()<70) continue;
-        if (trackReal->GetLengthInActiveZone(1,3,230, trackReal->GetBz(),0,0)<120) continue;
-      }
     }
     //
     // match the track with mc track
@@ -2232,12 +2165,6 @@ void AliAnalysisTaskTIdentityPID::FillTPCdEdxMC()
     //                        Fill the trees
     // --------------------------------------------------------------
     //
-    myDeDxMC        = fTPCSignalMC;
-    myBinMC[0]      = fHistEta ->FindBin(fEtaMC)-1;
-    myBinMC[1]      = fHistCent->FindBin(fCentrality)-1;
-    myBinMC[2]      = fHistPtot->FindBin(fPtotMC)-1;
-    signNewMC       = fSignMC;
-    if (fTIdentity) fIdenTreeMC->Fill();
     // Fill MC closure tree
     if(!fTreeSRedirector) return;
     if (fWeakAndMaterial){
@@ -2345,12 +2272,6 @@ void AliAnalysisTaskTIdentityPID::FillTPCdEdxMC()
           // Track cuts from detector
           if (!trackReal -> GetInnerParam()) continue;
           if (!fESDtrackCuts -> AcceptTrack(trackReal)) continue;  // real track cuts
-          //
-          // Tight cuts from marian
-          if (fTightCuts) {
-            if (trackReal->GetTPCsignalN()<70) continue;
-            if (trackReal->GetLengthInActiveZone(1,3,230, trackReal->GetBz(),0,0)<120) continue;
-          }
           //
           // match the track with mc track
           TParticle *trackMC  = fMCStack->Particle(lab);
@@ -2904,7 +2825,7 @@ void AliAnalysisTaskTIdentityPID::FastGen()
 
           for (Int_t ibar=0;ibar<fNBarBins;ibar++){
             if ( fBaryons[ibar] == absPDG ){
-              // cout << pdg << "  " << momName.GetString() << "  " << parName.GetString() << endl;
+              // std::cout << pdg << "  " << momName.GetString() << "  " << parName.GetString() << std::endl;
               iPart = 7; fBaMCgen = iPart; break;
             }
           }
@@ -3635,9 +3556,6 @@ void AliAnalysisTaskTIdentityPID::FillTPCdEdxMCEffMatrix()
     // Track cuts from detector
     if (!trackReal -> GetInnerParam())                 continue;
     if (!fESDtrackCuts -> AcceptTrack(trackReal))      continue;  // real track cuts
-    // Extra TPC cuts for better PID
-    if (fTightCuts) if (trackReal->GetTPCsignalN()<70) continue;
-    if (fTightCuts) if (trackReal->GetLengthInActiveZone(1,3,230, trackReal->GetBz(),0,0)<120) continue;
     // get track info
     Float_t fPtRec   = trackReal->Pt();
     Float_t fYRec    = trackReal->Y();
@@ -3845,7 +3763,41 @@ void AliAnalysisTaskTIdentityPID::FillCleanSamples()
       fArmPodCentrality = fCentrality;
       if (fArmPodTPCSignal<30 || fArmPodTPCSignal>200) continue;
       if (fArmPodptot<fMomDown || fArmPodptot>fMomUp) continue;
-      if (fFillArmPodTree) fArmPodTree->Fill();
+      //
+      // --------------------------------------------------------------
+      //  Fill Clean Samples tree
+      // --------------------------------------------------------------
+      //
+      if (fFillArmPodTree)
+      {
+        if(!fTreeSRedirector) return;
+        (*fTreeSRedirector)<<"fArmPodTree"<<
+        "cutBit="               << fTrackCutBits        <<  // cut bits
+        "dEdx="                 << fArmPodTPCSignal     <<  // TPC dEdx
+        "ptot="                 << fArmPodptot          <<  // momentum
+        "eta="                  << fArmPodEta           <<  // eta
+        "cent="                 << fArmPodCentrality    <<  // centrality
+        "qt="                   << fQt                  <<  // qT
+        "alfa="                 << fAlfa                <<  // alpha
+        "piTOFnSigma="          << fPiNSigmasTOF        <<  // TOF nsigma cut for pions
+        "prTOFnSigma="          << fPrNSigmasTOF        <<  // TOF nsigma cut for protons
+        "piFromK0="             << fCleanPionsFromK0    <<  // K0s cut for pions
+        "v0haspixel="           << fHasV0FirstITSlayer  <<  // ITS pixel cut
+        //
+        //  Extras
+        //
+        // "pi1FromK0="                << fCleanPion1FromK0       <<
+        // "pi0FromLambda="                << fCleanPion0FromLambda       <<
+        // "pi1FromLambda="                << fCleanPion1FromLambda       <<
+        // "pr0FromLambda="                << fCleanProton0FromLambda       <<
+        // "pr1FromLambda="                << fCleanProton1FromLambda       <<
+        // "tr0haspixel="                << fHasTrack0FirstITSlayer       <<
+        // "tr1haspixel="                << fHasTrack1FirstITSlayer       <<
+        //
+        "\n";
+
+      }
+
     }
 
   } // end of V0 loop
@@ -4084,14 +4036,22 @@ void AliAnalysisTaskTIdentityPID::SetCutBitsAndSomeTrackVariables(AliESDtrack *t
   fTrackProbPiTPC = probTPC[AliPID::kPion];
   fTrackProbKaTPC = probTPC[AliPID::kKaon];
   fTrackProbPrTPC = probTPC[AliPID::kProton];
-  fTrackProbDeTPC = probTPC[AliPID::kDeuteron];
   // Get TOF probabilities
   fPIDCombined->SetDetectorMask(AliPIDResponse::kDetTOF);
   fPIDCombined->ComputeProbabilities(track, fPIDResponse, probTOF);
   fTrackProbPiTOF = probTOF[AliPID::kPion];
   fTrackProbKaTOF = probTOF[AliPID::kKaon];
   fTrackProbPrTOF = probTOF[AliPID::kProton];
-  fTrackProbDeTOF = probTOF[AliPID::kDeuteron];
+  //
+  // --------------------------------------------------------------
+  //  Fcutbit variable for the clean deuterons
+  // --------------------------------------------------------------
+  //
+  Double_t nSigmasDeTOF = fPIDResponse->NumberOfSigmasTOF(track, AliPID::kDeuteron,fPIDResponse->GetTOFResponse().GetTimeZero());
+  Double_t nSigmasDeTPC = fPIDResponse->NumberOfSigmasTPC(track, AliPID::kDeuteron);
+  if (TMath::Abs(nSigmasDeTPC)<3) fTrackProbDeTPC = kTRUE;
+  if (TMath::Abs(nSigmasDeTOF)<3) fTrackProbDeTOF = kTRUE;
+
   //
   // --------------------------------------------------------------
   //      Global Track info
@@ -4142,12 +4102,12 @@ void AliAnalysisTaskTIdentityPID::SetCutBitsAndSomeTrackVariables(AliESDtrack *t
   if (fTrackProbPiTPC>=0.5) (fTrackCutBits |= 1 << kTrackProbPiTPC);
   if (fTrackProbKaTPC>=0.5) (fTrackCutBits |= 1 << kTrackProbKaTPC);
   if (fTrackProbPrTPC>=0.5) (fTrackCutBits |= 1 << kTrackProbPrTPC);
-  if (fTrackProbDeTPC>=0.6) (fTrackCutBits |= 1 << kTrackProbDeTPC);
+  if (fTrackProbDeTPC) (fTrackCutBits |= 1 << kTrackProbDeTPC);
   // Clean sapmle flags for TOF
   if (fTrackProbPiTOF>=0.8) (fTrackCutBits |= 1 << kTrackProbPiTOF);
   if (fTrackProbKaTOF>=0.8) (fTrackCutBits |= 1 << kTrackProbKaTOF);
   if (fTrackProbPrTOF>=0.8) (fTrackCutBits |= 1 << kTrackProbPrTOF);
-  if (fTrackProbDeTOF>=0.8) (fTrackCutBits |= 1 << kTrackProbDeTOF);
+  if (fTrackProbDeTOF) (fTrackCutBits |= 1 << kTrackProbDeTOF);
 }
 //________________________________________________________________________
 Bool_t AliAnalysisTaskTIdentityPID::GetSystematicClassIndex(UInt_t cut,Int_t syst)
