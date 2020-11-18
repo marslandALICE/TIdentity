@@ -28,6 +28,7 @@ class fPIDCombined;
 #include "AliAnalysisTaskSE.h"
 #include "AliPIDCombined.h"
 #include "AliTPCdEdxInfo.h"
+#include "AliESDv0KineCuts.h"
 #include "THnSparse.h"
 #include "THn.h"
 #include "TVectorF.h"
@@ -71,9 +72,9 @@ class AliAnalysisTaskTIdentityPID : public AliAnalysisTaskSE {
     kNCrossedRowsTPC60=0,
     kNCrossedRowsTPC80=1,
     kNCrossedRowsTPC100=2,
-    kMaxChi2PerClusterTPC3=3,
-    kMaxChi2PerClusterTPC4=4,
-    kMaxChi2PerClusterTPC5=5,
+    kMaxChi2PerClusterTPCSmall=3,
+    kMaxChi2PerClusterTPC=4,
+    kMaxChi2PerClusterTPCLarge=5,
     kMaxDCAToVertexXYPtDepSmall=6,
     kMaxDCAToVertexXYPtDep=7,
     kMaxDCAToVertexXYPtDepLarge=8,
@@ -92,14 +93,38 @@ class AliAnalysisTaskTIdentityPID : public AliAnalysisTaskSE {
     kTPCSignalNSmall=21,
     kTPCSignalN=22,
     kTPCSignalNLarge=23,
-    kTrackProbPiTPC=24,
-    kTrackProbKaTPC=25,
-    kTrackProbPrTPC=26,
-    kTrackProbDeTPC=27,
-    kTrackProbPiTOF=28,
-    kTrackProbKaTOF=29,
-    kTrackProbPrTOF=30,
-    kTrackProbDeTOF=31,
+    kCleanPrTOF=24,
+    kCleanKaTOF=25,
+    kCleanKaTOFTRD=26,
+    kTrackProbKaTOF=27,
+    kTrackProbPrTOF=28,
+    kCleanDeTOF=29,
+    kEventVertexZALICE=30,
+    kEventVertexZALICETight=31,
+  };
+
+  enum cutSettings {
+    kCutReference=0,
+    kCutCrossedRowsTPC60=1,
+    kCutCrossedRowsTPC100=2,
+    kCutMaxChi2PerClusterTPCSmall=3,
+    kCutMaxChi2PerClusterTPCLarge=4,
+    kCutMaxDCAToVertexXYPtDepSmall=5,
+    kCutMaxDCAToVertexXYPtDepLarge=6,
+    kCutVertexZSmall=7,
+    kCutVertexZLarge=8,
+    kCutEventVertexZSmall=9,
+    kCutEventVertexZLarge=10,
+    kCutRequireITSRefit=11,
+    kCutPixelRequirementITS=12,
+    kCutNewITSCut=13,
+    kCutTPCSignalN=14,
+    kCutActiveZone=15,
+    kCutTPCSignalNActiveZone=16,
+    kCutTPCSignalNSmallActiveZoneSmall=17,
+    kCutTPCSignalNLargeActiveZoneLarge=18,
+    kCutEventVertexZALICE=19,
+    kCutEventVertexZALICETight=20,
   };
 
   enum centEst {
@@ -128,6 +153,11 @@ class AliAnalysisTaskTIdentityPID : public AliAnalysisTaskSE {
     kBBB=6,
     kAAB=7,
     kBBA=8,
+    kABBB=9,
+    kAABB=10,
+    kAAAB=11,
+    kAAAA=12,
+    kBBBB=13,
   };
 
   /*
@@ -172,11 +202,14 @@ class AliAnalysisTaskTIdentityPID : public AliAnalysisTaskSE {
   //                                    Settings
   // ---------------------------------------------------------------------------------
 
-  void   SetESDtrackCuts(AliESDtrackCuts * trackCuts){fESDtrackCuts = trackCuts;};
-  void   SetIsMCtrue(Bool_t isMCdata = kTRUE){fMCtrue = isMCdata;};
   void   Initialize();
   void   PrintNumInBinary(UInt_t num);
-
+  void   SetESDtrackCuts(AliESDtrackCuts * trackCuts)                 {fESDtrackCuts        = trackCuts;};
+  void   SetIsMCtrue(Bool_t isMCdata = kTRUE)                         {fMCtrue              = isMCdata;};
+  void   SetYear(const Int_t ifYear = 0)                              {fYear                = ifYear;}
+  void   SetPeriodName(const TString ifPeriodName = "")               {fPeriodName          = ifPeriodName;}
+  void   SetPassIndex(const Int_t ifPassIndex = 0)                    {fPassIndex           = ifPassIndex;}
+  void   SetPileUpTightness(const Int_t ifPileUpTightness = 0)        {fPileUpTightness     = ifPileUpTightness;}
   // Some boolian settings
   void   SetRunOnGrid(const Bool_t ifRunOnGrid = kTRUE)               {fRunOnGrid           = ifRunOnGrid;}
   void   SetIncludeITScuts(const Bool_t ifITSCuts = kTRUE)            {fIncludeITS          = ifITSCuts;}
@@ -184,17 +217,21 @@ class AliAnalysisTaskTIdentityPID : public AliAnalysisTaskSE {
   void   SetDeDxCheck(const Bool_t ifDeDxCheck = kFALSE)              {fDEdxCheck           = ifDeDxCheck;}
   void   SetEffMatrix(const Bool_t ifEffMatrix = kFALSE)              {fEffMatrix           = ifEffMatrix;}
   void   SetFillAllCutVariables(const Bool_t ifAllCuts = kFALSE)      {fFillTracks          = ifAllCuts;}
+  void   SetFillOnlyHists(const Bool_t ifFillOnlyHists = kFALSE)      {fFillOnlyHists       = ifFillOnlyHists;}
   void   SetFillEffLookUpTable(const Bool_t ifEffLookUpTable = kFALSE){fFillEffLookUpTable  = ifEffLookUpTable;}
   void   SetFillHigherMomentsMCclosure(const Bool_t ifHigherMomentsMCclosure = kFALSE){fFillHigherMomentsMCclosure  = ifHigherMomentsMCclosure;}
   void   SetRunFastSimulation(const Bool_t ifFastSimul = kFALSE)      {fRunFastSimulation   = ifFastSimul;}
   void   SetRunFastHighMomentCal(const Bool_t ifFastHighMom = kFALSE) {fRunFastHighMomentCal= ifFastHighMom;}
-  void   SetFillGenDistributions(const Bool_t ifGenDistributions = kFALSE) {fFillGenDistributions= ifGenDistributions;}
+  void   SetFillDistributions(const Bool_t ifGenDistributions = kFALSE) {fFillDistributions= ifGenDistributions;}
   void   SetFillTreeMC(const Bool_t ifTreeMC = kFALSE)                {fFillTreeMC= ifTreeMC;}
 
   void   SetDefaultTrackCuts(const Bool_t ifDefaultTrackCuts = kFALSE){fDefaultTrackCuts= ifDefaultTrackCuts;}
+  void   SetDefaultEventCuts(const Bool_t ifDefaultEventCuts = kFALSE){fDefaultEventCuts= ifDefaultEventCuts;}
   void   SetFillNudynFastGen(const Bool_t ifNudynFastGen = kFALSE)    {fFillNudynFastGen= ifNudynFastGen;}
   void   SetUsePtCut(const Int_t ifUsePtCut = 1)                      {fUsePtCut            = ifUsePtCut;}
   void   SetTrackOriginType(const Int_t ifTrackOriginType = 0)        {fTrackOriginType     = ifTrackOriginType;}
+  void   SetRapidityType(const Int_t ifRapidityType = 0)              {fRapidityType        = ifRapidityType;}
+  void   SetSisterCheck(const Int_t ifSisterCheck = 0)                {fSisterCheck         = ifSisterCheck;}
   void   SetFillDnchDeta(const Bool_t ifDnchDetaCal = kFALSE)         {fFillDnchDeta        = ifDnchDetaCal;}
   void   SetIncludeTOF(const Bool_t ifIncludeTOF = kFALSE)            {fIncludeTOF          = ifIncludeTOF;}
   void   SetUseThnSparse(const Bool_t ifUseThnSparse = kFALSE)        {fUseThnSparse        = ifUseThnSparse;}
@@ -204,7 +241,6 @@ class AliAnalysisTaskTIdentityPID : public AliAnalysisTaskSE {
   void   SetPercentageOfEvents(const Int_t nPercentageOfEvents = 0)   {fPercentageOfEvents = nPercentageOfEvents;}
   //
   Bool_t GetRunOnGrid() const { return fRunOnGrid; }
-
 
   // Setters for the systematic uncertainty checks
   void   SetSystCentEstimator(const Int_t systCentEstimator = 0)  {fSystCentEstimatetor = systCentEstimator;}
@@ -219,15 +255,13 @@ class AliAnalysisTaskTIdentityPID : public AliAnalysisTaskSE {
   void   SetDeDxLowerEdge(const Float_t dEdxLowerEdge = 20.)      {fDEdxDown            = dEdxLowerEdge;}
   void   SetDeDxUpperEdge(const Float_t dEdxUpperEdge = 1020.)    {fDEdxUp              = dEdxUpperEdge;}
 
-  void   SetEtaLowerEdge(const Float_t etaLowerEdge = -1.)        {fEtaDown             = etaLowerEdge;}
-  void   SetEtaUpperEdge(const Float_t etaUpperEdge = 1.)         {fEtaUp               = etaUpperEdge;}
+  void   SetEtaLowerEdge(const Float_t etaLowerEdge = -0.8)      {fEtaDown             = etaLowerEdge;}
+  void   SetEtaUpperEdge(const Float_t etaUpperEdge = 0.8)       {fEtaUp               = etaUpperEdge;}
   void   SetNEtabins(const Int_t nEtaBins = 20)                   {fNEtaBins            = nEtaBins;}
   void   SetMomLowerEdge(const Float_t momLowerEdge = 0.)         {fMomDown             = momLowerEdge;}
   void   SetMomUpperEdge(const Float_t momUpperEdge = 12.)        {fMomUp               = momUpperEdge;}
   void   SetNMomBins(const Int_t nMombins = 600)                  {fNMomBins            = nMombins;}
   void   SetNGenprotonBins(const Int_t nGenprotonBins = 100)      {fGenprotonBins       = nGenprotonBins;}
-
-
 
   // Set the binning of centrality
   void SetCentralityBinning(const Int_t tmpCentbins, Float_t tmpfxCentBins[])
@@ -449,6 +483,7 @@ private:
   // ---------------------------------------------------------------------------------
 
   void FillTPCdEdxReal();                   // Main function to fill all info + TIden
+  void FillTrackVariables(AliESDtrack *track);
   void FillTPCdEdxCheck();                  // Quick check for the TPC dEdx
   void FillMCFull();                     // Fill all info + TIdenMC from MC to do MC closure test
   void FillTreeMC();
@@ -456,26 +491,26 @@ private:
   void FastGen();                           // Run over galice.root for Fastgen
   void FastGenHigherMoments();     // Run over galice.root for Fastgen and calculate higher moments
   void MCclosureHigherMoments();   // Calculate higher moments for REC and GEN
-  void CalculateFastGenVsFullMCHigherMoments();
   void WeakAndMaterial();                   // Look full acceptance, weak decay and material
   void FillDnchDeta();                      // Fill dnch/deta values for each cent and eta bin
   void FillEffMatrix();            // Prepare efficiency matrix
   void FillCleanSamples();                    // Fill Clean Pions
   void SelectCleanSamplesFromV0s(AliESDv0 *v0, AliESDtrack *track0, AliESDtrack *track1);
+  void SetSpecialV0Cuts(AliESDv0KineCuts* cuts);
   void BinLogAxis(TH1 *h);
   void CalculateEventVariables();
-  void SetCutBitsAndSomeTrackVariables(AliESDtrack *track);
   void DumpDownScaledTree();
   void GetExpecteds(AliESDtrack *track, Float_t closestPar[3]);
   void DumpEventVariables();
-  Bool_t ApplyDCAcutIfNoITSPixel(AliESDtrack *track);
-  Bool_t GetSystematicClassIndex(UInt_t cut,Int_t syst);
+  void FillGenDistributions();
+  //
   Int_t CountEmptyEvents(Int_t counterBin);  // Just count if there is empty events
   Int_t CacheTPCEventInformation();
+  UInt_t SetCutBitsAndSomeTrackVariables(AliESDtrack *track);
   Bool_t CheckIfFromResonance(Int_t mcType, AliMCParticle *trackMCgen, Int_t trackIndex, Bool_t parInterest, Double_t ptot, Double_t eta, Double_t cent, Bool_t fillTree);
-  Bool_t CheckIfFromAnyResonance(AliMCParticle *trackMCgen);
-  void FillGenDistributions();
-
+  Bool_t CheckIfFromAnyResonance(AliMCParticle *trackMCgen, Float_t etaLow, Float_t etaUp, Float_t pDown, Float_t pUp);
+  Bool_t ApplyDCAcutIfNoITSPixel(AliESDtrack *track);
+  Bool_t GetSystematicClassIndex(UInt_t cut,Int_t syst);
   // ---------------------------------------------------------------------------------
   //                                   Members
   // ---------------------------------------------------------------------------------
@@ -484,11 +519,19 @@ private:
   AliESDEvent      * fESD;                    //! ESD object
   TList            * fListHist;               //! list for histograms
   AliESDtrackCuts  * fESDtrackCuts;           //! basic cut variables
+  AliESDtrackCuts  * fESDtrackCutsLoose;      //! basic cut variables for debugging
   AliESDv0Cuts     * fESDtrackCutsV0;         //! basic cut variables for V0
   AliESDtrackCuts  * fESDtrackCutsCleanSamp;  //! basic cut variables for clean pion and electron form V0s
   AliPIDCombined   * fPIDCombined;            //! combined PID object
   AliTPCdEdxInfo   * fTPCdEdxInfo;            //! detailed dEdx info
   AliStack         * fMCStack;                //! stack object to get Mc info
+  AliESDv0KineCuts * fV0OpenCuts;             // v0 strong filter for tagged V0s
+  AliESDv0KineCuts * fV0StrongCuts;           // v0 strong filter for tagged V0s
+  AliAnalysisCuts  * fK0sPionCuts;            // filter for pions from K0s
+  AliAnalysisCuts  * fLambdaProtonCuts;       // filter for protons from Lambda
+  AliAnalysisCuts  * fLambdaPionCuts;         // filter for pions from Lambda
+  AliAnalysisCuts  * fGammaElectronCuts;      // filter for electrons from gamma conversions
+  const AliESDVertex     * fVertex;                  // primary vertex
 
   TTree            * fArmPodTree;             // Tree for clean pion and proton selection
   TTreeSRedirector * fTreeSRedirector;        //! temp tree to dump output
@@ -504,10 +547,19 @@ private:
   TTree            * fTreeEvents;
   TTree            * fTreeDScaled;
   TTree            * fTreeMCEffCorr;
+  TRandom          fRandom;
 
+
+  TString            fPeriodName;
+  Int_t              fYear;
+  Int_t              fPassIndex;
+  Int_t              fPileUpTightness;        // 1; 36% cut, 2: 18% cut, 3: 11% cut, 3: 6% cut
+  UInt_t             fPileUpBit;
   TH1F             * fHistCent;               // helper histogram for TIdentity tree
   TH1F             * fHistPhi;
   TH1F             * fHistGenMult;
+  TH2F             * fHistRapDistFullAccPr;
+  TH2F             * fHistRapDistFullAccAPr;
   TH1F             * fHistInvK0s;             // helper histogram for TIdentity tree
   TH1F             * fHistInvLambda;          // helper histogram for TIdentity tree
   TH1F             * fHistInvAntiLambda;      // helper histogram for TIdentity tree
@@ -521,9 +573,7 @@ private:
   TH1F             * fHistPhiITScounterC;     // helper histogram for TIdentity tree
 
   THnSparseF       * fHndEdx;                 // histogram which hold all dEdx info
-  THnSparseF       * fHnExpected[20];         // histogram which hold all PIDresponse info
-  THnSparseF       * fHnCleanKa;              // histogram which hold Clean Kaons
-  THnSparseF       * fHnCleanDe;              // histogram which hold Clean Deuterons
+  THnSparseF       * fHnExpected[22];         // histogram which hold all PIDresponse info
 
   TString           fChunkName;
 
@@ -541,24 +591,29 @@ private:
   Bool_t            fEffMatrix;              // flag for efficiency matrix filling
   Bool_t            fDEdxCheck;              // flag to check only the dEdx performance
   Bool_t            fIncludeITS;             // decide whether to use ITS or not
-  Bool_t            fFillTracks;               // switch whether to fill all cut variables
-  Bool_t            fFillEffLookUpTable;
+  Bool_t            fFillTracks;             // switch whether to fill all cut variables
+  Bool_t            fFillOnlyHists;          //
+  Bool_t            fFillEffLookUpTable;     //
   Bool_t            fFillHigherMomentsMCclosure;
   Bool_t            fFillArmPodTree;         // switch whether to fill clean sample tree
   Bool_t            fRunFastSimulation;      // when running over galice.root do not fill other objects
   Bool_t            fRunFastHighMomentCal;   // when running over galice.root do not fill other objects
-  Bool_t            fFillGenDistributions;   // when running over galice.root do not fill other objects
+  Bool_t            fFillDistributions;   // when running over galice.root do not fill other objects
   Bool_t            fFillTreeMC;
   Bool_t            fDefaultTrackCuts;
+  Bool_t            fDefaultEventCuts;
   Bool_t            fFillNudynFastGen;
   Int_t             fUsePtCut;
   Int_t             fTrackOriginType;
+  Int_t             fRapidityType;
+  Int_t             fSisterCheck;           // 0: reject the mother anyways, 1: if both girls are in acceptance rejet mother
 
   Bool_t            fFillDnchDeta;           // switch on calculation of the dncdeta for fastgens
   Bool_t            fIncludeTOF;             // Include TOF information to investigate the efficiency loss effects on observable
   Bool_t            fUseThnSparse;           // in case thnsparse is filled
   Bool_t            fUseCouts;               // for debugging
 
+  Int_t             fNSettings;
   Int_t             fNMomBins;               // number of mombins --> for 20MeV slice 150 and 10MeV 300
   Float_t           fMomDown;                // bottom limit for the momentum range (default 0.2)
   Float_t           fMomUp;                  // uppper limit for the momentum range (default 3.2)
@@ -573,11 +628,11 @@ private:
   Float_t           fArmPodCentrality;
   Float_t           fQt;
   Float_t           fAlfa;
-  Float_t           fPiNSigmasTOF;           // TOF N sigma for Pion
-  Float_t           fKaNSigmasTOF;           // TOF N sigma for Pion
-  Float_t           fElNSigmasTOF;           // TOF N sigma for Pion
-  Float_t           fPrNSigmasTOF;           // TOF N sigma for Pion
-  Float_t           fDeNSigmasTOF;           // TOF N sigma for Proton
+  Float_t           fNSigmasElTOF;           // TOF N sigma for Pion
+  Float_t           fNSigmasPiTOF;           // TOF N sigma for Pion
+  Float_t           fNSigmasKaTOF;           // TOF N sigma for Pion
+  Float_t           fNSigmasPrTOF;           // TOF N sigma for Pion
+  Float_t           fNSigmasDeTOF;           // TOF N sigma for Proton
 
   Float_t           fDEdxEl;                 // Expected Electron dEdx
   Float_t           fDEdxKa;                 // Expected Kaon dEdx
@@ -616,11 +671,15 @@ private:
   Float_t           fMuMC;
   Float_t           fLaMC;
 
-  Float_t           fPtotMCgen;
-  Float_t           fPtMCgen;
-  Float_t           fEtaMCgen;
-  Int_t             fSignMCgen;
   Double_t          fMCImpactParameter;
+  Int_t             fNHardScatters;            // Number of hard scatterings
+  Int_t             fNProjectileParticipants;  // Number of projectiles participants
+  Int_t             fNTargetParticipants;      // Number of target participants
+  Int_t             fNNColl;                   // Number of N-N collisions
+  Int_t             fNNwColl;                  // Number of N-Nwounded collisions
+  Int_t             fNwNColl;                  // Number of Nwounded-N collisons
+  Int_t             fNwNwColl;                 // Number of Nwounded-Nwounded collisions
+
 
   Float_t           fElMCgen;
   Float_t           fPiMCgen;
@@ -731,32 +790,32 @@ private:
   Int_t              fSystDCAxy;             // 0 --> default ||| -1 --> -sigma ||| +1 --> +sigma
   Int_t              fSystChi2;              // 0 -->  4      ||| -1 -->    3   ||| +1 -->   5
   Int_t              fSystVz;                // 0 -->  10     ||| -1 -->    8   ||| +1 -->   12
-  Float_t            fNetPiFirstMoments[2][4][10][16];    //[fNResModeMC][fNMomBinsMC][fNCentBinsMC][fNEtaWinBinsMC]
-  Float_t            fNetKaFirstMoments[2][4][10][16];    //[fNResModeMC][fNMomBinsMC][fNCentBinsMC][fNEtaWinBinsMC]
-  Float_t            fNetPrFirstMoments[2][4][10][16];    //[fNResModeMC][fNMomBinsMC][fNCentBinsMC][fNEtaWinBinsMC]
-  Float_t            fNetLaFirstMoments[2][4][10][16];    //[fNResModeMC][fNMomBinsMC][fNCentBinsMC][fNEtaWinBinsMC]
-  Float_t            fNetChFirstMoments[2][4][10][16];    //[fNResModeMC][fNMomBinsMC][fNCentBinsMC][fNEtaWinBinsMC]
+  Float_t            fNetPiFirstMoments[2][4][10][8];    //[fNResModeMC][fNMomBinsMC][fNCentBinsMC][fNEtaWinBinsMC]
+  Float_t            fNetKaFirstMoments[2][4][10][8];    //[fNResModeMC][fNMomBinsMC][fNCentBinsMC][fNEtaWinBinsMC]
+  Float_t            fNetPrFirstMoments[2][4][10][8];    //[fNResModeMC][fNMomBinsMC][fNCentBinsMC][fNEtaWinBinsMC]
+  Float_t            fNetLaFirstMoments[2][4][10][8];    //[fNResModeMC][fNMomBinsMC][fNCentBinsMC][fNEtaWinBinsMC]
+  Float_t            fNetChFirstMoments[2][4][10][8];    //[fNResModeMC][fNMomBinsMC][fNCentBinsMC][fNEtaWinBinsMC]
 
-  Float_t            fNetPiFirstMomentsRec[4][10][16];    //[fNMomBinsMC][fNCentBinsMC][fNEtaWinBinsMC]
-  Float_t            fNetKaFirstMomentsRec[4][10][16];    //[fNMomBinsMC][fNCentBinsMC][fNEtaWinBinsMC]
-  Float_t            fNetPrFirstMomentsRec[4][10][16];    //[fNMomBinsMC][fNCentBinsMC][fNEtaWinBinsMC]
-  Float_t            fNetPiFirstMomentsGen[4][10][16];    //[fNMomBinsMC][fNCentBinsMC][fNEtaWinBinsMC]
-  Float_t            fNetKaFirstMomentsGen[4][10][16];    //[fNMomBinsMC][fNCentBinsMC][fNEtaWinBinsMC]
-  Float_t            fNetPrFirstMomentsGen[4][10][16];    //[fNMomBinsMC][fNCentBinsMC][fNEtaWinBinsMC]
+  Float_t            fNetPiFirstMomentsRec[4][10][8];    //[fNMomBinsMC][fNCentBinsMC][fNEtaWinBinsMC]
+  Float_t            fNetKaFirstMomentsRec[4][10][8];    //[fNMomBinsMC][fNCentBinsMC][fNEtaWinBinsMC]
+  Float_t            fNetPrFirstMomentsRec[4][10][8];    //[fNMomBinsMC][fNCentBinsMC][fNEtaWinBinsMC]
+  Float_t            fNetPiFirstMomentsGen[4][10][8];    //[fNMomBinsMC][fNCentBinsMC][fNEtaWinBinsMC]
+  Float_t            fNetKaFirstMomentsGen[4][10][8];    //[fNMomBinsMC][fNCentBinsMC][fNEtaWinBinsMC]
+  Float_t            fNetPrFirstMomentsGen[4][10][8];    //[fNMomBinsMC][fNCentBinsMC][fNEtaWinBinsMC]
 
-  Float_t            fCrossPiFirstMomentsRec[4][10][16];    //[fNMomBinsMC][fNCentBinsMC][fNEtaWinBinsMC]
-  Float_t            fCrossKaFirstMomentsRec[4][10][16];    //[fNMomBinsMC][fNCentBinsMC][fNEtaWinBinsMC]
-  Float_t            fCrossPrFirstMomentsRec[4][10][16];    //[fNMomBinsMC][fNCentBinsMC][fNEtaWinBinsMC]
-  Float_t            fCrossPiFirstMomentsGen[4][10][16];    //[fNMomBinsMC][fNCentBinsMC][fNEtaWinBinsMC]
-  Float_t            fCrossKaFirstMomentsGen[4][10][16];    //[fNMomBinsMC][fNCentBinsMC][fNEtaWinBinsMC]
-  Float_t            fCrossPrFirstMomentsGen[4][10][16];    //[fNMomBinsMC][fNCentBinsMC][fNEtaWinBinsMC]
+  Float_t            fCrossPiFirstMomentsRec[4][10][8];    //[fNMomBinsMC][fNCentBinsMC][fNEtaWinBinsMC]
+  Float_t            fCrossKaFirstMomentsRec[4][10][8];    //[fNMomBinsMC][fNCentBinsMC][fNEtaWinBinsMC]
+  Float_t            fCrossPrFirstMomentsRec[4][10][8];    //[fNMomBinsMC][fNCentBinsMC][fNEtaWinBinsMC]
+  Float_t            fCrossPiFirstMomentsGen[4][10][8];    //[fNMomBinsMC][fNCentBinsMC][fNEtaWinBinsMC]
+  Float_t            fCrossKaFirstMomentsGen[4][10][8];    //[fNMomBinsMC][fNCentBinsMC][fNEtaWinBinsMC]
+  Float_t            fCrossPrFirstMomentsGen[4][10][8];    //[fNMomBinsMC][fNCentBinsMC][fNEtaWinBinsMC]
 
-  Float_t            fPiFirstMomentsGen[2][4][10][16];    //[2][fNMomBinsMC][fNCentBinsMC][fNEtaWinBinsMC]
-  Float_t            fKaFirstMomentsGen[2][4][10][16];    //[2][fNMomBinsMC][fNCentBinsMC][fNEtaWinBinsMC]
-  Float_t            fPrFirstMomentsGen[2][4][10][16];    //[2][fNMomBinsMC][fNCentBinsMC][fNEtaWinBinsMC]
-  Float_t            fPiFirstMomentsRec[2][4][10][16];    //[2][fNMomBinsMC][fNCentBinsMC][fNEtaWinBinsMC]
-  Float_t            fKaFirstMomentsRec[2][4][10][16];    //[2][fNMomBinsMC][fNCentBinsMC][fNEtaWinBinsMC]
-  Float_t            fPrFirstMomentsRec[2][4][10][16];    //[2][fNMomBinsMC][fNCentBinsMC][fNEtaWinBinsMC]
+  Float_t            fPiFirstMomentsGen[2][4][10][8];    //[2][fNMomBinsMC][fNCentBinsMC][fNEtaWinBinsMC]
+  Float_t            fKaFirstMomentsGen[2][4][10][8];    //[2][fNMomBinsMC][fNCentBinsMC][fNEtaWinBinsMC]
+  Float_t            fPrFirstMomentsGen[2][4][10][8];    //[2][fNMomBinsMC][fNCentBinsMC][fNEtaWinBinsMC]
+  Float_t            fPiFirstMomentsRec[2][4][10][8];    //[2][fNMomBinsMC][fNCentBinsMC][fNEtaWinBinsMC]
+  Float_t            fKaFirstMomentsRec[2][4][10][8];    //[2][fNMomBinsMC][fNCentBinsMC][fNEtaWinBinsMC]
+  Float_t            fPrFirstMomentsRec[2][4][10][8];    //[2][fNMomBinsMC][fNCentBinsMC][fNEtaWinBinsMC]
 
 
   Float_t            *fetaDownArr;           //[fNEtaWinBinsMC]
@@ -775,6 +834,10 @@ private:
   THnF             * fHistNegEffMatrixRec;       // histogram efficiency matrix --> generated traks
   THnF             * fHistPosEffMatrixGen;       // histogram efficiency matrix --> reconstructed pions
   THnF             * fHistNegEffMatrixGen;       // histogram efficiency matrix --> generated pions
+  THnF             * fHistPosEffMatrixScanRec;       // histogram efficiency matrix --> reconstructed traks
+  THnF             * fHistNegEffMatrixScanRec;       // histogram efficiency matrix --> generated traks
+  THnF             * fHistPosEffMatrixScanGen;       // histogram efficiency matrix --> reconstructed pions
+  THnF             * fHistNegEffMatrixScanGen;       // histogram efficiency matrix --> generated pions
   TH1F             * fHistEmptyEvent;         // control histogram for empty event
   TH1F             * fHistCentrality;         // control histogram for centrality
   TH1F             * fHistCentralityImpPar;         // control histogram for centrality
@@ -804,7 +867,7 @@ private:
 
 
 
-  ClassDef(AliAnalysisTaskTIdentityPID, 4);
+  ClassDef(AliAnalysisTaskTIdentityPID, 5);
 
 };
 

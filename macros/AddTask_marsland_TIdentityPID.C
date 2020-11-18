@@ -1,4 +1,4 @@
-AliAnalysisTask *AddTask_marsland_TIdentityPID(Bool_t getFromAlien=kFALSE, TString configFileName = "Config_marsland_TIdentityPID.C",Int_t settingType = 0,Int_t lhcPeriod = 1, Int_t lookUpTableIndex = 1, const char* suffix = "", Int_t containerNameMode=0)
+AliAnalysisTask *AddTask_marsland_TIdentityPID(Bool_t getFromAlien=kFALSE, TString configFileName = "Config_marsland_TIdentityPID.C",Int_t settingType = 0,Int_t year = 1, TString periodName="15o", Int_t passIndex, Int_t lookUpTableIndex = 1, const char* suffix = "", Int_t containerNameMode=0)
 {
   //
   //get the current analysis manager
@@ -9,7 +9,7 @@ AliAnalysisTask *AddTask_marsland_TIdentityPID(Bool_t getFromAlien=kFALSE, TStri
   Parameter 1: getFromAlien     --> decide if the config file will be taken from alien or hera
   Parameter 2: configFileName   --> config file which should exist both in alicen and hera
   Parameter 3: settingType      --> an integer to decide which setting to use
-  Parameter 4: lhcPeriod        --> an integer to decide which period 1,2 or 3
+  Parameter 4: year             --> year
   Parameter 5: lookUpTableIndex --> an integer to decide which lookup table to use
   Parameter 6: suffix           --> used for naming conflicts in lego train --> each wagon has a different suffix
   Parameter 7: containerNameMode--> decide either dump output files in a TDirectoryFile or not. 0 without 1 and 2 with TDirectoryFile,
@@ -36,26 +36,27 @@ AliAnalysisTask *AddTask_marsland_TIdentityPID(Bool_t getFromAlien=kFALSE, TStri
   } else {
     std::cout << " Info::marsland: Settings for local testing " << std::endl;
     configBasePath = "";
+    //
     // gSystem->Load("libANALYSIS");
     // gSystem->Load("libANALYSISalice");
     // gSystem->AddIncludePath("-I$ALICE_ROOT/include");
     // gSystem->AddIncludePath("-I$ALICE_PHYSICS/include");
     //
     // MC closure for higher moments
-    settingType = 80;      // 4 for Real data 100 for full MC
-    lhcPeriod = 2;
+    // settingType = 64;   // 1 for Real data 50 for full MC
+    // year   = 2; periodName="15o"; passIndex=2  // 1 for 10h, 2 for 15o, 3 for 18[q,r]
     lookUpTableIndex =0;
     suffix = "test";
     containerNameMode=0;
   }
   TString configFilePath(configBasePath+configFileName);
-  std::cout << " Info::marsland: Configpath:  " << configFilePath << std::endl;
+  std::cout << " Info::marsland: Configpath:  " << configFilePath << " year = " << year << " --- period name = " << periodName << " --- pass = " << passIndex << " --- lookUpTableIndex = " << lookUpTableIndex << " --- settingType = " << settingType << std::endl;
   //
   gROOT->LoadMacro(configFilePath.Data());
   //
   TString combinedName;
   combinedName.Form("marslandTIdentity_%s", suffix);
-  AliAnalysisTaskTIdentityPID* task = Config_marsland_TIdentityPID(getFromAlien,settingType,lhcPeriod,lookUpTableIndex,combinedName);
+  AliAnalysisTaskTIdentityPID* task = Config_marsland_TIdentityPID(getFromAlien,settingType,year,periodName,passIndex,lookUpTableIndex,combinedName);
   Bool_t hasMC = (AliAnalysisManager::GetAnalysisManager()->GetMCtruthEventHandler()!=0x0);
   task->SetIsMCtrue(hasMC);
   printf(" ========================= MC info %d ========================= \n",hasMC);

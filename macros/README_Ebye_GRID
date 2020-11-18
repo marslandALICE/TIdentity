@@ -1,0 +1,396 @@
+
+   ##########################################################################
+   ############### Run Analysis on LEGO TRAIN for Fast Gen ##################
+   ##########################################################################
+
+   ##############################################################################################################################
+   --> Enabling debugging in aliroot installed by alibuild
+   /lustre/nyx/alice/users/marsland/alicehub/alidist/defaults-user.sh  --> remove O2 in
+   CXXFLAGS: "-fPIC -g -O2 -std=c++11"
+   CFLAGS: "-fPIC -g -O2"
+   ##############################################################################################################################
+
+
+0) Modify config file and copy to alien
+
+   $RUN_ON_GRID_DIR/Ebye/code/helpers/copyConfigToAlien.sh $AliPhysics_SRC/PWGCF/EBYE/IdentityMethodEbyeFluctuations/macros/Config_marsland_EbyeIterPID.C
+
+
+1) check if the code in "new" "$AliPhysics" and GSI are consistent
+
+  diff -b  -y --suppress-common-lines
+  icdiff  -H -N
+
+  meld $AliPhysics_SRC/PWGCF/EBYE/IdentityMethodEbyeFluctuations/tasks/AliAnalysisTaskEbyeIterPID.h  $RUN_ON_GRID_DIR/Ebye/code/AliAnalysisTaskTIdentityPID.h
+  meld $AliPhysics_SRC/PWGCF/EBYE/IdentityMethodEbyeFluctuations/tasks/AliAnalysisTaskEbyeIterPID.cxx  $RUN_ON_GRID_DIR/Ebye/code/AliAnalysisTaskTIdentityPID.cxx
+  meld $AliPhysics_SRC/PWGCF/EBYE/IdentityMethodEbyeFluctuations/macros/Config_marsland_EbyeIterPID.C  $RUN_ON_GRID_DIR/Ebye/code/Config_marsland_TIdentityPID.C
+  meld $AliPhysics_SRC/PWGCF/EBYE/IdentityMethodEbyeFluctuations/macros/AddTask_marsland_EbyeIterPID.C  $RUN_ON_GRID_DIR/Ebye/code/AddTask_marsland_TIdentityPID.C
+
+  vimdiff $AliPhysics_SRC/PWGCF/EBYE/IdentityMethodEbyeFluctuations/tasks/AliAnalysisTaskEbyeIterPID.h  $RUN_ON_GRID_DIR/Ebye/code/AliAnalysisTaskTIdentityPID.h
+  vimdiff $AliPhysics_SRC/PWGCF/EBYE/IdentityMethodEbyeFluctuations/tasks/AliAnalysisTaskEbyeIterPID.cxx  $RUN_ON_GRID_DIR/Ebye/code/AliAnalysisTaskTIdentityPID.cxx
+  vimdiff $AliPhysics_SRC/PWGCF/EBYE/IdentityMethodEbyeFluctuations/macros/Config_marsland_EbyeIterPID.C  $RUN_ON_GRID_DIR/Ebye/code/Config_marsland_TIdentityPID.C
+  vimdiff $AliPhysics_SRC/PWGCF/EBYE/IdentityMethodEbyeFluctuations/macros/AddTask_marsland_EbyeIterPID.C  $RUN_ON_GRID_DIR/Ebye/code/AddTask_marsland_TIdentityPID.C
+
+  $RUN_ON_GRID_DIR/Ebye/code
+
+  meld $RUN_ON_GRID_DIR/Ebye/code/AliAnalysisTaskTIdentityPID.h  /u/marsland/PHD/macros/marsland_EbyeRatios/AliAnalysisTaskTIdentityPID.h
+  meld $RUN_ON_GRID_DIR/Ebye/code/AliAnalysisTaskTIdentityPID.cxx  /u/marsland/PHD/macros/marsland_EbyeRatios/AliAnalysisTaskTIdentityPID.cxx
+  meld $RUN_ON_GRID_DIR/Ebye/code/Config_marsland_TIdentityPID.C  /u/marsland/PHD/macros/marsland_EbyeRatios/Config_marsland_TIdentityPID.C
+  meld $RUN_ON_GRID_DIR/Ebye/code/AddTask_marsland_TIdentityPID.C  /u/marsland/PHD/macros/marsland_EbyeRatios/AddTask_marsland_TIdentityPID.C
+
+  meld $RUN_ON_GRID_DIR/Ebye/code/AliAnalysisTaskTIdentityPID.h  /u/marsland/workdir/RUN_ON_GRID/Ebye/code/AliAnalysisTaskTIdentityPID.h
+  meld $RUN_ON_GRID_DIR/Ebye/code/AliAnalysisTaskTIdentityPID.cxx  /u/marsland/workdir/RUN_ON_GRID/Ebye/code/AliAnalysisTaskTIdentityPID.cxx
+  meld $RUN_ON_GRID_DIR/Ebye/code/Config_marsland_TIdentityPID.C  /u/marsland/workdir/RUN_ON_GRID/Ebye/code/Config_marsland_TIdentityPID.C
+  meld $RUN_ON_GRID_DIR/Ebye/code/AddTask_marsland_TIdentityPID.C  /u/marsland/workdir/RUN_ON_GRID/Ebye/code/AddTask_marsland_TIdentityPID.C
+
+
+
+
+
+   alien_cp /lustre/nyx/alice/users/marsland/pFluct/files/analysis/Data/PbPb/MC/RUN1/LHC11a10a_bis_kineOnly_AllResOFF/MCgenResults/MomentsTree_AccCan.root alien:///alice/cern.ch/user/m/marsland/PWGCF/EBYE/IdentityMethodEbyeFluctuations/macros/MomentsTree_AccCan_HIJING.root
+
+
+1) Make File list,  prepare directory and copy LEGO TRAIN output:  --> marsland@lxbk0197
+
+   basedir=/lustre/nyx/alice/users/marsland/pFluct/files/analysis/Data/PbPb/MC/RUN2/LHC16g1_GRIDAll_MCclosure_cutON_p_EffMatrix_05022018
+   cd $basedir
+   mkdir mergedRuns/ mergedPeriods/ MCgenResults/ TIdenResults/ train_root/ Hists/ Fits/
+   cp -r  $RUN_ON_GRID_DIR/Ebye/code $basedir/train_root
+   cp -r  $AliPhysics_SRC/PWGCF/EBYE/IdentityMethodEbyeFluctuations $basedir/train_root
+   cd mergedPeriods
+
+   ### in case of runGrid.C
+   alien_find /alice/cern.ch/user/p/pwg_pp/Skimmed_ESDs_dEdxPerformance/  AnalysisResults.root  | grep root > tmp.list
+   or --> $AliPhysics_SRC/PWGPP/QA/scripts/alienSync.sh alienFindCommand="alien_find /alice/cern.ch/user/m/marsland/TPC_dEdx_Info/LHC17c5b_pass5_lowIR  AnalysisResults.root"
+   awk '{$0="alien://"$0}1' tmp.list > results.list;
+   alisync @results.list -o `pwd` -j 4 -t 3000
+
+   alien_find /alice/cern.ch/user/p/pwg_pp/Skimmed_ESDs_dEdxPerformance/  P*.root  | grep root | awk '{$0="alien://"$0}1' > results.list
+   alisync @results_hist.list -o `pwd` -j 4 -t 3000
+
+   ******  /u/marsland/PHD/macros/marsland_EbyeRatios/makeListOfLegoTrain.sh
+
+   ### in case of lego train
+   alien_find  /alice/cern.ch/user/a/alitrain/PWGCF/CF_PbPb_MC AnalysisResults.root | egrep "1354_20190130|1355_20190130|1356_20190130|1357_20190130" > tmp.list
+   awk '{$0="alien://"$0}1' tmp.list > results.list;
+   alisync @results.list -o `pwd` -j 4 -t 30000
+
+   ### merging the files
+   find ${PWD} -iname "AnalysisResults.root" -print0 | xargs -0 ls -lhS |  awk {'print$9'} > AnalysisResults_runs.list
+   for a in $(find ${PWD}/ -iname "root*.zip"); do echo $a#AnalysisResults.root;  done  > AnalysisResults_runs.list
+   for file in $(find ${PWD}/ -iname "root*.zip"); do unzip -d "${file%.zip}" $file; done;
+
+
+
+  unzip -d "${file%.zip}" $file
+
+   Bool_t a = AliXRDPROOFtoolkit::FilterList("AnalysisResults_runs.list","AnalysisResults.root mcFull",1)
+
+   alihadd -i "mcFull"       -s 2000000000 AnalysisResults_mcFull.root    @AnalysisResults_runs.list
+   alihadd -i "fTreeMC"      -s 2000000000 AnalysisResults_fTreeMC.root   @AnalysisResults_runs.list
+   alihadd -i "fArmPodTree"  -s 2000000000 AnalysisResults_armPod.root    @AnalysisResults_runs.list
+   alihadd -i "cleanHists"                 AnalysisResults_hists.root     @AnalysisResults_runs.list
+   alihadd -i "tracks"       -s 2000000000 AnalysisResults_tracks.root    @AnalysisResults_runs.list
+   lhs ${PWD}/AnalysisResults_mcFull*.root  | awk {'print$9'} > AnalysisResults_mcFull.list
+   lhs ${PWD}/AnalysisResults_fTreeMC*.root | awk {'print$9'} > AnalysisResults_fTreeMC.list
+   lhs ${PWD}/AnalysisResults_tracks*.root  | awk {'print$9'} > AnalysisResults_tracks.list
+
+   alihadd -i "mcFull" -i "mcGen" -s 2000000000  AnalysisResults_trees.root @AnalysisResults_sorted.list
+
+   ************************************************
+   *** to print the full alien path --> alien_ls -b
+   ************************************************
+
+2) Find Files on alien
+
+   copyCommand="alien_ls -b /alice/sim/2013/LHC13f3b/*/PWGCF/CF_PbPb_MC/878_20171128-*/Stage_1/*/Ana*.root"
+   for a in $(eval $copyCommand | grep root  | awk {'print$2'}); do
+      echo alien://$a;
+   done > results.list
+
+   alien_ls -b /alice/sim/2013/LHC13f3a/*/PWGCF/CF_PbPb_MC/874_20171119-2036_child_1/Stage_1/*/Ana*.root
+   alien_ls -b /alice/sim/2013/LHC13f3b/*/PWGCF/CF_PbPb_MC/874_20171119-2036_child_2/Stage_1/*/Ana*.root
+   alien_ls -b /alice/sim/2013/LHC13f3c/*/PWGCF/CF_PbPb_MC/874_20171119-2036_child_3/Stage_1/*/Ana*.root
+   alien_ls -b /alice/sim/LHC11a10a_bis/*/PWGCF/CF_PbPb_MC/874_20171119-2036_child_4/Ana*.root
+
+   alien_ls -b /alice/sim/2013/LHC13f3b/*/PWGCF/CF_PbPb_MC/877_20171128-*/Stage_1/*/Ana*.root
+   alien_ls -b /alice/sim/2013/LHC13f3b/*/PWGCF/CF_PbPb_MC/878_20171128-*/Stage_1/*/Ana*.root
+
+3) Copy files
+
+   alisync @results.list -o `pwd` -j 4 -t 3000
+   find ${PWD}/ -iname  "AnalysisResults.root" >  AnalysisResults.list
+
+   source $ALICE_ROOT/libexec/alihadd.sh
+   makeFilteredList AnalysisResults.list . filter.log 30
+
+
+4) run moment production
+   --> Modify in submitPrepareData.sh:
+       mainDir=$allDataDir/PbPb/MC/RUN1/LHC13f3b_kineOnly_AllResOFF
+       etaDownForMCgen=(-2 -1.9 -1.8 -1.7 -1.6 -1.5 -1.4 -1.3 -1.2 -1.1 -1 -0.9 -0.8 -0.7 -0.6 -0.5 -0.4 -0.3 -0.2 -0.1)
+       etaUpForMCgen=(   2  1.9  1.8  1.7  1.6  1.5  1.4  1.3  1.2  1.1  1  0.9  0.8  0.7  0.6  0.5  0.4  0.3  0.2  0.1)
+
+   cd ../MCgenResults
+   cpEbyeMacros
+   source /lustre/nyx/alice/users/marsland/pFluct/files/analysis/scripts/submitPrepareData.sh
+   AnalyseMCgenMoments
+
+3) merge the output of jobs into one
+
+   hadd MomentsTree_AccCan.root */Moment*.root
+
+4) Make plots:
+
+date=20171115
+
+for a in $(alien_ls -b /alice/sim/$period/*/PWGCF/CF_PbPb_MC/870\_$date\-*/AnalysisResults.root | grep root  | awk {'print$2'}); do
+   echo alien://$a;
+done >> results_0215.list
+
+for a in $(alien_ls -b /alice/sim/$period/*/PWGCF/CF_PbPb_MC/869\_$date\-*/AnalysisResults.root | grep root  | awk {'print$2'}); do
+   echo alien://$a;
+done >> results_0615.list
+
+
+ ### merge only "mcGenMoms" trees in files with 2GB outputs
+
+alihadd -i "mcGenMoms" -s 2000000000  AnalysisResults_mcGenMoms.root @AnalysisResults_sorted.list
+
+
+
+************************************************
+*** to print the full alien path --> alien_ls -b
+************************************************
+
+
+#### Copy and merge after running filtering on GRID :
+Copy:
+
+cd /lustre/nyx/alice/users/marsland/alice-tpc-notes/JIRA/ATO-465/data/LHC16g1/LHC16g1_pass1_140619
+source /u/marsland/PHD/macros/marsland_EbyeRatios/mergeFilteredTreesAtGSI.sh;
+copyFilteredTrees /alice/cern.ch/user/p/pwg_pp/Skimmed_ESDs_16g1_pass1_140619/
+
+Merge:
+
+filtTreeDirGSI=/lustre/nyx/alice/users/marsland/alice-tpc-notes/JIRA/ATO-465/data/LHC16g1c/LHC16g1c_pass1_140519
+cd $filtTreeDirGSI
+source /u/marsland/PHD/macros/marsland_EbyeRatios/mergeFilteredTreesAtGSI.sh;
+mergeFilteredTreesAtGSI
+
+
+
+
+
+##################################### https://alisw.github.io/git-tutorial/ #####################################
+#
+# Add code to AliPhysics:
+git commit  PWGCF/EBYE/IdentityMethodEbyeFluctuations/macros/AddTask_marsland_EbyeIterPID.C  -m "Ebye Fluctuation analyses with Identity Method; AddTask macro for AliAnalysisTaskEbyeIterPID.[cxx,h] class"
+git commit  PWGCF/EBYE/IdentityMethodEbyeFluctuations/tasks/AliAnalysisTaskEbyeIterPID.h  -m "Ebye Fluctuation analyses with Identity Method; Source file AliAnalysisTaskEbyeIterPID.cxx which fills dEdx and MC information"
+git commit  PWGCF/EBYE/IdentityMethodEbyeFluctuations/tasks/AliAnalysisTaskEbyeIterPID.cxx  -m "Ebye Fluctuation analyses with Identity Method; Header file AliAnalysisTaskEbyeIterPID.h which fills dEdx and MC information"
+git commit  PWGCF/EBYE/CMakeLists.txt  -m "Ebye Fluctuation analyses with Identity Method; AliAnalysisTaskEbyeIterPID.[cxx,h] class is added"
+git commit  PWGCF/EBYE/PWGCFebyeLinkDef.h  -m "Ebye Fluctuation analyses with Identity Method; AliAnalysisTaskEbyeIterPID.[cxx,h] class is added"
+
+#
+#### to create a remote repository
+git remote -v
+git remote add marslandALICE https://github.com/marslandALICE/AliPhysics
+
+#### take all repositories
+cd ~/alice/AliPhysics
+git fetch --all
+
+#### Updating your fork with changes from the master
+cd ~/alice/AliPhysics
+git pull --rebase
+git push marslandALICE master
+
+#### Create a pull request
+cd ~/alice/AliPhysics
+git add <file>  # possibly several times
+git commit
+git push marslandALICE master
+
+#### to get rid of a commit which you regret
+git reset --hard origin/master
+    -->  go back to origin master DANGEROUS
+    -->  this deletes commits local but they are still in WEB.
+    -->  In this case if you have new commits just overwrite the ones on WEB by forcing your new commit
+         git push -f marslandALICE
+
+# remove last commit
+git reset --hard HEAD~1
+
+
+
+
+
+##################################################################################################################
+
+--> How to run LEGO train test
+~/Desktop/RUN_ON_GRID/Ebye/code/copyConfigToAlien.sh $AliPhysics_SRC/PWGCF/EBYE/IdentityMethodEbyeFluctuations/macros/Config_marsland_EbyeIterPID.C
+cd $RUN_ON_GRID_DIR/Lego_Train_Test/LEGO_test
+rm std* AnalysisResults.root M*.root *.log syswatch.* Conf*.C TI*.C
+./runTest.sh
+
+
+##################################### https://alisw.github.io/git-tutorial/ #####################################
+## initital settings
+git config --global user.name "Mesut Arslandok"
+git config --global user.email mesut.arslandok@cern.ch
+git config --global user.github marslandALICE
+
+#### to create a remote repository
+git remote -v
+git remote add marslandALICE https://github.com/marslandALICE/AliPhysics
+
+#### take all repositories
+cd ~/alice/AliPhysics
+git fetch --all
+
+#### Updating your fork with changes from the master
+cd ~/alice/AliPhysics
+git pull --rebase
+git push marslandALICE   -->  git push -f marslandALICE    --> forces to push and overwrites your changes
+
+#### Create a pull request
+cd ~/alice/AliPhysics
+git add <file>  # possibly several times
+git commit -m "PWGCF-110: Major change which includes net particle calculations"
+git push marslandALICE
+
+#### to get rid of a commit which you regret
+git reset --hard origin/master
+    -->  go back to origin master DANGEROUS
+    -->  this deletes commits local but they are still in WEB.
+    -->  In this case if you have new commits just overwrite the ones on WEB by forcing your new commit
+         git push -f marslandALICE
+
+## This will show you all not pushed commits from all branches
+git log --branches --not --remotes
+
+## this must show you all your local commits
+git log origin/master..HEAD
+
+
+
+#############################################################################################################################
+                                             Copy lookup tables
+#############################################################################################################################
+
+alien_cp LHC11a10a_bis_kineOnly_GRID_NetCh_AllResOFF/MCgenResults/MomentsTree_AccCan_HIJING.root                    alien:///alice/cern.ch/user/m/marsland/PWGCF/EBYE/IdentityMethodEbyeFluctuations/macros/MomentsTree_AccCan_HIJING.root
+alien_cp LHC11a10a_bis_kineOnly_GRID_NetCh_AllResOFF_FullAcc/MCgenResults/MomentsTree_AccCan_HIJING_FullAcc.root    alien:///alice/cern.ch/user/m/marsland/PWGCF/EBYE/IdentityMethodEbyeFluctuations/macros/MomentsTree_AccCan_HIJING_FullAcc.root
+
+alien_cp LHC13f3a_kineOnly_GRID_NetCh_AllResOFF/MCgenResults/MomentsTree_AccCan_LHC13f3a.root                       alien:///alice/cern.ch/user/m/marsland/PWGCF/EBYE/IdentityMethodEbyeFluctuations/macros/MomentsTree_AccCan_LHC13f3a.root
+alien_cp LHC13f3a_kineOnly_GRID_NetCh_AllResOFF_FullAcc/MCgenResults/MomentsTree_AccCan_LHC13f3a_FullAcc.root       alien:///alice/cern.ch/user/m/marsland/PWGCF/EBYE/IdentityMethodEbyeFluctuations/macros/MomentsTree_AccCan_LHC13f3a_FullAcc.root
+
+alien_cp LHC13f3b_kineOnly_GRID_NetCh_AllResOFF/MCgenResults/MomentsTree_AccCan_LHC13f3b.root                       alien:///alice/cern.ch/user/m/marsland/PWGCF/EBYE/IdentityMethodEbyeFluctuations/macros/MomentsTree_AccCan_LHC13f3b.root
+alien_cp LHC13f3b_kineOnly_GRID_NetCh_AllResOFF_FullAcc/MCgenResults/MomentsTree_AccCan_LHC13f3b_FullAcc.root       alien:///alice/cern.ch/user/m/marsland/PWGCF/EBYE/IdentityMethodEbyeFluctuations/macros/MomentsTree_AccCan_LHC13f3b_FullAcc.root
+
+alien_cp LHC13f3c_kineOnly_GRID_NetCh_AllResOFF/MCgenResults/MomentsTree_AccCan_LHC13f3c.root                       alien:///alice/cern.ch/user/m/marsland/PWGCF/EBYE/IdentityMethodEbyeFluctuations/macros/MomentsTree_AccCan_LHC13f3c.root
+alien_cp LHC13f3c_kineOnly_GRID_NetCh_AllResOFF_FullAcc/MCgenResults/MomentsTree_AccCan_LHC13f3c_FullAcc.root       alien:///alice/cern.ch/user/m/marsland/PWGCF/EBYE/IdentityMethodEbyeFluctuations/macros/MomentsTree_AccCan_LHC13f3c_FullAcc.root
+
+#############################################################################################################################
+                                             How to kill jobs on alien
+#############################################################################################################################
+
+gbbox top -user pwg_pp -split 915389906  -all_status | grep RUNNING | awk '{print $1}' > ./joblist.txt
+gbbox top -user pwg_pp -split 915389906  -all_status | grep DONE    | awk '{print $1}' >> ./joblist.txt
+for i in $(cat joblist.txt); do alien_kill $i; done
+
+gbbox top -user pwg_pp -split 915389906  -all_status | grep RUNNING | awk '{print $1}' > ./joblist.txt
+gbbox top -user pwg_pp -split 915389906  -all_status | grep DONE    | awk '{print $1}' >> ./joblist.txt
+for i in $(cat file:joblist.txt); do kill $i; done
+
+
+
+#############################################################################################################################
+
+## kill or resubmit by copying from monalisa table by hand
+
+1) Copy masterjobs from monalisa and save in jobs.list
+
+2) loop over master jobs and its subjobs to resubmit
+for job in $(less jobs.list | grep "TaskEbyeIterPIDMC" | awk '{print $1}'); do
+  for subjob in $(gbbox top -user pwg_pp -split $job  -all_status | grep -E 'ERROR|EXPIRED|ZOMBIE' | awk '{print $1}'); do
+    echo $subjob >> subjobs.list
+    alien_resubmit $subjob
+  done
+done
+
+2) loop over master jobs and its subjobs to resubmit
+for job in $(gbbox top -user pwg_pp | grep "TaskEbyeIterPIDMC" | awk '{print $1}'); do
+  for subjob in $(gbbox top -user pwg_pp -split $job  -all_status | grep -E 'ERROR|EXPIRED|ZOMBIE' | awk '{print $1}'); do
+    echo $subjob >> subjobs.list
+    alien_resubmit $subjob
+  done
+done
+
+
+3) ## kill all masterjobs
+for job in $(less jobs.list | grep  "TaskEbyeIterPIDMC" | awk '{print $1}'); do
+  alien_kill $job
+done
+
+
+#############################################################################################################################
+Options --> ERROR_IB, RUNNING, DONE, EXPIRED, ZOMBIE, ERROR_E, ERROR_V
+
+## kill all running jobs
+for job in $(gbbox top -user pwg_pp  -all_status | grep -E 'ERROR_IB' | awk '{print $1}'); do
+  alien_kill $job
+done
+
+for job in $(gbbox top -user pwg_pp  -all_status | grep -E 'ZOMBIE' | awk '{print $1}'); do
+  alien_resubmit $job
+done
+
+for job in $(gbbox top -user marsland  -all_status | grep -E 'DONE' | awk '{print $1}'); do
+  echo $job
+  alien_kill $job
+done
+
+for job in $(gbbox top -user marsland  -all_status | grep -E 'ERROR|EXPIRED|ZOMBIE|INPUTBOX' | awk '{print $1}'); do
+  alien_resubmit $job
+done
+
+for job in $(gbbox top -user marsland  -all_status | grep -E 'WAITING' | awk '{print $1}'); do
+  alien_resubmit $job
+done
+
+for job in $(gbbox top -user marsland  -all_status | grep -E 'ERROR|EXPIRED|ZOMBIE|INPUTBOX' | awk '{print $1}'); do
+  alien_kill $job
+done
+
+for job in $(less jobs.list | grep  "marsland" | awk '{print $1}'); do
+  alien_kill $job
+done
+
+
+#############################################################################################################################
+## resubmit all jobs in error states
+for job in $(gbbox top -user pwg_pp  -all_status | grep "analysis.sh" | grep -E 'ERROR|EXPIRED|ZOMBIE' | awk '{print $1}'); do
+  alien_resubmit $job
+done
+
+## non working option
+#!/bin/bash
+for job in $(alien_ps -E | grep 'E' | awk '{print $2}' | sed 's/-//'); do
+  alien_resubmit $job
+done
+#############################################################################################################################
+
+#############################################################################################################################
+Check file size on alien --> aliendu <basedir> <recursiveSize> <verbosity> <maxNuberOfDiretories>
+-->
+source $AliPhysics_SRC/PWGPP/scripts/aliendu.sh
+aliendu /alice/cern.ch/user/p/pwg_pp/LHC15o_pass1_2runs  10000000000  1   20
+--> 505958118921    /alice/cern.ch/user/p/pwg_pp/LHC15o_pass1_2runs
+
+
+
+
+
+
+
+#############################################################################################################################

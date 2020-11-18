@@ -2,31 +2,38 @@ HOW TO EBYE ANALYSIS
 
 ###
 best test
-/lustre/nyx/alice/users/marsland/pFluct/files/analysis/Data/PbPb/Real/PbPb_cRows_80_16EtaBin_mombin20MeV_TightCuts
+/lustre/nyx/alice/users/marsland/pFluct/files/analysis/Data/PbPb/Real/RUN1/PbPb_cRows_80_16EtaBin_mombin20MeV_TightCuts
 ###
 
-Location of the splines 
+##############################################################################################################################
+--> Enabling debugging in aliroot installed by alibuild
+/lustre/nyx/alice/users/marsland/alicehub/alidist/defaults-user.sh  --> remove O2 in
+CXXFLAGS: "-fPIC -g -O2 -std=c++11"
+CFLAGS: "-fPIC -g -O2"
+##############################################################################################################################
+
+Location of the splines
 -->  /lustre/nyx/alice/users/marsland/alicesw/aliphysics/master/inst/OADB/COMMON/PID/data/TPCPIDResponse.root
 
 ##############################################################################################################################
-                                                     ANALYSIS TASK 
+                                                     ANALYSIS TASK
 ##############################################################################################################################
 
 1) Analysis tasks
 
    ***********************************************
-   ** check if it compiles 
-   aliroot -l 
+   ** check if it compiles
+   aliroot -l
    gSystem->Load("libANALYSIS");
    gSystem->Load("libANALYSISalice");
    .L /u/marsland/PHD/macros/marsland_EbyeRatios/AliAnalysisTaskEbyeIterPID.cxx++
-   
+
    gSystem->Load("libANALYSIS");
    gSystem->Load("libANALYSISalice");
    gSystem->AddIncludePath("-I/lustre/nyx/alice/users/marsland/alicehub/sw/ubuntu1404_x86-64/AliPhysics/alicehub-1/include")
   .L /u/marsland/PHD/macros/marsland_EbyeRatios/AliAnalysisTaskTIdentityPID.cxx++
    ***********************************************
-   
+
    ***********************************************
    Field (++)  --> run interval is {137161..138275}.ana
    Field (--)  --> run interval is {138364..139510}.ana
@@ -37,52 +44,56 @@ Location of the splines
    vi /lustre/nyx/alice/users/marsland/train/trunk/STEER/config/subdirs.[PbPb,pp,pPb]
    vi /lustre/nyx/alice/users/marsland/train/trunk/STEER/config/subdirs.MC_PbPb
    vi /lustre/nyx/alice/users/marsland/train/trunk/STEER/config/batch.settings.SGE
-   
-   --> AliAnalysisTaskEbyeIterPID.cxx; 
-       marsland_DataTree.root 
-       marsland_Hists.root  
-       marsland_IdenTree.root  
+
+   --> AliAnalysisTaskEbyeIterPID.cxx;
+       marsland_DataTree.root
+       marsland_Hists.root
+       marsland_IdenTree.root
        marsland_MCmoments.root*
-   
+
    ********* In Config.C --> Physics selection minimum bias events *******
    task->SelectCollisionCandidates(AliVEvent::kMB);      //  LHC10h
    task->SelectCollisionCandidates(AliVEvent::kINT7);    //  LHC15o
-   
+
    #######################  PbPb all train  #######################
-   ./run train -u. -l "PbPb/2.76ATeV/LHC10h.pass2/1*.ana.txt" -n50 -cPbPb 
+   ./run train -u. -l "PbPb/2.76ATeV/LHC10h.pass2/1*.ana.txt" -n50 -cPbPb
    ./run train -u. -l "PbPb/2.76ATeV/LHC10h.pass2/138275.ana.txt" -n50 -cPbPb            # longest run
-   ./run train -u. -l "PbPb/2.76ATeV/LHC10h.pass2/139173.ana.txt" -n20 -cPbPb 
-   ./run train -u. -l "PbPb/2.76ATeV/LHC10h.pass2/137161.ana.txt" -n30 -cPbPb   
-   
-   ## MC all train 
+   ./run train -u. -l "PbPb/2.76ATeV/LHC10h.pass2/139173.ana.txt" -n20 -cPbPb
+   ./run train -u. -l "PbPb/2.76ATeV/LHC10h.pass2/137161.ana.txt" -n30 -cPbPb
+
+   ## MC all train
    ./run train -u. -l "MC_PbPb/2.76ATeV/LHC11a10a_bis/1*.ana.txt" -n40 -cMC_PbPb         --> HIJING
    ./run train -u. -l "MC_PbPb/2.76ATeV/LHC12a11[a-i]/1*.ana.txt" -n40 -f -cMC_PbPb      --> AMPT
    ./run train -u. -l "MC_PbPb/2.76ATeV/LHC11a10a_bis/137231.ana.txt" -n40 -cMC_PbPb     # run with 0 entries
-   
-   ## test 
+
+   ## test
    ./run user -l "MC_PbPb/2.76ATeV/LHC11a10a_bis/137231.ana.txt" -n2 -f -c MC_PbPb        # HIJING
    ./run user -l "MC_PbPb/2.76ATeV/LHC12a11a/138534.ana.txt"     -n2 -f -c MC_PbPb        # AMPT
+   ./run user -l "MC_PbPb/5.023ATeV/LHC16g1/245353.ana.txt"     -n2 -f -c MC_PbPb         # HIJING RUN2
+
    ./run user -l  PbPb/2.76ATeV/LHC10h.pass2/137161.ana.txt -n4 -m0 -f -c PbPb            # 10h
    ./run user -l  PbPb/2.76ATeV/LHC11h.pass2/169099.ana.txt -n4 -m0 -f -c PbPb            # 11h
-   
+   ./run user -l  PbPb/5.023ATeV/LHC15o.pass2_lowIR/244918.ana.txt -n4 -m0 -f -c PbPb     # 15o
+
+
    #######################  pp all train  #######################
    ./run train -u. -l "pp/7TeV/LHC10[b-e].pass2/1*.txt" -n60 -cpp
    ./run user -l       pp/7TeV/LHC10b.pass2/117112.ana.txt -n2 -f -cpp
-   
+
    ./run train -u. -l  MC_pp/2.76TeV/LHC11b10a/1*.ana.txt     -n30 -cMC_pp                # Perugia-0, 2.76TeV  3.4M events
    ./run train -u. -l  MC_pp/7TeV/LHC10f6a/1*.ana.txt     -n50 -cMC_pp                    # Perugia-0, 7TeV     131.3M events
    ./run user -l       MC_pp/2.76TeV/LHC11b10a/146859.ana.txt -n2 -f -cMC_pp
-   
+
    ###############################################################
    TFile g("marsland_IdenTree.root")
    fIdenTree->Draw("myBin[0]","","",100000); new TCanvas
    fIdenTree->Draw("myBin[1]","","",100000); new TCanvas
-   fIdenTree->Draw("myBin[2]","","",100000); 
-   
+   fIdenTree->Draw("myBin[2]","","",100000);
+
    ###############################################################
    #################### RUN2 /lustre/nyx #########################
    ###############################################################
-   
+
    data location: vi /lustre/nyx/alice/train/lists/PbPb/5.023ATeV/LHC15o.pass2_lowIR/244918.ana.txt
                      /lustre/nyx/alice/train/lists/PbPb/5.023ATeV/LHC15o.pass2_lowIR/244975.ana.txt
                      /lustre/nyx/alice/train/lists/PbPb/5.023ATeV/LHC15o.pass2_lowIR/244982.ana.txt
@@ -95,136 +106,214 @@ Location of the splines
    modify:
    vi /lustre/nyx/alice/users/marsland/train/trunk/STEER/config/subdirs.[PbPb,pp,pPb]
    vi /lustre/nyx/alice/users/marsland/train/trunk/STEER/config/subdirs.MC_PbPb
-   vi /lustre/nyx/alice/users/marsland/train/trunk/STEER/scripts.SGE/env
+   vi /lustre/nyx/alice/users/marsland/train/trunk/STEER/scripts.gsislurm/env
    vi /lustre/nyx/alice/users/marsland/train/trunk/STEER/config/batch.settings.SGE
 
-   ./run user -l  PbPb/5.023ATeV/LHC15o.pass2_lowIR/245066.ana.txt -n4 -m0 -f -c PbPb 
+   ./run user -l  PbPb/5.023ATeV/LHC15o.pass2_lowIR/245066.ana.txt -n4 -m0 -f -c PbPb
    ./run user -l  PbPb/5.023ATeV/LHC15o.pass4_lowIR_pidfix_cookdedx/245064.ana.txt -n4 -m0 -f -c PbPb
    ./run train -u. -l "PbPb/5.023ATeV/LHC15o.pass2_lowIR/245066.ana.txt" -n30 -c PbPb
    ./run train -u. -l "PbPb/5.023ATeV/LHC15o.pass2_lowIR/2*.ana.txt" -n30 -c PbPb
    ./run train -u. -l "PbPb/5.023ATeV/LHC15o.pass2_lowIR/245066.ana.txt" -n20 -m20 -c PbPb
-   
+
+   ###############################################################
+   ###################### RUNNING on GRID ########################
+   ###############################################################
+
+   ### copy all files from grid
+   ### --> Run in screen session
+   alientarget=/alice/cern.ch/user/m/marsland/TPC_dEdx_Info/LHC16k3b_pass3
+   lustretarget=/lustre/nyx/alice/users/marsland/pFluct/files/analysis/Data/PbPb/MC/RUN2/eff_Pileup
+   source /u/marsland/PHD/macros/marsland_EbyeRatios/alihadd_GRIDoutput.sh;
+   CopyAllFilesFromAlien  $alientarget  $lustretarget
+
+   ### Merge files for on run basis
+   cd /lustre/nyx/alice/users/marsland/pFluct/files/analysis/Data/PbPb/Real/RUN2/15o_pass2_lowIR_cRows_80_10EtaBin_mombin20MeV_GRID/mergedRuns
+   source /u/marsland/PHD/macros/marsland_EbyeRatios/alihadd_GRIDoutput.sh;
+   alihadd_GRIDoutput 0
+
+
+   ###############################################################
+   ###############################################################
+   ###############################################################
+
+   --> Callgrind: memory check
+   /usr/bin/valgrind --tool=callgrind --log-file=cpu.txt   --num-callers=40 -v  --trace-children=yes ./run user -l  PbPb/2.76ATeV/LHC10h.pass2/137161.ana.txt -n3 -m0 -f -c PbPb
+
+   // Callgrind --> just copy+paste and run  ******  lxi038:~> which kcachegrind  -->  /usr/bin/kcachegrind
+
+   --> Valgrind: memory leak
+   /usr/bin/valgrind --leak-check=full --leak-resolution=high --num-callers=40 --error-limit=no --show-reachable=yes  --log-file=xxx.txt --suppressions=$ROOTSYS/etc/valgrind-root.supp  -v ./run user -l  PbPb/2.76ATeV/LHC10h.pass2/137161.ana.txt -n3 -m0 -f -c PbPb
+
+   --> Massif
+   ./run user -l  PbPb/2.76ATeV/LHC10h.pass2/137161.ana.txt -n3 -m0 -f -c PbPb --massif
+
+   ###############################################################
+   ###############################################################
+   ###############################################################
+
 **) Search in grid
     alien_find /alice/sim/LHC11a10a_bis/138364  AnalysisResults.root  | grep -v '/[0-9][0-9][0-9][0-9]/' | grep -v '/[0-9][0-9][0-9]/' | grep -v '/[0-9][0-9]/' | grep -v '/[0-9]/' | grep -v '/[0-9][0-9][0-9][0-9][0-9]/' | grep 432_20160119-1927
-   
-2) Check the log files 
+
+2) Check the log files
 
    cd /lustre/nyx/alice/users/marsland/train/trunk
    STEER/scripts.SGE/analyseLogs /lustre/nyx/alice/users/marsland/train/V011.MC_PbPb/2016-01-04_1843.23077  -v -k -n -l
 
-3) rename the outputdir and move data  
+3) rename the outputdir and move data
    cd /lustre/nyx/alice/users/marsland/train/V011.PbPb
    grep  -B 10 "fTightCuts=" */train_root/marsland_EbyeRatios/AliAnalysisTaskEbyeIterPID.cxx
    --> /lustre/nyx/alice/users/marsland/pFluct/files/analysis/Data/PbPb/
-   
-4) make the list out of mergedRuns 
-   basedir=/lustre/nyx/alice/users/marsland/pFluct/files/analysis/Data/PbPb/Real/RUN2/15o_pass2_lowIR_cRows_80_10EtaBin_mombin20MeV
+
+4) make the list out of mergedRuns
+   basedir=/lustre/nyx/alice/users/marsland/pFluct/files/analysis/Data/PbPb/MC/RUN1/10h_pass2_ResAndMoments_Rho_Omega_phi_delta_eta_OFF
+   cd $basedir
+   mkdir Fits/  Hists/  MCgenResults/  ParamTrees/  TIdenResults/  log/  mergedPeriods/  mergedRuns/  train_root/
    cd $basedir/mergedPeriods
    find $basedir/mergedRuns/ -iname "Ana*.root" > AnalysisResults.list
 
    ## Create file for clean pions and protons
-   aliroot -l 
+   aliroot -l
    .L /u/marsland/PHD/macros/marsland_EbyeRatios/CreateAllTIDENHists.C
-   CreateCleanSamples("AnalysisResults.list")  
-   
+   CreateCleanSamples("AnalysisResults.list")
+
    ## Create file for Hists
-   aliroot -l 
+   aliroot -l
    TFile f("AnalysisResults.root")
    TList * list  = (TList*)f.Get("cleanHists");
    TFile *g = TFile::Open("AnalysisResults_Hists.root","recreate");
    list->Write("cleanHists",TObject::kSingleKey);
    g->Close();
-   
+
    ORRRRR:
-   
+
    alihadd -T AnalysisResults_Hists.root @AnalysisResults.list
-   
+
+
+   ###############################################################
+   ###############Run Analysis on Fast Gen GRID ##################
+   ###############################################################
+
+0) Modify "~/Desktop/RUN_ON_GRID/official_Code/new/IdentityMethodEbyeFluctuations/macros/Config_marsland_EbyeIterPID.C" and accordingly the wagons
+
+   meld $AliPhysics_SRC/PWGCF/EBYE/IdentityMethodEbyeFluctuations/tasks/AliAnalysisTaskEbyeIterPID.cxx ~/Desktop/RUN_ON_GRID/official_Code/new/IdentityMethodEbyeFluctuations/tasks/AliAnalysisTaskEbyeIterPID.cxx &
+
+   meld ~/Desktop/RUN_ON_GRID/official_Code/new/IdentityMethodEbyeFluctuations/tasks/AliAnalysisTaskEbyeIterPID.cxx /u/marsland/PHD/macros/marsland_EbyeRatios/AliAnalysisTaskTIdentityPID.cxx &
+
+
+1) Make File list and prepare directory:  --> marsland@lxbk0197
+
+   cd /lustre/nyx/alice/users/marsland/pFluct/files/analysis/Data/PbPb/MC/RUN1
+   mkdir LHC13f3b_kineOnly_AllResOFF;
+   cd LHC13f3b_kineOnly_AllResOFF
+   mkdir mergedRuns/ mergedPeriods/ MCgenResults/ TIdenResults/ train_root/ Hists/ Fits/
+   cp -r  /lustre/nyx/alice/users/marsland/alicehub/AliPhysics//PWGCF/EBYE/IdentityMethodEbyeFluctuations/ train_root
+
+   cd mergedPeriods
+   alien_find   /alice/sim/2013/LHC13f3b AnalysisResults.root | grep "\/PWGCF\/CF_PbPb_MC\/812_20171019-1653\/Stage_1" > tmp.list
+   awk '{$0="alien://"$0}1' tmp.list > results.list;
+   alisync @results.list -o `pwd` -j 4 -t 3000
+   find ${PWD}/ -iname  "AnalysisResults.root" >  AnalysisResults.list
+
+2) run moment production
+   --> Modify in submitPrepareData.sh:
+       mainDir=$allDataDir/PbPb/MC/RUN1/LHC13f3b_kineOnly_AllResOFF
+       etaDownForMCgen=(-2 -1.9 -1.8 -1.7 -1.6 -1.5 -1.4 -1.3 -1.2 -1.1 -1 -0.9 -0.8 -0.7 -0.6 -0.5 -0.4 -0.3 -0.2 -0.1)
+       etaUpForMCgen=(   2  1.9  1.8  1.7  1.6  1.5  1.4  1.3  1.2  1.1  1  0.9  0.8  0.7  0.6  0.5  0.4  0.3  0.2  0.1)
+
+   cd ../MCgenResults
+   cpEbyeMacros
+   source /lustre/nyx/alice/users/marsland/pFluct/files/analysis/scripts/submitPrepareData.sh
+   AnalyseMCgenMoments
+
+3) merge the output of jobs into one
+
+   hadd MomentsTree_AccCan.root */Moment*.root
 
 #############################################################################################################################
-                                                    DATA PREPERATION  
+                                                    DATA PREPERATION
 #############################################################################################################################
 
-1) Create Hists 
- 
+1) Create Hists
+
    --> Modify "CreateAllTIDENHists(0,0,0,"","",d,m,h,0,0.2,0,5)"
-   --> Modify "submitPrepareData.sh" 
+   --> Modify "submitPrepareData.sh"
    --> Run the fuction to make hists
        cd $basedir/Hists
        cpEbyeMacros
-       source /lustre/nyx/alice/users/marsland/pFluct/files/analysis/scripts/submitPrepareData.sh 
+       source /lustre/nyx/alice/users/marsland/pFluct/files/analysis/scripts/submitPrepareData.sh
        SentHists
 
-2) Create Subsample trees 
+2) Create Subsample trees
 
    --> Modify "CreateAllTIDENHists(1,0,21,"fEventTree",i,"","","",0,0,0,0)"
    --> Modify "submitPrepareData.sh"
-      
+
    a) -- Run the fuction to make main subsample trees --
        cpEbyeMacros
-       source /lustre/nyx/alice/users/marsland/pFluct/files/analysis/scripts/submitPrepareData.sh 
+       source /lustre/nyx/alice/users/marsland/pFluct/files/analysis/scripts/submitPrepareData.sh
        SentMainSubSample
-       
+
    b) -- Run the fuction to make subsample trees --
        cpEbyeMacros
-       source /lustre/nyx/alice/users/marsland/pFluct/files/analysis/scripts/submitPrepareData.sh 
+       source /lustre/nyx/alice/users/marsland/pFluct/files/analysis/scripts/submitPrepareData.sh
        SentSubSamples
-       
+
 #############################################################################################################################
-                                                  PID FITS  
+                                                  PID FITS
 #############################################################################################################################
 
 1) Fit Slices
    --> Modify "PIDIterativeFittingMC.C+
        Modify "PIDIterativeFitting.C+
    --> Modify "submitPrepareData.sh"
-   
+
        cd /lustre/nyx/alice/users/marsland/pFluct/files/analysis/Data/PbPb/MC/MC_PbPb_Reference/Fits
        cpEbyeMacros
-       source /lustre/nyx/alice/users/marsland/pFluct/files/analysis/scripts/submitPrepareData.sh 
+       source /lustre/nyx/alice/users/marsland/pFluct/files/analysis/scripts/submitPrepareData.sh
        Slices 150 0.2 3.2 8 0.7 0.5 0.5 1 1 1
-       
+
        Slices 100 0.2 2.2 6 0.8 0.8 0.8 1 1 1    # MC
        Slices 150 0.2 3.2 8 0.7 0.5 0.5 1 1 1    # Real data
        Slices 150 0.2 3.2 8 0   0   0   1 1 1    # gauss fit
-       
+
        **** Check if any crash ****
        --> grep "There was a crash" FitResults_piS0.7_kaS0.5_prS0.5_pikaprKauto/PbPb_eta_*/err.log
            grep "PIDIterativeFitting.C:" FitResults_piS0.7_kaS0.5_prS0.5_pikaprKauto/PbPb_eta_*/err.log
        ****************************
-       
+
    ********************************************************************************************************************
    --> Full Scan of Skewness parameter
        cd /lustre/nyx/alice/users/marsland/pFluct/files/analysis/Data/PbPb/Real/PbPb_cRows_80_mombin20MeV/Fits
        cpEbyeMacros
-       source /lustre/nyx/alice/users/marsland/pFluct/files/analysis/scripts/submitPrepareData.sh 
+       source /lustre/nyx/alice/users/marsland/pFluct/files/analysis/scripts/submitPrepareData.sh
        FitScan 150 0.2 3.2 8 > outslice.log 2>&1 &
-       
-   --> After Scan  
+
+   --> After Scan
        cd /lustre/nyx/alice/users/marsland/pFluct/files/analysis/Data/PbPb/Real/PbPb_cRows_80_mombin20MeV/Fits/FitScan_20150111_02_12
        cpEbyeMacros
-       source /lustre/nyx/alice/users/marsland/pFluct/files/analysis/scripts/submitPrepareData.sh 
+       source /lustre/nyx/alice/users/marsland/pFluct/files/analysis/scripts/submitPrepareData.sh
        ParameterCheck
-       
-   --> Then merge 
+
+   --> Then merge
        hadd ParamTree_Scan.root  */ParamTr*.root
    ********************************************************************************************************************
-  
+
 6) Prepare Fitparams for TIDEN
- 
+
        cd /lustre/nyx/alice/users/marsland/pFluct/files/analysis/Data/PbPb/Real/PbPb_cRows_80_mombin20MeV/Fits/FitResults_pi0.7_ka0.5_pr0.4
        hadd -n 10000 AllPIDtrees_sign0.root *sign0/Tree*.root
        hadd -n 10000 AllPIDtrees_sign1.root *sign1/Tree*.root
        hadd -n 10000 AllPIDtrees_sign-1.root *sign-1/Tree*.root
        hadd -n 10000 AllPIDtrees.root AllPIDtrees_sign*.root
        cp ~/PHD/macros/marsland_EbyeRatios/CreateAllParamPlots.C .
-       aliroot -l 
+       aliroot -l
        .L CreateAllParamPlots.C+
-       CreateAllParamPlots(0,"AllPIDtrees_sign0.root","ParamTree_sign0.root")  
-       CreateAllParamPlots(0,"AllPIDtrees_sign1.root","ParamTree_sign1.root")     
-       CreateAllParamPlots(0,"AllPIDtrees_sign-1.root","ParamTree_sign-1.root")  
-       CreateAllParamPlots(0,"AllPIDtrees.root","ParamTree.root")     
-       
-       ******************************************************************************************************************** 
+       CreateAllParamPlots(0,"AllPIDtrees_sign0.root","ParamTree_sign0.root")
+       CreateAllParamPlots(0,"AllPIDtrees_sign1.root","ParamTree_sign1.root")
+       CreateAllParamPlots(0,"AllPIDtrees_sign-1.root","ParamTree_sign-1.root")
+       CreateAllParamPlots(0,"AllPIDtrees.root","ParamTree.root")
+
+       ********************************************************************************************************************
        ** Check failed fits
        TFile f("AllPIDtrees_sign0.root")
        IdMethodInput->Draw("eta:cent","","*")
@@ -232,41 +321,41 @@ Location of the splines
        new TCanvas; IdMethodInput->Draw("eta:cent","","*")
        TFile h("AllPIDtrees_sign1.root")
        new TCanvas; IdMethodInput->Draw("eta:cent","","*")
-       
+
        ** Check the fit quality
        TFile j("ParamTree.root")
        treeId->SetMarkerStyle(20)
        treeId->SetMarkerSize(0.5)
-       treeId->Draw("kaI:myBin[2]:myBin[1]","it==6&&sign==0&&myBin[2]<150","colz"); new TCanvas 
+       treeId->Draw("kaI:myBin[2]:myBin[1]","it==6&&sign==0&&myBin[2]<150","colz"); new TCanvas
        treeId->Draw("piI:myBin[2]:myBin[1]","it==6&&sign==0&&myBin[2]<150","colz"); new TCanvas
        treeId->Draw("prI:myBin[2]:myBin[1]","it==6&&sign==0&&myBin[2]<150","colz")
-       
+
        treeId->Draw("piI:myBin[2]:myBin[1]","it==6&&sign==1&&myBin[2]<65&&myBin[0]==8","colz")
        ********************************************************************************************************************
 
        --> mv AllPIDtrees.root "newName1.root"
-           mv ParamTree.root "newName2.root"    
+           mv ParamTree.root "newName2.root"
        --> cp newName1.root newName1.root /lustre/nyx/alice/users/marsland/pFluct/files/analysis/Data/PbPb/Real/PbPb_cRows_80_mombin20MeV/ParamTrees
-           
+
 #############################################################################################################################
-                                                          TIDENTITY 
+                                                          TIDENTITY
 #############################################################################################################################
 
 1) Run TIdentity Method output --> "testIdentity.C"
 
-    --> modifiy "testIdentity.C" and compile it  --> Change the binFactor 
+    --> modifiy "testIdentity.C" and compile it  --> Change the binFactor
        cpEbyeMacros
        cd /lustre/nyx/alice/users/marsland/pFluct/files/analysis/TIdentity
        make clean; make
        cpEbyeMacros
        cd /lustre/nyx/alice/users/marsland/pFluct/files/analysis/TIdentity/example
-       make clean; make 
-    
+       make clean; make
+
 2) Crosscheck before running the TIDENTITY
 
        **** TEST1 ****
        cd /lustre/nyx/alice/users/marsland/pFluct/files/analysis/Data/PbPb/Real/PbPb_cRows_80_16EtaBin_mombin20MeV_TightCuts/TIdenResults
-       aliroot -l 
+       aliroot -l
        TFile f("../ParamTrees/FitResults_piS0.7_kaS0.5_prS0.5_pikaprKauto.root")
        treeId->Draw("myBin[0]"); new TCanvas
        treeId->Draw("myBin[1]"); new TCanvas
@@ -276,63 +365,63 @@ Location of the splines
        //TFile g("AnalysisResults.root")
        fIdenTree->Draw("myBin[0]","","",100000); new TCanvas
        fIdenTree->Draw("myBin[1]","","",100000); new TCanvas
-       fIdenTree->Draw("myBin[2]","","",100000); 
-       
+       fIdenTree->Draw("myBin[2]","","",100000);
+
        **** TEST2 ****
        cpEbyeMacros
-       source /lustre/nyx/alice/users/marsland/pFluct/files/analysis/scripts/submitIdentity.sh 
-       testId PbPb/Real/Systematics_cRows_80_16EtaBin_mombin20MeV/SubSamples/cent_0.0/SubSample_cent0.00_ss1.root   0.0 0 6 -0.2 -0.1 0.3 0.4 
-       #testId PbPb/MC/MC_Closure_Test_HIJING/SubSamples/cent_0.0/SubSample_cent0.00_ss1.root  0.0 1 5 -0.8 0.8 0.2 1.5 
-       
-       testId pp/Real/pp_cRows_80_16EtaBin_mombin20MeV_LooseCuts/SubSamples/cent_-105/SubSample_cent-105_ss1.root -105 1 6  0   0.2 0.2 0.3 
+       source /lustre/nyx/alice/users/marsland/pFluct/files/analysis/scripts/submitIdentity.sh
+       testId PbPb/Real/Systematics_cRows_80_16EtaBin_mombin20MeV/SubSamples/cent_0.0/SubSample_cent0.00_ss1.root   0.0 0 6 -0.2 -0.1 0.3 0.4
+       #testId PbPb/MC/MC_Closure_Test_HIJING/SubSamples/cent_0.0/SubSample_cent0.00_ss1.root  0.0 1 5 -0.8 0.8 0.2 1.5
+
+       testId pp/Real/pp_cRows_80_16EtaBin_mombin20MeV_LooseCuts/SubSamples/cent_-105/SubSample_cent-105_ss1.root -105 1 6  0   0.2 0.2 0.3
        *******************************
-        
+
 3) RUN the script of TIDENTITY for job submission
 
     --> modifiy "submitIdentity.sh"  and compile it
        cd /lustre/nyx/alice/users/marsland/pFluct/files/analysis/Data/PbPb/Real/PbPb_cRows_80_16EtaBin_mombin20MeV_TightCuts/TIdenResults
        cpEbyeMacros
-       source /lustre/nyx/alice/users/marsland/pFluct/files/analysis/scripts/submitIdentity.sh 
+       source /lustre/nyx/alice/users/marsland/pFluct/files/analysis/scripts/submitIdentity.sh
        IdenFullScan iter
-       
-       
+
+
 4) STATISTICAL ERRORS
 
-    --> Check if any fail 
+    --> Check if any fail
         cd TIdenResults_EtaMomScan_GAUSSonly/Eta_-0.8_0.8_Mom_0.2_1.2
         grep "nan" TIdenResults_iter_*/ce*/SubSampl*/out.log
-        grep "pi,K nu dyn:"   *_0.5_1.5/TIdenResults_iter_6/cent_*/SubSample_cent30_ss0/out.log 
-    
+        grep "pi,K nu dyn:"   *_0.5_1.5/TIdenResults_iter_6/cent_*/SubSample_cent30_ss0/out.log
+
     --> cd ..../PbPb_cRows_80_16EtaBin_mombin20MeV_TightCuts/TIdenResults/TIdenResults_EtaMomScan_2015_03_14_13_10
         cpEbyeMacros
-        source /lustre/nyx/alice/users/marsland/pFluct/files/analysis/scripts/submitIdentity.sh 
+        source /lustre/nyx/alice/users/marsland/pFluct/files/analysis/scripts/submitIdentity.sh
         MakeFinalPlots 6
-    
-        --> It does for each directory of "Eta_-0.8_0.8_Mom_0.2_1.2"    
-            hadd TIdenMoments.root TI*/cen*/*/TImoment*.root 
-            aliroot -q -b rootlogon.C $macroDir/TIdentityStatisticalError.C+\(\"TIdenMoments.root\",6\) 
-         
+
+        --> It does for each directory of "Eta_-0.8_0.8_Mom_0.2_1.2"
+            hadd TIdenMoments.root TI*/cen*/*/TImoment*.root
+            aliroot -q -b rootlogon.C $macroDir/TIdentityStatisticalError.C+\(\"TIdenMoments.root\",6\)
+
 5) MC CLOSURE
 
     -->  /lustre/nyx/alice/users/marsland/pFluct/files/analysis/Data/PbPb/MC/MC_PbPb_cRows/TIdenResults/TIdenResults_EtaMomScan_minus1ksFree_GAUSS
-    aliroot -l 
+    aliroot -l
     TString tid   = "/lustre/nyx/alice/users/marsland/pFluct/files/analysis/Data/PbPb/MC/MC_Closure_Test_HIJING/TIdenResults/TIdenResults_piS0.7_kaS0.5_prS0.5_pikaprKauto/Eta_-0.8_0.8_Mom_0.2_1.5/PlotsMomentsStatErr_iter3.root"
     TString mcRec = "/lustre/nyx/alice/users/marsland/pFluct/files/analysis/Data/PbPb/MC/MC_Closure_Test_HIJING/EfficiencyCheck/MC_EffCheck_0106_22_48/Ratios_CentScan_eta_-0.8-0.8_mom_0.2-1.5.root"
-  
-   .L ~/PHD/macros/marsland_EbyeRatios/TIdentityStatisticalError.C+ 
+
+   .L ~/PHD/macros/marsland_EbyeRatios/TIdentityStatisticalError.C+
     CompareToReference(mcRec,tid,"pikaNuDyn")
     CompareToReference(mcRec,tid,"piprNuDyn")
     CompareToReference(mcRec,tid,"kaprNuDyn")
- 
---> Old Results are in 
-    
-   /lustre/nyx/alice/users/marsland/pFluct/files/analysis/IdentityFiles/TIdenResults_PbPb/Real/IdDataTrees_AllStatistics_Results_Iter4_280pBins 
-   
+
+--> Old Results are in
+
+   /lustre/nyx/alice/users/marsland/pFluct/files/analysis/IdentityFiles/TIdenResults_PbPb/Real/IdDataTrees_AllStatistics_Results_Iter4_280pBins
+
 6) DATA vs HIJING,AMPT
 
     --> cd /lustre/nyx/alice/users/marsland/pFluct/files/analysis/Data/PbPb/Real/PbPb_cRows_80_16EtaBin_mombin20MeV_TightCuts/TIdenResults/TIdenResults_EtaMomScan_2015_03_14_13_10/Eta_-0.5_0.5_Mom_0.2_1.5
 
-    aliroot -l 
+    aliroot -l
     //TString data="/lustre/nyx/alice/users/marsland/pFluct/files/analysis/Data/PbPb/Real/PbPb_cRows_80_16EtaBin_mombin20MeV_TightCuts/TIdenResults/TIdenResults_EtaMomScan_2015_03_14_13_10/Eta_-0.5_0.5_Mom_0.2_1.5/PlotsMomentsStatErr_iter6.root"
     //TString data="/lustre/nyx/alice/users/marsland/pFluct/files/analysis/Data/PbPb/Real/PbPb_cRows_80_16EtaBin_mombin20MeV_TightCuts/TIdenResults/TIdenResults_EtaMomScan_le30centbinsDownscaled_GOOD/Eta_-0.5_0.5_Mom_0.2_1.5/PlotsMomentsStatErr_iter6.root"
     TString data = "/lustre/nyx/alice/users/marsland/pFluct/files/analysis/Data/PbPb/Real/PbPb_cRows_80_16EtaBin_mombin20MeV_TightCuts/TIdenResults/TIdenResults_EtaMomScan_le30centbinsDownscaled_EtaScan_GOOD/Eta_-0.8_0.8_Mom_0.2_1.5/PlotsMomentsStatErr_iter6.root"
@@ -343,65 +432,71 @@ Location of the splines
     CompareDataVsMC(data,hijing,ampt)
 
 7) TIDENTITY vs TRADITIONAL
- 
-  aliroot -l 
+
+  aliroot -l
   TString data = "/lustre/nyx/alice/users/marsland/pFluct/files/analysis/Data/PbPb/Real/PbPb_cRows_80_16EtaBin_mombin20MeV_TightCuts/TIdenResults/TIdenResults_EtaMomScan_le30centbinsDownscaled_EtaScan_GOOD/Eta_-0.8_0.8_Mom_0.5_1.5/PlotsMomentsStatErr_iter6.root"
   //TString data = "/lustre/nyx/alice/users/marsland/pFluct/files/analysis/Data/PbPb/Real/PbPb_cRows_80_16EtaBin_mombin20MeV_LooseCuts/TIdenResults/TIdenResults_EtaMomScan_piS0.7_kaS0.5_prS0.5_K2/Eta_-0.5_0.5_Mom_0.5_1.5/PlotsMomentsStatErr_iter6.root"
   //TString data = "/lustre/nyx/alice/users/marsland/pFluct/files/analysis/Data/PbPb/Real/PbPb_cRows_80_16EtaBin_mombin20MeV_TightCuts/TIdenResults/TIdenResults_EtaMomScan_le30centbinsDownscaled_GOOD/Eta_-0.5_0.5_Mom_0.5_1.5/PlotsMomentsStatErr_iter6.root"
   TString trad="/lustre/nyx/alice/users/marsland/pFluct/files/analysis/Data/PbPb/Real/traditional/deepika_NuDynInNpart.root"
   .L ~/PHD/macros/marsland_EbyeRatios/TIdentityStatisticalError.C+
   CompareIdentityVsTraditional(data,trad)
-  
+
 #############################################################################################################################
-                                     Analysis task Output Analysis for MC 
+                                     Analysis task Output Analysis for MC
 #############################################################################################################################
 
 1) Calculate Nudyn results
 
    --> Modify "~/PHD/macros/marsland_EbyeRatios/TIdentitySubSampleMC.C"
    --> Modify "submitPrepareData.sh"
-   
+
        cd /lustre/nyx/alice/users/marsland/pFluct/files/analysis/Data/PbPb/MC/MC_PbPb_HIJING_TightCuts/EfficiencyCheck
        cpEbyeMacros
-       source /lustre/nyx/alice/users/marsland/pFluct/files/analysis/scripts/submitPrepareData.sh 
-       SentMCEffCheck 
-       
+       source /lustre/nyx/alice/users/marsland/pFluct/files/analysis/scripts/submitPrepareData.sh
+       SentMCEffCheck
+
        -->  RUNS:
             cd /lustre/nyx/alice/users/marsland/pFluct/files/analysis/Data/PbPb/MC/MC_PbPb_HIJING_TightCuts/EfficiencyCheck
             aliroot -l -b
             .L /u/marsland/PHD/macros/marsland_EbyeRatios/TIdentitySubSampleMC.C+
             TString momFile = "/lustre/nyx/alice/users/marsland/pFluct/files/analysis/Data/PbPb/MC/MC_PbPb_HIJING_TightCuts/mergedPeriods/marsland_MCmoments.root"
-            TIdentitySubSampleMC(momFile,0,1,0.2,1.5,-0.8,0.8) 
-            TIdentitySubSampleMC(momFile,0,0,0.2,1.5,-0.8,0.8)   
-   
+            TIdentitySubSampleMC(momFile,0,1,0.2,1.5,-0.8,0.8)
+            TIdentitySubSampleMC(momFile,0,0,0.2,1.5,-0.8,0.8)
+
 2) Produce the plots
-  cd /lustre/nyx/alice/users/marsland/pFluct/files/analysis/Data/PbPb/MC/MC_PbPb_HIJING_TightCuts/EfficiencyCheck 
+  cd /lustre/nyx/alice/users/marsland/pFluct/files/analysis/Data/PbPb/MC/MC_PbPb_HIJING_TightCuts/EfficiencyCheck
   hadd MomentsTree.root */*/*.root
-  aliroot -l   
+  aliroot -l
   .L /u/marsland/PHD/macros/marsland_EbyeRatios/TIdentityStatisticalErrorMC.C+
   ProcessErrorCalculationVScent("MomentsTree.root",-0.8,0.8,0.2,1.5)
   ProcessErrorCalculationVScent("MomentsTree.root",-0.8,0.8,0.2,1.8)
   ProcessErrorCalculationVScent("MomentsTree.root",-0.8,0.8,0.6,1.5)
   ProcessErrorCalculationVScent("MomentsTree.root",-0.8,0.8,0.6,1.8)
- 
+
   ProcessErrorCalculationVScent("MomentsTree.root",-0.5,0.5,0.2,1.5)
   ProcessErrorCalculationVScent("MomentsTree.root",-0.5,0.5,0.2,1.8)
   ProcessErrorCalculationVScent("MomentsTree.root",-0.5,0.5,0.6,1.5)
   ProcessErrorCalculationVScent("MomentsTree.root",-0.5,0.5,0.6,1.8)
- 
- 
-  
+
+3) Analyse the acceptance scan --> See TIdentityStatisticalErrorMC.C
+
+   cd /lustre/nyx/alice/users/marsland/pFluct/files/analysis/Data/PbPb/MC/RUN1/10h_pass2_ResAndMoments_cRows_80_10EtaBin_mombin20MeV/MCgenResults
+   cpEbyeMacros
+   source /lustre/nyx/alice/users/marsland/pFluct/files/analysis/scripts/submitPrepareData.sh
+   AnalyseMCgenMoments
+
+
 #############################################################################################################################
                                              How to kill jobs on alien
 #############################################################################################################################
 
 gbbox top -user pwg_pp -split 915389906  -all_status | grep RUNNING | awk '{print $1}' > ./joblist.txt
 gbbox top -user pwg_pp -split 915389906  -all_status | grep DONE    | awk '{print $1}' >> ./joblist.txt
-for i in $(cat joblist.txt); do alien_kill $i; done 
+for i in $(cat joblist.txt); do alien_kill $i; done
 
 gbbox top -user pwg_pp -split 915389906  -all_status | grep RUNNING | awk '{print $1}' > ./joblist.txt
 gbbox top -user pwg_pp -split 915389906  -all_status | grep DONE    | awk '{print $1}' >> ./joblist.txt
-for i in $(cat file:joblist.txt); do kill $i; done 
+for i in $(cat file:joblist.txt); do kill $i; done
 
 
 gbbox top -user marsland -all_status | awk '{print $1}' ./joblist.txt
@@ -420,7 +515,3 @@ LHC16h8a    -->  p-p, 5.02 TeV, General-purpose Monte Carlo productions anchored
 LHC16h8b    -->  p-p, 5.02 TeV, General-purpose Monte Carlo productions anchored to LHC15n (Pythia6_Perugia2011), ALIROOT-6827
 
 LHC17c5b    -->  Pb-Pb, 5.02 TeV, General-purpose Monte Carlo productions anchored to Low IR runs of Pb-Pb 5.02 TeV (LHC15o, pass5) bis, ALIROOT-7157
-
-
-
- 
