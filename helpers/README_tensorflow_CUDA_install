@@ -1,0 +1,87 @@
+
+#########################################################
+ ** Prerequisites:
+
+##) Install singularity from:
+   https://sylabs.io/guides/3.6/admin-guide/installation.html
+
+##) get alice-tpc-notes
+   git clone https://gitlab.cern.ch/alice-tpc-offline/alice-tpc-notes
+   export NOTES=/home/marsland/Desktop/ubuntu_desktop/github/alice-tpc-notes
+
+##) Define an installation directory
+   export WORKDIR=/home/marsland/containers/tensorflow_latest_gpu_CUDA
+
+##) Settings are in TPC git "https://gitlab.cern.ch/alice-tpc-offline/alice-tpc-notes"
+
+   cd ${WORKDIR}
+   cp $NOTES/JIRA/ATO-500/machineLearning/benchmark.sh .
+   cp $NOTES/JIRA/ATO-500/machineLearning/tensorflow_latest-gpu_CUDA.def .
+
+   --> you can modifiy the def file but good to check if Marian has new modification in the reference file
+   meld $NOTES/JIRA/ATO-500/machineLearning/tensorflow_latest-gpu_CUDA.def  ${WORKDIR}/tensorflow_latest-gpu_CUDA.def
+   meld $NOTES/JIRA/ATO-500/machineLearning/benchmark.sh ${WORKDIR}/benchmark.sh
+
+##) After the installation of singularity: To install additional programs:
+    singularity shell --fakeroot --writable ${WORKDIR}/tensorflow_latest-gpuCUDA
+    apt-get install -y meld
+    apt-get install -y valgrind
+    apt-get install -y ddd
+    apt-get install -y kate
+    apt-get install -y massif-visualizer
+
+##) Create an alias in .bashrc:
+    alias alisingcuda='cd /home/marsland/containers/tensorflow_latest_gpu_CUDA; singularity shell /home/marsland/containers/tensorflow_latest_gpu_CUDA/tensorflow_latest-gpuCUDA'
+
+#########################################################
+
+** Installation:
+
+0) installation should be done in a workdir
+  cd ${WORKDIR}
+
+1) some exports
+  export SINGULARITY_PREFIX=${WORKDIR}/
+  export SINGULARITY_CACHEDIR=${WORKDIR}/CACHEDIR
+
+2) Create Container
+  cd ${WORKDIR}/
+  time singularity build --fakeroot --fix-perms --sandbox $SINGULARITY_PREFIX/tensorflow_latest-gpuCUDA  tensorflow_latest-gpu_CUDA.def
+  ** Environment variables can be modified later in  "${WORKDIR}/tensorflow_latest-gpuCUDA/.singularity.d/env/90-environment.sh".
+     It corresponds to "%environment" part in "tensorflow_latest-gpu_CUDA.def"
+
+3) Compile aliroot inside the container:
+  singularity shell ${SINGULARITY_PREFIX}/tensorflow_latest-gpuCUDA
+  export SINGULARITY_PREFIX=/home/marsland/containers/tensorflow_latest_gpu_CUDA/
+  mkdir  -p ${SINGULARITY_PREFIX}/tensorflow_latest-gpuCUDA/alicesw/
+  cd ${SINGULARITY_PREFIX}/tensorflow_latest-gpuCUDA/alicesw/
+  export ALIBUILD_WORK_DIR="${SINGULARITY_PREFIX}/tensorflow_latest-gpuCUDA/alicesw/sw"
+  aliBuild init  AliPhysics,AliRoot  --debug
+  (cd AliRoot; git checkout master);
+  (cd AliPhysics; git checkout master);
+
+  ##############################################################################################################################
+  --> Enable debugging by modifying "./alidist/defaults-user.sh" and/or "./alidist/defaults-user-next-root6.sh"--> remove "O2"
+  CXXFLAGS: "-fPIC -g -O2 -std=c++11"
+  CFLAGS: "-fPIC -g -O2"
+  ##############################################################################################################################
+
+  Option 1) Install only aliroot6
+  time aliBuild build AliPhysics --defaults user-next-root6 --debug
+
+  Option 2) install both aliroot5 and aliroot6
+  time aliBuild build AliPhysics --defaults user -z aliroot5 --debug
+  time aliBuild build AliPhysics --defaults user-next-root6 -z aliroot6 --debug
+
+4) Modify "bashrc_custom_tensorflow_CUDA.sh" for some usefull aliases
+
+5) Go into singularity container and run from scratch
+  alisingcuda
+  . bashrc_custom_tensorflow_CUDA.sh
+  aliload6
+  --> aliroot and all rootinterative tools are ready to be used
+  export RootInteractive=/lustre/alice/users/miranov/github/RootInteractive
+  #export RootInteractive=/home/marsland/containers/tensorflow_latest_gpu_CUDA/tensorflow_latest-gpuCUDA/usr/local/lib/python3.6/dist-packages/RootInteractive
+  export PYTHONPATH=/usr/local/lib/python3.6/dist-packages:$PYTHONPATH
+  export PYTHONPATH=$RootInteractive/:$PYTHONPATH
+  export PATH=/usr/local/bin/:$PATH

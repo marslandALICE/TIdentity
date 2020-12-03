@@ -1,0 +1,108 @@
+Bootstrap: docker
+# https://hub.docker.com/r/tensorflow/tensorflow/tags
+From: tensorflow/tensorflow:2.2.0-gpu-jupyter
+
+%help
+    This Singularity definition contains
+        -
+        - tensorflow-datasets
+        - tensorflow/models examples
+    To enable aliroot from cvmfs:
+        - environment-modules to be installed in container to enable alienv
+        - singularity shell –B /cvmfs
+        - source /cvmfs/alice.cern.ch/etc/login.sh
+        - alienv enter AliPhysics
+    Build as:
+        -
+    Run 'ipython' for an interactive python shell
+    Run 'jupyter notebook' to startup a jupyter notebook server
+    Run 'benchmark.sh' to start the TF benchmark
+
+%environment
+#    source /alicesw/root/bin/thisroot.sh - soruce doesn not work here  sourcing with .
+#    .  /cvmfs/alice.cern.ch/etc/login.sh
+     #export ALIBUILD_WORK_DIR=/alicesw/sw/
+     #if [ -d /alicesw/sw/ ]; then
+        #export ALIBUILD_WORK_DIR=/alicesw/sw/
+        #eval $(alienv --no-refresh printenv AliPhysics::latest)
+        #export PYTHONPATH=/usr/local/lib/python3.6/dist-packages:$PYTHONPATH
+        #export PYTHONPATH=$RootInteractive/:$PYTHONPATH
+        #export PATH=/usr/local/bin/:$PATH
+     #fi
+%files
+    # Copy cifar10 example script
+    benchmark.sh /usr/local/bin/benchmark.sh
+%post
+    mkdir -p /lustre
+    mkdir -p /cvmfs
+    export DEBIAN_FRONTEND=noninteractive
+    apt-get update
+    apt-get install -y mlocate
+    # adding nodejs and npm - see https://linuxize.com/post/how-to-install-node-js-on-ubuntu-18.04/
+    curl -sL https://deb.nodesource.com/setup_14.x | bash -
+    apt-get install  -y nodejs
+    #
+    apt-get install -y less mc nano vim
+    apt-get install -y environment-modules libssl-dev python3-venv tclsh
+    apt-get install -y valgrind
+    #apt-get install -y massif-visualizer
+    #apt-get install -y meld kate
+    #openssl-devel
+    #sudo apt-get install libssl-dev
+    # see https://alice-doc.github.io/alice-analysis-tutorial/building/prereq-ubuntu.html 
+    # apt-get  install -y curl libcurl4-gnutls-dev build-essential gfortran cmake libmysqlclient-dev xorg-dev libglu1-mesa-dev libfftw3-dev libxml2-dev git unzip autoconf automake autopoint texinfo gettext libtool libtool-bin pkg-config bison flex libperl-dev libbz2-dev swig liblzma-dev libnanomsg-dev libyaml-cpp-dev rsync lsb-release unzip environment-modules libglfw3-dev
+    apt-get  install -y curl libcurl4-gnutls-dev build-essential gfortran cmake libmysqlclient-dev xorg-dev libglu1-mesa-dev libfftw3-dev libxml2-dev git unzip autoconf automake autopoint texinfo gettext libtool libtool-bin pkg-config bison flex libperl-dev libbz2-dev swig liblzma-dev libnanomsg-dev libyaml-cpp-dev rsync lsb-release unzip environment-modules libglfw3-dev libtbb-dev libgsl-dev libssl-dev cmake
+
+    #apt-getinstall -y python3-tk
+    #apt-get install -y python36-tkinter
+    #apt-get install -y mc
+    #apt-get install -y  ncurses-devel zlib-devel texinfo gtk+-devel gtk2-devel tcl-devel tk-devel
+    #
+    python3 -m pip install conda aliBuild notebook numba
+    python3 -m pip install datashader
+    python3 -m pip install pytest pytest_tornasync pandas bokeh==1.4.0 anytree  tabulate
+    python3 -m pip install voila panel ipyvolume ipywidgets iminuit
+    python3 -m pip install torch torchvision
+    # jupyter hub
+    python3 -m pip install jupyterhub jupyterlab
+    npm install -g configurable-http-proxy
+    # python3 -m pip install torch torchvision tensorflow_probability iminuit
+    python3 -m pip install tensorflow_probability  tensorflow-datasets
+    python3 -m pip install jax scikit-garden
+    python3 -m pip install git+https://github.com/miranov25/RootInteractive
+    # enable jupyter lab externsions
+    jupyter labextension install @pyviz/jupyterlab_pyviz
+    jupyter labextension install @jupyter-widgets/jupyterlab-manager
+    jupyter labextension install ipyvolume
+    jupyter labextension install jupyter-threejs
+    jupyter nbextension enable --py --sys-prefix ipyvolume
+    jupyter nbextension enable --py --sys-prefix widgetsnbextension
+    jupyter labextension install @bokeh/jupyter_bokeh
+    #
+    cd /opt
+    git clone https://github.com/tensorflow/models
+    #
+    #mkdir /alicesw/
+    #cd /alicesw/
+    #wget https://root.cern/download/root_v6.20.04.Linux-centos7-aarch64-gcc4.8.tar.gz
+    #tar xvfz root_v6.20.04.Linux-centos7-aarch64-gcc4.8.tar.gz
+    # install benchmarks
+    mkdir -p /benchmarks/
+    cd /benchmarks/
+    git clone  https://github.com/tensorflow/benchmarks tensorflow_benchmarks
+    git clone  https://github.com/elombardi2/pytorch-gpu-benchmark pytorch-gpu-benchmark
+    updatedb
+    rm -f /var/cache/apt/archives/lock
+%runscript
+
+    echo "Clone of tensorflow-rocm example container"
+    echo "   github.com/sylabs/examples"
+    echo
+    echo "Run 'ipython' for an interactive python shell"
+    echo "Run 'jupyter notebook' to startup a jupyter notebook server"
+    echo "Run 'benchmark.sh' to start the TF benchmark"
+    echo
+    bash
+
+%labels
+    Maintainer "marian.ivanov@cern.ch"

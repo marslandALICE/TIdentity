@@ -1,0 +1,39 @@
+
+## Settings are in TPC git
+meld $NOTES/JIRA/ATO-500/alidockSingularity/alidockSingularity.def  /home/marsland/alice/alidockSingularity.def
+
+1) export some env. in .bashrc
+  export SINGULARITY_PREFIX=/home/marsland/o2/
+  export SINGULARITY_CACHEDIR=/home/marsland/o2/CACHEDIR
+  export NOTES=/home/marsland/Desktop/ubuntu_desktop/github/alice-tpc-notes
+  export NOTESData=/home/marsland/Desktop/ubuntu_desktop/workdir/NOTESData
+
+2)
+  cd /home/marsland/o2/
+  singularity  build  --fakeroot  --notest  --sandbox --fix-perms ${SINGULARITY_PREFIX}/o2dockSingularity   o2dockSingularity.def
+
+3) Modify /home/marsland/o2/o2dockSingularity/.singularity.d/env/90-environment.sh
+
+3)
+  singularity shell ${SINGULARITY_PREFIX}/o2dockSingularity
+  export SINGULARITY_PREFIX=/home/marsland/o2/
+  mkdir  -p ${SINGULARITY_PREFIX}/o2dockSingularity/o2sw/
+  cd ${SINGULARITY_PREFIX}/o2dockSingularity/o2sw/
+  export ALIBUILD_WORK_DIR="${SINGULARITY_PREFIX}/o2dockSingularity/o2sw/sw"
+  aliBuild init O2@dev --defaults o2
+  aliBuild build O2 --defaults o2 --debug
+
+  ==> Build of O2 successfully completed on `ubuntu'.
+    Your software installation is at:
+
+      /home/marsland/o2/o2dockSingularity/o2sw/sw/slc7_x86-64
+
+    You can use this package by loading the environment:
+
+      alienv enter O2/latest-dev-o2
+
+  ==> Build directory for devel package O2:
+       /home/marsland/o2/o2dockSingularity/o2sw/sw/BUILD/O2-latest/O2
+
+
+4)Source aliroot

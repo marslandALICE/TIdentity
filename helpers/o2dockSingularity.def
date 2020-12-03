@@ -1,0 +1,108 @@
+bootstrap: docker
+from: alisw/alidock
+#    installation example:
+#    export SINGULARITY_PREFIX=/tmp/${USER}/JIRA/ATO-500/
+#    export SINGULARITY_PREFIX=$NOTESData/JIRA/ATO-500/
+#    singularity  build --fakeroot  --notest  --sandbox  ${SINGULARITY_PREFIX}/alidockSingularity   $NOTES/JIRA/ATO-500/alidockSingularity/alidockSingularity.def
+#    singularity  build --fakeroot  ${SINGULARITY_PREFIX}/alidockSingularity    ${SINGULARITY_PREFIX}/alidockSingularity
+#
+%environment
+
+
+    export LANG=en_US.utf8                         # in default installation wrong locals used - see tedaultt to english - check you locales with - locale -a
+    export LC_ALL=en_US.utf8
+    export SINGULARITY_HOME="/home/marsland/o2/o2dockSingularity"       # this is needed at batch odes whithout HOME
+    export LUSTRE_HOME="/lustre/alice/${USER}"
+    export AliRoot_SRC=$SINGULARITY_HOME/o2sw/AliRoot
+    export AliPhysics_SRC=$SINGULARITY_HOME/o2sw/AliPhysics
+    export AliRoot_BUILD=$SINGULARITY_HOME/o2sw/sw/BUILD/AliRoot-latest/AliRoot/
+    export AliPhysics_BUILD=$SINGULARITY_HOME/o2sw/sw/BUILD/AliPhysics-latest/AliPhysics
+    export SINGULARITY_CACHEDIR=/home/marsland/o2/CACHEDIR
+    export SINGULARITY_PREFIX=/home/marsland/o2
+    export ALIBUILD_WORK_DIR="${SINGULARITY_PREFIX}/o2dockSingularity/o2sw/sw"
+    #
+    export NOTES=/home/marsland/Desktop/ubuntu_desktop/github/alice-tpc-notes
+    export NOTESData=/home/marsland/Desktop/ubuntu_desktop/workdir/NOTESData
+    ## extras from Marian
+    #source scl_source enable devtoolset-7
+    #source `which env_parallel.bash`              # enable parallel
+    #parallel --record-env                         # record varaibles and functions
+    #source  /venv/venvAlice/bin/activate
+
+
+%help
+    Alice docker + addition for development tools
+    This Singularity definition contains
+        - alisw/alidock
+        - python36
+            - to enable type in shell  scl enable rh-python36 sh
+        - devtoolset-7
+            - source scl_source enable devtoolset-7
+    Usage: (see README.md files fro details)
+        - Build container
+            - time singularity  build --fakeroot  --notest  --sandbox  ${SINGULARITY_PREFIX}/alidockSingularity   $NOTES/JIRA/ATO-500/alidockSingularity/alidockSingularity.def
+            - O(2 minutes)
+        - Iterativelly Install/update container within containter
+            - O (30 minutes) from scratch
+            - O (seconds) ro re ompile after
+            - within   singularity shell   ${SINGULARITY_PREFIX}/alidockSingularity
+        - Make compressed container
+            - O (1 minute) to re-build and distribute it on the farm
+            - To be done on fast disk  (/scratch, /tmp )- on /lustre/ /eos much slower
+        - Run aliroot/root macro (see example)
+            - singularity exec ${SINGULARITY_PREFIX}/alidockSingularity  aliroot  -l  -b -q $NOTES/JIRA/ATO-491/performanceResolution.C
+            - singularity exec ${SINGULARITY_PREFIX}/alidockSingularity  root.exe  -l  -b -q $NOTES/JIRA/ATO-491/performanceResolution.C
+        - Parallel instalation
+            - new parallel installtion with env_parallel
+            - environment variables and functions recorded and can be used by env_parallel
+
+
+
+
+%labels
+    Maintainer "Marian Ivanov marian.ivanov@cern.ch"
+
+%post
+    yum install -y mlocate
+    mkdir -p /u /lustre
+    mkdir -p /cvmfs
+    updatedb
+    # Locale problem
+    # https://serverfault.com/questions/616790/how-to-add-language-support-on-centos-7-on-docker does not work
+    #yum install -y glibc-langpack-en glibc-langpack-de                         #for some reason yum in signularity was insosistenlty using en and de support - installing one expecting other - this is failing
+    yum install -y  yum-langpacks                                               #attempt    thttps://github.com/CentOS/sig-cloud-instance-images/issues/10
+    yum install -y man-pages man-db man
+    # yum reinstall  glibc                                                      #attempt    thttps://github.com/CentOS/sig-cloud-instance-images/issues/10 -> Installed package glibc-2.17-260.el7_6.4.x86_64 (from updates) not available.
+
+    #yum install -y parallel                                                     #needed to run several processes - this is old verion
+    wget http://repo.openfusion.net/centos7-x86_64/parallel-20191122-1.of.el7.x86_64.rpm
+    yum install -y parallel-20191122-1.of.el7.x86_64.rpm
+    yum install -y centos-release-scl                                           #source
+    yum-config-manager --enable rhel-server-rhscl-7-rpms                        #
+    yum install -y devtoolset-7                                                 #
+    yum install -y cmake
+    yum -y install glibc-common
+    yum install -y man-pages man-db man
+    yum install -y gdb-gdbserver                                                # enabling remote debugging - for server node
+    # yum install -y swig3 - this conflict with development tools
+    yum install -y rh-python36                                                  #to enable type in shell  scl enable rh-python36 sh
+    #yum install -y glibc-all-langpacks                                          #added to solve problems with man -not working
+    # install PYTHON packages
+    mkdir -p /venv
+    cd /venv/
+    scl enable rh-python36 'bash -c "python  -m venv venvAlice"'                #install ALICE virtual environment
+    source  /venv/venvAlice/bin/activate
+    pip install pip==19.3.1
+    pip install git+https://github.com/miranov25/RootInteractive
+    updatedb
+    mkdir -p /o2sw
+
+    # test if we can simply synchronize - this is an option - but doing rsync MODULES/BASE/1.0 path has to be modified
+    #rsync -avzt /tmp/miranov/alicesw /opt/alicesw
+
+#%runscript
+#    exec aliroot "$@"
+#%apprun root.exe
+#    exec root.exe "$@"
+#%apprun hadd
+#    exec hadd "$@"

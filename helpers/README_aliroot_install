@@ -1,0 +1,43 @@
+
+## Settings are in TPC git --> you can modifiy the def file but good to check if Marian has new modification in the reference file
+  meld $NOTES/JIRA/ATO-500/alidockSingularity/alidockSingularity.def  /home/marsland/alice/alidockSingularity.def
+
+## to install additional programs after the first installation
+  singularity shell --fakeroot --writable /home/marsland/containers/tensorflow_latest_gpu_CUDA/tensorflow_latest-gpuCUDA
+  apt-get install -y meld
+
+1) export some env. in .bashrc
+  export SINGULARITY_PREFIX=/home/marsland/alice/
+  export SINGULARITY_CACHEDIR=/home/marsland/alice/CACHEDIR
+  export NOTES=/home/marsland/Desktop/ubuntu_desktop/github/alice-tpc-notes
+  export NOTESData=/home/marsland/Desktop/ubuntu_desktop/workdir/NOTESData
+
+2)
+  cd /home/marsland/alice/
+  singularity  build  --fakeroot  --notest  --sandbox --fix-perms ${SINGULARITY_PREFIX}/alidockSingularity   alidockSingularity.def
+
+3) Modify /home/marsland/alice/alidockSingularity/.singularity.d/env/90-environment.sh
+
+4) Go into singularity container and compile aliroot
+
+  singularity shell ${SINGULARITY_PREFIX}/alidockSingularity
+  export SINGULARITY_PREFIX=/home/marsland/alice/
+  mkdir  -p ${SINGULARITY_PREFIX}/alidockSingularity/alicesw/
+  cd ${SINGULARITY_PREFIX}/alidockSingularity/alicesw/
+  export ALIBUILD_WORK_DIR="${SINGULARITY_PREFIX}/alidockSingularity/alicesw/sw"
+  aliBuild init  AliPhysics,AliRoot  --debug
+  (cd AliRoot; git checkout master);
+  (cd AliPhysics; git checkout master);
+  # time aliBuild build -j 80 AliPhysics --disable DPMJET
+
+  **************************************************************************
+  time aliBuild build AliPhysics --defaults user -z aliroot5 --debug
+  time aliBuild build AliPhysics --defaults user-next-root6 -z aliroot6 --debug
+
+
+
+
+
+  **************************************************************************
+
+4)Source aliroot
