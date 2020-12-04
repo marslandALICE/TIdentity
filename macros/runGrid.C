@@ -168,23 +168,23 @@ mergeFilteredTreesAtGSI
 
 
 // Galuber setting
-aliroot -b -q 'runGrid.C(0,"test",0,"1","$RUN_ON_GRID_DIR/Ebye/lists/runs-2016-LHC16g1-pass1.list","TPC_dEdx_Info",1,64,2,"vAN-20201108-1")'
-aliroot -b -q 'runGrid.C(0,"full",1,"1","$RUN_ON_GRID_DIR/Ebye/lists/runs-2016-LHC16g1-pass1.list","TPC_dEdx_Info",1,64,2,"vAN-20201108-1")'
+aliroot -b -q 'runGrid.C(0,"test",0,"1","$RUN_ON_GRID_DIR/Ebye/lists/runs-2016-LHC16g1-pass1.list","TPC_dEdx_Info",1,64,2,"vAN-20201124-1")'
+aliroot -b -q 'runGrid.C(0,"full",1,"1","$RUN_ON_GRID_DIR/Ebye/lists/runs-2016-LHC16g1-pass1.list","TPC_dEdx_Info",1,64,2,"vAN-20201124-1")'
 
-aliroot -b -q 'runGrid.C(0,"test",0,"1","$RUN_ON_GRID_DIR/Ebye/lists/runs-2010-LHC11a10a_bis-pass1.list","TPC_dEdx_Info",3,64,1,"vAN-20201108-1")'
-aliroot -b -q 'runGrid.C(0,"full",1,"1","$RUN_ON_GRID_DIR/Ebye/lists/runs-2010-LHC11a10a_bis-pass1.list","TPC_dEdx_Info",3,64,1,"vAN-20201108-1")'
+aliroot -b -q 'runGrid.C(0,"test",0,"1","$RUN_ON_GRID_DIR/Ebye/lists/runs-2010-LHC11a10a_bis-pass1.list","TPC_dEdx_Info",3,64,1,"vAN-20201124-1")'
+aliroot -b -q 'runGrid.C(0,"full",1,"1","$RUN_ON_GRID_DIR/Ebye/lists/runs-2010-LHC11a10a_bis-pass1.list","TPC_dEdx_Info",3,64,1,"vAN-20201124-1")'
 
-aliroot -b -q 'runGrid.C(0,"test",0,"1","$RUN_ON_GRID_DIR/Ebye/lists/runs-2016-LHC16d2-pass1.list","TPC_dEdx_Info",1,64,2,"vAN-20201108-1")'
-aliroot -b -q 'runGrid.C(0,"full",1,"1","$RUN_ON_GRID_DIR/Ebye/lists/runs-2016-LHC16d2-pass1.list","TPC_dEdx_Info",1,64,2,"vAN-20201108-1")'
+aliroot -b -q 'runGrid.C(0,"test",0,"1","$RUN_ON_GRID_DIR/Ebye/lists/runs-2016-LHC16d2-pass1.list","TPC_dEdx_Info",1,64,2,"vAN-20201124-1")'
+aliroot -b -q 'runGrid.C(0,"full",1,"1","$RUN_ON_GRID_DIR/Ebye/lists/runs-2016-LHC16d2-pass1.list","TPC_dEdx_Info",1,64,2,"vAN-20201124-1")'
 
-aliroot -b -q 'runGrid.C(0,"test",0,"1","$RUN_ON_GRID_DIR/Ebye/lists/runs-2017-LHC17i2-pass1.list","TPC_dEdx_Info",1,64,2,"vAN-20201108-1")'
-aliroot -b -q 'runGrid.C(0,"full",1,"1","$RUN_ON_GRID_DIR/Ebye/lists/runs-2017-LHC17i2-pass1.list","TPC_dEdx_Info",1,64,2,"vAN-20201108-1")'
+aliroot -b -q 'runGrid.C(0,"test",0,"1","$RUN_ON_GRID_DIR/Ebye/lists/runs-2017-LHC17i2-pass1.list","TPC_dEdx_Info",1,64,2,"vAN-20201124-1")'
+aliroot -b -q 'runGrid.C(0,"full",1,"1","$RUN_ON_GRID_DIR/Ebye/lists/runs-2017-LHC17i2-pass1.list","TPC_dEdx_Info",1,64,2,"vAN-20201124-1")'
 
-aliroot -b -q 'runGrid.C(0,"test",0,"1","$RUN_ON_GRID_DIR/Ebye/lists/runs-2012-LHC12a11i-pass2.list","TPC_dEdx_Info",5,64,1,"vAN-20201108-1")'
-aliroot -b -q 'runGrid.C(0,"full",1,"1","$RUN_ON_GRID_DIR/Ebye/lists/runs-2012-LHC12a11i-pass2.list","TPC_dEdx_Info",5,64,1,"vAN-20201108-1")'
+aliroot -b -q 'runGrid.C(0,"test",0,"1","$RUN_ON_GRID_DIR/Ebye/lists/runs-2012-LHC12a11i-pass2.list","TPC_dEdx_Info",5,64,1,"vAN-20201124-1")'
+aliroot -b -q 'runGrid.C(0,"full",1,"1","$RUN_ON_GRID_DIR/Ebye/lists/runs-2012-LHC12a11i-pass2.list","TPC_dEdx_Info",5,64,1,"vAN-20201124-1")'
 
-aliroot -b -q 'runGrid.C(0,"test",0,"1","$RUN_ON_GRID_DIR/Ebye/lists/runs-2020-LHC20e3a-pass3.list","TPC_dEdx_Info",1,64,2,"vAN-20201108-1")'
-aliroot -b -q 'runGrid.C(0,"full",1,"1","$RUN_ON_GRID_DIR/Ebye/lists/runs-2020-LHC20e3a-pass3.list","TPC_dEdx_Info",1,64,2,"vAN-20201108-1")'
+aliroot -b -q 'runGrid.C(0,"test",0,"1","$RUN_ON_GRID_DIR/Ebye/lists/runs-2020-LHC20e3a-pass3.list","TPC_dEdx_Info",1,64,2,"vAN-20201124-1")'
+aliroot -b -q 'runGrid.C(0,"full",1,"1","$RUN_ON_GRID_DIR/Ebye/lists/runs-2020-LHC20e3a-pass3.list","TPC_dEdx_Info",1,64,2,"vAN-20201124-1")'
 
 #########################################################################
 ------ Yale times ------
@@ -194,33 +194,33 @@ cd $RUN_ON_GRID_DIR/Ebye/test/
 rm *.xml Task* *.root stderr out* Ali*
 cp $RUN_ON_GRID_DIR/Ebye/code/*.*  .; rm *.so *.d
 
-aliroot -b -q 'runGrid.C(0,"test",0,"1","$RUN_ON_GRID_DIR/Ebye/lists/runsMC-2020-LHC20e3a-pass3.list","TPC_dEdx_Info",1,64,2018,"18q",3,"vAN-20201108-1")'
-aliroot -b -q 'runGrid.C(0,"test",0,"1","$RUN_ON_GRID_DIR/Ebye/lists/runsMC-2020-LHC20e3b-pass3.list","TPC_dEdx_Info",1,64,2018,"18q",3,"vAN-20201108-1")'
-aliroot -b -q 'runGrid.C(0,"test",0,"1","$RUN_ON_GRID_DIR/Ebye/lists/runsMC-2020-LHC20e3c-pass3.list","TPC_dEdx_Info",1,64,2018,"18q",3,"vAN-20201108-1")'
-aliroot -b -q 'runGrid.C(0,"test",0,"1","$RUN_ON_GRID_DIR/Ebye/lists/runsMC-2020-LHC20g12-pass2.list","TPC_dEdx_Info",1,64,2015,"15o",2,"vAN-20201108-1")'
-aliroot -b -q 'runGrid.C(0,"test",0,"1","$RUN_ON_GRID_DIR/Ebye/lists/runsMC-2020-LHC20j6a-pass2.list","TPC_dEdx_Info",1,64,2015,"15o",2,"vAN-20201108-1")'
-aliroot -b -q 'runGrid.C(0,"test",0,"1","$RUN_ON_GRID_DIR/Ebye/lists/runsMC-2016-LHC16g1-pass1.list" ,"TPC_dEdx_Info",1,64,2015,"15o",1,"vAN-20201108-1")'
+aliroot -b -q 'runGrid.C(0,"test",0,"1","$RUN_ON_GRID_DIR/Ebye/lists/runsMC-2020-LHC20e3a-pass3.list","TPC_dEdx_Info",1,64,2018,"18q",3,"vAN-20201124-1")'
+aliroot -b -q 'runGrid.C(0,"test",0,"1","$RUN_ON_GRID_DIR/Ebye/lists/runsMC-2020-LHC20e3b-pass3.list","TPC_dEdx_Info",1,64,2018,"18q",3,"vAN-20201124-1")'
+aliroot -b -q 'runGrid.C(0,"test",0,"1","$RUN_ON_GRID_DIR/Ebye/lists/runsMC-2020-LHC20e3c-pass3.list","TPC_dEdx_Info",1,64,2018,"18q",3,"vAN-20201124-1")'
+aliroot -b -q 'runGrid.C(0,"test",0,"1","$RUN_ON_GRID_DIR/Ebye/lists/runsMC-2020-LHC20g12-pass2.list","TPC_dEdx_Info",1,64,2015,"15o",2,"vAN-20201124-1")'
+aliroot -b -q 'runGrid.C(0,"test",0,"1","$RUN_ON_GRID_DIR/Ebye/lists/runsMC-2020-LHC20j6a-pass2.list","TPC_dEdx_Info",1,64,2015,"15o",2,"vAN-20201124-1")'
+aliroot -b -q 'runGrid.C(0,"test",0,"1","$RUN_ON_GRID_DIR/Ebye/lists/runsMC-2016-LHC16g1-pass1.list" ,"TPC_dEdx_Info",1,64,2015,"15o",1,"vAN-20201124-1")'
 
-aliroot -b -q 'runGrid.C(0,"test",0,"1","$RUN_ON_GRID_DIR/Ebye/lists/runs-2018-LHC18q-pass3.list","TPC_dEdx_Info",0,4,2018,"18q",3,"vAN-20201108-1")'
-aliroot -b -q 'runGrid.C(0,"test",0,"1","$RUN_ON_GRID_DIR/Ebye/lists/runs-2018-LHC18r-pass3.list","TPC_dEdx_Info",0,4,2018,"18r",3,"vAN-20201108-1")'
-aliroot -b -q 'runGrid.C(0,"test",0,"1","$RUN_ON_GRID_DIR/Ebye/lists/runs-2015-LHC15o-pass2.list","TPC_dEdx_Info",0,4,2015,"15o",2,"vAN-20201108-1")'
-
-
+aliroot -b -q 'runGrid.C(0,"test",0,"1","$RUN_ON_GRID_DIR/Ebye/lists/runs-2018-LHC18q-pass3.list","TPC_dEdx_Info",0,4,2018,"18q",3,"vAN-20201124-1")'
+aliroot -b -q 'runGrid.C(0,"test",0,"1","$RUN_ON_GRID_DIR/Ebye/lists/runs-2018-LHC18r-pass3.list","TPC_dEdx_Info",0,4,2018,"18r",3,"vAN-20201124-1")'
+aliroot -b -q 'runGrid.C(0,"test",0,"1","$RUN_ON_GRID_DIR/Ebye/lists/runsMega-2015-LHC15o-pass2.list","TPC_dEdx_Info",0,4,2015,"15o",2,"vAN-20201124-1")'
+aliroot -b -q 'runGrid.C(0,"test",0,"1","$RUN_ON_GRID_DIR/Ebye/lists/runsMega-2015-LHC15o-pass1.list","TPC_dEdx_Info",0,4,2015,"15o",1,"vAN-20201124-1")'
 
 */
 
+Bool_t fAddFilteredTrees = kTRUE;
 Bool_t fUseMultSelection = kTRUE;
-const Int_t nTestFiles = 2;
-const Int_t nChunksPerJob = 50;
+const Int_t nTestFiles = 5;
+const Int_t nChunksPerJob = 20;
 Bool_t fRunLocalFiles = kFALSE;
-TString aliPhysicsTag = "vAN-20201108-1"; //  	vAN-20180828-1  vAN-20181119-1  vAN-20190105_ROOT6-1
+TString aliPhysicsTag = "vAN-20201124-1"; //  	vAN-20180828-1  vAN-20181119-1  vAN-20190105_ROOT6-1
 // TString aliPhysicsTag = "vAN-20180416-1"; // old working tag
 
 TString fValgrind  = "/usr/bin/valgrind --leak-check=full --leak-resolution=high --num-callers=40 --error-limit=no --show-reachable=yes  --log-file=xxx.txt --suppressions=$ROOTSYS/etc/valgrind-root.supp  -v ";
 TString fCallgrind = "/usr/bin/valgrind --tool=callgrind --log-file=cpu.txt   --num-callers=40 -v  --trace-children=yes ";
 TString fMassif    = "/usr/bin/valgrind --tool=massif ";
 
-void runGrid(Int_t valgrindOption = 0, TString mode="test",Int_t localOrGrid=0, TString passStr="1", TString list = "", TString fname="EbyeIterPID", Int_t isMC=0, Int_t setType=3, Int_t lhcYear=2015, TString periodName="15o", Int_t passIndex=2, TString physicsTagForFullTest="vAN-20201108-1")
+void runGrid(Int_t valgrindOption = 0, TString mode="test",Int_t localOrGrid=0, TString passStr="1", TString list = "", TString fname="EbyeIterPID", Int_t isMC=0, Int_t setType=3, Int_t lhcYear=2015, TString periodName="15o", Int_t passIndex=2, TString physicsTagForFullTest="vAN-20201124-1")
 {
   //
   // valgrindOption --> 0 --> Normal, 1--> valgrind, 2--> callgrind, 3-->Massif
@@ -305,6 +305,11 @@ void runGrid(Int_t valgrindOption = 0, TString mode="test",Int_t localOrGrid=0, 
     if(fUseMultSelection){
       gROOT->LoadMacro(gSystem->ExpandPathName("$ALICE_PHYSICS/OADB/COMMON/MULTIPLICITY/macros/AddTaskMultSelection.C"));
       AliMultSelectionTask* multTask = AddTaskMultSelection();
+      if (fAddFilteredTrees)
+      {
+        gROOT->LoadMacro("$ALICE_PHYSICS/PWGPP/TPC/macros/AddTaskConfigOCDB.C");
+        AddTaskConfigOCDB("raw://");
+      }
       std::cout << "period name = " << periodName << std::endl;
       if(periodName.Contains("15o")) multTask->SetAlternateOADBforEstimators("LHC15o-DefaultMC-HIJING");
       //
@@ -326,16 +331,25 @@ void runGrid(Int_t valgrindOption = 0, TString mode="test",Int_t localOrGrid=0, 
   // to run locally
   gSystem->AddIncludePath("-I$ALICE_ROOT/include");
   gSystem->AddIncludePath("-I$ALICE_PHYSICS/include");
+  //
+  // Filtered tree
+  if (fAddFilteredTrees) {
+    gROOT->LoadMacro("./AddTaskFilteredTreeLocal.C");
+    AliAnalysisTask *ana = AddTaskFilteredTree("",isMC);
+  }
+  //
+  // My task
   gROOT->LoadMacro("$RUN_ON_GRID_DIR/Ebye/code/AliAnalysisTaskTIdentityPID.cxx+g");
   gROOT->LoadMacro("$RUN_ON_GRID_DIR/Ebye/code/AddTask_marsland_TIdentityPID.C");
   AliAnalysisTask *ana = AddTask_marsland_TIdentityPID(kFALSE,"Config_marsland_TIdentityPID.C",setType,lhcYear,periodName,passIndex);
+  //
   // ----------------------------------------------------------------------------------------------------------------------
   // ----------------------------------------------------------------------------------------------------------------------
+  //
   if (!mgr->InitAnalysis()) return;
   mgr->PrintStatus();
   if (!fRunLocalFiles) {
     // Start analysis in grid.
-    std::cout << " mmmmmmmmmmmmmm " << std::endl;
     mgr->StartAnalysis("grid");   // to set the number of events --> mgr->StartAnalysis("grid",nEvents);
   } else {
     // to run over files stored locally, uncomment this section,
@@ -479,7 +493,7 @@ AliAnalysisGrid* CreateAlienHandler(Int_t valgrindOption = 0,TString mode="test"
   // Declare the output file names separated by blancs.
   // (can be like: file.root or file.root@ALICE::Niham::File)
   //plugin->SetDefaultOutputs(0);
-  //plugin->SetOutputFiles("AnalysisResults.root.root");
+  //plugin->SetOutputFiles("AnalysisResults.root");
   plugin->SetMergeViaJDL(kTRUE);
   plugin->SetOneStageMerging(kFALSE);
   //plugin->SetMaxMergeFiles(40);

@@ -1,5 +1,14 @@
 AliAnalysisTask *AddTask_marsland_TIdentityPID(Bool_t getFromAlien=kFALSE, TString configFileName = "Config_marsland_TIdentityPID.C",Int_t settingType = 0,Int_t year = 1, TString periodName="15o", Int_t passIndex, Int_t lookUpTableIndex = 1, const char* suffix = "", Int_t containerNameMode=0)
 {
+  gSystem->Load("libANALYSIS");
+  gSystem->Load("libANALYSISalice");
+  gSystem->Load("libTender");
+  gSystem->Load("libCORRFW");
+  gSystem->Load("libPWGUDbase");
+  gSystem->Load("libTPCcalib");
+  gSystem->Load("libPWGPP");
+  gSystem->Load("libPWGLFspectra");
+  gRandom->SetSeed(0);
   //
   //get the current analysis manager
   //
@@ -21,6 +30,8 @@ AliAnalysisTask *AddTask_marsland_TIdentityPID(Bool_t getFromAlien=kFALSE, TStri
     Error("AddTask_marsland_TIdentityPID", "No analysis manager found.");
     return 0;
   }
+  // Switch off all AliInfo (too much output!!!)
+  AliLog::SetGlobalLogLevel(AliLog::kError);
   mgr->SetDebugLevel(0);
   //
   //==================================================
@@ -115,7 +126,7 @@ AliAnalysisTask *AddTask_marsland_TIdentityPID(Bool_t getFromAlien=kFALSE, TStri
   coutput9  = mgr->CreateContainer(combinedName+"_fullacc",       TTree::Class(), AliAnalysisManager::kOutputContainer, fileDirStructure);
   coutput10 = mgr->CreateContainer(combinedName+"_resonance",     TTree::Class(), AliAnalysisManager::kOutputContainer, fileDirStructure);
   coutput11 = mgr->CreateContainer(combinedName+"_mcGenMoms",     TTree::Class(), AliAnalysisManager::kOutputContainer, fileDirStructure);
-  coutput12 = mgr->CreateContainer(combinedName+"_events",        TTree::Class(), AliAnalysisManager::kOutputContainer, fileDirStructure);
+  coutput12 = mgr->CreateContainer(combinedName+"_eventInfo",     TTree::Class(), AliAnalysisManager::kOutputContainer, fileDirStructure);
   coutput13 = mgr->CreateContainer(combinedName+"_dscaled",       TTree::Class(), AliAnalysisManager::kOutputContainer, fileDirStructure);
   coutput14 = mgr->CreateContainer(combinedName+"_mcMoms",        TTree::Class(), AliAnalysisManager::kOutputContainer, fileDirStructure);
   mgr->ConnectOutput (task,  1, coutput1);

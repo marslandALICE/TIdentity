@@ -22,7 +22,8 @@ class AliESDtrackCuts;
 class AliPIDResponse;
 class AliHeader;
 class AliESDpid;
-class fPIDCombined;
+class AliESDtools;
+class AliPIDCombined;
 
 
 #include "AliAnalysisTaskSE.h"
@@ -498,10 +499,10 @@ private:
   void SelectCleanSamplesFromV0s(AliESDv0 *v0, AliESDtrack *track0, AliESDtrack *track1);
   void SetSpecialV0Cuts(AliESDv0KineCuts* cuts);
   void BinLogAxis(TH1 *h);
-  void CalculateEventVariables();
+  void CalculateEventInfo();
   void DumpDownScaledTree();
   void GetExpecteds(AliESDtrack *track, Float_t closestPar[3]);
-  void DumpEventVariables();
+  void CreateEventInfoTree();
   void FillGenDistributions();
   //
   Int_t CountEmptyEvents(Int_t counterBin);  // Just count if there is empty events
@@ -531,10 +532,11 @@ private:
   AliAnalysisCuts  * fLambdaProtonCuts;       // filter for protons from Lambda
   AliAnalysisCuts  * fLambdaPionCuts;         // filter for pions from Lambda
   AliAnalysisCuts  * fGammaElectronCuts;      // filter for electrons from gamma conversions
-  const AliESDVertex     * fVertex;                  // primary vertex
+  const AliESDVertex * fVertex;               // primary vertex
+  AliESDtools      * fESDtool;                 // tools to calculate derived variables from the ESD
 
   TTree            * fArmPodTree;             // Tree for clean pion and proton selection
-  TTreeSRedirector * fTreeSRedirector;        //! temp tree to dump output
+  TTreeSRedirector * fTreeSRedirector;        /// temp tree to dump output
   TTree            * fTreeMCFull;             // tree for reconstructed moments
   TTree            * fTreeMCgen;              // tree for reconstructed moments
   TTree            * fTreeDnchDeta;           // tree for dnch/deta calculation
@@ -848,26 +850,26 @@ private:
   //
   // Counters for Marian
   //
-  TVectorF         * fPhiTPCdcarA;  // track counter
-  TVectorF         * fPhiTPCdcarC; // dedx info counter
-  TVectorF         * fCacheTrackCounters;  // track counter
-  TVectorF         * fCacheTrackdEdxRatio; // dedx info counter
-  TVectorF         * fCacheTrackNcl;       // ncl counter
-  TVectorF         * fCacheTrackChi2;      // chi2 counter
-  TVectorF         * fCacheTrackMatchEff;  // matchEff counter
-  TVectorF         * fCentralityEstimates;
-  TGraph           * fLumiGraph;           // grap for the interaction rate info for a run
-  TH1F             * fHisTPCVertexA;
-  TH1F             * fHisTPCVertexC;
-  TH1F             * fHisTPCVertexACut;
-  TH1F             * fHisTPCVertexCCut;
-  TH1F             * fHisTPCVertex;
-  TVectorF         * fCacheTrackTPCCountersZ; // track counter with DCA z cut
-  static const char*  centEstStr[];              //!centrality types
+  TVectorF         * fEventInfo_PhiTPCdcarA;  // track counter
+  TVectorF         * fEventInfo_PhiTPCdcarC; // dedx info counter
+  TVectorF         * fEventInfo_CacheTrackCounters;  // track counter
+  TVectorF         * fEventInfo_CacheTrackdEdxRatio; // dedx info counter
+  TVectorF         * fEventInfo_CacheTrackNcl;       // ncl counter
+  TVectorF         * fEventInfo_CacheTrackChi2;      // chi2 counter
+  TVectorF         * fEventInfo_CacheTrackMatchEff;  // matchEff counter
+  TVectorF         * fEventInfo_CentralityEstimates;
+  TGraph           * fEventInfo_LumiGraph;           // grap for the interaction rate info for a run
+  TH1F             * fEventInfo_HisTPCVertexA;
+  TH1F             * fEventInfo_HisTPCVertexC;
+  TH1F             * fEventInfo_HisTPCVertexACut;
+  TH1F             * fEventInfo_HisTPCVertexCCut;
+  TH1F             * fEventInfo_HisTPCVertex;
+  TVectorF         * fEventInfo_CacheTrackTPCCountersZ; // track counter with DCA z cut
+  static const char*  fEventInfo_centEstStr[];              //!centrality types
 
 
 
-  ClassDef(AliAnalysisTaskTIdentityPID, 5);
+  ClassDef(AliAnalysisTaskTIdentityPID, 6);
 
 };
 

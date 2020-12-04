@@ -154,6 +154,7 @@ void runTiden_FilteredRaw(Int_t valgrindOption = 0, TString mode="test",Int_t lo
   //
   // ----------------------------------------------------------------------------------------------------------------------
   // ----------------------------------------------------------------------------------------------------------------------
+  //
   if (!(isMC==2 || isMC==4)){
     // Add Additional tasks
     gROOT->LoadMacro(gSystem->ExpandPathName("$ALICE_PHYSICS/OADB/macros/AddTaskPhysicsSelection.C"));
@@ -197,9 +198,10 @@ void runTiden_FilteredRaw(Int_t valgrindOption = 0, TString mode="test",Int_t lo
   gROOT->LoadMacro("$RUN_ON_GRID_DIR/Ebye/code/AliAnalysisTaskTIdentityPID.cxx+g");
   gROOT->LoadMacro("$RUN_ON_GRID_DIR/Ebye/code/AddTask_marsland_TIdentityPID.C");
   AliAnalysisTask *ana = AddTask_marsland_TIdentityPID(kFALSE,"Config_marsland_TIdentityPID.C",setType,lhcPeriod);
+  //
   // ----------------------------------------------------------------------------------------------------------------------
   // ----------------------------------------------------------------------------------------------------------------------
-
+  //
   if (!mgr->InitAnalysis()) return;
   mgr->PrintStatus();
   if (!fRunLocalFiles) {
@@ -233,7 +235,7 @@ AliAnalysisGrid* CreateAlienHandler(Int_t valgrindOption = 0,TString mode="test"
   plugin->SetRunMode(mode.Data());
   plugin->SetNtestFiles(nTestFiles);
   plugin->SetAPIVersion("V1.1x");
-  plugin->SetAliPhysicsVersion(aliPhysicsTag);
+  plugin->SetAliPhysicsVersion(aliPhysicsTag); // change to something up-to-date vAN-20170717-1 vAN-20180403-1
   plugin->SetNrunsPerMaster(1);
   plugin->SetSplitMaxInputFileNumber(nChunksPerJob); // 3 in the LEGO trains
   if (!isMC) plugin->SetRunPrefix("000");  // fort the data
@@ -281,14 +283,17 @@ AliAnalysisGrid* CreateAlienHandler(Int_t valgrindOption = 0,TString mode="test"
   TDatime date;
   plugin->SetGridWorkingDir(Form("%s/%s_%s_%d_%d%d/",fname.Data(),period.Data(),pass.Data(),date.GetDate(),date.GetHour(),date.GetMinute()));
   if (isMC==0) {       // data
+    std::cout << " Data SOURCE = REAL DATA " << std::endl;
     plugin->SetGridDataDir(Form("/alice/data/%d/%s/",year,period.Data())); // /alice/data/2015/LHC15o/000246858/pass1/15000246858039.402/AliESDs.root
     plugin->SetDataPattern(Form("/%s/*/AliESDs.root",pass.Data()));
   }
   else if (isMC==1) {  // RUN2 full MC gen+rec
+    std::cout << " Data SOURCE = RUN2 full MC gen+rec " << std::endl;
     plugin->SetGridDataDir(Form("/alice/sim/%d/%s/",year,period.Data()));
     plugin->SetDataPattern("/*/AliESDs.root");
   }
   else if (isMC==2) {  // RUN2 fast MC gen
+    std::cout << " Data SOURCE = RUN2 fast MC gen " << std::endl;
     plugin->SetAdditionalLibs("pythia6 Tree Geom VMC Physics Minuit Gui Minuit2 STEERBase ESD OADB ANALYSIS ANALYSISalice CDB STEER CORRFW EMCALUtils EMCALrec VZERObase VZEROrec");
     plugin->SetAdditionalRootLibs("libVMC.so libPhysics.so libTree.so libMinuit.so libProof.so libSTEERBase.so libESD.so libAOD.so");
     plugin->SetMCLoop(kTRUE);
@@ -299,11 +304,13 @@ AliAnalysisGrid* CreateAlienHandler(Int_t valgrindOption = 0,TString mode="test"
     plugin->SetDataPattern("/*/galice.root");
     //       plugin->SetDataPattern("/*/root_archive.zip#galice.root");
   }
-  else if (isMC==3) {  // RUN1 full MC gen+rec
+  else if (isMC==3) {  // RUN1 full MC gen+rec HIJING
+    std::cout << " Data SOURCE = RUN1 full MC gen+rec HIJING " << std::endl;
     plugin->SetGridDataDir(Form("/alice/sim/%s/",period.Data()));
     plugin->SetDataPattern("/*/AliESDs.root");
   }
   else if (isMC==4) {  // RUN1 fast MC gen
+    std::cout << " Data SOURCE = RUN1 fast MC gen " << std::endl;
     plugin->SetAdditionalLibs("pythia6 Tree Geom VMC Physics Minuit Gui Minuit2 STEERBase ESD OADB ANALYSIS ANALYSISalice CDB STEER CORRFW EMCALUtils EMCALrec VZERObase VZEROrec");
     plugin->SetAdditionalRootLibs("libVMC.so libPhysics.so libTree.so libMinuit.so libProof.so libSTEERBase.so libESD.so libAOD.so");
     plugin->SetMCLoop(kTRUE);

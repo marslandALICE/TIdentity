@@ -86,6 +86,7 @@
 #include "AliRunLoader.h"
 #include "AliEventCuts.h"
 #include "AliAnalysisUtils.h"
+#include "AliESDtools.h"
 #include <fstream>
 #include <iostream>
 #include <iomanip>
@@ -97,9 +98,9 @@ using std::setw;
 
 ClassImp(AliAnalysisTaskTIdentityPID)
 
-const char* AliAnalysisTaskTIdentityPID::centEstStr[] = {"V0M","CL0","CL1"};
+const char* AliAnalysisTaskTIdentityPID::fEventInfo_centEstStr[] = {"V0M","CL0","CL1"};
 // {"V0M","V0A","V0C","FMD","TRK","TKL","CL0","CL1","V0MvsFMD","ZNA","TKLvsV0M","ZEMvsZDC","V0A123","V0A0","V0S", "MB", "Ref", "V0av"};
-// const char* AliAnalysisTaskTIdentityPID::centEstStr[] = {"V0M","CL0","CL1","TRK","TKL","V0MvsFMD","TKLvsV0M","ZEMvsZDC","kV0A"
+// const char* AliAnalysisTaskTIdentityPID::fEventInfo_centEstStr[] = {"V0M","CL0","CL1","TRK","TKL","V0MvsFMD","TKLvsV0M","ZEMvsZDC","kV0A"
 // ,"V0C","ZNA","ZNC","ZPA","ZPC","CND","FMD","NPA","V0A0","V0A123","V0A23","V0C01","V0S","V0MEq","V0AEq","V0CEq","SPDClusters","SPDTracklets"};
 
 #define USE_STREAMER 1
@@ -123,6 +124,7 @@ fLambdaProtonCuts(0x0),
 fLambdaPionCuts(0x0),
 fGammaElectronCuts(0x0),
 fVertex(0x0),
+fESDtool(nullptr),
 fArmPodTree(0x0),
 fTreeSRedirector(0x0),
 fTreeMCFull(0x0),
@@ -366,21 +368,21 @@ fHistImpParam(0),
 fHistVertex(0),
 fHistdEdxTPC(0),
 fHistArmPod(0),
-fPhiTPCdcarA(0),
-fPhiTPCdcarC(0),
-fCacheTrackCounters(0),
-fCacheTrackdEdxRatio(0),
-fCacheTrackNcl(0),
-fCacheTrackChi2(0),
-fCacheTrackMatchEff(0),
-fCentralityEstimates(0),
-fLumiGraph(0),
-fHisTPCVertexA(0),
-fHisTPCVertexC(0),
-fHisTPCVertexACut(0),
-fHisTPCVertexCCut(0),
-fHisTPCVertex(0),
-fCacheTrackTPCCountersZ(0)
+fEventInfo_PhiTPCdcarA(0),
+fEventInfo_PhiTPCdcarC(0),
+fEventInfo_CacheTrackCounters(0),
+fEventInfo_CacheTrackdEdxRatio(0),
+fEventInfo_CacheTrackNcl(0),
+fEventInfo_CacheTrackChi2(0),
+fEventInfo_CacheTrackMatchEff(0),
+fEventInfo_CentralityEstimates(0),
+fEventInfo_LumiGraph(0),
+fEventInfo_HisTPCVertexA(0),
+fEventInfo_HisTPCVertexC(0),
+fEventInfo_HisTPCVertexACut(0),
+fEventInfo_HisTPCVertexCCut(0),
+fEventInfo_HisTPCVertex(0),
+fEventInfo_CacheTrackTPCCountersZ(0)
 {
   // default Constructor
   /* fast compilation test
@@ -408,6 +410,7 @@ fLambdaProtonCuts(0x0),
 fLambdaPionCuts(0x0),
 fGammaElectronCuts(0x0),
 fVertex(0x0),
+fESDtool(nullptr),
 fArmPodTree(0x0),
 fTreeSRedirector(0x0),
 fTreeMCFull(0x0),
@@ -651,21 +654,21 @@ fHistImpParam(0),
 fHistVertex(0),
 fHistdEdxTPC(0),
 fHistArmPod(0),
-fPhiTPCdcarA(0),
-fPhiTPCdcarC(0),
-fCacheTrackCounters(0),
-fCacheTrackdEdxRatio(0),
-fCacheTrackNcl(0),
-fCacheTrackChi2(0),
-fCacheTrackMatchEff(0),
-fCentralityEstimates(0),
-fLumiGraph(0),
-fHisTPCVertexA(0),
-fHisTPCVertexC(0),
-fHisTPCVertexACut(0),
-fHisTPCVertexCCut(0),
-fHisTPCVertex(0),
-fCacheTrackTPCCountersZ(0)
+fEventInfo_PhiTPCdcarA(0),
+fEventInfo_PhiTPCdcarC(0),
+fEventInfo_CacheTrackCounters(0),
+fEventInfo_CacheTrackdEdxRatio(0),
+fEventInfo_CacheTrackNcl(0),
+fEventInfo_CacheTrackChi2(0),
+fEventInfo_CacheTrackMatchEff(0),
+fEventInfo_CentralityEstimates(0),
+fEventInfo_LumiGraph(0),
+fEventInfo_HisTPCVertexA(0),
+fEventInfo_HisTPCVertexC(0),
+fEventInfo_HisTPCVertexACut(0),
+fEventInfo_HisTPCVertexCCut(0),
+fEventInfo_HisTPCVertex(0),
+fEventInfo_CacheTrackTPCCountersZ(0)
 {
   //
   //         standard constructur which should be used
@@ -808,20 +811,20 @@ AliAnalysisTaskTIdentityPID::~AliAnalysisTaskTIdentityPID()
   if (fHistPhiTPCcounterCITS)  delete fHistPhiTPCcounterCITS;
   if (fHistPhiITScounterA)  delete fHistPhiITScounterA;
   if (fHistPhiITScounterC)  delete fHistPhiITScounterC;
-  if (fHisTPCVertexA)  delete fHisTPCVertexA;
-  if (fHisTPCVertexC)  delete fHisTPCVertexC;
-  if (fHisTPCVertex)  delete fHisTPCVertex;
-  if (fHisTPCVertexACut)  delete fHisTPCVertexACut;
-  if (fHisTPCVertexCCut)  delete fHisTPCVertexCCut;
-  if (fPhiTPCdcarA)  delete fPhiTPCdcarA;
-  if (fPhiTPCdcarC)  delete fPhiTPCdcarC;
-  if (fCacheTrackCounters)  delete fCacheTrackCounters;
-  if (fCacheTrackdEdxRatio)  delete fCacheTrackdEdxRatio;
-  if (fCacheTrackNcl)  delete fCacheTrackNcl;
-  if (fCacheTrackChi2)  delete fCacheTrackChi2;
-  if (fCacheTrackMatchEff)  delete fCacheTrackMatchEff;
-  if (fCentralityEstimates)  delete fCentralityEstimates;
-  if (fCacheTrackTPCCountersZ)  delete fCacheTrackTPCCountersZ;
+  if (fEventInfo_HisTPCVertexA)  delete fEventInfo_HisTPCVertexA;
+  if (fEventInfo_HisTPCVertexC)  delete fEventInfo_HisTPCVertexC;
+  if (fEventInfo_HisTPCVertex)  delete fEventInfo_HisTPCVertex;
+  if (fEventInfo_HisTPCVertexACut)  delete fEventInfo_HisTPCVertexACut;
+  if (fEventInfo_HisTPCVertexCCut)  delete fEventInfo_HisTPCVertexCCut;
+  if (fEventInfo_PhiTPCdcarA)  delete fEventInfo_PhiTPCdcarA;
+  if (fEventInfo_PhiTPCdcarC)  delete fEventInfo_PhiTPCdcarC;
+  if (fEventInfo_CacheTrackCounters)  delete fEventInfo_CacheTrackCounters;
+  if (fEventInfo_CacheTrackdEdxRatio)  delete fEventInfo_CacheTrackdEdxRatio;
+  if (fEventInfo_CacheTrackNcl)  delete fEventInfo_CacheTrackNcl;
+  if (fEventInfo_CacheTrackChi2)  delete fEventInfo_CacheTrackChi2;
+  if (fEventInfo_CacheTrackMatchEff)  delete fEventInfo_CacheTrackMatchEff;
+  if (fEventInfo_CentralityEstimates)  delete fEventInfo_CentralityEstimates;
+  if (fEventInfo_CacheTrackTPCCountersZ)  delete fEventInfo_CacheTrackTPCCountersZ;
   if (fPIDCombined) delete fPIDCombined;
   if (fESDtrackCuts) delete fESDtrackCuts;
   if (fESDtrackCutsLoose) delete fESDtrackCutsLoose;
@@ -889,7 +892,6 @@ void AliAnalysisTaskTIdentityPID::Initialize()
   fESDtrackCutsLoose->SetMaxFractionSharedTPCClusters(0.4);
   fESDtrackCutsLoose->SetMinNClustersTPC(50);
   fESDtrackCutsLoose->SetMinNCrossedRowsTPC(50);
-  fESDtrackCutsLoose->SetMaxChi2PerClusterTPC(10);
   fESDtrackCutsLoose->SetMaxDCAToVertexXY(10);   // hybrid cuts  TODO
   fESDtrackCutsLoose->SetMaxDCAToVertexZ(10);    // hybrid cuts  TODO
   //
@@ -897,7 +899,7 @@ void AliAnalysisTaskTIdentityPID::Initialize()
   fESDtrackCutsCleanSamp = new AliESDtrackCuts("AliESDtrackCutsV0","");
   fESDtrackCutsCleanSamp -> SetEtaRange(-1.5,1.5);
   fESDtrackCutsCleanSamp -> SetPtRange(0.,1e10);
-  fESDtrackCutsCleanSamp -> SetMinNCrossedRowsTPC(70);
+  fESDtrackCutsCleanSamp -> SetMinNCrossedRowsTPC(80);
   fESDtrackCutsCleanSamp -> SetRequireTPCRefit(kTRUE);
   fESDtrackCutsCleanSamp -> SetAcceptKinkDaughters(kFALSE);
   fESDtrackCutsCleanSamp -> SetMinRatioCrossedRowsOverFindableClustersTPC(0.8);
@@ -950,6 +952,7 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
   // ************************************************************************
   //
   OpenFile(1);
+  fTreeSRedirector = new TTreeSRedirector();
   fListHist = new TList();
   fListHist->SetOwner(kTRUE);
   //
@@ -971,7 +974,8 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
     // 6 --> Expected Mean of a given track
     const Int_t nExpectedbins = 7;
     //                                        0    1,    2,                 3,           4,        5,       6
-    Int_t   binsExpected[nExpectedbins]  = {  5,   1,  fNCentbinsData,   fNEtaBins,   fNMomBins,   180,   2000,};
+    // Int_t   binsExpected[nExpectedbins]  = {  5,   1,  fNCentbinsData,   fNEtaBins,   fNMomBins,   180,   2000,};  // ?????
+    Int_t   binsExpected[nExpectedbins]  = {  5,   1,  fNCentbinsData,   fNEtaBins,   fNMomBins,   120,   100 ,};  // ?????
     Double_t xminExpected[nExpectedbins] = {  0., -2.,   0.,             fEtaDown,    fMomDown,     1.,   20.  };
     Double_t xmaxExpected[nExpectedbins] = {  5.,  2.,  80.,             fEtaUp,      fMomUp,      61.,   1020.};
     TString axisNameExpected[nExpectedbins]   = {"particleType","sign","Centrality"    ,"eta" ,"momentum" ,"ExSigma","ExMean"};
@@ -1090,8 +1094,8 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
   fListHist->Add(fHistGenMult);
   fListHist->Add(fHistRapDistFullAccPr);
   fListHist->Add(fHistRapDistFullAccAPr);
-  fCentralityEstimates  = new TVectorF(3);
-  for (Int_t i=0;i<3;i++) (*fCentralityEstimates)[i]=-10.;
+  fEventInfo_CentralityEstimates  = new TVectorF(3);
+  for (Int_t i=0;i<3;i++) (*fEventInfo_CentralityEstimates)[i]=-10.;
   //
   // ************************************************************************
   //   Marians counters
@@ -1100,25 +1104,25 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
   if (fEventInfo)
   {
     // vectors
-    fPhiTPCdcarA         = new TVectorF(36);
-    fPhiTPCdcarC         = new TVectorF(36);
-    fCacheTrackCounters  = new TVectorF(20);
-    fCacheTrackdEdxRatio = new TVectorF(30);
-    fCacheTrackNcl       = new TVectorF(20);
-    fCacheTrackChi2      = new TVectorF(20);
-    fCacheTrackMatchEff  = new TVectorF(20);
-    fCacheTrackTPCCountersZ = new TVectorF(8);
-    for (Int_t i=0;i<8;i++) (*fCacheTrackTPCCountersZ)[i]=0.;
+    fEventInfo_PhiTPCdcarA         = new TVectorF(36);
+    fEventInfo_PhiTPCdcarC         = new TVectorF(36);
+    fEventInfo_CacheTrackCounters  = new TVectorF(20);
+    fEventInfo_CacheTrackdEdxRatio = new TVectorF(30);
+    fEventInfo_CacheTrackNcl       = new TVectorF(20);
+    fEventInfo_CacheTrackChi2      = new TVectorF(20);
+    fEventInfo_CacheTrackMatchEff  = new TVectorF(20);
+    fEventInfo_CacheTrackTPCCountersZ = new TVectorF(8);
+    for (Int_t i=0;i<8;i++) (*fEventInfo_CacheTrackTPCCountersZ)[i]=0.;
     for (Int_t i=0;i<36;i++){
-      (*fPhiTPCdcarA)[i]=0.;
-      (*fPhiTPCdcarC)[i]=0.;
+      (*fEventInfo_PhiTPCdcarA)[i]=0.;
+      (*fEventInfo_PhiTPCdcarC)[i]=0.;
     }
     for (Int_t i=0;i<20;i++){
-      (*fCacheTrackCounters)[i]=0.;
-      (*fCacheTrackdEdxRatio)[i]=0.;
-      (*fCacheTrackNcl)[i]=0.;
-      (*fCacheTrackChi2)[i]=0.;
-      (*fCacheTrackMatchEff)[i]=0.;
+      (*fEventInfo_CacheTrackCounters)[i]=0.;
+      (*fEventInfo_CacheTrackdEdxRatio)[i]=0.;
+      (*fEventInfo_CacheTrackNcl)[i]=0.;
+      (*fEventInfo_CacheTrackChi2)[i]=0.;
+      (*fEventInfo_CacheTrackMatchEff)[i]=0.;
     }
     // Hists
     fHistPhiTPCcounterA    = new TH1F("hPhiTPCcounterC",       "control histogram to count tracks on the A side in phi ", 36, 0.,18.);
@@ -1127,16 +1131,16 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
     fHistPhiTPCcounterCITS = new TH1F("hPhiTPCcounterCITS",    "control histogram to count tracks on the C side in phi ", 36, 0.,18.);
     fHistPhiITScounterA    = new TH1F("hPhiITScounterA",       "control histogram to count tracks on the A side in phi ", 36, 0.,18.);
     fHistPhiITScounterC    = new TH1F("hPhiITScounterC",       "control histogram to count tracks on the C side in phi ", 36, 0.,18.);
-    fHisTPCVertexA = new TH1F("hisTPCZA", "hisTPCZA", 1000, -250, 250);
-    fHisTPCVertexC = new TH1F("hisTPCZC", "hisTPCZC", 1000, -250, 250);
-    fHisTPCVertex = new TH1F("hisTPCZ", "hisTPCZ", 1000, -250, 250);
-    fHisTPCVertexACut = new TH1F("hisTPCZACut", "hisTPCZACut", 1000, -250, 250);
-    fHisTPCVertexCCut = new TH1F("hisTPCZCCut", "hisTPCZCCut", 1000, -250, 250);
-    fHisTPCVertex->SetLineColor(1);
-    fHisTPCVertexA->SetLineColor(2);
-    fHisTPCVertexC->SetLineColor(4);
-    fHisTPCVertexACut->SetLineColor(3);
-    fHisTPCVertexCCut->SetLineColor(6);
+    fEventInfo_HisTPCVertexA = new TH1F("hisTPCZA", "hisTPCZA", 1000, -250, 250);
+    fEventInfo_HisTPCVertexC = new TH1F("hisTPCZC", "hisTPCZC", 1000, -250, 250);
+    fEventInfo_HisTPCVertex = new TH1F("hisTPCZ", "hisTPCZ", 1000, -250, 250);
+    fEventInfo_HisTPCVertexACut = new TH1F("hisTPCZACut", "hisTPCZACut", 1000, -250, 250);
+    fEventInfo_HisTPCVertexCCut = new TH1F("hisTPCZCCut", "hisTPCZCCut", 1000, -250, 250);
+    fEventInfo_HisTPCVertex->SetLineColor(1);
+    fEventInfo_HisTPCVertexA->SetLineColor(2);
+    fEventInfo_HisTPCVertexC->SetLineColor(4);
+    fEventInfo_HisTPCVertexACut->SetLineColor(3);
+    fEventInfo_HisTPCVertexCCut->SetLineColor(6);
   }
   //
   // ************************************************************************
@@ -1161,8 +1165,6 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
   //   Trees
   // ************************************************************************
   //
-  //   OpenFile(6);
-  fTreeSRedirector = new TTreeSRedirector();
   fArmPodTree    = ((*fTreeSRedirector)<<"fArmPodTree").GetTree();
   fTreeMCFull    = ((*fTreeSRedirector)<<"mcFull").GetTree();
   fTreeMCgen     = ((*fTreeSRedirector)<<"mcGen").GetTree();
@@ -1173,7 +1175,7 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
   fTreeMCFullAcc = ((*fTreeSRedirector)<<"fullacc").GetTree();
   fTreeResonance = ((*fTreeSRedirector)<<"resonance").GetTree();
   fTreeMCgenMoms = ((*fTreeSRedirector)<<"mcGenMoms").GetTree();
-  fTreeEvents    = ((*fTreeSRedirector)<<"events").GetTree();
+  fTreeEvents    = ((*fTreeSRedirector)<<"eventInfo").GetTree();
   fTreeDScaled   = ((*fTreeSRedirector)<<"dscaled").GetTree();
   fTreeMCEffCorr = ((*fTreeSRedirector)<<"mcMoms").GetTree();
   //
@@ -1195,7 +1197,6 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
   PostData(12, fTreeEvents);
   PostData(13, fTreeDScaled);
   PostData(14, fTreeMCEffCorr);
-
 
   std::cout << " Info::marsland: ===== Out of UserCreateOutputObjects ===== " << std::endl;
 
@@ -1303,8 +1304,8 @@ void AliAnalysisTaskTIdentityPID::UserExec(Option_t *)
         AliInfo("Trying to connect to AliEn ...");
         TGrid::Connect("alien://");
       } else {
-        fLumiGraph = (TGraph*)AliLumiTools::GetLumiFromCTP(fRunNo,ocdb);
-        fIntRate   = fLumiGraph->Eval(fTimeStamp); delete fLumiGraph;
+        fEventInfo_LumiGraph = (TGraph*)AliLumiTools::GetLumiFromCTP(fRunNo,ocdb);
+        fIntRate   = fEventInfo_LumiGraph->Eval(fTimeStamp); delete fEventInfo_LumiGraph;
       }
     }
     fEventMult = fESD->GetNumberOfTracks();
@@ -1442,19 +1443,19 @@ void AliAnalysisTaskTIdentityPID::UserExec(Option_t *)
     // ---------- Centrality definition ---------------
     // ------------------------------------------------
     //
-    Int_t nEst = sizeof(centEstStr)/sizeof(char*);
-    fCentralityEstimates->Zero();  // matchEff counter
+    Int_t nEst = sizeof(fEventInfo_centEstStr)/sizeof(char*);
+    fEventInfo_CentralityEstimates->Zero();  // matchEff counter
     if (fBeamType.CompareTo("A-A") == 0) { // PbPb
       if (MultSelection) {
         if(fSystCentEstimatetor == -1) fCentrality = MultSelection->GetMultiplicityPercentile("TRK");
         if(fSystCentEstimatetor ==  0) fCentrality = MultSelection->GetMultiplicityPercentile("V0M");
         if(fSystCentEstimatetor ==  1) fCentrality = MultSelection->GetMultiplicityPercentile("CL1");
-        for (Int_t i=0;i<nEst;i++) (*fCentralityEstimates)[i]=MultSelection->GetMultiplicityPercentile(centEstStr[i]);
+        for (Int_t i=0;i<nEst;i++) (*fEventInfo_CentralityEstimates)[i]=MultSelection->GetMultiplicityPercentile(fEventInfo_centEstStr[i]);
       } else if (esdCentrality) {
         if(fSystCentEstimatetor == -1) fCentrality = esdCentrality->GetCentralityPercentile("TRK");
         if(fSystCentEstimatetor ==  0) fCentrality = esdCentrality->GetCentralityPercentile("V0M");
         if(fSystCentEstimatetor ==  1) fCentrality = esdCentrality->GetCentralityPercentile("CL1");
-        for (Int_t i=0;i<nEst;i++) (*fCentralityEstimates)[i]=esdCentrality->GetCentralityPercentile(centEstStr[i]);
+        for (Int_t i=0;i<nEst;i++) (*fEventInfo_CentralityEstimates)[i]=esdCentrality->GetCentralityPercentile(fEventInfo_centEstStr[i]);
       } else {
         std::cout << " Info::marsland: Error: There is no cent info " << std::endl;
       }
@@ -1468,6 +1469,14 @@ void AliAnalysisTaskTIdentityPID::UserExec(Option_t *)
   }
   fHistCentrality->Fill(fCentrality);  // count events after physics and vertex selection
   //
+  // if (!fESDtool) {
+  //   fESDtool = new AliESDtools();
+  //   fESDtool->SetStreamer(fTreeSRedirector);
+  // }
+  // fESDtool->Init(NULL,fESD);
+  // fESDtool->CalculateEventVariables();
+  // fESDtool->SetMCEvent(fMCEvent);
+  // fESDtool->DumpEventVariables();
   //
   // in case small stat is enough
   if (fPercentageOfEvents>0 && (fEventCountInFile%fPercentageOfEvents)==0) return;
@@ -1486,8 +1495,8 @@ void AliAnalysisTaskTIdentityPID::UserExec(Option_t *)
   if (!fMCtrue && fFillTracks && fESD){
     FillTPCdEdxReal();
     if (fFillArmPodTree) FillCleanSamples();
-    if (fEventInfo) {CalculateEventVariables(); DumpEventVariables();}
-    if (fUseCouts)  std::cout << " Info::marsland: (Real Data Analysis) End of Filling part = " << fEventCountInFile << std::endl;
+    if (fEventInfo) {CalculateEventInfo(); CreateEventInfoTree();}
+    std::cout << " Info::marsland: (Real Data Analysis) End of Filling part = " << fEventCountInFile << std::endl;
     return;
   }
   //
@@ -1497,7 +1506,7 @@ void AliAnalysisTaskTIdentityPID::UserExec(Option_t *)
     // FillEffMatrix();
     FillMCFull_NetParticles();
     if (fFillArmPodTree) FillCleanSamples();
-    if (fEventInfo) {CalculateEventVariables(); DumpEventVariables();}
+    if (fEventInfo) {CalculateEventInfo(); CreateEventInfoTree();}
     if (fUseCouts)  std::cout << " Info::marsland: (full MC analysis) End of Filling part = " << fEventCountInFile << std::endl;
     return;
   }
@@ -1780,7 +1789,7 @@ void AliAnalysisTaskTIdentityPID::FillTrackVariables(AliESDtrack *track)
   "pt="                   << pt                    <<  //  pT
   //
   "vz="                   << fVz                   <<  //  vertex Z
-  "centArray.="           << fCentralityEstimates  <<  // track counter
+  "centArray.="           << fEventInfo_CentralityEstimates  <<  // track counter
   "fdTPC="                << pTPC[0]               <<
   "fzTPC="                << pTPC[1]               <<
   "fCddTPC="              << covTPC[0]                <<  //  DCAxy
@@ -3801,26 +3810,6 @@ void AliAnalysisTaskTIdentityPID::FillEffMatrix()
   Int_t nSubSample = 20;
   sampleNo = Int_t(fEventGID)%nSubSample;
   if (fUseCouts) std::cout << " Info::marsland: ===== In the FillEffMatrix ===== " << std::endl;
-  // AliMCEventHandler *eventHandler = dynamic_cast<AliMCEventHandler*>(AliAnalysisManager::GetAnalysisManager()->GetMCtruthEventHandler());
-  // Int_t   runNumber  = fESD->GetRunNumber();
-  // Float_t nTPCmultMC = fESD->GetNumberOfTracks();
-  // for (Int_t itrack=0;itrack<fESD->GetNumberOfTracks();++itrack){
-  //   AliESDtrack *track = fESD->GetTrack(itrack);
-  //   if (track->IsOn(AliESDtrack::kTPCin)) nTPCmultMC++;
-  // }
-  // // Get the real primary vertex
-  // AliGenEventHeader* genHeader = 0x0;
-  // if (mcEvent) genHeader = mcEvent->GenEventHeader();
-  // TList* lsth = ((AliGenCocktailEventHeader*)genHeader)->GetHeaders();
-  // TArrayF vtx(3);
-  // TIter next(lsth);
-  // Int_t ivt=0;
-  // while (genHeader=(AliGenEventHeader*)next())
-  // {
-  //   if (ivt>0) return;
-  //   genHeader->PrimaryVertex(vtx);
-  //   printf("FillEffMatrix First Three vertices: Vtx:%d %f %f %f\n",ivt++,vtx[0],vtx[1],vtx[2]);
-  // }
   //
   // -----------------------------------------------------------------------------------------
   // ----------------------------   reconstructed MC particles  ------------------------------
@@ -3906,7 +3895,6 @@ void AliAnalysisTaskTIdentityPID::FillEffMatrix()
     // -----------------------------------------------------------------------------------------
     // ----------------------------   MC generated pure MC particles  --------------------------
     // -----------------------------------------------------------------------------------------
-    //
     //
     // only event Vz cuts can be applied on generated level
     if ( iset==kCutReference || iset==kCutEventVertexZSmall || iset==kCutEventVertexZLarge || iset==kCutEventVertexZALICE || iset==kCutEventVertexZALICETight ) {
@@ -4913,7 +4901,8 @@ UInt_t AliAnalysisTaskTIdentityPID::SetCutBitsAndSomeTrackVariables(AliESDtrack 
     fMissingCl = track->GetTPCClusterInfo(3,0,0,159);
     fNcl       = track->GetTPCncls();
     goldenChi2 = track->GetChi2TPCConstrainedVsGlobal(fVertex);
-    fTrackChi2TPC   = (fNcl>0) ? TMath::Sqrt(TMath::Abs(track->GetTPCchi2()/fNcl)) : -1;  // ???
+    // fTrackChi2TPC  = (fNcl>0) ? TMath::Sqrt(TMath::Abs(track->GetTPCchi2()/fNcl)) : -1;  // ???
+    fTrackChi2TPC  = (fNcl>0) ? TMath::Abs(track->GetTPCchi2()/fNcl) : -1;  // ???
     fTrackLengthInActiveZone = track->GetLengthInActiveZone(1,3,230, track->GetBz(),0,0);
     //
     Double_t nSigmasDeTPC = fPIDResponse->NumberOfSigmasTPC(track, AliPID::kDeuteron);
@@ -5407,10 +5396,10 @@ void AliAnalysisTaskTIdentityPID::Terminate(Option_t *)
 
 }
 //________________________________________________________________________
-void AliAnalysisTaskTIdentityPID::DumpEventVariables()
+void AliAnalysisTaskTIdentityPID::CreateEventInfoTree()
 {
 
-  if (fUseCouts) std::cout << " Info::marsland: ===== In the DumpEventVariables ===== " << std::endl;
+  if (fUseCouts) std::cout << " Info::marsland: ===== In the CreateEventInfoTree ===== " << std::endl;
 
   Int_t tpcClusterMultiplicity   = fESD->GetNumberOfTPCClusters();
   const AliMultiplicity *multObj = fESD->GetMultiplicity();
@@ -5440,7 +5429,10 @@ void AliAnalysisTaskTIdentityPID::DumpEventVariables()
   // AliFMDFloatMap fmdMult = esdFMD->MultiplicityMap();
   const AliESDTZERO *esdTzero = fESD->GetESDTZERO();
   const Double32_t *t0amp=esdTzero->GetT0amplitude();
-
+  ULong64_t triggerMask = fESD->GetTriggerMask();
+  Short_t   eventMult = fESD->GetNumberOfTracks();
+  Int_t eventMultESD = fESD->GetNumberOfESDTracks();
+  Int_t tpcTrackBeforeClean =fESD->GetNTPCTrackBeforeClean();
 
   for (Int_t i=0;i<24;i++) { tzeroMult[i] = t0amp[i]; }
   for (Int_t i=0;i<64;i++) { vzeroMult[i] = fESD->GetVZEROData()-> GetMultiplicity(i); }
@@ -5448,57 +5440,59 @@ void AliAnalysisTaskTIdentityPID::DumpEventVariables()
 
   if(!fTreeSRedirector) return;
   DumpDownScaledTree();
-  (*fTreeSRedirector)<<"events"<<
+  (*fTreeSRedirector)<<"eventInfo"<<
   "run="                  << fRunNo                 <<  // run Number
   // "pileupbit="            << fPileUpBit             <<
   "pileup="               << fPileUpTightness       <<
   "bField="               << fBField                <<  // run Number
   "gid="                  << fEventGID              <<  // global event ID
   "timestamp="            << fTimeStamp             <<  // timestamp
+  "triggerMask="          << triggerMask            <<  //trigger mask
   "intrate="              << fIntRate               <<  // interaction rate
   "centV0M="              << fCentrality            <<  // centrality
-  "cent.="                << fCentralityEstimates   <<  // track counter
+  "centrality.="          << fEventInfo_CentralityEstimates   <<  // track counter
   "vz="                   << fVz                    <<  // vertex Z
   "tpcvz="                << fTPCvZ                 <<
   "spdvz="                << fSPDvZ                 <<
   "tpcMult="              << fTPCMult               <<  //  TPC multiplicity
-  "eventmult="            << fEventMult             <<  //  event multiplicity
+  "eventMult="            << fEventMult             <<  //  event multiplicity
+  "eventMultESD="         << eventMultESD           <<  //  event multiplicity ESD
   "primMult="             << fNContributors         <<  //  #prim tracks
   "tpcClusterMult="       << tpcClusterMultiplicity <<  // tpc cluster multiplicity
+  "tpcTrackBeforeClean="  << tpcTrackBeforeClean <<   // tpc track before cleaning
   "itsTracklets="         << itsNumberOfTracklets   <<  // number of ITS tracklets
   //
   // "fmdMult.="             << &fmdMult               <<  // T0 multiplicity
-  "tzeroMult.="           << &tzeroMult             <<  // T0 multiplicity
-  "vzeroMult.="           << &vzeroMult             <<  // V0 multiplicity
+  "tZeroMult.="           << &tzeroMult             <<  // T0 multiplicity
+  "vZeroMult.="           << &vzeroMult             <<  // V0 multiplicity
   "itsClustersPerLayer.=" << &itsClustersPerLayer   <<  // its clusters per layer
-  "trackCounters.="       << fCacheTrackCounters    <<  // track counter
-  "trackdEdxRatio.="      << fCacheTrackdEdxRatio   <<  // dEdx conter
-  "trackNcl.="            << fCacheTrackNcl         <<  // nCluster counter
-  "trackChi2.="           << fCacheTrackChi2        <<  // Chi2 counter
-  "trackMatchEff.="       << fCacheTrackMatchEff    <<  // Chi2 counter
-  "trackTPCCountersZ.="   << fCacheTrackTPCCountersZ    <<  // Chi2 counter
-  "hisTPCVertexA.="       << fHisTPCVertexA         <<  // Chi2 counter
-  "hisTPCVertexC.="       << fHisTPCVertexC         <<  // Chi2 counter
-  "hisTPCVertex.="        << fHisTPCVertex          <<  // Chi2 counter
-  "hisTPCVertexACut.="    << fHisTPCVertexACut      <<  // Chi2 counter
-  "hisTPCVertexCCut.="    << fHisTPCVertexCCut      <<  // Chi2 counter
-  "phiTPCdcarA.="         << fPhiTPCdcarA           <<  // track counter
-  "phiTPCdcarC.="         << fPhiTPCdcarC           <<  // dEdx conter
+  "trackCounters.="       << fEventInfo_CacheTrackCounters    <<  // track counter
+  "trackdEdxRatio.="      << fEventInfo_CacheTrackdEdxRatio   <<  // dEdx conter
+  "trackNcl.="            << fEventInfo_CacheTrackNcl         <<  // nCluster counter
+  "trackChi2.="           << fEventInfo_CacheTrackChi2        <<  // Chi2 counter
+  "trackMatchEff.="       << fEventInfo_CacheTrackMatchEff    <<  // Chi2 counter
+  "trackTPCCountersZ.="   << fEventInfo_CacheTrackTPCCountersZ    <<  // Chi2 counter
+  "hisTPCVertexA.="       << fEventInfo_HisTPCVertexA         <<  // Chi2 counter
+  "hisTPCVertexC.="       << fEventInfo_HisTPCVertexC         <<  // Chi2 counter
+  "hisTPCVertex.="        << fEventInfo_HisTPCVertex          <<  // Chi2 counter
+  "hisTPCVertexACut.="    << fEventInfo_HisTPCVertexACut      <<  // Chi2 counter
+  "hisTPCVertexCCut.="    << fEventInfo_HisTPCVertexCCut      <<  // Chi2 counter
+  "phiTPCdcarA.="         << fEventInfo_PhiTPCdcarA           <<  // track counter
+  "phiTPCdcarC.="         << fEventInfo_PhiTPCdcarC           <<  // dEdx conter
   "phiCountA.="           << &phiCountA             <<  // TPC track count on A side
   "phiCountC.="           << &phiCountC             <<  // TPC track count on C side
   "phiCountAITS.="        << &phiCountAITS          <<  // track count fitted ITS on A side
   "phiCountCITS.="        << &phiCountCITS          <<  // track count fitted ITS on C side
-  "phiCountAITSonly.="    << &phiCountAITSonly      <<  // track count only ITS on A side
-  "phiCountCITSonly.="    << &phiCountCITSonly      <<  // track count only ITS on C side
+  "phiCountAITSOnly.="    << &phiCountAITSonly      <<  // track count only ITS on A side
+  "phiCountCITSOnly.="    << &phiCountCITSonly      <<  // track count only ITS on C side
   "\n";
-
 
 }
 //________________________________________________________________________
-void AliAnalysisTaskTIdentityPID::CalculateEventVariables()
+void AliAnalysisTaskTIdentityPID::CalculateEventInfo()
 {
 
-  if (fUseCouts) std::cout << " Info::marsland: ===== In the CalculateEventVariables ===== " << std::endl;
+  if (fUseCouts) std::cout << " Info::marsland: ===== In the CalculateEventInfo ===== " << std::endl;
 
   AliVEvent *event=InputEvent();
   CacheTPCEventInformation();
@@ -5512,13 +5506,13 @@ void AliAnalysisTaskTIdentityPID::CalculateEventVariables()
   const Float_t kDCAtpcNULL = -10000;
   // const Float_t kNTrackletCut=1.5;
   //
-  fPhiTPCdcarA->Zero();
-  fPhiTPCdcarC->Zero();
-  fCacheTrackCounters->Zero();   // track counter
-  fCacheTrackdEdxRatio->Zero(); // dedx info counter
-  fCacheTrackNcl->Zero();       // ncl counter
-  fCacheTrackChi2->Zero();      // chi2 counter
-  fCacheTrackMatchEff->Zero();  // matchEff counter
+  fEventInfo_PhiTPCdcarA->Zero();
+  fEventInfo_PhiTPCdcarC->Zero();
+  fEventInfo_CacheTrackCounters->Zero();   // track counter
+  fEventInfo_CacheTrackdEdxRatio->Zero(); // dedx info counter
+  fEventInfo_CacheTrackNcl->Zero();       // ncl counter
+  fEventInfo_CacheTrackChi2->Zero();      // chi2 counter
+  fEventInfo_CacheTrackMatchEff->Zero();  // matchEff counter
   //
   if (fHistPhiTPCcounterA)    fHistPhiTPCcounterA->Reset();
   if (fHistPhiTPCcounterC)    fHistPhiTPCcounterC->Reset();
@@ -5589,14 +5583,14 @@ void AliAnalysisTaskTIdentityPID::CalculateEventVariables()
     //
     if (!track->GetInnerParam()) continue;  // ????
     if (track->IsOn(AliVTrack::kTPCout)==kFALSE)  continue;  // ????
-    (*fCacheTrackCounters)[4]++;      // all TPC track with out flag
+    (*fEventInfo_CacheTrackCounters)[4]++;      // all TPC track with out flag
     // TPC track counters with DCAZ
     for (Int_t izCut=1; izCut<4; izCut++){
       Float_t impactParam[2];
       track->GetImpactParameters(impactParam[0],impactParam[1]);
       if (TMath::Abs(impactParam[0])>kDCACut) continue;
-      if (TMath::Abs(track->GetInnerParam()->GetParameter()[1])<10.*(izCut+1.)) (*fCacheTrackTPCCountersZ)[izCut]++;
-      if (TMath::Abs(impactParam[1])<10.*(izCut+1.)) (*fCacheTrackTPCCountersZ)[izCut+4]++;
+      if (TMath::Abs(track->GetInnerParam()->GetParameter()[1])<10.*(izCut+1.)) (*fEventInfo_CacheTrackTPCCountersZ)[izCut]++;
+      if (TMath::Abs(impactParam[1])<10.*(izCut+1.)) (*fEventInfo_CacheTrackTPCCountersZ)[izCut+4]++;
     }
     //
     //
@@ -5636,7 +5630,7 @@ void AliAnalysisTaskTIdentityPID::CalculateEventVariables()
     //      TPC Phi counter
     // --------------------------------------------------------------
     //
-    (*fCacheTrackCounters)[5]++;
+    (*fEventInfo_CacheTrackCounters)[5]++;
     if (TMath::Abs(phiTPC)>1e-10){
       if (tgl>0) fHistPhiTPCcounterA->Fill(sectorNumber);
       if (tgl<0) fHistPhiTPCcounterC->Fill(sectorNumber);
@@ -5653,7 +5647,7 @@ void AliAnalysisTaskTIdentityPID::CalculateEventVariables()
     Bool_t pileUpCut=  ( (nclITS>2) || (nclTRD>40) );
     if (pileUpCut==kFALSE) continue;
     if (TMath::Min(chi2TPC,100.)<0) continue;
-    (*fCacheTrackCounters)[1]++;
+    (*fEventInfo_CacheTrackCounters)[1]++;
     //
     Bool_t itsOK=track->IsOn(AliVTrack::kITSout) && nclITS>2  && chi2ITS>0;
     Bool_t trdOK=track->IsOn(AliVTrack::kTRDout) && nclTRD>35 && chi2TRD>0;
@@ -5663,11 +5657,11 @@ void AliAnalysisTaskTIdentityPID::CalculateEventVariables()
     //      number of clusters cut
     // --------------------------------------------------------------
     //
-    (*fCacheTrackNcl)[4]+=track->GetTPCncls(0, 63);
-    (*fCacheTrackNcl)[5]+=track->GetTPCncls(64, 127);
-    (*fCacheTrackNcl)[6]+=track->GetTPCncls(128, 159);
-    (*fCacheTrackNcl)[1] += nclTPC;
-    (*fCacheTrackChi2)[1]+= (chi2TPC>0) ? TMath::Sqrt(chi2TPC):2;   // sometimes negative chi2?
+    (*fEventInfo_CacheTrackNcl)[4]+=track->GetTPCncls(0, 63);
+    (*fEventInfo_CacheTrackNcl)[5]+=track->GetTPCncls(64, 127);
+    (*fEventInfo_CacheTrackNcl)[6]+=track->GetTPCncls(128, 159);
+    (*fEventInfo_CacheTrackNcl)[1] += nclTPC;
+    (*fEventInfo_CacheTrackChi2)[1]+= (chi2TPC>0) ? TMath::Sqrt(chi2TPC):2;   // sometimes negative chi2?
 
     if (itsOK && track->GetTPCdEdxInfo(tpcdEdxInfo)){
 
@@ -5679,17 +5673,17 @@ void AliAnalysisTaskTIdentityPID::CalculateEventVariables()
       isOK&=(itsOK||trdOK);      // stronger pile-up cut requiring ITS or TRD
 
       if (isOK) {
-        (*fCacheTrackCounters)[6]+=1;         // Counter with accepted TPC dEdx info
-        (*fCacheTrackdEdxRatio)[0]+=TMath::Log(tpcdEdxInfo.GetSignalMax(3));
-        (*fCacheTrackdEdxRatio)[1]+=TMath::Log(tpcdEdxInfo.GetSignalTot(3));
-        (*fCacheTrackdEdxRatio)[2]+=TMath::Log(tpcdEdxInfo.GetSignalMax(0)/tpcdEdxInfo.GetSignalTot(0));
-        (*fCacheTrackdEdxRatio)[3]+=TMath::Log(tpcdEdxInfo.GetSignalMax(1)/tpcdEdxInfo.GetSignalTot(1));
-        (*fCacheTrackdEdxRatio)[4]+=TMath::Log(tpcdEdxInfo.GetSignalMax(2)/tpcdEdxInfo.GetSignalTot(2));
-        (*fCacheTrackdEdxRatio)[5]+=TMath::Log(tpcdEdxInfo.GetSignalMax(3)/tpcdEdxInfo.GetSignalTot(3));
-        (*fCacheTrackdEdxRatio)[6]+=TMath::Log(tpcdEdxInfo.GetSignalMax(1)/tpcdEdxInfo.GetSignalMax(0));
-        (*fCacheTrackdEdxRatio)[7]+=TMath::Log(tpcdEdxInfo.GetSignalMax(1)/tpcdEdxInfo.GetSignalMax(2));
-        (*fCacheTrackdEdxRatio)[8]+=TMath::Log(tpcdEdxInfo.GetSignalTot(1)/tpcdEdxInfo.GetSignalTot(0));
-        (*fCacheTrackdEdxRatio)[9]+=TMath::Log(tpcdEdxInfo.GetSignalTot(1)/tpcdEdxInfo.GetSignalTot(2));
+        (*fEventInfo_CacheTrackCounters)[6]+=1;         // Counter with accepted TPC dEdx info
+        (*fEventInfo_CacheTrackdEdxRatio)[0]+=TMath::Log(tpcdEdxInfo.GetSignalMax(3));
+        (*fEventInfo_CacheTrackdEdxRatio)[1]+=TMath::Log(tpcdEdxInfo.GetSignalTot(3));
+        (*fEventInfo_CacheTrackdEdxRatio)[2]+=TMath::Log(tpcdEdxInfo.GetSignalMax(0)/tpcdEdxInfo.GetSignalTot(0));
+        (*fEventInfo_CacheTrackdEdxRatio)[3]+=TMath::Log(tpcdEdxInfo.GetSignalMax(1)/tpcdEdxInfo.GetSignalTot(1));
+        (*fEventInfo_CacheTrackdEdxRatio)[4]+=TMath::Log(tpcdEdxInfo.GetSignalMax(2)/tpcdEdxInfo.GetSignalTot(2));
+        (*fEventInfo_CacheTrackdEdxRatio)[5]+=TMath::Log(tpcdEdxInfo.GetSignalMax(3)/tpcdEdxInfo.GetSignalTot(3));
+        (*fEventInfo_CacheTrackdEdxRatio)[6]+=TMath::Log(tpcdEdxInfo.GetSignalMax(1)/tpcdEdxInfo.GetSignalMax(0));
+        (*fEventInfo_CacheTrackdEdxRatio)[7]+=TMath::Log(tpcdEdxInfo.GetSignalMax(1)/tpcdEdxInfo.GetSignalMax(2));
+        (*fEventInfo_CacheTrackdEdxRatio)[8]+=TMath::Log(tpcdEdxInfo.GetSignalTot(1)/tpcdEdxInfo.GetSignalTot(0));
+        (*fEventInfo_CacheTrackdEdxRatio)[9]+=TMath::Log(tpcdEdxInfo.GetSignalTot(1)/tpcdEdxInfo.GetSignalTot(2));
         //
         // --------------------------------------------------------------
         //      dEdx counter wrt splines and Bethe bloch
@@ -5698,57 +5692,57 @@ void AliAnalysisTaskTIdentityPID::CalculateEventVariables()
         Float_t closestPar[3];    // closestPar[0] --> closest spline, Int_t(closestPar[1]) --> particle index,  closestPar[2] --> corresponding particle mass
         GetExpecteds(track,closestPar);
         // std::cout << " aaaaaaaa  " << tpcdEdx << "     "  << closestPar[0] << "    " << closestPar[1] << "      " << closestPar[2]  << "   " << ptotTPC << std::endl;
-        (*fCacheTrackdEdxRatio)[10]+=TMath::Log(tpcdEdx/closestPar[0]);    // ???
-        (*fCacheTrackdEdxRatio)[11]+=TMath::Log((tpcdEdxInfo.GetSignalMax(0)/50.)/AliExternalTrackParam::BetheBlochAleph(ptotTPC/closestPar[2]));
-        (*fCacheTrackdEdxRatio)[12]+=TMath::Log((tpcdEdxInfo.GetSignalMax(1)/50.)/AliExternalTrackParam::BetheBlochAleph(ptotTPC/closestPar[2]));
-        (*fCacheTrackdEdxRatio)[13]+=TMath::Log((tpcdEdxInfo.GetSignalMax(2)/50.)/AliExternalTrackParam::BetheBlochAleph(ptotTPC/closestPar[2]));
-        (*fCacheTrackdEdxRatio)[14]+=TMath::Log((tpcdEdxInfo.GetSignalMax(3)/50.)/AliExternalTrackParam::BetheBlochAleph(ptotTPC/closestPar[2]));
-        (*fCacheTrackdEdxRatio)[15]+=TMath::Log((tpcdEdxInfo.GetSignalTot(0)/50.)/AliExternalTrackParam::BetheBlochAleph(ptotTPC/closestPar[2]));
-        (*fCacheTrackdEdxRatio)[16]+=TMath::Log((tpcdEdxInfo.GetSignalTot(1)/50.)/AliExternalTrackParam::BetheBlochAleph(ptotTPC/closestPar[2]));
-        (*fCacheTrackdEdxRatio)[17]+=TMath::Log((tpcdEdxInfo.GetSignalTot(2)/50.)/AliExternalTrackParam::BetheBlochAleph(ptotTPC/closestPar[2]));
-        (*fCacheTrackdEdxRatio)[18]+=TMath::Log((tpcdEdxInfo.GetSignalTot(3)/50.)/AliExternalTrackParam::BetheBlochAleph(ptotTPC/closestPar[2]));
-        (*fCacheTrackdEdxRatio)[19]+=TMath::Log((tpcdEdxInfo.GetSignalMax(0)/50.));
-        (*fCacheTrackdEdxRatio)[20]+=TMath::Log((tpcdEdxInfo.GetSignalMax(1)/50.));
-        (*fCacheTrackdEdxRatio)[21]+=TMath::Log((tpcdEdxInfo.GetSignalMax(2)/50.));
-        (*fCacheTrackdEdxRatio)[22]+=TMath::Log((tpcdEdxInfo.GetSignalMax(3)/50.));
-        (*fCacheTrackdEdxRatio)[23]+=TMath::Log((tpcdEdxInfo.GetSignalTot(0)/50.));
-        (*fCacheTrackdEdxRatio)[24]+=TMath::Log((tpcdEdxInfo.GetSignalTot(1)/50.));
-        (*fCacheTrackdEdxRatio)[25]+=TMath::Log((tpcdEdxInfo.GetSignalTot(2)/50.));
-        (*fCacheTrackdEdxRatio)[26]+=TMath::Log((tpcdEdxInfo.GetSignalTot(3)/50.));
+        (*fEventInfo_CacheTrackdEdxRatio)[10]+=TMath::Log(tpcdEdx/closestPar[0]);    // ???
+        (*fEventInfo_CacheTrackdEdxRatio)[11]+=TMath::Log((tpcdEdxInfo.GetSignalMax(0)/50.)/AliExternalTrackParam::BetheBlochAleph(ptotTPC/closestPar[2]));
+        (*fEventInfo_CacheTrackdEdxRatio)[12]+=TMath::Log((tpcdEdxInfo.GetSignalMax(1)/50.)/AliExternalTrackParam::BetheBlochAleph(ptotTPC/closestPar[2]));
+        (*fEventInfo_CacheTrackdEdxRatio)[13]+=TMath::Log((tpcdEdxInfo.GetSignalMax(2)/50.)/AliExternalTrackParam::BetheBlochAleph(ptotTPC/closestPar[2]));
+        (*fEventInfo_CacheTrackdEdxRatio)[14]+=TMath::Log((tpcdEdxInfo.GetSignalMax(3)/50.)/AliExternalTrackParam::BetheBlochAleph(ptotTPC/closestPar[2]));
+        (*fEventInfo_CacheTrackdEdxRatio)[15]+=TMath::Log((tpcdEdxInfo.GetSignalTot(0)/50.)/AliExternalTrackParam::BetheBlochAleph(ptotTPC/closestPar[2]));
+        (*fEventInfo_CacheTrackdEdxRatio)[16]+=TMath::Log((tpcdEdxInfo.GetSignalTot(1)/50.)/AliExternalTrackParam::BetheBlochAleph(ptotTPC/closestPar[2]));
+        (*fEventInfo_CacheTrackdEdxRatio)[17]+=TMath::Log((tpcdEdxInfo.GetSignalTot(2)/50.)/AliExternalTrackParam::BetheBlochAleph(ptotTPC/closestPar[2]));
+        (*fEventInfo_CacheTrackdEdxRatio)[18]+=TMath::Log((tpcdEdxInfo.GetSignalTot(3)/50.)/AliExternalTrackParam::BetheBlochAleph(ptotTPC/closestPar[2]));
+        (*fEventInfo_CacheTrackdEdxRatio)[19]+=TMath::Log((tpcdEdxInfo.GetSignalMax(0)/50.));
+        (*fEventInfo_CacheTrackdEdxRatio)[20]+=TMath::Log((tpcdEdxInfo.GetSignalMax(1)/50.));
+        (*fEventInfo_CacheTrackdEdxRatio)[21]+=TMath::Log((tpcdEdxInfo.GetSignalMax(2)/50.));
+        (*fEventInfo_CacheTrackdEdxRatio)[22]+=TMath::Log((tpcdEdxInfo.GetSignalMax(3)/50.));
+        (*fEventInfo_CacheTrackdEdxRatio)[23]+=TMath::Log((tpcdEdxInfo.GetSignalTot(0)/50.));
+        (*fEventInfo_CacheTrackdEdxRatio)[24]+=TMath::Log((tpcdEdxInfo.GetSignalTot(1)/50.));
+        (*fEventInfo_CacheTrackdEdxRatio)[25]+=TMath::Log((tpcdEdxInfo.GetSignalTot(2)/50.));
+        (*fEventInfo_CacheTrackdEdxRatio)[26]+=TMath::Log((tpcdEdxInfo.GetSignalTot(3)/50.));
 
       }
     }
 
     if (itsOK) {  // ITS
-      (*fCacheTrackCounters)[0]++;
-      (*fCacheTrackNcl)[0] += nclITS;
-      (*fCacheTrackChi2)[0] += TMath::Min(TMath::Sqrt(chi2ITS),10.); // cutoff chi2 10
-      (*fCacheTrackMatchEff)[2]+=trdOK;
-      (*fCacheTrackMatchEff)[3]+=tofOK;
-      (*fCacheTrackChi2)[4]+= (fTrackChi2TPC>0) ? TMath::Sqrt(fTrackChi2TPC):2; // TPC chi2 in case prolongation to ITS
+      (*fEventInfo_CacheTrackCounters)[0]++;
+      (*fEventInfo_CacheTrackNcl)[0] += nclITS;
+      (*fEventInfo_CacheTrackChi2)[0] += TMath::Min(TMath::Sqrt(chi2ITS),10.); // cutoff chi2 10
+      (*fEventInfo_CacheTrackMatchEff)[2]+=trdOK;
+      (*fEventInfo_CacheTrackMatchEff)[3]+=tofOK;
+      (*fEventInfo_CacheTrackChi2)[4]+= (fTrackChi2TPC>0) ? TMath::Sqrt(fTrackChi2TPC):2; // TPC chi2 in case prolongation to ITS
       // long tracks properties
       if (nclITS>4){
-        (*fCacheTrackCounters)[7]++;
-        (*fCacheTrackNcl)[7] += nclITS;
-        (*fCacheTrackChi2)[7]+=TMath::Min(TMath::Sqrt(chi2ITS),10.);
+        (*fEventInfo_CacheTrackCounters)[7]++;
+        (*fEventInfo_CacheTrackNcl)[7] += nclITS;
+        (*fEventInfo_CacheTrackChi2)[7]+=TMath::Min(TMath::Sqrt(chi2ITS),10.);
       }
     }
     if (trdOK) {// TRD    ///TODO - why chi2TRD could be smaller than 0?
-      (*fCacheTrackCounters)[2]++;
-      (*fCacheTrackNcl)[2] += nclTRD;
-      (*fCacheTrackChi2)[2] += TMath::Sqrt(chi2TRD);
-      (*fCacheTrackMatchEff)[0]+=itsOK;
-      (*fCacheTrackChi2)[5]+= (fTrackChi2TPC>0) ? TMath::Sqrt(fTrackChi2TPC):2; // TPC chi2 in case prolongation to TRD
+      (*fEventInfo_CacheTrackCounters)[2]++;
+      (*fEventInfo_CacheTrackNcl)[2] += nclTRD;
+      (*fEventInfo_CacheTrackChi2)[2] += TMath::Sqrt(chi2TRD);
+      (*fEventInfo_CacheTrackMatchEff)[0]+=itsOK;
+      (*fEventInfo_CacheTrackChi2)[5]+= (fTrackChi2TPC>0) ? TMath::Sqrt(fTrackChi2TPC):2; // TPC chi2 in case prolongation to TRD
       if (nclTRD>80){
-        (*fCacheTrackCounters)[8]++;
-        (*fCacheTrackNcl)[8] += nclTRD;
-        (*fCacheTrackChi2)[8]+=TMath::Min(TMath::Sqrt(chi2TRD),10.);
+        (*fEventInfo_CacheTrackCounters)[8]++;
+        (*fEventInfo_CacheTrackNcl)[8] += nclTRD;
+        (*fEventInfo_CacheTrackChi2)[8]+=TMath::Min(TMath::Sqrt(chi2TRD),10.);
       }
     }
     if (tofOK) {  // TOF
-      (*fCacheTrackCounters)[3]++;
-      (*fCacheTrackNcl)[3] += 1;   // dummy for the moment
-      (*fCacheTrackChi2)[3]+= 1;   //
+      (*fEventInfo_CacheTrackCounters)[3]++;
+      (*fEventInfo_CacheTrackdEdxRatio)[3] += 1;   // dummy for the moment
+      (*fEventInfo_CacheTrackChi2)[3]+= 1;   //
     }
   } // end of track LOOP
   //
@@ -5756,26 +5750,26 @@ void AliAnalysisTaskTIdentityPID::CalculateEventVariables()
   //  calculate event averages
   // ======================================================================
   //
-  for (Int_t i=0; i<9; i++) if ((*fCacheTrackCounters)[i]>0) (*fCacheTrackNcl)[i]/=(*fCacheTrackCounters)[i];
-  for (Int_t i=0; i<4; i++) if ((*fCacheTrackCounters)[i]>0) (*fCacheTrackChi2)[i]/=(*fCacheTrackCounters)[i];
+  for (Int_t i=0; i<9; i++) if ((*fEventInfo_CacheTrackCounters)[i]>0) (*fEventInfo_CacheTrackdEdxRatio)[i]/=(*fEventInfo_CacheTrackCounters)[i];
+  for (Int_t i=0; i<4; i++) if ((*fEventInfo_CacheTrackCounters)[i]>0) (*fEventInfo_CacheTrackChi2)[i]/=(*fEventInfo_CacheTrackCounters)[i];
 
-  for (Int_t i=4; i<7; i++)  if ((*fCacheTrackCounters)[1]>0) (*fCacheTrackNcl)[i]/=(*fCacheTrackCounters)[1];
+  for (Int_t i=4; i<7; i++)  if ((*fEventInfo_CacheTrackCounters)[1]>0) (*fEventInfo_CacheTrackdEdxRatio)[i]/=(*fEventInfo_CacheTrackCounters)[1];
   //
-  if ((*fCacheTrackCounters)[6]>0){
-    for (Int_t i=0; i<27; i++)   (*fCacheTrackdEdxRatio)[i]/=(*fCacheTrackCounters)[6];
+  if ((*fEventInfo_CacheTrackCounters)[6]>0){
+    for (Int_t i=0; i<27; i++)   (*fEventInfo_CacheTrackdEdxRatio)[i]/=(*fEventInfo_CacheTrackCounters)[6];
   }
   //
   // conditional matching efficiency and chi2
-  if ((*fCacheTrackCounters)[0]>0){
-    (*fCacheTrackMatchEff)[2]/=(*fCacheTrackCounters)[0];  // TRD if ITS
-    (*fCacheTrackMatchEff)[3]/=(*fCacheTrackCounters)[0];  // TOF if ITS
-    (*fCacheTrackChi2)[4]/=(*fCacheTrackCounters)[0];
+  if ((*fEventInfo_CacheTrackCounters)[0]>0){
+    (*fEventInfo_CacheTrackMatchEff)[2]/=(*fEventInfo_CacheTrackCounters)[0];  // TRD if ITS
+    (*fEventInfo_CacheTrackMatchEff)[3]/=(*fEventInfo_CacheTrackCounters)[0];  // TOF if ITS
+    (*fEventInfo_CacheTrackChi2)[4]/=(*fEventInfo_CacheTrackCounters)[0];
   }
-  if ((*fCacheTrackCounters)[2]>0) {
-    (*fCacheTrackMatchEff)[0]/=(*fCacheTrackCounters)[2];
-    (*fCacheTrackChi2)[5]/=(*fCacheTrackCounters)[2];
+  if ((*fEventInfo_CacheTrackCounters)[2]>0) {
+    (*fEventInfo_CacheTrackMatchEff)[0]/=(*fEventInfo_CacheTrackCounters)[2];
+    (*fEventInfo_CacheTrackChi2)[5]/=(*fEventInfo_CacheTrackCounters)[2];
   } //ITS if TRD
-  (*fCacheTrackCounters)[9]=event->GetNumberOfTracks();  // original number of ESDtracks
+  (*fEventInfo_CacheTrackCounters)[9]=event->GetNumberOfTracks();  // original number of ESDtracks
   //
   //
   for (Int_t iphi=0; iphi<36; iphi++){
@@ -5801,8 +5795,8 @@ void AliAnalysisTaskTIdentityPID::CalculateEventVariables()
     for (Int_t itrack=0;itrack<nNumberOfTracks;itrack++) {
       if (tpcDCAarrPhiC[iphi][itrack]>kDCAtpcNULL) { tmpC[k]=tpcDCAarrPhiC[iphi][itrack]; k++; }
     }
-    (*fPhiTPCdcarA)[iphi]=TMath::Median(countNonZerosA,tmpA);
-    (*fPhiTPCdcarC)[iphi]=TMath::Median(countNonZerosC,tmpC);
+    (*fEventInfo_PhiTPCdcarA)[iphi]=TMath::Median(countNonZerosA,tmpA);
+    (*fEventInfo_PhiTPCdcarC)[iphi]=TMath::Median(countNonZerosC,tmpC);
 
   }
 
@@ -5816,11 +5810,11 @@ Int_t AliAnalysisTaskTIdentityPID::CacheTPCEventInformation()
   const Double_t kDCACut=5;
   const Float_t knTrackletCut=1.5;
   // FILL DCA histograms
-  fHisTPCVertexA->Reset();
-  fHisTPCVertexC->Reset();
-  fHisTPCVertexACut->Reset();
-  fHisTPCVertexCCut->Reset();
-  fHisTPCVertex->Reset();
+  fEventInfo_HisTPCVertexA->Reset();
+  fEventInfo_HisTPCVertexC->Reset();
+  fEventInfo_HisTPCVertexACut->Reset();
+  fEventInfo_HisTPCVertexCCut->Reset();
+  fEventInfo_HisTPCVertex->Reset();
 
   Int_t nTracks=event->GetNumberOfTracks();
   Int_t selected=0;
@@ -5836,15 +5830,15 @@ Int_t AliAnalysisTaskTIdentityPID::CacheTPCEventInformation()
     pTrack->SetESDEvent(fESD);
     selected++;
     if ((pTrack->GetNumberOfTRDClusters()/20.+pTrack->GetNumberOfITSClusters())>knTrackletCut){
-      fHisTPCVertex->Fill(pTrack->GetTPCInnerParam()->GetZ());
-      if (pTrack->GetTgl()>0) fHisTPCVertexACut->Fill(pTrack->GetTPCInnerParam()->GetZ());
-      if (pTrack->GetTgl()<0) fHisTPCVertexCCut->Fill(pTrack->GetTPCInnerParam()->GetZ());
+      fEventInfo_HisTPCVertex->Fill(pTrack->GetTPCInnerParam()->GetZ());
+      if (pTrack->GetTgl()>0) fEventInfo_HisTPCVertexACut->Fill(pTrack->GetTPCInnerParam()->GetZ());
+      if (pTrack->GetTgl()<0) fEventInfo_HisTPCVertexCCut->Fill(pTrack->GetTPCInnerParam()->GetZ());
     }else{
-      if (pTrack->GetTgl()>0) fHisTPCVertexA->Fill(pTrack->GetTPCInnerParam()->GetZ());
-      if (pTrack->GetTgl()<0) fHisTPCVertexC->Fill(pTrack->GetTPCInnerParam()->GetZ());
+      if (pTrack->GetTgl()>0) fEventInfo_HisTPCVertexA->Fill(pTrack->GetTPCInnerParam()->GetZ());
+      if (pTrack->GetTgl()<0) fEventInfo_HisTPCVertexC->Fill(pTrack->GetTPCInnerParam()->GetZ());
     }
   }
-  printf(" Info::marsland: ===== In the CacheTPCEventInformation:  %d\n",selected);
+  if (fUseCouts) printf(" Info::marsland: ===== In the CacheTPCEventInformation:  %d\n",selected);
   return selected;
 }
 //________________________________________________________________________
@@ -5944,7 +5938,7 @@ void AliAnalysisTaskTIdentityPID::DumpDownScaledTree()
       if(!fTreeSRedirector) return;
       (*fTreeSRedirector)<<"dscaled"<<
       "centV0M="              << fCentrality           <<  //  centrality
-      "cent.="                << fCentralityEstimates  <<  // track counter
+      "cent.="                << fEventInfo_CentralityEstimates  <<  // track counter
       "gid="                  << fEventGID             <<  //  global event ID
       "intrate="              << fIntRate              <<  // interaction rate
       "timestamp="            << fTimeStamp            <<  // timestamp

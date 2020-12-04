@@ -74,11 +74,11 @@ AliAnalysisTaskTIdentityPID* Config_marsland_TIdentityPID(Bool_t getFromAlien, I
     case 4:{
       std::cout << " SETTING TYPE = " << settingType << " Info::marsland: Fill hists for all syst setting " << std::endl;
       // Real data settings
-      task->SetUseCouts(kTRUE);
       if( (passIndex==3 && periodName.Contains("18")) || (passIndex==2 && periodName.Contains("15")) ) {
         task->SetDefaultEventCuts(kTRUE);
-        task->SetPileUpTightness(2);
+        task->SetPileUpTightness(0);
       }
+      task->SetUseCouts(kTRUE);
       task->SetNEtabins(16);
       task->SetEtaLowerEdge(-0.8.);
       task->SetEtaUpperEdge( 0.8.);
