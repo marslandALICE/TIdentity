@@ -31,6 +31,7 @@ class AliPIDCombined;
 #include "AliTPCdEdxInfo.h"
 #include "AliESDv0KineCuts.h"
 #include "THnSparse.h"
+#include "TClonesArray.h"
 #include "THn.h"
 #include "TVectorF.h"
 #include "TCutG.h"
@@ -40,7 +41,7 @@ class AliPIDCombined;
 
 // class AliAnalysisTaskPIDetaTreeElectrons : public AliAnalysisTaskPIDV0base {
 class AliAnalysisTaskTIdentityPID : public AliAnalysisTaskSE {
-  public:
+public:
 
   AliEventCuts fEventCuts;     /// Event cuts
 
@@ -229,6 +230,7 @@ class AliAnalysisTaskTIdentityPID : public AliAnalysisTaskSE {
   void   SetDefaultTrackCuts(const Bool_t ifDefaultTrackCuts = kFALSE){fDefaultTrackCuts= ifDefaultTrackCuts;}
   void   SetDefaultEventCuts(const Bool_t ifDefaultEventCuts = kFALSE){fDefaultEventCuts= ifDefaultEventCuts;}
   void   SetFillNudynFastGen(const Bool_t ifNudynFastGen = kFALSE)    {fFillNudynFastGen= ifNudynFastGen;}
+  void   SetCorrectForMissCl(const Int_t ifCorrectForMissCl = kFALSE)    {fCorrectForMissCl= ifCorrectForMissCl;}
   void   SetUsePtCut(const Int_t ifUsePtCut = 1)                      {fUsePtCut            = ifUsePtCut;}
   void   SetTrackOriginType(const Int_t ifTrackOriginType = 0)        {fTrackOriginType     = ifTrackOriginType;}
   void   SetRapidityType(const Int_t ifRapidityType = 0)              {fRapidityType        = ifRapidityType;}
@@ -240,6 +242,8 @@ class AliAnalysisTaskTIdentityPID : public AliAnalysisTaskSE {
   void   SetWeakAndMaterial(const Bool_t ifWeakAndMaterial = kFALSE)  {fWeakAndMaterial     = ifWeakAndMaterial;}
   void   SetFillEventInfo(const Bool_t ifEventInfo = kFALSE)          {fEventInfo           = ifEventInfo;}
   void   SetPercentageOfEvents(const Int_t nPercentageOfEvents = 0)   {fPercentageOfEvents = nPercentageOfEvents;}
+  void   SetNSettings(const Int_t nSettings = 22)                     {fNSettings = nSettings;}
+
   //
   Bool_t GetRunOnGrid() const { return fRunOnGrid; }
 
@@ -275,8 +279,12 @@ class AliAnalysisTaskTIdentityPID : public AliAnalysisTaskSE {
     // prepare real data centrality bins
     fNCentbinsData = tmpCentbins;
     fNCentBinsMC   = tmpCentbins-1;
-    fxCentBins = new Float_t[fNCentbinsData];
-    for (Int_t i=0; i<fNCentbinsData; i++) fxCentBins[i] =  tmpfxCentBins[i];
+    std::cout << "AAAAAAAAAAAAAAA" << fNCentbinsData <<  std::endl;
+    fxCentBins.resize(fNCentbinsData);
+    for (Int_t i=0; i<fNCentbinsData; i++) {
+      fxCentBins[i] =  tmpfxCentBins[i];
+      std::cout << "BBBBBBBBB" << fxCentBins[i] <<  std::endl;
+      }
     fcentDownArr = new Float_t[fNCentBinsMC];
     fcentUpArr   = new Float_t[fNCentBinsMC];
     for (Int_t i=0; i<fNCentbinsData-1; i++) fcentDownArr[i] =  tmpfxCentBins[i];
@@ -474,6 +482,23 @@ class AliAnalysisTaskTIdentityPID : public AliAnalysisTaskSE {
 
   }
 
+  void SetLookUpTable_MissCl(TClonesArray *lookUpArray)
+  {
+    // set MC eta values to scan
+    std::cout << " Info::marsland: !!!!!! SetLookUpTable_MissCl is being set !!!!!!!   " << std::endl;
+    //
+    const Int_t nParticles=4;
+    const Int_t nMultBins=16;
+    for (Int_t ipart=0; ipart<nParticles; ipart++){
+      for (Int_t icent=0; icent<nMultBins; icent++){
+        TString objname = Form("hDiffMissCl_part_%d_cent_%d",ipart,icent);
+        fH2MissCl[ipart][icent] = *((TH2F*)(lookUpArray->FindObject(objname))->Clone());
+        std::cout << fH2MissCl[ipart][icent].GetName() << std::endl;
+      }
+    }
+
+  }
+
 private:
 
   AliAnalysisTaskTIdentityPID(const AliAnalysisTaskTIdentityPID&);
@@ -507,7 +532,7 @@ private:
   //
   Int_t CountEmptyEvents(Int_t counterBin);  // Just count if there is empty events
   Int_t CacheTPCEventInformation();
-  UInt_t SetCutBitsAndSomeTrackVariables(AliESDtrack *track);
+  UInt_t SetCutBitsAndSomeTrackVariables(AliESDtrack *track, Int_t particleType);
   Bool_t CheckIfFromResonance(Int_t mcType, AliMCParticle *trackMCgen, Int_t trackIndex, Bool_t parInterest, Double_t ptot, Double_t eta, Double_t cent, Bool_t fillTree);
   Bool_t CheckIfFromAnyResonance(AliMCParticle *trackMCgen, Float_t etaLow, Float_t etaUp, Float_t pDown, Float_t pUp);
   Bool_t ApplyDCAcutIfNoITSPixel(AliESDtrack *track);
@@ -520,6 +545,11 @@ private:
   AliESDEvent      * fESD;                    //! ESD object
   TList            * fListHist;               //! list for histograms
   AliESDtrackCuts  * fESDtrackCuts;           //! basic cut variables
+  AliESDtrackCuts  * fESDtrackCuts_Bit96;     //! basic cut variables
+  AliESDtrackCuts  * fESDtrackCuts_Bit96_spd;     //! basic cut variables
+  AliESDtrackCuts  * fESDtrackCuts_Bit96_sdd;     //! basic cut variables
+  AliESDtrackCuts  * fESDtrackCuts_Bit128;    //! basic cut variables
+  AliESDtrackCuts  * fESDtrackCuts_Bit768;    //! basic cut variables
   AliESDtrackCuts  * fESDtrackCutsLoose;      //! basic cut variables for debugging
   AliESDv0Cuts     * fESDtrackCutsV0;         //! basic cut variables for V0
   AliESDtrackCuts  * fESDtrackCutsCleanSamp;  //! basic cut variables for clean pion and electron form V0s
@@ -576,6 +606,7 @@ private:
 
   THnSparseF       * fHndEdx;                 // histogram which hold all dEdx info
   THnSparseF       * fHnExpected[22];         // histogram which hold all PIDresponse info
+  TH2F              fH2MissCl[4][16];          // histogram which hold all PIDresponse info
 
   TString           fChunkName;
 
@@ -605,6 +636,7 @@ private:
   Bool_t            fDefaultTrackCuts;
   Bool_t            fDefaultEventCuts;
   Bool_t            fFillNudynFastGen;
+  Int_t             fCorrectForMissCl;       // 0; defaults crows, 1; ncls used wo correction, 2; ncls used with correction
   Int_t             fUsePtCut;
   Int_t             fTrackOriginType;
   Int_t             fRapidityType;
@@ -721,6 +753,7 @@ private:
   Int_t              fSign;                   // sign of the particle
   Int_t              fTPCShared;              // number of shared clusters
   Int_t              fNcl;                    // number of points used for dEdx
+  Int_t              fNclCorr;                // number of points used for dEdx
 
   Int_t              fNResBins;
   Int_t              fNBarBins;
@@ -744,15 +777,16 @@ private:
   Double_t fTrackProbPiTPC;
   Double_t fTrackProbKaTPC;
   Double_t fTrackProbPrTPC;
-  Bool_t fTrackProbDeTPC;
+  Bool_t   fTrackProbDeTPC;
   Double_t fTrackProbElTOF;
   Double_t fTrackProbPiTOF;
   Double_t fTrackProbKaTOF;
   Double_t fTrackProbPrTOF;
-  Bool_t fTrackProbDeTOF;
+  Bool_t   fTrackProbDeTOF;
 
   Float_t fTrackTPCCrossedRows;
   Float_t fTrackChi2TPC;
+  Float_t fTrackChi2TPCcorr;
   Float_t fTrackDCAxy;
   Float_t fTrackDCAz;
   Float_t fTrackLengthInActiveZone;
@@ -783,10 +817,10 @@ private:
 
   //  Variables for systematic uncertainty checks
   //  B field configurations -->  use default settings and analyse the following set of runs
-  //  ***********************************************
+  //  ------------------------------------------------
   //  Field (++)  --> run interval is [137161, 138275]
   //  Field (--)  --> run interval is [138364, 139510]
-  //  ***********************************************
+  //  ------------------------------------------------
   Int_t              fSystCentEstimatetor;   // 0 --> "V0M"   ||| -1 -->  "TRK" ||| +1 --> "CL1"
   Int_t              fSystCrossedRows;       // 0 -->  80     ||| -1 -->   60   ||| +1 -->  100
   Int_t              fSystDCAxy;             // 0 --> default ||| -1 --> -sigma ||| +1 --> +sigma
@@ -826,7 +860,7 @@ private:
   Float_t            *fcentUpArr;            //[fNCentBinsMC]
   Float_t            *fpDownArr;             //[fNMomBinsMC]
   Float_t            *fpUpArr;               //[fNMomBinsMC]
-  Float_t            *fxCentBins;            //[fNCentbinsData]
+  std::vector<float> fxCentBins;             ///<
   TString            *fResonances;           //[fNResBins]
   Int_t              *fBaryons;              //[fNBarBins]
   //
@@ -867,7 +901,10 @@ private:
   TVectorF         * fEventInfo_CacheTrackTPCCountersZ; // track counter with DCA z cut
   static const char*  fEventInfo_centEstStr[];              //!centrality types
 
-
+  AliEventCuts* fPileUpTightnessCut4;
+  AliEventCuts* fPileUpTightnessCut3;
+  AliEventCuts* fPileUpTightnessCut2;
+  AliEventCuts* fPileUpTightnessCut1;
 
   ClassDef(AliAnalysisTaskTIdentityPID, 6);
 

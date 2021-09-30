@@ -1,12 +1,4 @@
-// R__ADD_INCLUDE_PATH($PWD)
-#include "AliAnalysisTaskTIdentityPID.h"
-#include "AliAnalysisManager.h"
-#include "AliLog.h"
-#include "TSystem.h"
-#include "TROOT.h"
-#include "TRandom.h"
-
-AliAnalysisTask *AddTask_marsland_TIdentityPID(Bool_t getFromAlien=kFALSE, TString configFileName = "Config_marsland_TIdentityPID.C",Int_t settingType = 0,Int_t year = 1, TString periodName="15o", Int_t passIndex = 0, Int_t lookUpTableIndex = 1, const char* suffix = "", Int_t containerNameMode=0)
+AliAnalysisTask *AddTask_marsland_TIdentityPID(Bool_t getFromAlien=kFALSE, TString configFileName = "Config_marsland_TIdentityPID.C",Int_t settingType = 0,Int_t year = 1, TString periodName="15o", Int_t passIndex, Int_t lookUpTableIndex = 1, const char* suffix = "", Int_t containerNameMode=0)
 {
   gSystem->Load("libANALYSIS");
   gSystem->Load("libANALYSISalice");
@@ -68,32 +60,14 @@ AliAnalysisTask *AddTask_marsland_TIdentityPID(Bool_t getFromAlien=kFALSE, TStri
     suffix = "test";
     containerNameMode=0;
   }
-  TString combinedName;
-  combinedName.Form("marslandTIdentity_%s", suffix);
   TString configFilePath(configBasePath+configFileName);
   std::cout << " Info::marsland: Configpath:  " << configFilePath << " year = " << year << " --- period name = " << periodName << " --- pass = " << passIndex << " --- lookUpTableIndex = " << lookUpTableIndex << " --- settingType = " << settingType << std::endl;
   //
-
-  AliAnalysisTaskTIdentityPID* task(0x0);
-  #ifdef __CLING__
-      std::stringstream triggermakeradd;
-      triggermakeradd << ".x " << configFilePath.Data() << "(";
-      triggermakeradd << (getFromAlien ? "kTRUE" : "kFALSE") << ", ";
-      triggermakeradd << settingType << ", ";
-      triggermakeradd << year << ", ";
-      triggermakeradd << "\"" << periodName.Data() << "\"" << ", ";
-      triggermakeradd << passIndex << ", ";
-      triggermakeradd << lookUpTableIndex << ", ";
-      triggermakeradd << "\"" << combinedName.Data() << "\"";
-      triggermakeradd << ")";
-      std::string triggermakeraddstring = triggermakeradd.str();
-      std::cout << triggermakeraddstring << std::endl;
-      task = (AliAnalysisTaskTIdentityPID*)gROOT->ProcessLine(triggermakeraddstring.c_str());
-  #else
-      gROOT->LoadMacro(configFilePath.Data());
-      task = Config_marsland_TIdentityPID(getFromAlien,settingType,year,periodName,passIndex,lookUpTableIndex,combinedName);
-  #endif
-  
+  gROOT->LoadMacro(configFilePath.Data());
+  //
+  TString combinedName;
+  combinedName.Form("marslandTIdentity_%s", suffix);
+  AliAnalysisTaskTIdentityPID* task = Config_marsland_TIdentityPID(getFromAlien,settingType,year,periodName,passIndex,lookUpTableIndex,combinedName);
   Bool_t hasMC = (AliAnalysisManager::GetAnalysisManager()->GetMCtruthEventHandler()!=0x0);
   task->SetIsMCtrue(hasMC);
   printf(" ========================= MC info %d ========================= \n",hasMC);
@@ -126,7 +100,7 @@ AliAnalysisTask *AddTask_marsland_TIdentityPID(Bool_t getFromAlien=kFALSE, TStri
   mgr->ConnectInput(task, 0, cinput);
   //
   // Get the output file name which is by default "AnalysisResults.root" --> Either write output into a TDirectoryFile or directly in "AnalysisResults.root"
-  const char* outputFileName = AliAnalysisManager::GetCommonFileName();
+  char* outputFileName = AliAnalysisManager::GetCommonFileName();
   TString dirName = "";
   TString fileDirStructure = "";
   TString listName = "";

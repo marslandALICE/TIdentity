@@ -1,255 +1,61 @@
+R__ADD_INCLUDE_PATH($ALICE_ROOT)
+#include <ANALYSIS/macros/train/AddESDHandler.C>
+#include <ANALYSIS/macros/train/AddAODHandler.C>
+#include <ANALYSIS/macros/train/AddMCHandler.C>
+#include <ANALYSIS/macros/AddTaskPIDResponse.C>
+
+R__ADD_INCLUDE_PATH($ALICE_PHYSICS)
+#include <OADB/macros/AddTaskPhysicsSelection.C>
+#include <OADB/macros/AddTaskCentrality.C>
+#include <OADB/COMMON/MULTIPLICITY/macros/AddTaskMultSelection.C>
+#include <PWGPP/TPC/macros/AddTaskConfigOCDB.C>
+
+R__ADD_INCLUDE_PATH($PWD)
+#include <AddTask_marsland_TIdentityPID.C>
+#include <AddTaskFilteredTreeLocal.C>
+// #include <AliAnalysisTaskTIdentityPID.cxx>
+
+#include "AliAODInputHandler.h"
+#include "AliMCEventHandler.h"
+#include "AliESDInputHandler.h"
+
+AliAnalysisGrid* CreateAlienHandler(Int_t, TString, Int_t, TString, TString, Int_t);
 class  AliAnalysisManager;
 class  AliAnalysisAlien;
-//
-//
-//
-// modes: "test" to run over a small set of files (requires alien connection but everything stored locally),
-//        "full" to run over everything on the grid,
-//        "terminate" to merge results after "full"
-//
+
 /*
 
-//
-// valgrindOption --> 0 --> Normal, 1--> valgrind, 2--> callgrind, 3-->Massif
-// mode           --> "test" or "full" or "terminate"
-// localOrGrid    --> 0 --> Use only one run and run locally, 1 --> run for all runs on the grid
-// list           --> defines the data set according to year, period and pass --> "test-2015-LHC15o-pass5_lowIR.list"
-// fname          --> output directory name in my home folder in alien
-// isMC           --> 0:Data , 1:MCfull,  2:fastMC
-// setType        --> setting type encoded in Config file
-// lhcYear        --> year
-//
-
-gSystem->AddIncludePath("-I$ALICE_ROOT/include");
-gSystem->AddIncludePath("-I$ALICE_PHYSICS/include");
-gSystem->Load("libANALYSIS");
-gSystem->Load("libANALYSISalice");
-.L /home/marsland/Desktop/ubuntu_desktop/workdir/RUN_ON_GRID/Ebye/code/AliAnalysisTaskTIdentityPID.cxx++
-
-## comma separated list to coulumn
-tr ","  "\n" < runsAlien-2018-LHC18q-pass3.list > runs-2018-LHC18q-pass3.list
-for job in $(less runsMCa-2020-LHC20j6a-pass2.list | awk '{print $1}'); do echo $job >> runsMC-2020-LHC20j6a-pass2.list ; done;
-
-// ---------------------------------------------------------------------------------------------------
-// ---------------------------------------------------------------------------------------------------
-Notes:
-runs-2017-LHC17i2-pass1.list  --> MultSelectionTask should be disabled
-// run debugging:  0 --> Normal, 1--> valgrind, 2--> callgrind, 3-->Massif
-
-// ---------------------------------------------------------------------------------------------------
-// ---------------------------------------------------------------------------------------------------
-
-// Sync all directories
-meld /home/marsland/Desktop/ubuntu_desktop/workdir/RUN_ON_GRID/Ebye/code/ /u/marsland/workdir/RUN_ON_GRID/Ebye/code/
-meld /home/marsland/Desktop/ubuntu_desktop/workdir/RUN_ON_GRID/Ebye/code/ /afs/cern.ch/work/m/marsland/workdir/RUN_ON_GRID/Ebye/code
-
-meld /home/marsland/Desktop/ubuntu_desktop/workdir/RUN_ON_GRID/ESD_Filtering/code/ /u/marsland/workdir/RUN_ON_GRID/ESD_Filtering/code/
-meld /home/marsland/Desktop/ubuntu_desktop/workdir/RUN_ON_GRID/ESD_Filtering/code/ /afs/cern.ch/work/m/marsland/workdir/RUN_ON_GRID/ESD_Filtering/code
-
-
-rsync -rtvu --chmod=Du=rwx,Dg=rx,Do=rx,Fu=rw,Fg=r,Fo=r $RUN_ON_GRID_DIR   /u/marsland/workdir/
-rsync -rtvu --chmod=Du=rwx,Dg=rx,Do=rx,Fu=rw,Fg=r,Fo=r $RUN_ON_GRID_DIR   /afs/cern.ch/work/m/marsland/workdir/
-
-// ---------------------------------------------------------------------------------------------------
-// ---------------------------------------------------------------------------------------------------
-
-Estimate the number of input files
-
-source $RUN_ON_GRID_DIR/Ebye/code/helpers/alihadd_GRIDoutput.sh;
-CountFiles "/alice/sim/2017/LHC17c5b"       "AliESDs.root"      --> 252442  #chunks  HIJING   0-100%     2,524,160 events
-CountFiles "/alice/sim/2016/LHC16g1"        "AliESDs.root"      --> 315589  #chunks  HIJING   0-100%     3,214,480 events
-CountFiles "/alice/sim/2016/LHC16g1a"       "AliESDs.root"      --> 105045  #chunks  HIJING   0-10%      319,821 events
-CountFiles "/alice/sim/2016/LHC16g1b"       "AliESDs.root"      --> 233916  #chunks  HIJING   10-50%     2,403,220 events
-CountFiles "/alice/sim/2016/LHC16g1b_extra" "AliESDs.root"      --> 127669  #chunks  HIJING   10-50%     1,278,900 events
-CountFiles "/alice/sim/2016/LHC16g1c"       "AliESDs.root"      --> 127021  #chunks  HIJING   50-90%     6,489,950 events
-CountFiles "/alice/sim/2016/LHC16g1c_extra" "AliESDs.root"      --> 68065   #chunks  HIJING   50-90%     3,409,350 events
-CountFiles "/alice/sim/2017/LHC17i2"        "AliESDs.root"      --> 1116453 #chunks  AMPT     0-100%     7,441,489 events
-CountFiles "/alice/sim/2017/LHC16d2"        "AliESDs.root"      --> 97292   #chunks  EPOS     0-100%     1,233,240 events
-//
-// Test MC productions
-CountFiles "/alice/sim/2016/LHC16k3b" "AliESDs.root"   --> 90082
-CountFiles "/alice/sim/2016/LHC16k3b2" "AliESDs.root"  --> 92380
-
-
-source $RUN_ON_GRID_DIR/Ebye/code/helpers/alihadd_GRIDoutput.sh;
-CountFilesRealData "/alice/data/2015/LHC15o" "pass1" "AliESDs.root"
-
-// Post process the counting of chunks
-sort -nk5 chunkStat_2015o_pass1.list > chunkStat_2015o_pass1_sorted.list
-cat chunkStat_2015o_pass1_sorted.list | awk '{sum+=$5 ; print $0} END{print "sum=",sum}'
-
-// ---------------------------------------------------------------------------------------------------
-// ---------------------------------------------------------------------------------------------------
-
-How to run:
-
-cd $RUN_ON_GRID_DIR/Ebye/test/
-rm *.xml Task* *.root stderr out* Ali*
-cp $RUN_ON_GRID_DIR/Ebye/code/*.*  .; rm *.so *.d
-
-// ---------------------------------------------------------------------------------------------------
-// ---------------------------------------------------------------------------------------------------
-aliroot -b -q 'runGrid.C(0,"test",0,"1","$RUN_ON_GRID_DIR/Ebye/lists/badrunsFillDep-2015-LHC15o-pass1.list","TPC_dEdx_Info")' &> stdout &
-aliroot -b -q 'runGrid.C(0,"full",1,"1","$RUN_ON_GRID_DIR/Ebye/lists/badrunsFillDep-2015-LHC15o-pass1.list","TimeBinQAFillDep")'
-// ---------------------------------------------------------------------------------------------------
-// ---------------------------------------------------------------------------------------------------
-
-// tests real data
-aliroot -b -q 'runGrid.C(0,"test",0,"5","$RUN_ON_GRID_DIR/Ebye/lists/runs-2015-LHC15o-pass5_lowIR.list","TPC_dEdx_Info")' &> stdout &
-aliroot -b -q 'runGrid.C(0,"test",0,"1","$RUN_ON_GRID_DIR/Ebye/lists/runsMega10Mevents-2015-LHC15o-pass1.list","LHC15o_pass1_1run",0,3,2."vAN-20190514-1")'
-// ---------------------------------------------------------------------------------------------------
-// tests real data
-aliroot -b -q 'runGrid.C(0,"test",0,"5","$RUN_ON_GRID_DIR/Ebye/lists/runs-2015-LHC15o-pass5_lowIR.list","TPC_dEdx_Info",0,4,2."vAN-20190514-1")' &> stdout &
-// ---------------------------------------------------------------------------------------------------
-// ---------------------------------------------------------------------------------------------------
-// tests RUN2 MC full
-// void runGrid(valgrindOption, mode, localOrGrid, list, fname, isMC, setType, lhcYear)
-aliroot -b -q 'runGrid.C(0,"test",0,"1","$RUN_ON_GRID_DIR/Ebye/lists/runs-2016-LHC16d2-pass1.list","TPC_dEdx_Info",1,50,2."vAN-20190514-1")'          //  EPOS
-aliroot -b -q 'runGrid.C(0,"test",0,"3","$RUN_ON_GRID_DIR/Ebye/lists/runs-2016-LHC16k3b-pass3.list","TPC_dEdx_Info",1,50,2."vAN-20190514-1")'         //  HIJING with pileup anchored to 15o (pass3)
-aliroot -b -q 'runGrid.C(0,"test",0,"3","$RUN_ON_GRID_DIR/Ebye/lists/runs-2016-LHC16k3b2-pass3.list","TPC_dEdx_Info",1,50,2."vAN-20190514-1")'        //  HIJING no pile-up
-aliroot -b -q 'runGrid.C(0,"test",0,"5","$RUN_ON_GRID_DIR/Ebye/lists/runs-2017-LHC17c5b-pass5_lowIR.list","TPC_dEdx_Info",1,50,2."vAN-20190514-1")'   //  HIJING anchored to Low IR runs LHC15o (pass5)
-aliroot -b -q 'runGrid.C(0,"test",0,"1","$RUN_ON_GRID_DIR/Ebye/lists/runs-2016-LHC16g1-pass1.list","TPC_dEdx_Info",1,50,2,"vAN-20190514-1")'          //  HIJING min bias - anchored to LHC15o (pass1 highIR)
-aliroot -b -q 'runGrid.C(0,"test",0,"1","$RUN_ON_GRID_DIR/Ebye/lists/runs-2017-LHC17i2-pass1.list","TPC_dEdx_Info",1,50,2,"vAN-20190514-1")'          //  AMPT (via AliGenerators) for Pb-Pb 5.02 TeV, LHC15o, ALIROOT-7338
-// ---------------------------------------------------------------------------------------------------
-// ---------------------------------------------------------------------------------------------------
-// tests RUN2 MC Fast
-aliroot -b -q 'runGrid.C(0,"test",0,"3","$RUN_ON_GRID_DIR/Ebye/lists/runs-2016-LHC16k3b-pass3.list","TPC_dEdx_Info",2,111,2)'
-
-// tests RUN2 Real 15o Pass1
-aliroot -b -q 'runGrid.C(0,"test",0,"1","$RUN_ON_GRID_DIR/Ebye/lists/runs-2015-LHC15o-pass1.list","Distortion_vs_PID",0,4,2)'
-aliroot -b -q 'runGrid.C(0,"full",1,"1","$RUN_ON_GRID_DIR/Ebye/lists/runs-2015-LHC15o-pass1.list","Distortion_vs_PID",0,4,2)'
-// ----------------------------------------------------------------------------------------------------------------------------------------
-// ----------------------------------------------------------------------------------------------------------------------------------------
-// tests RUN1 MC full
-aliroot -b -q 'runGrid.C(0,"test",0,"1","$RUN_ON_GRID_DIR/Ebye/lists/runs-2010-LHC11a10a_bis-pass1.list","TPC_dEdx_Info",3,50,1)'
-aliroot -b -q 'runGrid.C(0,"test",0,"1","$RUN_ON_GRID_DIR/Ebye/lists/runsOnRun-2010-LHC11a10a_bis-pass1.list","TPC_dEdx_Info",3,50,1)'
-// ----------------------------------------------------------------------------------------------------------------------------------------
-// ----------------------------------------------------------------------------------------------------------------------------------------
-// tests RUN1 MC fast
-aliroot -b -q 'runGrid.C(0,"test",0,"1","$RUN_ON_GRID_DIR/Ebye/lists/runs-2013-LHC13f3b-pass1.list","TPC_dEdx_Info",4,111,1)'
-
-LHC16k3b     -->  Pb-Pb, 5.02 TeV - HIJING with pileup anchored to 15o (pass3)   (one run -->  246751)
-LHC16k3b2    -->  Pb-Pb, 5.02 TeV - HIJING no pile-up (ion tail/xtalk) anchored to 15o (pass3)  (one run -->  246751)
-LHC17c5b     -->  Pb-Pb, 5.02 TeV - HIJING anchored to Low IR runs LHC15o (pass5)  (same list as --> runs-2015-LHC15o-pass5_lowIR.list)
-LHC16g1      -->  Pb-Pb, 5.02 TeV - HIJING min bias - anchored to LHC15o (pass1 highIR)
-LHC16d2      -->  Pb-Pb, 5.02 TeV - EPOS-LHC MB simulation, 245064 (LHC15o) anchor, ALIROOT-6632
-LHC16k3a2    -->  p-p,   5.02 TeV - Pythia6 no pile-up (ion tail/xtalk) anchored to 15n (pass2)
-LHC16h8a     -->  p-p,   5.02 TeV - Pythia8_Monash2013 anchored to LHC15n
-LHC16h8b     -->  p-p,   5.02 TeV - Pythia6_Perugia2011 anchored to LHC15n
-
-aliroot -b -q 'runGrid.C(0,"test",0,"2","$RUN_ON_GRID_DIR/ESD_Filtering/lists/runs-2010-LHC10h-pass2.list","TPC_dEdx_Info",0,21,1)'
-
-aliroot -b -q 'runGrid.C(0,"test",0,"2","$RUN_ON_GRID_DIR/ESD_Filtering/lists/runs-2011-LHC11h_2-pass2.list","TPC_dEdx_Info",0,21,1)'
-
-Problems faced:
-saving --> delete the output dir on alien /alice/cern.ch/user/m/marsland/EbyeIterPID/LHC15o_pass5_lowIR
-
-###
-command to check valgrind output
-less xxx.txt | grep TIdentity | awk {'print$5'} | sort | uniq -u
-
-
-time singularity  build --fakeroot  --sandbox /lustre/nyx/alice/users/marsland/aliceSING/alidockSingularity  /lustre/nyx/alice/users/marsland/aliceSING/alidockSingularity.sif
-
-
-#### Copy and merge afterwards:
-Copy:
-
-cd /lustre/nyx/alice/users/marsland/alice-tpc-notes/JIRA/ATO-465/data/LHC16g1/LHC16g1_pass1_140619
-source /u/marsland/PHD/macros/marsland_EbyeRatios/mergeFilteredTreesAtGSI.sh;
-copyFilteredTrees /alice/cern.ch/user/p/pwg_pp/Skimmed_ESDs_16g1_pass1_140619/
-
-Merge:
-
-filtTreeDirGSI=/lustre/nyx/alice/users/marsland/alice-tpc-notes/JIRA/ATO-465/data/LHC16g1c/LHC16g1c_pass1_140519
-cd $filtTreeDirGSI
-source /u/marsland/PHD/macros/marsland_EbyeRatios/mergeFilteredTreesAtGSI.sh;
-mergeFilteredTreesAtGSI
-
-
-// Galuber setting
-aliroot -b -q 'runGrid.C(0,"test",0,"1","$RUN_ON_GRID_DIR/Ebye/lists/runs-2016-LHC16g1-pass1.list","TPC_dEdx_Info",1,64,2,"vAN-20201124-1")'
-aliroot -b -q 'runGrid.C(0,"full",1,"1","$RUN_ON_GRID_DIR/Ebye/lists/runs-2016-LHC16g1-pass1.list","TPC_dEdx_Info",1,64,2,"vAN-20201124-1")'
-
-aliroot -b -q 'runGrid.C(0,"test",0,"1","$RUN_ON_GRID_DIR/Ebye/lists/runs-2010-LHC11a10a_bis-pass1.list","TPC_dEdx_Info",3,64,1,"vAN-20201124-1")'
-aliroot -b -q 'runGrid.C(0,"full",1,"1","$RUN_ON_GRID_DIR/Ebye/lists/runs-2010-LHC11a10a_bis-pass1.list","TPC_dEdx_Info",3,64,1,"vAN-20201124-1")'
-
-aliroot -b -q 'runGrid.C(0,"test",0,"1","$RUN_ON_GRID_DIR/Ebye/lists/runs-2016-LHC16d2-pass1.list","TPC_dEdx_Info",1,64,2,"vAN-20201124-1")'
-aliroot -b -q 'runGrid.C(0,"full",1,"1","$RUN_ON_GRID_DIR/Ebye/lists/runs-2016-LHC16d2-pass1.list","TPC_dEdx_Info",1,64,2,"vAN-20201124-1")'
-
-aliroot -b -q 'runGrid.C(0,"test",0,"1","$RUN_ON_GRID_DIR/Ebye/lists/runs-2017-LHC17i2-pass1.list","TPC_dEdx_Info",1,64,2,"vAN-20201124-1")'
-aliroot -b -q 'runGrid.C(0,"full",1,"1","$RUN_ON_GRID_DIR/Ebye/lists/runs-2017-LHC17i2-pass1.list","TPC_dEdx_Info",1,64,2,"vAN-20201124-1")'
-
-aliroot -b -q 'runGrid.C(0,"test",0,"1","$RUN_ON_GRID_DIR/Ebye/lists/runs-2012-LHC12a11i-pass2.list","TPC_dEdx_Info",5,64,1,"vAN-20201124-1")'
-aliroot -b -q 'runGrid.C(0,"full",1,"1","$RUN_ON_GRID_DIR/Ebye/lists/runs-2012-LHC12a11i-pass2.list","TPC_dEdx_Info",5,64,1,"vAN-20201124-1")'
-
-aliroot -b -q 'runGrid.C(0,"test",0,"1","$RUN_ON_GRID_DIR/Ebye/lists/runs-2020-LHC20e3a-pass3.list","TPC_dEdx_Info",1,64,2,"vAN-20201124-1")'
-aliroot -b -q 'runGrid.C(0,"full",1,"1","$RUN_ON_GRID_DIR/Ebye/lists/runs-2020-LHC20e3a-pass3.list","TPC_dEdx_Info",1,64,2,"vAN-20201124-1")'
-
-#########################################################################
------- Yale times ------
-#########################################################################
-
-cd $RUN_ON_GRID_DIR/Ebye/test/
-rm *.xml Task* *.root stderr out* Ali*
-cp $RUN_ON_GRID_DIR/Ebye/code/*.*  .; rm *.so *.d
-
-aliroot -b -q 'runGrid.C(0,"test",0,"1","$RUN_ON_GRID_DIR/Ebye/lists/runsMC-2020-LHC20e3a-pass3.list","TPC_dEdx_Info",1,64,2018,"18q",3,"vAN-20201124-1")'
-aliroot -b -q 'runGrid.C(0,"test",0,"1","$RUN_ON_GRID_DIR/Ebye/lists/runsMC-2020-LHC20e3b-pass3.list","TPC_dEdx_Info",1,64,2018,"18q",3,"vAN-20201124-1")'
-aliroot -b -q 'runGrid.C(0,"test",0,"1","$RUN_ON_GRID_DIR/Ebye/lists/runsMC-2020-LHC20e3c-pass3.list","TPC_dEdx_Info",1,64,2018,"18q",3,"vAN-20201124-1")'
-aliroot -b -q 'runGrid.C(0,"test",0,"1","$RUN_ON_GRID_DIR/Ebye/lists/runsMC-2020-LHC20g12-pass2.list","TPC_dEdx_Info",1,64,2015,"15o",2,"vAN-20201124-1")'
-aliroot -b -q 'runGrid.C(0,"test",0,"1","$RUN_ON_GRID_DIR/Ebye/lists/runsMC-2020-LHC20j6a-pass2.list","TPC_dEdx_Info",1,64,2015,"15o",2,"vAN-20201124-1")'
-aliroot -b -q 'runGrid.C(0,"test",0,"1","$RUN_ON_GRID_DIR/Ebye/lists/runsMC-2016-LHC16g1-pass1.list" ,"TPC_dEdx_Info",1,64,2015,"15o",1,"vAN-20201124-1")'
-
-aliroot -b -q 'runGrid.C(0,"test",0,"1","$RUN_ON_GRID_DIR/Ebye/lists/runs-2018-LHC18q-pass3.list","TPC_dEdx_Info",0,4,2018,"18q",3,"vAN-20201124-1")'
-aliroot -b -q 'runGrid.C(0,"test",0,"1","$RUN_ON_GRID_DIR/Ebye/lists/runs-2018-LHC18r-pass3.list","TPC_dEdx_Info",0,4,2018,"18r",3,"vAN-20201124-1")'
-aliroot -b -q 'runGrid.C(0,"test",0,"1","$RUN_ON_GRID_DIR/Ebye/lists/runsMega-2015-LHC15o-pass2.list","TPC_dEdx_Info",0,4,2015,"15o",2,"vAN-20201124-1")'
-aliroot -b -q 'runGrid.C(0,"test",0,"1","$RUN_ON_GRID_DIR/Ebye/lists/runsMega-2015-LHC15o-pass1.list","TPC_dEdx_Info",0,4,2015,"15o",1,"vAN-20201124-1")'
+valgrindOption --> 0 --> Normal, 1--> valgrind, 2--> callgrind, 3-->Massif
+modes          --> "test" --> to run over a small set of files (requires alien connection but everything stored locally), "full" --> to run over everything on the grid, "terminate" --> to merge results after "full"
+localOrGrid    --> 0 --> Use only one run and run locally, 1 --> run for all runs on the grid
+list           --> defines the data set according to year, period and pass --> "test-2015-LHC15o-pass5_lowIR.list"
+fname          --> output directory name in my home folder in alien
+isMC           --> 0:Data , 1:MCfull,  2:fastMC
+setType        --> setting type encoded in Config file
+lhcYear        --> year
 
 */
 
-Bool_t fAddFilteredTrees = kTRUE;
+Bool_t fAddFilteredTrees = kFALSE;
 Bool_t fUseMultSelection = kTRUE;
-const Int_t nTestFiles = 5;
+const Int_t nTestFiles = 2;
 const Int_t nChunksPerJob = 20;
-Bool_t fRunLocalFiles = kFALSE;
+TString dataBaseDir = "/eos/user/m/marsland/data";
+// TString dataBaseDir = "/media/marsland/Samsung_T5/data";
 TString aliPhysicsTag = "vAN-20201124-1"; //  	vAN-20180828-1  vAN-20181119-1  vAN-20190105_ROOT6-1
-// TString aliPhysicsTag = "vAN-20180416-1"; // old working tag
-
+//
+// debugging options
 TString fValgrind  = "/usr/bin/valgrind --leak-check=full --leak-resolution=high --num-callers=40 --error-limit=no --show-reachable=yes  --log-file=xxx.txt --suppressions=$ROOTSYS/etc/valgrind-root.supp  -v ";
 TString fCallgrind = "/usr/bin/valgrind --tool=callgrind --log-file=cpu.txt   --num-callers=40 -v  --trace-children=yes ";
 TString fMassif    = "/usr/bin/valgrind --tool=massif ";
 
-void runGrid(Int_t valgrindOption = 0, TString mode="test",Int_t localOrGrid=0, TString passStr="1", TString list = "", TString fname="EbyeIterPID", Int_t isMC=0, Int_t setType=3, Int_t lhcYear=2015, TString periodName="15o", Int_t passIndex=2, TString physicsTagForFullTest="vAN-20201124-1")
+Bool_t fDoAOD = kFALSE;
+
+void runGrid(Bool_t fRunLocalFiles = kTRUE, Int_t valgrindOption = 0, TString mode="test",Int_t localOrGrid=0, TString passStr="1", TString list = "", TString fname="EbyeIterPID", Int_t isMC=0, Int_t setType=3, Int_t lhcYear=2015, TString periodName="15o", Int_t passIndex=2, TString physicsTagForFullTest="vAN-20201124-1")
 {
-  //
-  // valgrindOption --> 0 --> Normal, 1--> valgrind, 2--> callgrind, 3-->Massif
-  // mode           --> "test" or "full" or "terminate"
-  // localOrGrid    --> 0 --> Use only one run and run locally, 1 --> run for all runs on the grid
-  // list           --> defines the data set according to year, period and pass --> "test-2015-LHC15o-pass5_lowIR.list"
-  // fname          --> output directory name in my home folder in alien
-  // isMC           --> 0:Data , 1:MCfull,  2:fastMC
-  // setType        --> setting type encoded in Config file
-  // lhcYear      --> 1 for RUN1, and 2 for RUN2
-  //
 
   aliPhysicsTag=physicsTagForFullTest;
 
-  // load libraries
-  // gSystem->Load("libCore.so");
-  // gSystem->Load("libGeom.so");
-  // gSystem->Load("libVMC.so");
-  // gSystem->Load("libPhysics.so");
-  // gSystem->Load("libTree.so");
-  // gSystem->Load("libSTEERBase.so");
-  // gSystem->Load("libESD.so");
-  // gSystem->Load("libAOD.so");
-  // gSystem->Load("libANALYSIS.so");
-  // gSystem->Load("libANALYSISalice.so");
-  // gSystem->Load("libCORRFW.so");
-  // gSystem->Load("libPWGTools.so");
-  // gSystem->Load("libPWGCFCorrelationsBase.so");
-  // gSystem->Load("libPWGCFCorrelationsDPhi.so");
   AliLog::SetGlobalDebugLevel(0);
   // Create the analysis manager
   AliAnalysisManager *mgr = new AliAnalysisManager("testAnalysis");
@@ -262,9 +68,6 @@ void runGrid(Int_t valgrindOption = 0, TString mode="test",Int_t localOrGrid=0, 
     if (!alienHandler) return;
     // Connect plug-in to the analysis manager
     mgr->SetGridHandler(alienHandler);
-    //   AliAODInputHandler* aodH = new AliAODInputHandler();
-    //   AliESDInputHandler* aodH = new AliESDInputHandler();
-    //   mgr->SetInputEventHandler(aodH)
   }
   //
   // ----------------------------------------------------------------------------------------------------------------------
@@ -273,41 +76,56 @@ void runGrid(Int_t valgrindOption = 0, TString mode="test",Int_t localOrGrid=0, 
   // Add handlers
   AliVEventHandler* handler=0x0;
   if (isMC>0){
-    gROOT->LoadMacro(gSystem->ExpandPathName("$ALICE_ROOT/ANALYSIS/macros/train/AddMCHandler.C"));
-    handler = AddMCHandler(kFALSE);
-    ((AliMCEventHandler*)handler)->SetReadTR(kFALSE);
-    mgr->SetMCtruthEventHandler(handler);
-    gROOT->LoadMacro(gSystem->ExpandPathName("$ALICE_ROOT/ANALYSIS/macros/train/AddESDHandler.C"));
-    handler = AddESDHandler();
-    ((AliESDInputHandler*)handler)->SetReadFriends(kFALSE);
-    ((AliESDInputHandler*)handler)->SetNeedField();
-  } else
-  {
-    gROOT->LoadMacro(gSystem->ExpandPathName("$ALICE_ROOT/ANALYSIS/macros/train/AddESDHandler.C"));
-    handler = AddESDHandler();
+    AliMCEventHandler* mcHandler = AddMCHandler(kFALSE);
+    mcHandler->SetReadTR(kFALSE);
+    mgr->SetMCtruthEventHandler(mcHandler);
+    if (fDoAOD) {
+      // AliAODInputHandler* aodHandler = AddAODHandler();
+      AliAODInputHandler* aodHandler = new AliAODInputHandler();
+      // aodHandler->SetReadFriends(kFALSE);
+      aodHandler->SetNeedField();
+      mgr->SetInputEventHandler(aodHandler);
+    } else {
+      // AliESDInputHandler* esdHandler = AddESDHandler();
+      AliESDInputHandler* esdHandler = new AliESDInputHandler();
+      esdHandler->SetReadFriends(kFALSE);
+      esdHandler->SetNeedField();
+      mgr->SetInputEventHandler(esdHandler);
   }
-  mgr->SetInputEventHandler(handler);
+  } else {
+    if (fDoAOD) {
+      AliAODInputHandler* aodHandler = AddAODHandler();
+      aodHandler->SetNeedField();
+      mgr->SetInputEventHandler(aodHandler);
+    } else {
+      AliESDInputHandler* esdHandler = AddESDHandler();
+      esdHandler->SetReadFriends(kFALSE);
+      esdHandler->SetNeedField();
+      mgr->SetInputEventHandler(esdHandler);
+    }
+  }
+  // mgr->SetInputEventHandler(handler);
   //
   // ----------------------------------------------------------------------------------------------------------------------
   // ----------------------------------------------------------------------------------------------------------------------
   //
   if (!(isMC==2 || isMC==4)){
     // Add Additional tasks
-    gROOT->LoadMacro(gSystem->ExpandPathName("$ALICE_PHYSICS/OADB/macros/AddTaskPhysicsSelection.C"));
     AddTaskPhysicsSelection(isMC);
-    gROOT->LoadMacro(gSystem->ExpandPathName("$ALICE_ROOT/ANALYSIS/macros/AddTaskPIDResponse.C"));
     AliAnalysisTaskPIDResponse *taskPID = NULL;
     // if (isMC==0) taskPID=AddTaskPIDResponse(kFALSE,kTRUE,kTRUE,1);
-    if (isMC==0) taskPID=AddTaskPIDResponse(kFALSE,kTRUE,kFALSE,passStr);
-    if (isMC==1 || isMC==3 || isMC==5 ) taskPID=AddTaskPIDResponse(kTRUE,kTRUE,kTRUE,passStr);
-    gROOT->LoadMacro(gSystem->ExpandPathName("$ALICE_PHYSICS/OADB/macros/AddTaskCentrality.C"));
-    AliCentralitySelectionTask *taskCentrality=AddTaskCentrality();
+    if (lhcYear<2016){
+      if (isMC==0) taskPID=AddTaskPIDResponse(kFALSE,kTRUE,kFALSE,passStr);
+      if (isMC==1 || isMC==3 || isMC==5 ) taskPID=AddTaskPIDResponse(kTRUE,kTRUE,kTRUE,passStr);
+    } else {
+      if (isMC==0) taskPID=AddTaskPIDResponse(kFALSE,kTRUE,kFALSE,passStr,kFALSE,"TPC-OADB:COMMON/PID/data/TPCPIDResponseOADB_pileupCorr.root;TPC-Maps:$ALICE_PHYSICS/OADB/COMMON/PID/data/TPCetaMaps_pileupCorr.root" );
+      if (isMC==1 || isMC==3 || isMC==5 ) taskPID=AddTaskPIDResponse(kTRUE,kTRUE,kTRUE,passStr,kFALSE,"TPC-OADB:COMMON/PID/data/TPCPIDResponseOADB_pileupCorr.root;TPC-Maps:$ALICE_PHYSICS/OADB/COMMON/PID/data/TPCetaMaps_pileupCorr.root" );
+    }
+    AliCentralitySelectionTask *taskCentrality=AddTaskCentrality(kTRUE, fDoAOD);
     if(fUseMultSelection){
-      gROOT->LoadMacro(gSystem->ExpandPathName("$ALICE_PHYSICS/OADB/COMMON/MULTIPLICITY/macros/AddTaskMultSelection.C"));
       AliMultSelectionTask* multTask = AddTaskMultSelection();
       if (fAddFilteredTrees)
       {
-        gROOT->LoadMacro("$ALICE_PHYSICS/PWGPP/TPC/macros/AddTaskConfigOCDB.C");
         AddTaskConfigOCDB("raw://");
       }
       std::cout << "period name = " << periodName << std::endl;
@@ -316,31 +134,13 @@ void runGrid(Int_t valgrindOption = 0, TString mode="test",Int_t localOrGrid=0, 
     }
   }
   //
-  // ----------------------------------------------------------------------------------------------------------------------
-  // ----------------------------------------------------------------------------------------------------------------------
-  // to run a local task not in AliPhysics (there will be conflicts if a task in AliPhysics has the same name)
-  //   gROOT->LoadMacro("AliAnalysisTaskNetLambdaMC.cxx+g");
-  //   gROOT->LoadMacro("AddTaskNetLambdaMC.C");
-  // ----------------------------------------------------------------------------------------------------------------------
-  // ----------------------------------------------------------------------------------------------------------------------
-  // to run a task in AliPhysics
-  //   gROOT->LoadMacro("$ALICE_PHYSICS/PWGCF/EBYE/IdentityMethodEbyeFluctuations/macros/AddTask_marsland_EbyeIterPID.C");
-  //   AliAnalysisTask *ana = AddTask_marsland_EbyeIterPID(kTRUE,"Config_marsland_EbyeIterPID.C",setType);
-  // ----------------------------------------------------------------------------------------------------------------------
-  // ----------------------------------------------------------------------------------------------------------------------
-  // to run locally
-  gSystem->AddIncludePath("-I$ALICE_ROOT/include");
-  gSystem->AddIncludePath("-I$ALICE_PHYSICS/include");
-  //
   // Filtered tree
   if (fAddFilteredTrees) {
-    gROOT->LoadMacro("./AddTaskFilteredTreeLocal.C");
-    AliAnalysisTask *ana = AddTaskFilteredTree("",isMC);
+    AliAnalysisTask *ana = AddTaskFilteredTreeLocal("",isMC);
   }
   //
   // My task
-  gROOT->LoadMacro("$RUN_ON_GRID_DIR/Ebye/code/AliAnalysisTaskTIdentityPID.cxx+g");
-  gROOT->LoadMacro("$RUN_ON_GRID_DIR/Ebye/code/AddTask_marsland_TIdentityPID.C");
+  gROOT->LoadMacro("AliAnalysisTaskTIdentityPID.cxx++g");
   AliAnalysisTask *ana = AddTask_marsland_TIdentityPID(kFALSE,"Config_marsland_TIdentityPID.C",setType,lhcYear,periodName,passIndex);
   //
   // ----------------------------------------------------------------------------------------------------------------------
@@ -355,9 +155,26 @@ void runGrid(Int_t valgrindOption = 0, TString mode="test",Int_t localOrGrid=0, 
     // to run over files stored locally, uncomment this section,
     // and comment out the above lines related to alienHandler and StartAnalysis("grid")
     TChain *chain = new TChain("esdTree");
-    chain->AddFile("$RUN_ON_GRID_DIR/Ebye/test/testReal/testFiles_00246272/AliESDs_0.root");
-    chain->AddFile("$RUN_ON_GRID_DIR/Ebye/test/testReal/testFiles_00246272/AliESDs_1.root");
-    chain->AddFile("$RUN_ON_GRID_DIR/Ebye/test/testReal/testFiles_00246272/AliESDs_2.root");
+    // chain->AddFile(dataBaseDir+"/alice/data/2018/LHC18q/000296622/pass3/18000296622035.203/AliESDs.root");
+    // chain->AddFile(dataBaseDir+"/alice/data/2018/LHC18q/000296622/pass3/18000296622035.207/AliESDs.root");
+    // chain->AddFile(dataBaseDir+"/alice/data/2018/LHC18q/000296622/pass3/18000296622035.209/AliESDs.root");
+    // chain->AddFile(dataBaseDir+"/alice/data/2018/LHC18q/000296622/pass3/18000296622035.211/AliESDs.root");
+    // chain->AddFile(dataBaseDir+"/alice/data/2018/LHC18q/000296622/pass3/18000296622035.220/AliESDs.root");
+    // chain->AddFile(dataBaseDir+"/alice/data/2018/LHC18q/000296622/pass3/18000296622035.228/AliESDs.root");
+    // chain->AddFile(dataBaseDir+"/alice/data/2018/LHC18q/000296622/pass3/18000296622035.302/AliESDs.root");
+    // chain->AddFile(dataBaseDir+"/alice/data/2018/LHC18q/000296622/pass3/18000296622035.306/AliESDs.root");
+    // chain->AddFile(dataBaseDir+"/alice/data/2018/LHC18q/000296622/pass3/18000296622035.325/AliESDs.root");
+    chain->AddFile(dataBaseDir+"/alice/data/2018/LHC18q/000296622/pass3/18000296622035.401/AliESDs.root");
+    chain->AddFile(dataBaseDir+"/alice/data/2018/LHC18q/000296622/pass3/18000296622035.406/AliESDs.root");
+    chain->AddFile(dataBaseDir+"/alice/data/2018/LHC18q/000296622/pass3/18000296622035.411/AliESDs.root");
+    // chain->AddFile(dataBaseDir+"/alice/data/2018/LHC18q/000296622/pass3/18000296622035.514/AliESDs.root");
+    // chain->AddFile(dataBaseDir+"/alice/data/2018/LHC18q/000296622/pass3/18000296622035.531/AliESDs.root");
+    // chain->AddFile(dataBaseDir+"/alice/data/2018/LHC18q/000296622/pass3/18000296622036.503/AliESDs.root");
+    // chain->AddFile(dataBaseDir+"/alice/data/2018/LHC18q/000296622/pass3/18000296622036.526/AliESDs.root");
+    // chain->AddFile(dataBaseDir+"/alice/data/2018/LHC18q/000296622/pass3/18000296622036.603/AliESDs.root");
+    // chain->AddFile(dataBaseDir+"/alice/data/2018/LHC18q/000296622/pass3/18000296622037.309/AliESDs.root");
+    // chain->AddFile(dataBaseDir+"/alice/data/2018/LHC18q/000296622/pass3/18000296622037.315/AliESDs.root");
+    // chain->AddFile(dataBaseDir+"/alice/data/2018/LHC18q/000296622/pass3/18000296622037.325/AliESDs.root");
     chain->Print();
     mgr->StartAnalysis("local",chain);
   }
@@ -469,6 +286,8 @@ AliAnalysisGrid* CreateAlienHandler(Int_t valgrindOption = 0,TString mode="test"
     std::cout << " Data SOURCE = RUN1 full MC gen+rec AMPT " << std::endl;
     plugin->SetGridDataDir(Form("/alice/sim/%d/%s/",year,period.Data()));
     plugin->SetDataPattern("/*/AliESDs.root");
+  } else {
+    std::cout << " Unknown data source: isMC = " << isMC << std::endl;
   }
 
   plugin->SetAnalysisMacro(Form("TaskEbyeIterPIDMC_%s_%s.C",period.Data(),pass.Data()));

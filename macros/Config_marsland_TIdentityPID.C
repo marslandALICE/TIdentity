@@ -1,3 +1,5 @@
+// R__ADD_INCLUDE_PATH($PWD)
+// #include "AliAnalysisTaskTIdentityPID.h"
 //
 //
 void SetDefaults(AliAnalysisTaskTIdentityPID *defaultTask, Int_t year, TString periodName, Int_t passIndex);
@@ -12,7 +14,7 @@ AliAnalysisTaskTIdentityPID* Config_marsland_TIdentityPID(Bool_t getFromAlien, I
   SetDefaults(task,year,periodName,passIndex);
   if (year==2010) task->SelectCollisionCandidates(AliVEvent::kMB);   // select minimum bias events for LHC10h
   if (year==2015) task->SelectCollisionCandidates(AliVEvent::kINT7); // select minimum bias events for LHC15o
-  // if (year==3) task->SelectCollisionCandidates(AliVEvent::kMB | AliVEvent::kCentral | AliVEvent::kSemiCentral) ;
+  // if (year==2018) task->SelectCollisionCandidates(AliVEvent::kMB | AliVEvent::kCentral | AliVEvent::kSemiCentral) ;
   //
   // Get the lookup table
   TTree *lookUpTree=NULL;
@@ -62,9 +64,13 @@ AliAnalysisTaskTIdentityPID* Config_marsland_TIdentityPID(Bool_t getFromAlien, I
     break;
     case 3:{
       std::cout << " SETTING TYPE = " << settingType << " Info::marsland: (REFERENCE settings) + centBinning 10 " << std::endl;
+      if( (passIndex==3 && periodName.Contains("18")) || (passIndex==2 && periodName.Contains("15")) ) {
+        task->SetDefaultEventCuts(kTRUE);
+        task->SetPileUpTightness(0);
+      }
       task->SetUseCouts(kFALSE);
       task->SetFillAllCutVariables(kTRUE);
-      task->SetFillArmPodTree(kTRUE);
+      task->SetFillArmPodTree(kFALSE);
       task->fEventCuts.fUseVariablesCorrelationCuts = true;
       const Int_t tmpCentbins = 9;
       Float_t tmpfxCentBins[tmpCentbins] = {0,10,20,30,40,50,60,70,80};
@@ -80,18 +86,18 @@ AliAnalysisTaskTIdentityPID* Config_marsland_TIdentityPID(Bool_t getFromAlien, I
       }
       task->SetUseCouts(kTRUE);
       task->SetNEtabins(16);
-      task->SetEtaLowerEdge(-0.8.);
-      task->SetEtaUpperEdge( 0.8.);
-      task->SetNMomBins(600);
+      task->SetEtaLowerEdge(-0.8);
+      task->SetEtaUpperEdge( 0.8);
+      task->SetNMomBins(300);
       task->SetMomLowerEdge(0.);
-      task->SetMomUpperEdge(12.);
+      task->SetMomUpperEdge(6.);
       task->SetDeDxBinWidth(1);
       task->SetDeDxLowerEdge(20.);
       task->SetDeDxUpperEdge(1020.);
       task->SetFillAllCutVariables(kTRUE);
       task->SetFillDistributions(kTRUE);
       task->SetFillEventInfo(kTRUE);
-      task->SetDefaultTrackCuts(kFALSE);
+      task->SetDefaultTrackCuts(kTRUE);
       //
       task->SetFillArmPodTree(kTRUE);
       task->SetRunOnGrid(kTRUE);
@@ -106,6 +112,34 @@ AliAnalysisTaskTIdentityPID* Config_marsland_TIdentityPID(Bool_t getFromAlien, I
       task->SetUseCouts(kTRUE);
     }
     break;
+    case 6:{
+      std::cout << " SETTING TYPE = " << settingType << " Info::marsland: Fill hists for all syst setting " << std::endl;
+      // Real data settings
+      cout << "period and pass = " << periodName << "    " << passIndex << endl;
+      if( (passIndex==3) || (passIndex==2) ) {
+        task->SetDefaultEventCuts(kTRUE);
+        task->SetPileUpTightness(0);
+        cout << " special settings for 18q pass3 and 15o pass2 " << endl;
+      }
+      task->SetNSettings(1);
+      task->SetCorrectForMissCl(0);
+      task->SetUseCouts(kFALSE);
+      task->SetDefaultTrackCuts(kTRUE);
+      task->SetNEtabins(16);
+      task->SetEtaLowerEdge(-0.8);
+      task->SetEtaUpperEdge( 0.8);
+      task->SetNMomBins(300);
+      task->SetMomLowerEdge(0.2);
+      task->SetMomUpperEdge(3.2);
+      task->SetFillAllCutVariables(kTRUE);
+      task->SetFillDistributions(kTRUE);
+      task->SetFillEventInfo(kTRUE);
+      //
+      task->SetFillArmPodTree(kTRUE);
+      task->SetRunOnGrid(kTRUE);
+      task->fEventCuts.fUseVariablesCorrelationCuts = true;
+    }
+    break;
     //
     // ====================================================================================
     // =========================== MC Closure on Lego train  ==============================
@@ -115,10 +149,16 @@ AliAnalysisTaskTIdentityPID* Config_marsland_TIdentityPID(Bool_t getFromAlien, I
       std::cout << " SETTING TYPE = " << settingType << " Info::marsland: MC full on lego train --> eff matrix is not filled " << std::endl;
       task->SetEffMatrix(kTRUE);  task->SetIsMCtrue(kTRUE);  task->SetFillAllCutVariables(kTRUE);  // conditions to enter FillMCFull_NetParticles()
       //
+      if( (passIndex==3 && periodName.Contains("18")) || (passIndex==2 && periodName.Contains("15")) ) {
+        task->SetDefaultEventCuts(kTRUE);
+        task->SetPileUpTightness(0);
+      }
+      //
       task->SetFillTreeMC(kTRUE);
       task->SetDefaultTrackCuts(kFALSE);
       task->SetDefaultEventCuts(kFALSE);
       task->SetFillDistributions(kFALSE);
+      task->SetUseCouts(kFALSE);
       task->SetEtaLowerEdge(-0.8);
       task->SetEtaUpperEdge( 0.8);
       task->SetMomLowerEdge(0.1);
@@ -374,6 +414,59 @@ AliAnalysisTaskTIdentityPID* Config_marsland_TIdentityPID(Bool_t getFromAlien, I
       task->SetMCBaryonArray(tmpNbaryons,tmpBaryonArr);
     }
     break;
+    case 65:{
+      std::cout << " SETTING TYPE = " << settingType << " Info::marsland: Flow Analysis MC checks " << std::endl;
+      task->SetEffMatrix(kTRUE);
+      task->SetIsMCtrue(kTRUE);
+      task->SetFillAllCutVariables(kTRUE);  // conditions to enter FillMCFull_NetParticles()
+      //
+      cout << "period and pass = " << periodName << "    " << passIndex << endl;
+      if( (passIndex==3) || (passIndex==2) ) {
+        task->SetDefaultEventCuts(kTRUE);
+        task->SetPileUpTightness(1);
+        cout << " special settings for 18q pass3 and 15o pass2 " << endl;
+      }
+      task->SetNSettings(1);
+      task->SetCorrectForMissCl(0);
+      task->SetUseCouts(kFALSE);
+      task->SetUseCouts(kTRUE);
+      task->SetDefaultTrackCuts(kTRUE);
+      task->SetTrackOriginType(0);   // 0:prim, 1: prim+weak, 2:prim+material, 3:prim+material+weak, 4:full scan
+      task->SetRapidityType(0);      // 0:pseudorapidity, 1: rapidity
+      task->SetUsePtCut(1);          // 0: tpc momcut, 1: vertex momcut, 2: pT cut
+      task->SetFillTreeMC(kTRUE);
+      task->SetFillEventInfo(kTRUE);
+      task->SetIncludeITScuts(kTRUE);
+      task->SetFillArmPodTree(kFALSE);
+      task->SetNEtabins(16);
+      task->SetEtaLowerEdge(-0.8);
+      task->SetEtaUpperEdge( 0.8);
+      task->SetNMomBins(300);
+      task->SetMomLowerEdge(0.2);
+      task->SetMomUpperEdge(3.2);
+      task->fEventCuts.fUseVariablesCorrelationCuts = true;
+      //
+      // acceptance
+      const Int_t tmpEtaBinsMC = 1;
+      const Int_t tmpMomBinsMC = 1;
+      Float_t tmpetaDownArr[tmpEtaBinsMC] = {-0.8};
+      Float_t tmpetaUpArr[tmpEtaBinsMC]   = { 0.8};
+      Float_t tmppDownArr[tmpMomBinsMC] = { 0.6};
+      Float_t tmppUpArr[tmpMomBinsMC]   = { 1.5};
+      task->SetMCEtaScanArray(tmpEtaBinsMC, tmpetaDownArr, tmpetaUpArr);
+      task->SetMCMomScanArray(tmpMomBinsMC, tmppDownArr,   tmppUpArr);
+      // resonances to exclude
+      const Int_t tmpNresonances = 1;
+      TString tmpResArr[tmpNresonances] = {"xxx"};
+      task->SetMCResonanceArray(tmpNresonances,tmpResArr);
+      //
+      // baryons to be included for netbaryon analysis
+      const Int_t tmpNbaryons = 7;
+      Int_t tmpBaryonArr[tmpNbaryons] = {2212,2112,2224,2214,2114,1114,3122};  // {p,n,delta++,delta+,delta0,delta-,Lambda,}
+      task->SetMCBaryonArray(tmpNbaryons,tmpBaryonArr);
+    }
+    break;
+
     //
     // ====================================================================================
     // ============================== MC to run Local  ====================================
@@ -917,7 +1010,9 @@ void SetDefaults(AliAnalysisTaskTIdentityPID *defaultTask, Int_t year, TString p
   std::cout << " Info::marsland: ------------------------------------------------------------------------------------- " << std::endl;
   std::cout << " Info::marsland: ------------------------------------------------------------------------------------- " << std::endl;
 
+  defaultTask->SetNSettings(22);
   defaultTask->SetPileUpTightness(0);
+  defaultTask->SetCorrectForMissCl(0);
   defaultTask->SetYear(year);
   defaultTask->SetPeriodName(periodName);
   defaultTask->SetPassIndex(passIndex);

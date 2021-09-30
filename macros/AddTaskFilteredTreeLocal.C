@@ -1,4 +1,14 @@
-AliAnalysisTask* AddTaskFilteredTree(TString outputFile="", Int_t isMC=0)
+AliESDtrackCuts* CreateCuts(Bool_t=kTRUE, Bool_t=kTRUE);
+#include "AliAnalysisTaskFilteredTree.h"
+#include "TRandom.h"
+#include "AliFilteredTreeEventCuts.h"
+#include "AliFilteredTreeAcceptanceCuts.h"
+#include "TSystem.h"
+#include "AliAnalysisManager.h"
+#include "AliLog.h"
+
+
+AliAnalysisTask* AddTaskFilteredTreeLocal(TString outputFile="", Int_t isMC=0)
 {
   gSystem->Load("libANALYSIS");
   gSystem->Load("libANALYSISalice");
@@ -20,8 +30,8 @@ AliAnalysisTask* AddTaskFilteredTree(TString outputFile="", Int_t isMC=0)
   }
 
   // Switch off all AliInfo (too much output!!!)
-  AliLog::SetGlobalLogLevel(AliLog::kError);
-  mgr->SetDebugLevel(0);
+  AliLog::SetGlobalLogLevel(AliLog::kDebug);
+  mgr->SetDebugLevel(1);
 
 
 
@@ -61,7 +71,7 @@ AliAnalysisTask* AddTaskFilteredTree(TString outputFile="", Int_t isMC=0)
   AliESDtrackCuts* esdTrackCuts = CreateCuts();
   if (!esdTrackCuts) {
     printf("ERROR: esdTrackCuts could not be created\n");
-    return;
+    return 0;
   } else {
     esdTrackCuts->SetHistogramsOn(kTRUE);
   }
@@ -73,10 +83,12 @@ AliAnalysisTask* AddTaskFilteredTree(TString outputFile="", Int_t isMC=0)
   //
   AliAnalysisTaskFilteredTree *task = new AliAnalysisTaskFilteredTree("AliAnalysisTaskFilteredTree");
   //task->SetUseMCInfo(hasMC);
-  Double_t dScaleFactorPt = (isMC==0) ? 5000 : 100;
-  Double_t dScaleFactorV0 = (isMC==0) ? 250 : 10;
-  std:cout <<  " Pt downscaling = " << dScaleFactorPt << std::endl;
-  std:cout <<  " V0 downscaling = " << dScaleFactorV0 << std::endl;
+  // Double_t dScaleFactorPt = (isMC==0) ? 5000 : 100;
+  // Double_t dScaleFaorV0 = (isMC==0) ? 250 : 10;
+  Double_t dScaleFactorPt = (isMC==0) ? 20000 : 100;
+  Double_t dScaleFactorV0 = (isMC==0) ? 1000 : 10;
+  std::cout <<  " Pt downscaling = " << dScaleFactorPt << std::endl;
+  std::cout <<  " V0 downscaling = " << dScaleFactorV0 << std::endl;
   task->SetLowPtTrackDownscaligF(dScaleFactorPt);
   task->SetLowPtV0DownscaligF(dScaleFactorV0);
   //task->SetLowPtTrackDownscaligF(1.e5);   // default
