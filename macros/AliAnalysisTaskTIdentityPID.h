@@ -211,7 +211,6 @@ public:
   void   SetYear(const Int_t ifYear = 0)                              {fYear                = ifYear;}
   void   SetPeriodName(const TString ifPeriodName = "")               {fPeriodName          = ifPeriodName;}
   void   SetPassIndex(const Int_t ifPassIndex = 0)                    {fPassIndex           = ifPassIndex;}
-  void   SetPileUpTightness(const Int_t ifPileUpTightness = 0)        {fPileUpTightness     = ifPileUpTightness;}
   // Some boolian settings
   void   SetRunOnGrid(const Bool_t ifRunOnGrid = kTRUE)               {fRunOnGrid           = ifRunOnGrid;}
   void   SetIncludeITScuts(const Bool_t ifITSCuts = kTRUE)            {fIncludeITS          = ifITSCuts;}
@@ -232,7 +231,7 @@ public:
   void   SetFillNudynFastGen(const Bool_t ifNudynFastGen = kFALSE)    {fFillNudynFastGen= ifNudynFastGen;}
   void   SetCorrectForMissCl(const Int_t ifCorrectForMissCl = kFALSE)    {fCorrectForMissCl= ifCorrectForMissCl;}
   void   SetUsePtCut(const Int_t ifUsePtCut = 1)                      {fUsePtCut            = ifUsePtCut;}
-  void   SetTrackOriginType(const Int_t ifTrackOriginType = 0)        {fTrackOriginType     = ifTrackOriginType;}
+  void   SetMCTrackOriginType(const Int_t ifTrackOriginOnlyPrimary = 0) {fTrackOriginOnlyPrimary     = ifTrackOriginOnlyPrimary;}
   void   SetRapidityType(const Int_t ifRapidityType = 0)              {fRapidityType        = ifRapidityType;}
   void   SetSisterCheck(const Int_t ifSisterCheck = 0)                {fSisterCheck         = ifSisterCheck;}
   void   SetFillDnchDeta(const Bool_t ifDnchDetaCal = kFALSE)         {fFillDnchDeta        = ifDnchDetaCal;}
@@ -279,14 +278,10 @@ public:
     // prepare real data centrality bins
     fNCentbinsData = tmpCentbins;
     fNCentBinsMC   = tmpCentbins-1;
-    std::cout << "AAAAAAAAAAAAAAA" << fNCentbinsData <<  std::endl;
     fxCentBins.resize(fNCentbinsData);
-    for (Int_t i=0; i<fNCentbinsData; i++) {
-      fxCentBins[i] =  tmpfxCentBins[i];
-      std::cout << "BBBBBBBBB" << fxCentBins[i] <<  std::endl;
-      }
-    fcentDownArr = new Float_t[fNCentBinsMC];
-    fcentUpArr   = new Float_t[fNCentBinsMC];
+    for (Int_t i=0; i<fNCentbinsData; i++) fxCentBins[i] =  tmpfxCentBins[i];
+    fcentDownArr.resize(fNCentBinsMC);
+    fcentUpArr.resize(fNCentBinsMC);
     for (Int_t i=0; i<fNCentbinsData-1; i++) fcentDownArr[i] =  tmpfxCentBins[i];
     for (Int_t i=1; i<fNCentbinsData; i++)   fcentUpArr[i-1] =  tmpfxCentBins[i];
   }
@@ -296,8 +291,8 @@ public:
     // set MC eta values to scan
     std::cout << " Info::marsland: !!!!!! SetMCEtaScanArray is being set !!!!!!! " << std::endl;
     fNEtaWinBinsMC = tmpEtaBinsMC;
-    fetaDownArr = new Float_t[fNEtaWinBinsMC];
-    fetaUpArr   = new Float_t[fNEtaWinBinsMC];
+    fetaDownArr.resize(fNEtaWinBinsMC);
+    fetaUpArr.resize(fNEtaWinBinsMC);
     for (Int_t i=0; i<fNEtaWinBinsMC; i++) {
       fetaDownArr[i] =  tmpetaDownArr[i];
       fetaUpArr[i]   =  tmpetaUpArr[i];
@@ -309,7 +304,7 @@ public:
     // set MC eta values to scan
     std::cout << " Info::marsland: !!!!!! SetMCResonanceArray is being set !!!!!!! " << std::endl;
     fNResBins = tmpNRes;
-    fResonances = new TString[fNResBins];
+    fResonances.resize(fNResBins);
     for (Int_t i=0; i<fNResBins; i++) fResonances[i] = tmpResArr[i];
 
   }
@@ -319,7 +314,7 @@ public:
     // set MC eta values to scan
     std::cout << " Info::marsland: !!!!!! SetMCBaryonArray is being set !!!!!!! " << std::endl;
     fNBarBins = tmpNBar;
-    fBaryons = new Int_t[fNBarBins];
+    fBaryons.resize(fNBarBins);
     for (Int_t i=0; i<fNBarBins; i++) fBaryons[i] = tmpBarArr[i];
   }
 
@@ -328,8 +323,8 @@ public:
     // set MC momentum values to scan
     std::cout << " Info::marsland: !!!!!! SetMCMomScanArray is being set !!!!!!! " << std::endl;
     fNMomBinsMC = tmpMomBinsMC;
-    fpDownArr = new Float_t[fNMomBinsMC];
-    fpUpArr   = new Float_t[fNMomBinsMC];
+    fpDownArr.resize(fNMomBinsMC);
+    fpUpArr.resize(fNMomBinsMC);
     for (Int_t i=0; i<fNMomBinsMC; i++) {
       fpDownArr[i] =  tmppDownArr[i];
       fpUpArr[i]   =  tmppUpArr[i];
@@ -585,7 +580,6 @@ private:
   TString            fPeriodName;
   Int_t              fYear;
   Int_t              fPassIndex;
-  Int_t              fPileUpTightness;        // 1; 36% cut, 2: 18% cut, 3: 11% cut, 3: 6% cut
   UInt_t             fPileUpBit;
   TH1F             * fHistCent;               // helper histogram for TIdentity tree
   TH1F             * fHistPhi;
@@ -638,7 +632,7 @@ private:
   Bool_t            fFillNudynFastGen;
   Int_t             fCorrectForMissCl;       // 0; defaults crows, 1; ncls used wo correction, 2; ncls used with correction
   Int_t             fUsePtCut;
-  Int_t             fTrackOriginType;
+  Int_t             fTrackOriginOnlyPrimary;
   Int_t             fRapidityType;
   Int_t             fSisterCheck;           // 0: reject the mother anyways, 1: if both girls are in acceptance rejet mother
 
@@ -854,15 +848,15 @@ private:
   Float_t            fPrFirstMomentsRec[2][4][10][8];    //[2][fNMomBinsMC][fNCentBinsMC][fNEtaWinBinsMC]
 
 
-  Float_t            *fetaDownArr;           //[fNEtaWinBinsMC]
-  Float_t            *fetaUpArr;             //[fNEtaWinBinsMC]
-  Float_t            *fcentDownArr;          //[fNCentBinsMC]
-  Float_t            *fcentUpArr;            //[fNCentBinsMC]
-  Float_t            *fpDownArr;             //[fNMomBinsMC]
-  Float_t            *fpUpArr;               //[fNMomBinsMC]
-  std::vector<float> fxCentBins;             ///<
-  TString            *fResonances;           //[fNResBins]
-  Int_t              *fBaryons;              //[fNBarBins]
+  std::vector<float>  fetaDownArr;           
+  std::vector<float>  fetaUpArr;             
+  std::vector<float>  fcentDownArr;          
+  std::vector<float>  fcentUpArr;            
+  std::vector<float>  fpDownArr;             
+  std::vector<float>  fpUpArr;               
+  std::vector<float>  fxCentBins;             
+  std::vector<string> fResonances;           
+  std::vector<int>    fBaryons;
   //
   // control and QA histograms
   //

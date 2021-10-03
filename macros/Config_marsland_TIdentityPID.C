@@ -1,7 +1,4 @@
-// R__ADD_INCLUDE_PATH($PWD)
-// #include "AliAnalysisTaskTIdentityPID.h"
-//
-//
+
 void SetDefaults(AliAnalysisTaskTIdentityPID *defaultTask, Int_t year, TString periodName, Int_t passIndex);
 TTree *GetLookUpTable(Bool_t runOnGrid, Int_t index);
 //
@@ -66,7 +63,6 @@ AliAnalysisTaskTIdentityPID* Config_marsland_TIdentityPID(Bool_t getFromAlien, I
       std::cout << " SETTING TYPE = " << settingType << " Info::marsland: (REFERENCE settings) + centBinning 10 " << std::endl;
       if( (passIndex==3 && periodName.Contains("18")) || (passIndex==2 && periodName.Contains("15")) ) {
         task->SetDefaultEventCuts(kTRUE);
-        task->SetPileUpTightness(0);
       }
       task->SetUseCouts(kFALSE);
       task->SetFillAllCutVariables(kTRUE);
@@ -82,7 +78,6 @@ AliAnalysisTaskTIdentityPID* Config_marsland_TIdentityPID(Bool_t getFromAlien, I
       // Real data settings
       if( (passIndex==3 && periodName.Contains("18")) || (passIndex==2 && periodName.Contains("15")) ) {
         task->SetDefaultEventCuts(kTRUE);
-        task->SetPileUpTightness(0);
       }
       task->SetUseCouts(kTRUE);
       task->SetNEtabins(16);
@@ -118,7 +113,6 @@ AliAnalysisTaskTIdentityPID* Config_marsland_TIdentityPID(Bool_t getFromAlien, I
       cout << "period and pass = " << periodName << "    " << passIndex << endl;
       if( (passIndex==3) || (passIndex==2) ) {
         task->SetDefaultEventCuts(kTRUE);
-        task->SetPileUpTightness(0);
         cout << " special settings for 18q pass3 and 15o pass2 " << endl;
       }
       task->SetNSettings(1);
@@ -151,7 +145,6 @@ AliAnalysisTaskTIdentityPID* Config_marsland_TIdentityPID(Bool_t getFromAlien, I
       //
       if( (passIndex==3 && periodName.Contains("18")) || (passIndex==2 && periodName.Contains("15")) ) {
         task->SetDefaultEventCuts(kTRUE);
-        task->SetPileUpTightness(0);
       }
       //
       task->SetFillTreeMC(kTRUE);
@@ -185,7 +178,6 @@ AliAnalysisTaskTIdentityPID* Config_marsland_TIdentityPID(Bool_t getFromAlien, I
       //
       task->SetFillTreeMC(kTRUE);
       task->SetFillDistributions(kFALSE);
-      task->SetTrackOriginType(0);   // 0:prim, 1: prim+weak, 2:prim+material, 3:prim+material+weak, 4:full scan
       task->SetUsePtCut(2); // 0: tpc momcut, 1: vertex momcut, 2: pT cut
       // acceptance
       const Int_t tmpEtaBinsMC = 8;
@@ -208,7 +200,6 @@ AliAnalysisTaskTIdentityPID* Config_marsland_TIdentityPID(Bool_t getFromAlien, I
       //
       task->SetFillTreeMC(kTRUE);
       task->SetFillDistributions(kFALSE);
-      task->SetTrackOriginType(0);   // 0:prim, 1: prim+weak, 2:prim+material, 3:prim+material+weak, 4:full scan
       task->SetUsePtCut(2); // 0: tpc momcut, 1: vertex momcut, 2: pT cut
       //
       // acceptance
@@ -232,7 +223,6 @@ AliAnalysisTaskTIdentityPID* Config_marsland_TIdentityPID(Bool_t getFromAlien, I
       //
       task->SetFillTreeMC(kTRUE);
       task->SetFillDistributions(kFALSE);
-      task->SetTrackOriginType(0);   // 0:prim, 1: prim+weak, 2:prim+material, 3:prim+material+weak, 4:full scan
       task->SetUsePtCut(2); // 0: tpc momcut, 1: vertex momcut, 2: pT cut
       // acceptance
       const Int_t tmpEtaBinsMC = 8;
@@ -261,7 +251,7 @@ AliAnalysisTaskTIdentityPID* Config_marsland_TIdentityPID(Bool_t getFromAlien, I
       task->SetFillDistributions(kTRUE);
       task->SetUseCouts(kTRUE);
       task->SetFillTreeMC(kFALSE);
-      task->SetTrackOriginType(4);   // 0:prim, 1: prim+weak, 2:prim+material, 3:prim+material+weak, 4:full scan
+      task->SetMCTrackOriginType(0);   // 0:full scan, 1: prim
       task->SetUsePtCut(1); // 0: tpc momcut, 1: vertex momcut, 2: pT cut
       // acceptance
       const Int_t tmpEtaBinsMC = 8;
@@ -283,7 +273,7 @@ AliAnalysisTaskTIdentityPID* Config_marsland_TIdentityPID(Bool_t getFromAlien, I
       task->SetEffMatrix(kTRUE);  task->SetIsMCtrue(kTRUE);  task->SetFillAllCutVariables(kTRUE);  // conditions to enter FillMCFull_NetParticles()
       //
       task->SetUseCouts(kFALSE);
-      task->SetTrackOriginType(4);   // 0:prim, 1: prim+weak, 2:prim+material, 3:prim+material+weak, 4:full scan
+      task->SetMCTrackOriginType(0);   // 0:full scan, 1: prim
       task->SetUsePtCut(1); // 0: tpc momcut, 1: vertex momcut, 2: pT cut
       // acceptance
       const Int_t tmpEtaBinsMC = 1;
@@ -306,12 +296,12 @@ AliAnalysisTaskTIdentityPID* Config_marsland_TIdentityPID(Bool_t getFromAlien, I
       //
       // task->SetRunOnGrid(kTRUE); // do not fill eff matrix
       task->SetUseCouts(kTRUE);
+      task->SetMCTrackOriginType(0);   // 0:full scan, 1: prim
       task->SetRunFastSimulation(kTRUE);
       task->SetFillTreeMC(kFALSE);
       task->SetFillDistributions(kFALSE);
       task->SetDefaultTrackCuts(kTRUE);
       task->SetFillNudynFastGen(kTRUE);
-      task->SetTrackOriginType(0);   // 0:prim, 1: prim+weak, 2:prim+material, 3:prim+material+weak, 4:full scan
       task->SetRapidityType(1);      // 0:pseudorapidity, 1: rapidity
       task->SetSisterCheck(1);
       task->SetUsePtCut(1); // 0: tpc momcut, 1: vertex momcut, 2: pT cut
@@ -351,7 +341,7 @@ AliAnalysisTaskTIdentityPID* Config_marsland_TIdentityPID(Bool_t getFromAlien, I
       task->SetFillArmPodTree(kTRUE);         // fills fTreeMC
       task->SetDefaultEventCuts(kFALSE);
       task->SetDefaultTrackCuts(kTRUE);
-      task->SetTrackOriginType(0);   // 0:prim, 1: prim+weak, 2:prim+material, 3:prim+material+weak, 4:full scan
+      task->SetMCTrackOriginType(0);   // 0:full scan, 1: prim
       task->SetRapidityType(0);      // 0:pseudorapidity, 1: rapidity
       task->SetUsePtCut(1);          // 0: tpc momcut, 1: vertex momcut, 2: pT cut
       //
@@ -382,11 +372,10 @@ AliAnalysisTaskTIdentityPID* Config_marsland_TIdentityPID(Bool_t getFromAlien, I
       // task->SetRunOnGrid(kTRUE); // do not fill eff matrix
       if( (passIndex==3 && periodName.Contains("18")) || (passIndex==2 && periodName.Contains("15"))) {
         task->SetDefaultEventCuts(kTRUE);
-        task->SetPileUpTightness(0);
       }
       task->SetUseCouts(kTRUE);
       task->SetDefaultTrackCuts(kFALSE);
-      task->SetTrackOriginType(0);   // 0:prim, 1: prim+weak, 2:prim+material, 3:prim+material+weak, 4:full scan
+      task->SetMCTrackOriginType(0);   // 0:full scan, 1: prim
       task->SetRapidityType(0);      // 0:pseudorapidity, 1: rapidity
       task->SetUsePtCut(1);          // 0: tpc momcut, 1: vertex momcut, 2: pT cut
       task->SetFillTreeMC(kTRUE);
@@ -420,18 +409,16 @@ AliAnalysisTaskTIdentityPID* Config_marsland_TIdentityPID(Bool_t getFromAlien, I
       task->SetIsMCtrue(kTRUE);
       task->SetFillAllCutVariables(kTRUE);  // conditions to enter FillMCFull_NetParticles()
       //
-      cout << "period and pass = " << periodName << "    " << passIndex << endl;
+      std::cout << "period and pass = " << periodName << "    " << passIndex << std::endl;
       if( (passIndex==3) || (passIndex==2) ) {
         task->SetDefaultEventCuts(kTRUE);
-        task->SetPileUpTightness(1);
-        cout << " special settings for 18q pass3 and 15o pass2 " << endl;
+        std::cout << " special settings for 18q pass3 and 15o pass2 " << std::endl;
       }
       task->SetNSettings(1);
+      task->SetMCTrackOriginType(0);   // 0:full scan, 1: prim
       task->SetCorrectForMissCl(0);
       task->SetUseCouts(kFALSE);
-      task->SetUseCouts(kTRUE);
       task->SetDefaultTrackCuts(kTRUE);
-      task->SetTrackOriginType(0);   // 0:prim, 1: prim+weak, 2:prim+material, 3:prim+material+weak, 4:full scan
       task->SetRapidityType(0);      // 0:pseudorapidity, 1: rapidity
       task->SetUsePtCut(1);          // 0: tpc momcut, 1: vertex momcut, 2: pT cut
       task->SetFillTreeMC(kTRUE);
@@ -447,12 +434,15 @@ AliAnalysisTaskTIdentityPID* Config_marsland_TIdentityPID(Bool_t getFromAlien, I
       task->fEventCuts.fUseVariablesCorrelationCuts = true;
       //
       // acceptance
-      const Int_t tmpEtaBinsMC = 1;
+
+      const Int_t tmpCentbins  = 10;
+      const Int_t tmpEtaBinsMC = 8;
       const Int_t tmpMomBinsMC = 1;
-      Float_t tmpetaDownArr[tmpEtaBinsMC] = {-0.8};
-      Float_t tmpetaUpArr[tmpEtaBinsMC]   = { 0.8};
-      Float_t tmppDownArr[tmpMomBinsMC] = { 0.6};
-      Float_t tmppUpArr[tmpMomBinsMC]   = { 1.5};
+      Float_t tmpfxCentBins[tmpCentbins] = {0,5,10,20,30,40,50,60,70,80};
+      Float_t tmpetaDownArr[tmpEtaBinsMC] = {-0.1,-0.2,-0.3,-0.4,-0.5,-0.6,-0.7,-0.8};
+      Float_t tmpetaUpArr[tmpEtaBinsMC]   = { 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8};
+      Float_t tmppDownArr[tmpMomBinsMC] = {0.6};
+      Float_t tmppUpArr[tmpMomBinsMC]   = {1.5};
       task->SetMCEtaScanArray(tmpEtaBinsMC, tmpetaDownArr, tmpetaUpArr);
       task->SetMCMomScanArray(tmpMomBinsMC, tmppDownArr,   tmppUpArr);
       // resonances to exclude
@@ -478,7 +468,7 @@ AliAnalysisTaskTIdentityPID* Config_marsland_TIdentityPID(Bool_t getFromAlien, I
       //
       task->SetFillDistributions(kTRUE);
       task->SetRunOnGrid(kTRUE); // do not fill eff matrix
-      task->SetTrackOriginType(0);   // 0:prim, 1: prim+weak, 2:prim+material, 3:prim+material+weak, 4:full scan
+      task->SetMCTrackOriginType(0);   // 0:full scan, 1: prim
       task->SetUsePtCut(1); // 0: tpc momcut, 1: vertex momcut, 2: pT cut
       //
       task->SetMomLowerEdge(0.);
@@ -509,7 +499,7 @@ AliAnalysisTaskTIdentityPID* Config_marsland_TIdentityPID(Bool_t getFromAlien, I
       std::cout << " SETTING TYPE = " << settingType << " Info::marsland: fill only eff matrix " << std::endl;
       task->SetEffMatrix(kTRUE);  task->SetIsMCtrue(kTRUE);  task->SetFillAllCutVariables(kTRUE);  // conditions to enter FillMCFull_NetParticles()
       //
-      task->SetTrackOriginType(0);   // 0:prim, 1: prim+weak, 2:prim+material, 3:prim+material+weak, 4:full scan
+      task->SetMCTrackOriginType(0);   // 0:full scan, 1: prim
       task->SetUsePtCut(1); // 0: tpc momcut, 1: vertex momcut, 2: pT cut
       //
       // acceptance
@@ -1011,7 +1001,6 @@ void SetDefaults(AliAnalysisTaskTIdentityPID *defaultTask, Int_t year, TString p
   std::cout << " Info::marsland: ------------------------------------------------------------------------------------- " << std::endl;
 
   defaultTask->SetNSettings(22);
-  defaultTask->SetPileUpTightness(0);
   defaultTask->SetCorrectForMissCl(0);
   defaultTask->SetYear(year);
   defaultTask->SetPeriodName(periodName);
@@ -1050,7 +1039,7 @@ void SetDefaults(AliAnalysisTaskTIdentityPID *defaultTask, Int_t year, TString p
   defaultTask->SetIncludeITScuts(kFALSE);
   defaultTask->SetFillArmPodTree(kFALSE);
   defaultTask->SetUsePtCut(1);
-  defaultTask->SetTrackOriginType(0);   // 0:prim, 1: prim+weak, 2:prim+material, 3:prim+material+weak, 4:full scan
+  defaultTask->SetMCTrackOriginType(1);   // 0:full scan, 1: prim
   defaultTask->SetRapidityType(0);      // 0:pseudorapidity, 1: rapidity
 
   // Extra Boolians which are by default === OFF ===

@@ -13,7 +13,6 @@ R__ADD_INCLUDE_PATH($ALICE_PHYSICS)
 R__ADD_INCLUDE_PATH($PWD)
 #include <AddTask_marsland_TIdentityPID.C>
 #include <AddTaskFilteredTreeLocal.C>
-// #include <AliAnalysisTaskTIdentityPID.cxx>
 
 #include "AliAODInputHandler.h"
 #include "AliMCEventHandler.h"
@@ -24,6 +23,12 @@ class  AliAnalysisManager;
 class  AliAnalysisAlien;
 
 /*
+
+Example usage: 
+
+cd /home/marsland/Desktop/ubuntu_desktop/workdir/RUN_ON_GRID/Ebye/test/root6_based/4thMoment_29092021
+aliroot -b -q 'runGrid.C(0,0,"test",0,"3","$RUN_ON_GRID_DIR/Ebye/lists/runsONERUN-2020-LHC20e3a-pass3.list","PWGPP695_MC_remapping",1,65,2018,"18q",3,"vAN-20210925_ROOT6-1")'
+aliroot -b -q 'runGrid.C(0,0,"test",0,"3","$RUN_ON_GRID_DIR/Ebye/lists/runs-2020-LHC20e3a-pass3.list","PWGPP695_MC_remapping",1,65,2018,"18q",3,"vAN-20210925_ROOT6-1")'
 
 valgrindOption --> 0 --> Normal, 1--> valgrind, 2--> callgrind, 3-->Massif
 modes          --> "test" --> to run over a small set of files (requires alien connection but everything stored locally), "full" --> to run over everything on the grid, "terminate" --> to merge results after "full"
@@ -38,8 +43,8 @@ lhcYear        --> year
 
 Bool_t fAddFilteredTrees = kFALSE;
 Bool_t fUseMultSelection = kTRUE;
-const Int_t nTestFiles = 2;
-const Int_t nChunksPerJob = 20;
+const Int_t nTestFiles = 1;
+const Int_t nChunksPerJob = 10;
 TString dataBaseDir = "/eos/user/m/marsland/data";
 // TString dataBaseDir = "/media/marsland/Samsung_T5/data";
 TString aliPhysicsTag = "vAN-20201124-1"; //  	vAN-20180828-1  vAN-20181119-1  vAN-20190105_ROOT6-1
@@ -139,7 +144,7 @@ void runGrid(Bool_t fRunLocalFiles = kTRUE, Int_t valgrindOption = 0, TString mo
     AliAnalysisTask *ana = AddTaskFilteredTreeLocal("",isMC);
   }
   //
-  // My task
+  // My task --> has to be compiled here instead of including
   gROOT->LoadMacro("AliAnalysisTaskTIdentityPID.cxx++g");
   AliAnalysisTask *ana = AddTask_marsland_TIdentityPID(kFALSE,"Config_marsland_TIdentityPID.C",setType,lhcYear,periodName,passIndex);
   //
@@ -155,26 +160,30 @@ void runGrid(Bool_t fRunLocalFiles = kTRUE, Int_t valgrindOption = 0, TString mo
     // to run over files stored locally, uncomment this section,
     // and comment out the above lines related to alienHandler and StartAnalysis("grid")
     TChain *chain = new TChain("esdTree");
-    // chain->AddFile(dataBaseDir+"/alice/data/2018/LHC18q/000296622/pass3/18000296622035.203/AliESDs.root");
-    // chain->AddFile(dataBaseDir+"/alice/data/2018/LHC18q/000296622/pass3/18000296622035.207/AliESDs.root");
-    // chain->AddFile(dataBaseDir+"/alice/data/2018/LHC18q/000296622/pass3/18000296622035.209/AliESDs.root");
-    // chain->AddFile(dataBaseDir+"/alice/data/2018/LHC18q/000296622/pass3/18000296622035.211/AliESDs.root");
-    // chain->AddFile(dataBaseDir+"/alice/data/2018/LHC18q/000296622/pass3/18000296622035.220/AliESDs.root");
-    // chain->AddFile(dataBaseDir+"/alice/data/2018/LHC18q/000296622/pass3/18000296622035.228/AliESDs.root");
-    // chain->AddFile(dataBaseDir+"/alice/data/2018/LHC18q/000296622/pass3/18000296622035.302/AliESDs.root");
-    // chain->AddFile(dataBaseDir+"/alice/data/2018/LHC18q/000296622/pass3/18000296622035.306/AliESDs.root");
-    // chain->AddFile(dataBaseDir+"/alice/data/2018/LHC18q/000296622/pass3/18000296622035.325/AliESDs.root");
-    chain->AddFile(dataBaseDir+"/alice/data/2018/LHC18q/000296622/pass3/18000296622035.401/AliESDs.root");
-    chain->AddFile(dataBaseDir+"/alice/data/2018/LHC18q/000296622/pass3/18000296622035.406/AliESDs.root");
-    chain->AddFile(dataBaseDir+"/alice/data/2018/LHC18q/000296622/pass3/18000296622035.411/AliESDs.root");
-    // chain->AddFile(dataBaseDir+"/alice/data/2018/LHC18q/000296622/pass3/18000296622035.514/AliESDs.root");
-    // chain->AddFile(dataBaseDir+"/alice/data/2018/LHC18q/000296622/pass3/18000296622035.531/AliESDs.root");
-    // chain->AddFile(dataBaseDir+"/alice/data/2018/LHC18q/000296622/pass3/18000296622036.503/AliESDs.root");
-    // chain->AddFile(dataBaseDir+"/alice/data/2018/LHC18q/000296622/pass3/18000296622036.526/AliESDs.root");
-    // chain->AddFile(dataBaseDir+"/alice/data/2018/LHC18q/000296622/pass3/18000296622036.603/AliESDs.root");
-    // chain->AddFile(dataBaseDir+"/alice/data/2018/LHC18q/000296622/pass3/18000296622037.309/AliESDs.root");
-    // chain->AddFile(dataBaseDir+"/alice/data/2018/LHC18q/000296622/pass3/18000296622037.315/AliESDs.root");
-    // chain->AddFile(dataBaseDir+"/alice/data/2018/LHC18q/000296622/pass3/18000296622037.325/AliESDs.root");
+    TString localFiles[] = 
+    {
+      "/alice/data/2018/LHC18q/000296622/pass3/18000296622035.401/AliESDs.root",
+      "/alice/data/2018/LHC18q/000296622/pass3/18000296622035.406/AliESDs.root",
+      "/alice/data/2018/LHC18q/000296622/pass3/18000296622035.411/AliESDs.root",
+      "/alice/data/2018/LHC18q/000296622/pass3/18000296622035.203/AliESDs.root",
+      "/alice/data/2018/LHC18q/000296622/pass3/18000296622035.207/AliESDs.root",
+      "/alice/data/2018/LHC18q/000296622/pass3/18000296622035.209/AliESDs.root",
+      "/alice/data/2018/LHC18q/000296622/pass3/18000296622035.211/AliESDs.root",
+      "/alice/data/2018/LHC18q/000296622/pass3/18000296622035.220/AliESDs.root",
+      "/alice/data/2018/LHC18q/000296622/pass3/18000296622035.228/AliESDs.root",
+      "/alice/data/2018/LHC18q/000296622/pass3/18000296622035.302/AliESDs.root",
+      "/alice/data/2018/LHC18q/000296622/pass3/18000296622035.306/AliESDs.root",
+      "/alice/data/2018/LHC18q/000296622/pass3/18000296622035.325/AliESDs.root",
+      "/alice/data/2018/LHC18q/000296622/pass3/18000296622035.514/AliESDs.root",
+      "/alice/data/2018/LHC18q/000296622/pass3/18000296622035.531/AliESDs.root",
+      "/alice/data/2018/LHC18q/000296622/pass3/18000296622036.503/AliESDs.root",
+      "/alice/data/2018/LHC18q/000296622/pass3/18000296622036.526/AliESDs.root",
+      "/alice/data/2018/LHC18q/000296622/pass3/18000296622036.603/AliESDs.root",
+      "/alice/data/2018/LHC18q/000296622/pass3/18000296622037.309/AliESDs.root",
+      "/alice/data/2018/LHC18q/000296622/pass3/18000296622037.315/AliESDs.root",
+      "/alice/data/2018/LHC18q/000296622/pass3/18000296622037.325/AliESDs.root"
+    };
+    for (int ifile =0; ifile<nTestFiles; ifile++) chain->AddFile(dataBaseDir+localFiles[ifile]);
     chain->Print();
     mgr->StartAnalysis("local",chain);
   }
