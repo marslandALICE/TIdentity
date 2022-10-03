@@ -2675,9 +2675,6 @@ void AliAnalysisTaskTIdentityPID::FillMCFull_NetParticles()
             { 
               // track loop
               //
-              // select pile up
-              Bool_t ispileup = (isTPCPileup || isITSPileup);
-              if (ipileup==0 && ispileup) continue;
               //
               // initialize the dummy particle id
               fElMC =-100.; fPiMC =-100.; fKaMC =-100.; fPrMC =-100.;
@@ -2686,6 +2683,11 @@ void AliAnalysisTaskTIdentityPID::FillMCFull_NetParticles()
               AliESDtrack *trackReal = fESD->GetTrack(irectrack);
               if (trackReal==NULL) continue;
               Int_t lab = TMath::Abs(trackReal->GetLabel());           // avoid from negatif labels, they include some garbage
+              // select pile up
+              isTPCPileup = AliAnalysisUtils::IsParticleFromOutOfBunchPileupCollision(lab,fMCEvent);
+              isITSPileup = AliAnalysisUtils::IsSameBunchPileupInGeneratedEvent(fMCEvent, "Hijing");
+              Bool_t ispileup = (isTPCPileup || isITSPileup);
+              if (ipileup==0 && ispileup) continue;
               //
               // check the origin of the track
               Bool_t bPrim     = fMCStack->IsPhysicalPrimary(lab);
