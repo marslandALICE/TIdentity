@@ -55,6 +55,7 @@
 #include "AliCollisionGeometry.h"
 #include "AliGenEventHeader.h"
 #include "AliGenHijingEventHeader.h"
+#include "AliGenHepMCEventHeader.h"
 #include "AliGenCocktailEventHeader.h"
 #include "AliGenEposEventHeader.h"
 #include "AliRun.h"
@@ -305,7 +306,7 @@ fNMomBinsMC(-100),
 fNCentBinsMC(-100),
 fGenprotonBins(-100),
 fNResModeMC(2),
-fNCentbinsData(10),
+fNCentbinsData(14),
 fMissingCl(0.),
 fTPCMult(0),
 fEventMult(0),
@@ -605,7 +606,7 @@ fNMomBinsMC(-100),
 fNCentBinsMC(-100),
 fGenprotonBins(-100),
 fNResModeMC(2),
-fNCentbinsData(10),
+fNCentbinsData(14),
 fMissingCl(0.),
 fTPCMult(0),
 fEventMult(0),
@@ -1087,7 +1088,7 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
     //                                        0    1,    2,                 3,           4,        5,       6
     Int_t   binsExpected[nExpectedbins]  = {  5,   3,  fNCentbinsData,   fNEtaBins,   fNMomBins,   240,   4000 };  // ????
     Double_t xminExpected[nExpectedbins] = {  0., -2.,   0.,             fEtaDown,    fMomDown,     1.,   20.  };
-    Double_t xmaxExpected[nExpectedbins] = {  5.,  2.,  80.,             fEtaUp,      fMomUp,      61.,   1020.};
+    Double_t xmaxExpected[nExpectedbins] = {  5.,  2.,  100.,            fEtaUp,      fMomUp,      61.,   1020.};
     TString axisNameExpected[nExpectedbins]   = {"particleType","sign","Centrality"    ,"eta" ,"momentum" ,"ExSigma","ExMean"};
     TString axisTitleExpected[nExpectedbins]  = {"particleType","sign","Centrality [%]","#eta","#it{p} (GeV/#it{c})", "#sigma","#mu"};
     for (Int_t i=0;i<fNSettings;i++){
@@ -1123,7 +1124,7 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
     // inclusive spectra
     Int_t   binsdEdx[nhistbins]  = { 2,  fNCentbinsData, fNEtaBins,   fNMomBins,    dEdxnBins};
     Double_t xmindEdx[nhistbins] = {-2,  0.,             fEtaDown,    fMomDown,     fDEdxDown};
-    Double_t xmaxdEdx[nhistbins] = { 2,  80.,            fEtaUp,      fMomUp,       fDEdxUp};
+    Double_t xmaxdEdx[nhistbins] = { 2,  100.,           fEtaUp,      fMomUp,       fDEdxUp};
     fHndEdx= new THnSparseF("hdEdx","Inclusive dEdx Spectrum"  ,nhistbins,binsdEdx,xmindEdx,xmaxdEdx);
     fHndEdx->GetAxis(1)->Set(fNCentbinsData-1,fxCentBins.data());
     // Set the branch names
@@ -1163,9 +1164,9 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
     //
     //
     const Int_t ndimScan=6;
-    Int_t nbinsScan[ndimScan]   = {2, fNSettings,           3,8, 40       ,16   };
-    Double_t xminScan[ndimScan] = {0, 0,                    0,0, fMomDown ,fEtaDown };
-    Double_t xmaxScan[ndimScan] = {2, Double_t(fNSettings), 3,80,fMomUp   ,fEtaUp };
+    Int_t nbinsScan[ndimScan]   = {2, fNSettings,           3,10, 40       ,16   };
+    Double_t xminScan[ndimScan] = {0, 0,                    0,0,  fMomDown ,fEtaDown };
+    Double_t xmaxScan[ndimScan] = {2, Double_t(fNSettings), 3,100,fMomUp   ,fEtaUp };
     fHistPosEffMatrixScanRec  =new THnF("fHistPosEffMatrixScanRec","fHistPosEffMatrixScanRec",ndimScan, nbinsScan,xminScan,xmaxScan);
     fHistNegEffMatrixScanRec  =new THnF("fHistNegEffMatrixScanRec","fHistNegEffMatrixScanRec",ndimScan, nbinsScan,xminScan,xmaxScan);
     fHistPosEffMatrixScanGen  =new THnF("fHistPosEffMatrixScanGen","fHistPosEffMatrixScanGen",ndimScan, nbinsScan,xminScan,xmaxScan);
@@ -1340,8 +1341,10 @@ void AliAnalysisTaskTIdentityPID::UserExec(Option_t *)
   //
   if (eventHandler) fMCEvent = eventHandler->MCEvent();
   AliGenEventHeader* genHeader = 0x0;
+  TString genheaderName;
   if (fMCEvent){
     genHeader = fMCEvent->GenEventHeader();
+    genheaderName = genHeader->GetName();
     if(!genHeader){ Printf(" Error::marsland: Event generator header not available!!!\n"); return; }
   }
   //
@@ -1351,6 +1354,7 @@ void AliAnalysisTaskTIdentityPID::UserExec(Option_t *)
   fCentImpBin =-10.;
   AliCentrality    *esdCentrality = 0x0;
   AliMultSelection *MultSelection = 0x0;
+  AliMultSelectionTask *MultSelectionTask = 0x0;
   ULong64_t gid=0;
   fESD = dynamic_cast<AliESDEvent*>( InputEvent() );
   if (fESD)
@@ -1367,10 +1371,10 @@ void AliAnalysisTaskTIdentityPID::UserExec(Option_t *)
         //
         // pileup bit: 0bxxxx, where the leftmost bit is the tightest and the rightmost is the loosest cut
         // OOB pileup cut (for Pb-Pb) based on ITS and TPC clusters: 0-> no cut; 1-> default cut (remove all OOB pileup); 2-> looser cut; 3-> even more looser cut; 4-> very loose cut
-        if (fPileUpTightnessCut4->AcceptEvent(fESD)) { fPileUpBit |= 1 << 3; if (fUseCouts) std::cout << "pileupbit: " << std::bitset<4>(fPileUpBit) << std::endl;}
-        if (fPileUpTightnessCut3->AcceptEvent(fESD)) { fPileUpBit |= 1 << 2; if (fUseCouts) std::cout << "pileupbit: " << std::bitset<4>(fPileUpBit) << std::endl;}
-        if (fPileUpTightnessCut2->AcceptEvent(fESD)) { fPileUpBit |= 1 << 1; if (fUseCouts) std::cout << "pileupbit: " << std::bitset<4>(fPileUpBit) << std::endl;}
-        if (fPileUpTightnessCut1->AcceptEvent(fESD)) { fPileUpBit |= 1 << 0; if (fUseCouts) std::cout << "pileupbit: " << std::bitset<4>(fPileUpBit) << std::endl;}
+        // if (fPileUpTightnessCut4->AcceptEvent(fESD)) { fPileUpBit |= 1 << 3; if (fUseCouts) std::cout << "pileupbit: " << std::bitset<4>(fPileUpBit) << std::endl;}
+        // if (fPileUpTightnessCut3->AcceptEvent(fESD)) { fPileUpBit |= 1 << 2; if (fUseCouts) std::cout << "pileupbit: " << std::bitset<4>(fPileUpBit) << std::endl;}
+        // if (fPileUpTightnessCut2->AcceptEvent(fESD)) { fPileUpBit |= 1 << 1; if (fUseCouts) std::cout << "pileupbit: " << std::bitset<4>(fPileUpBit) << std::endl;}
+        // if (fPileUpTightnessCut1->AcceptEvent(fESD)) { fPileUpBit |= 1 << 0; if (fUseCouts) std::cout << "pileupbit: " << std::bitset<4>(fPileUpBit) << std::endl;}
         fEventCuts.SetRejectTPCPileupWithITSTPCnCluCorr(kTRUE,0); // do not apply any pile cut
         if (!fEventCuts.AcceptEvent(fESD)) {cout<< "pileup event " << endl; return;}
       }
@@ -1437,37 +1441,65 @@ void AliAnalysisTaskTIdentityPID::UserExec(Option_t *)
     if (!fMCStack) { Printf(" Error::marsland: No MC stack available !!!\n"); return;}
     //
     if (MultSelection) {
-      if (fUseCouts)  std::cout << " Info::marsland: Centralitity is taken from MultSelection " << std::endl;
       fCentrality = MultSelection->GetMultiplicityPercentile("V0M");
+      if (fUseCouts)  std::cout << " Info::marsland: Centralitity is taken from MultSelection " << fCentrality << std::endl;
     } else if (esdCentrality) {
-      if (fUseCouts)  std::cout << " Info::marsland: Centralitity is taken from esdCentrality " << std::endl;
       fCentrality = esdCentrality->GetCentralityPercentile("V0M");
+      if (fUseCouts)  std::cout << " Info::marsland: Centralitity is taken from esdCentrality " << fCentrality << std::endl;
     }
     //
     // AliCollisionGeometry* colGeometry = dynamic_cast<AliCollisionGeometry*>(genHeader);
     // std::cout << " aaaa  " <<  ((AliGenEposEventHeader*) genHeader)->ImpactParameter() << std::endl;
     // std::cout << " bbbb  " <<  colGeometry->ImpactParameter() << std::endl;
     //
-    // Just take impact parameter and in case use it
-    if (!TMath::IsNaN(((AliGenHijingEventHeader*) genHeader)->ImpactParameter()) && fMCEvent){
+    //
+    // impact parameters to use: 0.0, 3.72, 5.23, 7.31, 8.88, 10.20, 11.38, 12.47, 13.50, 14.5
+    // corresponding Centrality:  0     5    10    20    30     40     50    60      70    80
+    Double_t impParArr[10] = {0.0, 3.72, 5.23, 7.31, 8.88, 10.20, 11.38, 12.47, 13.50, 14.5};
+    AliGenHijingEventHeader *lHIJINGHeader = 0x0;  // event header for HIJING
+    AliGenHepMCEventHeader *lHepMCHeader = 0x0;    // event header for EPOS
+    //
+    // If EPOS based MC
+    if ( genheaderName.Contains("EPOSLHC") && fMCEvent ){
+      if (genHeader->InheritsFrom(AliGenHepMCEventHeader::Class()))
+      lHepMCHeader = (AliGenHepMCEventHeader*)genHeader;
+      if (lHepMCHeader ){
+        fNHardScatters = lHepMCHeader->Ncoll_hard(); // Number of hard scatterings
+        fNProjectileParticipants = lHepMCHeader->Npart_proj(); // Number of projectile participants
+        fNTargetParticipants     = lHepMCHeader->Npart_targ(); // Number of target participants
+        fNNColl   = lHepMCHeader->Ncoll(); // Number of NN (nucleon-nucleon) collisions
+        fNNwColl  = lHepMCHeader->N_Nwounded_collisions(); // Number of N-Nwounded collisions
+        fNwNColl  = lHepMCHeader->Nwounded_N_collisions(); // Number of Nwounded-N collisons
+        fNwNwColl = lHepMCHeader->Nwounded_Nwounded_collisions();// Number of Nwounded-Nwounded collisions
+        fMCImpactParameter = lHepMCHeader->impact_parameter();
+        if (fUseCouts)  std::cout << " Info::marsland: EPOS: Centralitity is taken from ImpactParameter = " << fMCImpactParameter << "  "  << ((AliGenEposEventHeader*) genHeader)->GetName() << std::endl;
+        fHistImpParam->Fill(fMCImpactParameter);
+        if (fMCImpactParameter>=impParArr[0] && fMCImpactParameter<impParArr[1]) fCentImpBin=2.5;
+        if (fMCImpactParameter>=impParArr[1] && fMCImpactParameter<impParArr[2]) fCentImpBin=7.5;
+        if (fMCImpactParameter>=impParArr[2] && fMCImpactParameter<impParArr[3]) fCentImpBin=15.;
+        if (fMCImpactParameter>=impParArr[3] && fMCImpactParameter<impParArr[4]) fCentImpBin=25.;
+        if (fMCImpactParameter>=impParArr[4] && fMCImpactParameter<impParArr[5]) fCentImpBin=35.;
+        if (fMCImpactParameter>=impParArr[5] && fMCImpactParameter<impParArr[6]) fCentImpBin=45.;
+        if (fMCImpactParameter>=impParArr[6] && fMCImpactParameter<impParArr[7]) fCentImpBin=55.;
+        if (fMCImpactParameter>=impParArr[7] && fMCImpactParameter<impParArr[8]) fCentImpBin=65.;
+        if (fMCImpactParameter>=impParArr[8] && fMCImpactParameter<impParArr[9]) fCentImpBin=75.;
+        if (fMCImpactParameter<impParArr[0]  || fMCImpactParameter>impParArr[9]) fCentImpBin=-10.;
+        fHistCentralityImpPar->Fill(fCentImpBin);
+      }
+    } else if (!TMath::IsNaN(((AliGenHijingEventHeader*) genHeader)->ImpactParameter()) && fMCEvent){
       //
-      // impact parameters to use: 0.0, 3.72, 5.23, 7.31, 8.88, 10.20, 11.38, 12.47, 13.50, 14.5
-      // corresponding Centrality:  0     5    10    20    30     40     50    60      70    80
-      //
-      Double_t impParArr[10] = {0.0, 3.72, 5.23, 7.31, 8.88, 10.20, 11.38, 12.47, 13.50, 14.5};
-      if (fUseCouts)  std::cout << " Info::marsland: Centralitity is taken from ImpactParameter = " << fMCImpactParameter << std::endl;
-      fMCImpactParameter = ((AliGenHijingEventHeader*) genHeader)->ImpactParameter();
-      //
-      // Glauber information
-      fNHardScatters = ((AliGenHijingEventHeader*) genHeader)->HardScatters();
-      fNProjectileParticipants = ((AliGenHijingEventHeader*) genHeader)->ProjectileParticipants();
-      fNTargetParticipants     = ((AliGenHijingEventHeader*) genHeader)->TargetParticipants();
-      fNNColl   = ((AliGenHijingEventHeader*) genHeader)->NN();
-      fNNwColl  = ((AliGenHijingEventHeader*) genHeader)->NNw();
-      fNwNColl  = ((AliGenHijingEventHeader*) genHeader)->NwN();
-      fNwNwColl = ((AliGenHijingEventHeader*) genHeader)->NwNw();
-      //
+      // If HIJING based MC
+      lHIJINGHeader = (AliGenHijingEventHeader*) genHeader;
+      fNHardScatters = lHIJINGHeader->HardScatters();
+      fNProjectileParticipants = lHIJINGHeader->ProjectileParticipants();
+      fNTargetParticipants     = lHIJINGHeader->TargetParticipants();
+      fNNColl   = lHIJINGHeader->NN();
+      fNNwColl  = lHIJINGHeader->NNw();
+      fNwNColl  = lHIJINGHeader->NwN();
+      fNwNwColl = lHIJINGHeader->NwNw();
+      fMCImpactParameter = lHIJINGHeader->ImpactParameter();
       fHistImpParam->Fill(fMCImpactParameter);
+      if (fUseCouts)  std::cout << " Info::marsland: HIJING: Centralitity is taken from ImpactParameter = " << fMCImpactParameter << "  "  << ((AliGenHijingEventHeader*) genHeader)->GetName() << std::endl;
       if (fMCImpactParameter>=impParArr[0] && fMCImpactParameter<impParArr[1]) fCentImpBin=2.5;
       if (fMCImpactParameter>=impParArr[1] && fMCImpactParameter<impParArr[2]) fCentImpBin=7.5;
       if (fMCImpactParameter>=impParArr[2] && fMCImpactParameter<impParArr[3]) fCentImpBin=15.;
@@ -1586,7 +1618,7 @@ void AliAnalysisTaskTIdentityPID::UserExec(Option_t *)
   if (fDEdxCheck)                          { FillTPCdEdxCheck(); return;}
   if (fRunFastSimulation && fFillDnchDeta) { FillDnchDeta(); return;}
   if (fRunFastHighMomentCal)               { FastGenHigherMoments(); return;}
-  if (fRunFastSimulation)                  { FastGen(); return;}
+  if (fRunFastSimulation)                  { FastGen_NetParticles(); return;}
   //
   // Real Data Analysis
   //
@@ -2059,7 +2091,7 @@ void AliAnalysisTaskTIdentityPID::FillMCFull()
     if(!fTreeSRedirector) return;
     if (fWeakAndMaterial){
       (*fTreeSRedirector)<<"fTreeMC"<<
-      "defCut="    << ifDefaultCuts <<  // default cuts 
+      "defCut="    << ifDefaultCuts <<  // default cuts
       "bit96spd="  << fBit96_spd <<  // run Number
       "bit96sdd="  << fBit96_sdd <<  // run Number
       "bit96="     << fBit96_base <<  // run Number
@@ -2579,7 +2611,7 @@ void AliAnalysisTaskTIdentityPID::FillMCFull_NetParticles()
             // -----------------------------------------------------------------------------------------
             //
             for (Int_t iTrack = 0; iTrack < fMCEvent->GetNumberOfTracks(); iTrack++)
-            { 
+            {
               // track loop
               //
               // Select real trigger event and reject other pile up vertices
@@ -2672,7 +2704,7 @@ void AliAnalysisTaskTIdentityPID::FillMCFull_NetParticles()
             // -----------------------------------------------------------------------------------------
             //
             for(Int_t irectrack = 0; irectrack < fESD->GetNumberOfTracks(); irectrack++)
-            { 
+            {
               // track loop
               //
               //
@@ -2969,6 +3001,175 @@ void AliAnalysisTaskTIdentityPID::FillMCFull_NetParticles()
 
 }
 //________________________________________________________________________
+void AliAnalysisTaskTIdentityPID::FastGen_NetParticles()
+{
+  //
+  // Fill dEdx information for the TPC and also the clean kaon and protons
+  //
+  // Assign subsample index
+  Int_t sampleNo = 0;
+  Int_t nSubSample = 20;
+  sampleNo = Int_t(fEventGID)%nSubSample;
+  if (fUseCouts) std::cout << " Info::marsland: ===== In the FastGen_NetParticles ===== " << std::endl;
+  //
+  // ======================================================================
+  // --------------   MC information with ideal PID   ---------------------
+  // ======================================================================
+  //
+  const Int_t nParticles = 3;
+  const Int_t nMoments   = 14;
+  TVectorF genPos(nParticles);
+  TVectorF genNeg(nParticles);
+  TVectorF fMomNetPiGen(nMoments);
+  TVectorF fMomNetKaGen(nMoments);
+  TVectorF fMomNetPrGen(nMoments);
+  //
+  // Acceptance scan
+  for (Int_t ieta=0; ieta<fNEtaWinBinsMC; ieta++){
+    for (Int_t imom=0; imom<fNMomBinsMC; imom++){
+      //
+      // Initialize counters
+      Int_t nTracksgen=0;
+      for(Int_t i=0;i<nParticles; i++){ genPos[i]=0.; genNeg[i]=0.; }
+      for(Int_t i=0;i<nMoments; i++)  { fMomNetPiGen[i]=0.; fMomNetKaGen[i]=0.; fMomNetPrGen[i]=0.; }
+      //
+      // ----------------------------   MC generated pure MC particles  --------------------------
+      AliMCParticle *trackMCgen;
+      for (Int_t iTrack = 0; iTrack < fMCEvent->GetNumberOfTracks(); iTrack++)
+      {
+        //
+        // initialize the dummy particle id
+        fElMCgen =-100.; fPiMCgen =-100.; fKaMCgen =-100.; fPrMCgen =-100.;
+        trackMCgen = (AliMCParticle *)fMCEvent->GetTrack(iTrack);
+        if (!trackMCgen) continue;
+        // 
+        // Accepty only primary particles
+        if (!fMCStack->IsPhysicalPrimary(iTrack)) continue;
+        //
+        // select particle of interest
+        Int_t sign = trackMCgen->Charge();
+        Int_t pdg  = trackMCgen->Particle()->GetPdgCode();
+        Int_t absPDG = TMath::Abs(pdg);
+        Int_t iPart = -10;
+        if (absPDG == kPDGpi) {iPart = 0; fPiMCgen = iPart;} // select pi+
+        if (absPDG == kPDGka) {iPart = 1; fKaMCgen = iPart;} // select ka+
+        if (absPDG == kPDGpr) {iPart = 2; fPrMCgen = iPart;} // select pr+
+        if (iPart == -10) continue; // perfect PID cut
+        //
+        // Acceptance selection
+        Double_t ptotMCgen = 0.;
+        if(fUsePtCut==0) ptotMCgen = trackMCgen->P();
+        if(fUsePtCut==1) ptotMCgen = trackMCgen->P();
+        if(fUsePtCut==2) ptotMCgen = trackMCgen->Pt();
+        Double_t etaMCgen = trackMCgen->Eta();
+        Bool_t etaAcc  = (etaMCgen  >= fetaDownArr[ieta] && etaMCgen  <= fetaUpArr[ieta]);
+        Bool_t momAcc  = (ptotMCgen >= fpDownArr[imom]   && ptotMCgen <= fpUpArr[imom]);
+        Bool_t etaAccMaxWindow = (etaMCgen>=fEtaDown  && etaMCgen<=fEtaUp);
+        Bool_t momAccMaxWindow = (ptotMCgen>=fMomDown && ptotMCgen<=fMomUp);
+        Bool_t centAcc = (fCentrality>0);
+        //
+        // fill the moments
+        if (etaAcc && momAcc && centAcc){
+          nTracksgen++;
+          if ( fPiMCgen>-1 && pdg<0) genNeg[kPi]++;
+          if ( fKaMCgen>-1 && pdg<0) genNeg[kKa]++;
+          if ( fPrMCgen>-1 && pdg<0) genNeg[kPr]++;
+          // 
+          if ( fPiMCgen>-1 && pdg>0) genPos[kPi]++;
+          if ( fKaMCgen>-1 && pdg>0) genPos[kKa]++;
+          if ( fPrMCgen>-1 && pdg>0) genPos[kPr]++;
+        }
+
+      } // ======= end of track loop for generated particles =======
+      //
+      // -----------------------------------------------------------------------------------------
+      // --------------------   Calculation of moments on the event level  -----------------------
+      // -----------------------------------------------------------------------------------------
+      //
+      // Net Pions
+      fMomNetPiGen[kA]    = genPos[kPi];
+      fMomNetPiGen[kB]    = genNeg[kPi];
+      fMomNetPiGen[kAA]   = genPos[kPi]*genPos[kPi];
+      fMomNetPiGen[kBB]   = genNeg[kPi]*genNeg[kPi];
+      fMomNetPiGen[kAB]   = genPos[kPi]*genNeg[kPi];
+      fMomNetPiGen[kAAA]  = genPos[kPi]*genPos[kPi]*genPos[kPi];
+      fMomNetPiGen[kBBB]  = genNeg[kPi]*genNeg[kPi]*genNeg[kPi];
+      fMomNetPiGen[kAAB]  = genPos[kPi]*genPos[kPi]*genNeg[kPi];
+      fMomNetPiGen[kBBA]  = genNeg[kPi]*genNeg[kPi]*genPos[kPi];
+      fMomNetPiGen[kABBB] = genPos[kPi]*genNeg[kPi]*genNeg[kPi]*genNeg[kPi];
+      fMomNetPiGen[kAABB] = genPos[kPi]*genPos[kPi]*genNeg[kPi]*genNeg[kPi];
+      fMomNetPiGen[kAAAB] = genPos[kPi]*genPos[kPi]*genPos[kPi]*genNeg[kPi];
+      fMomNetPiGen[kAAAA] = genPos[kPi]*genPos[kPi]*genPos[kPi]*genPos[kPi];
+      fMomNetPiGen[kBBBB] = genNeg[kPi]*genNeg[kPi]*genNeg[kPi]*genNeg[kPi];
+      //
+      // Net Kaons
+      fMomNetKaGen[kA]    = genPos[kKa];
+      fMomNetKaGen[kB]    = genNeg[kKa];
+      fMomNetKaGen[kAA]   = genPos[kKa]*genPos[kKa];
+      fMomNetKaGen[kBB]   = genNeg[kKa]*genNeg[kKa];
+      fMomNetKaGen[kAB]   = genPos[kKa]*genNeg[kKa];
+      fMomNetKaGen[kAAA]  = genPos[kKa]*genPos[kKa]*genPos[kKa];
+      fMomNetKaGen[kBBB]  = genNeg[kKa]*genNeg[kKa]*genNeg[kKa];
+      fMomNetKaGen[kAAB]  = genPos[kKa]*genPos[kKa]*genNeg[kKa];
+      fMomNetKaGen[kBBA]  = genNeg[kKa]*genNeg[kKa]*genPos[kKa];
+      fMomNetKaGen[kABBB] = genPos[kKa]*genNeg[kKa]*genNeg[kKa]*genNeg[kKa];
+      fMomNetKaGen[kAABB] = genPos[kKa]*genPos[kKa]*genNeg[kKa]*genNeg[kKa];
+      fMomNetKaGen[kAAAB] = genPos[kKa]*genPos[kKa]*genPos[kKa]*genNeg[kKa];
+      fMomNetKaGen[kAAAA] = genPos[kKa]*genPos[kKa]*genPos[kKa]*genPos[kKa];
+      fMomNetKaGen[kBBBB] = genNeg[kKa]*genNeg[kKa]*genNeg[kKa]*genNeg[kKa];
+      //
+      // Net Protons
+      fMomNetPrGen[kA]    = genPos[kPr];
+      fMomNetPrGen[kB]    = genNeg[kPr];
+      fMomNetPrGen[kAA]   = genPos[kPr]*genPos[kPr];
+      fMomNetPrGen[kBB]   = genNeg[kPr]*genNeg[kPr];
+      fMomNetPrGen[kAB]   = genPos[kPr]*genNeg[kPr];
+      fMomNetPrGen[kAAA]  = genPos[kPr]*genPos[kPr]*genPos[kPr];
+      fMomNetPrGen[kBBB]  = genNeg[kPr]*genNeg[kPr]*genNeg[kPr];
+      fMomNetPrGen[kAAB]  = genPos[kPr]*genPos[kPr]*genNeg[kPr];
+      fMomNetPrGen[kBBA]  = genNeg[kPr]*genNeg[kPr]*genPos[kPr];
+      fMomNetPrGen[kABBB] = genPos[kPr]*genNeg[kPr]*genNeg[kPr]*genNeg[kPr];
+      fMomNetPrGen[kAABB] = genPos[kPr]*genPos[kPr]*genNeg[kPr]*genNeg[kPr];
+      fMomNetPrGen[kAAAB] = genPos[kPr]*genPos[kPr]*genPos[kPr]*genNeg[kPr];
+      fMomNetPrGen[kAAAA] = genPos[kPr]*genPos[kPr]*genPos[kPr]*genPos[kPr];
+      fMomNetPrGen[kBBBB] = genNeg[kPr]*genNeg[kPr]*genNeg[kPr]*genNeg[kPr];
+      //
+      // fill tree which contains moments
+      if(!fTreeSRedirector) return;
+      if (nTracksgen>0){
+        (*fTreeSRedirector)<<"mcGen"<<
+        "ngenacc="      << nTracksgen <<
+        "isample="      << sampleNo <<                 // sample id for subsample method
+        "cent="         << fCentrality <<              // centrality from V0
+        "centimp="      << fCentImpBin <<              // centraltiy from impact parameter
+        "impPar="       << fMCImpactParameter <<       // impact parameter taken from MC event header
+        //
+        "nhard="        << fNHardScatters <<           // Number of hard scatterings
+        "nproj="        << fNProjectileParticipants << // Number of projectiles participants
+        "ntarget="      << fNTargetParticipants <<     // Number of target participants
+        "nn="           << fNNColl <<                  // Number of N-N collisions
+        "nnw="          << fNNwColl <<                 // Number of N-Nwounded collisions
+        "nwn="          << fNwNColl <<                 // Number of Nwounded-N collisons
+        "nwnw="         << fNwNwColl <<                // Number of Nwounded-Nwounded collisions
+        //
+        "pDown="        << fpDownArr[imom] <<          // lower edge of momentum bin
+        "pUp="          << fpUpArr[imom] <<            // upper edge of momentum bin
+        "etaDown="      << fetaDownArr[ieta] <<        // lower edge of eta bin
+        "etaUp="        << fetaUpArr[ieta] <<          // upper edge of eta bin
+        //
+        "netPiMomGen.="   << &fMomNetPiGen <<         // momnets up to 3rd order for (net)pions on generated level with resonances
+        "netKaMomGen.="   << &fMomNetKaGen <<         // momnets up to 3rd order for (net)kaons on generated level with resonances
+        "netPrMomGen.="   << &fMomNetPrGen <<         // momnets up to 3rd order for (net)protons on generated level with resonances
+        "\n";
+      }
+
+
+    } // ======= end of momentum loop =======
+  } // ======= end of eta loop =======
+
+
+}
+//________________________________________________________________________
 void AliAnalysisTaskTIdentityPID::FillTreeMC()
 {
 
@@ -3007,7 +3208,7 @@ void AliAnalysisTaskTIdentityPID::FillTreeMC()
     if (fMCStack->IsPhysicalPrimary(lab))        trackOrigin = 0;
     if (fMCStack->IsSecondaryFromMaterial(lab))  trackOrigin = 1;
     if (fMCStack->IsSecondaryFromWeakDecay(lab)) trackOrigin = 2;
-    if (trackOrigin<-1) continue;
+    if (trackOrigin<-1) continue; // TODO
     //
     // Track cuts from dtector
     Bool_t ifDefaultCuts = fESDtrackCuts->AcceptTrack(trackReal);
@@ -3017,9 +3218,9 @@ void AliAnalysisTaskTIdentityPID::FillTreeMC()
     Bool_t fBit128       = fESDtrackCuts_Bit128->AcceptTrack(trackReal);
     Bool_t fBit768       = fESDtrackCuts_Bit768->AcceptTrack(trackReal);
     Bool_t ifDCAcutIfNoITSPixel = ApplyDCAcutIfNoITSPixel(trackReal);
-    if (!trackReal->GetInnerParam()) continue;             // Ask if track is in the TPC
-    if (!fESDtrackCutsLoose->AcceptTrack(trackReal))  continue;    // Loose Cuts
-    if (!(trackReal->GetTPCsignalN()>0)) continue;
+    if (!trackReal->GetInnerParam()) continue;     // TODO        // Ask if track is in the TPC
+    if (!fESDtrackCutsLoose->AcceptTrack(trackReal))  continue;    // TODO
+    if (!(trackReal->GetTPCsignalN()>0)) continue; // TODO
     //
     // match the track with mc track
     Int_t iPart = -10;
@@ -3028,7 +3229,7 @@ void AliAnalysisTaskTIdentityPID::FillTreeMC()
     if (TMath::Abs(pdg) == kPDGka) { iPart = 2; } // select ka
     if (TMath::Abs(pdg) == kPDGpr) { iPart = 3; } // select pr
     if (TMath::Abs(pdg) == kPDGde) { iPart = 4; } // select de
-    if (iPart == -10) continue;
+    if (iPart == -10) continue; // TODO
     //
     Float_t closestPar[3];
     GetExpecteds(trackReal,closestPar);
@@ -3246,7 +3447,7 @@ void AliAnalysisTaskTIdentityPID::FastGen()
           if (!bAcceptOrigin) continue; // origin cut
           //
           // select sigle particle type
-          Int_t sign = trackMCgen->Particle()->GetPDG()->Charge();
+          Int_t sign = trackMCgen->Charge();
           Int_t pdg  = trackMCgen->Particle()->GetPdgCode();
           Int_t absPDG = TMath::Abs(pdg);
           Int_t iPart = -10;
@@ -3272,6 +3473,7 @@ void AliAnalysisTaskTIdentityPID::FastGen()
           Double_t etaMCgen = (fRapidityType==0) ? trackMCgen->Eta() :  trackMCgen->Y();
           Bool_t etaAcc  = (etaMCgen>=fetaDownArr[ieta] && etaMCgen<=fetaUpArr[ieta]);
           Bool_t momAcc  = (ptotMCgen>=fpDownArr[imom]  && ptotMCgen<fpUpArr[imom]);
+          Bool_t centAcc = (fCentrality>0);
           //
           if (iorig==0 && fPrMCgen>0 && fetaUpArr[ieta]>11.7 && fpUpArr[imom]>100.)
           {
@@ -3280,10 +3482,15 @@ void AliAnalysisTaskTIdentityPID::FastGen()
           }
           //
           // Check particle is from a Resonance
-          Bool_t acceptRes = CheckIfFromAnyResonance(trackMCgen,fetaDownArr[ieta],fetaUpArr[ieta],fpDownArr[imom],fpUpArr[imom]);
+          // Bool_t acceptRes = CheckIfFromAnyResonance(trackMCgen,fetaDownArr[ieta],fetaUpArr[ieta],fpDownArr[imom],fpUpArr[imom]);
+          //
+          // Resonance control
+          Bool_t parInterest = (fPiMCgen>-1||fKaMCgen>-1||fPrMCgen>-1||fElMCgen>-1||fLaMCgen>-1) ? kTRUE : kFALSE;
+          // Bool_t acceptRes = CheckIfFromResonance(1,trackMCgen,iTrack,parInterest,ptotMCgen,etaMCgen,fCentrality,kTRUE);
+          Bool_t acceptRes = kTRUE;  // TODO
           //
           // count first moments
-          if (etaAcc && momAcc){
+          if (etaAcc && momAcc && centAcc){
             //
             // count charged particles
             trCountgen++;
@@ -3395,6 +3602,13 @@ void AliAnalysisTaskTIdentityPID::FastGen()
           "isample="      << sampleNo <<                // sample id for subsample method
           "orig="         << iorig <<
           "vZ="           << fVz <<
+          "nhard="        << fNHardScatters <<           // Number of hard scatterings
+          "nproj="        << fNProjectileParticipants << // Number of projectiles participants
+          "ntarget="      << fNTargetParticipants <<     // Number of target participants
+          "nn="           << fNNColl <<                  // Number of N-N collisions
+          "nnw="          << fNNwColl <<                 // Number of N-Nwounded collisions
+          "nwn="          << fNwNColl <<                 // Number of Nwounded-N collisons
+          "nwnw="         << fNwNwColl <<                // Number of Nwounded-Nwounded collisions
           "cent="         << fCentrality <<
           "centimp="      << fCentImpBin <<
           "impPar="       << fMCImpactParameter <<      // impact parameter taken from MC event header
@@ -4630,10 +4844,10 @@ Bool_t AliAnalysisTaskTIdentityPID::CheckIfFromResonance(Int_t mcType, AliMCPart
   Bool_t acceptRes = kTRUE;
   //
   TObjString momName="xxx";
-  Int_t labMom = trackMCgen->GetMother();
+  Int_t labMom = trackMCgen->Particle()->GetFirstMother();
   Int_t pdgMom = 0;
-  if ((labMom>=0) && (labMom < fMCEvent->GetNumberOfTracks())){
-    pdgMom = fMCStack->Particle(labMom)->GetPdgCode();
+  if ( (labMom>=0) && (labMom < fMCEvent->GetNumberOfTracks()) ){
+    pdgMom  = fMCStack->Particle(labMom)->GetPdgCode();
     momName = fMCStack->Particle(labMom)->GetName();
   }
   //
@@ -4654,10 +4868,10 @@ Bool_t AliAnalysisTaskTIdentityPID::CheckIfFromResonance(Int_t mcType, AliMCPart
     if(!fTreeSRedirector) return kFALSE;
     (*fTreeSRedirector)<<"resonance"<<
     "acceptRes="   << acceptRes   <<
-    "mcType="      << mcType       <<         // lower edge of momentum bin
-    "ptot="        << ptot       <<         // lower edge of momentum bin
-    "eta="         << eta     <<         // lower edge of eta bin
-    "cent="        << cent        <<                 // cent bin
+    "mcType="      << mcType       <<        // lower edge of momentum bin
+    "ptot="        << ptot       <<          // lower edge of momentum bin
+    "eta="         << eta     <<             // lower edge of eta bin
+    "cent="        << cent        <<         // cent bin
     "parInterest=" << parInterest <<         // only pi, ka, and proton
     "pdg="         << pdg         <<         // pdg of prim particle
     "lab="         << trackIndex  <<         // index of prim particle
@@ -4804,10 +5018,11 @@ void AliAnalysisTaskTIdentityPID::FillDnchDeta()
     etaUpArray[i]=0.1*(i+1);
     etaDownArray[i]=etaUpArray[i]*-1.;
   }
-  Double_t centDownArray[9]={0., 5.,  10., 20., 30., 40., 50., 60., 70.};
-  Double_t centUpArray[9]  ={5., 10., 20., 30., 40., 50., 60., 70., 80.};
+  const Int_t nCentBins = 9;
+  Double_t centDownArray[nCentBins]={0., 5.,  10., 20., 30., 40., 50., 60., 70.};
+  Double_t centUpArray[nCentBins]  ={5., 10., 20., 30., 40., 50., 60., 70., 80.};
   for (Int_t ieta=0; ieta<netabins; ieta++){
-    for (Int_t icent=0; icent<9; icent++){
+    for (Int_t icent=0; icent<nCentBins; icent++){
 
       AliMCParticle *trackMCgen;
       Int_t trCount=0,    elCount=0,    piCount=0,    kaCount=0,    prCount=0;
