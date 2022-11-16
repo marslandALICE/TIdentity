@@ -96,6 +96,9 @@ AliAnalysisTaskTIdentityPID* Config_marsland_TIdentityPID(Bool_t getFromAlien, I
       //
       task->SetFillArmPodTree(kTRUE);
       task->SetRunOnGrid(kTRUE);
+      const Int_t tmpCentbins = 14;
+      Float_t tmpfxCentBins[tmpCentbins] = {0,5,10,20,30,40,50,60,70,80,85,90,95,100};
+      task->SetCentralityBinning(tmpCentbins,tmpfxCentBins);
       task->fEventCuts.fUseVariablesCorrelationCuts = true;
     }
     break;

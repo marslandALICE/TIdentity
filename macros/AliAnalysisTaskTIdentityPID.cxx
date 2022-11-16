@@ -990,9 +990,9 @@ void AliAnalysisTaskTIdentityPID::Initialize()
   fESDtrackCutsLoose = new AliESDtrackCuts("esdTrackCutsLoose","");
   fESDtrackCutsLoose->SetEtaRange(-100.,100.);
   fESDtrackCutsLoose->SetPtRange(0.1,100000.);
-  fESDtrackCutsLoose->SetMinRatioCrossedRowsOverFindableClustersTPC(0.8);
+  // fESDtrackCutsLoose->SetMinRatioCrossedRowsOverFindableClustersTPC(0.8);
   fESDtrackCutsLoose->SetAcceptKinkDaughters(kFALSE);
-  fESDtrackCutsLoose->SetMaxFractionSharedTPCClusters(0.4);
+  // fESDtrackCutsLoose->SetMaxFractionSharedTPCClusters(0.4);
   fESDtrackCutsLoose->SetMinNClustersTPC(50);
   fESDtrackCutsLoose->SetMinNCrossedRowsTPC(50);
   fESDtrackCutsLoose->SetMaxDCAToVertexXY(10);   // hybrid cuts  TODO
@@ -1722,6 +1722,10 @@ void AliAnalysisTaskTIdentityPID::FillTPCdEdxReal()
     Bool_t dca11h     = TMath::Abs(fTrackDCAxy)<0.0105+0.0350/TMath::Power(fPt,1.1);    // 10h tuned loose cut
     Bool_t dca10h     = TMath::Abs(fTrackDCAxy)<0.0182+0.0350/TMath::Power(fPt,1.01);    // 10h tuned loose cut
     Bool_t dcaBaseCut = TMath::Abs(fTrackDCAxy)<0.0208+0.04/TMath::Power(fPt,1.01);  // 10h tuned loose cut
+
+    UShort_t tpcFindableCls = track->GetTPCNclsF();
+    UShort_t tpcSharedCls = track->GetTPCnclsS();
+
     //
     if (fFillTracks && !fFillOnlyHists)
     {
@@ -1749,6 +1753,9 @@ void AliAnalysisTaskTIdentityPID::FillTPCdEdxReal()
       "itsmult="   << itsNumberOfTracklets <<    // ITS multiplicity
       "itsclmult=" << nITSClusters <<    // ITS multiplicity
       "tpcclmult=" << nTPCClusters <<    // ITS multiplicity
+      //
+      "tpcFindableCls=" << tpcFindableCls << // number of findable clusters
+      "tpcSharedCls=" << tpcSharedCls << // number of shared clusters
       //
       "gid="       << fEventGID             <<  //  global event ID
       "eventtime=" << fTimeStamp            <<  // event timeStamp
@@ -4495,6 +4502,12 @@ void AliAnalysisTaskTIdentityPID::FillCleanSamples()
     //  Selections from ionuts
     // ----------------------------------------------------------------------------------------------------------
     //
+
+    // protect against floating point exception in asin(deltat/chipair) calculation in AliESDv0KineCuts::PsiPair
+    if (!CheckPsiPair(fV0s)) {
+      continue;
+    }
+
     if(trackPosTest->GetSign() == trackNegTest->GetSign()) {fTrackCutBits=0; continue;}
     Bool_t v0ChargesAreCorrect = (trackPosTest->GetSign()==+1 ? kTRUE : kFALSE);
     trackPosTest = (!v0ChargesAreCorrect ? fESD->GetTrack(fV0s->GetNindex()) : trackPosTest);
@@ -4566,6 +4579,7 @@ void AliAnalysisTaskTIdentityPID::FillCleanSamples()
 
     if ((vecP.Mag() * vecM.Mag())<0.00001) {fTrackCutBits=0; continue;}
     if ((vecN.Mag() * vecM.Mag())<0.00001) {fTrackCutBits=0; continue;}
+
     Double_t thetaP  = acos((vecP * vecM)/(vecP.Mag() * vecM.Mag()));
     Double_t thetaN  = acos((vecN * vecM)/(vecN.Mag() * vecM.Mag()));
     if ( ((vecP.Mag())*cos(thetaP)+(vecN.Mag())*cos(thetaN)) <0.00001) {fTrackCutBits=0; continue;}
@@ -6490,4 +6504,86 @@ void AliAnalysisTaskTIdentityPID::DumpDownScaledTree()
 
   } // end of track LOOP
 
+}
+
+const Bool_t AliAnalysisTaskTIdentityPID::CheckPsiPair(const AliESDv0* v0)
+{
+  // Angle between daughter momentum plane and plane
+  // taken from AliESDv0KineCuts
+
+  if(!fESD) return kFALSE;
+
+  Float_t magField = fESD->GetMagneticField();
+
+  // check if indices have been correctly applied
+  Int_t pIndexTemp = -1;
+  Int_t nIndexTemp = -1;
+
+  pIndexTemp = v0->GetPindex();
+  nIndexTemp = v0->GetNindex();
+
+  AliESDtrack* d[2];
+  d[0] = dynamic_cast<AliESDtrack*>(fESD->GetTrack(pIndexTemp));
+  d[1] = dynamic_cast<AliESDtrack*>(fESD->GetTrack(nIndexTemp));
+
+  Int_t sign[2];
+  sign[0] = (int)d[0]->GetSign();
+  sign[1] = (int)d[1]->GetSign();
+
+  Int_t pIndex = 0, nIndex = 0;
+  if(-1 == sign[0] && 1 == sign[1]){
+    pIndex = v0->GetPindex();
+    nIndex = v0->GetNindex();
+  }
+  else{
+    pIndex = v0->GetNindex();
+    nIndex = v0->GetPindex();
+  }
+
+  AliESDtrack* daughter[2];
+
+  daughter[0] = dynamic_cast<AliESDtrack *>(fESD->GetTrack(pIndex));
+  daughter[1] = dynamic_cast<AliESDtrack *>(fESD->GetTrack(nIndex));
+
+  Double_t x, y, z;
+  v0->GetXYZ(x,y,z);//Reconstructed coordinates of V0; to be replaced by Markus Rammler's method in case of conversions!
+
+  Double_t mn[3] = {0,0,0};
+  Double_t mp[3] = {0,0,0};
+
+
+  v0->GetNPxPyPz(mn[0],mn[1],mn[2]);//reconstructed cartesian momentum components of negative daughter;
+  v0->GetPPxPyPz(mp[0],mp[1],mp[2]);//reconstructed cartesian momentum components of positive daughter;
+
+
+  Double_t deltat = 1.;
+  deltat = TMath::ATan(mp[2]/(TMath::Sqrt(mp[0]*mp[0] + mp[1]*mp[1])+1.e-13)) -  TMath::ATan(mn[2]/(TMath::Sqrt(mn[0]*mn[0] + mn[1]*mn[1])+1.e-13));//difference of angles of the two daughter tracks with z-axis
+
+  Double_t radiussum = TMath::Sqrt(x*x + y*y) + 50;//radius to which tracks shall be propagated
+
+  Double_t momPosProp[3];
+  Double_t momNegProp[3];
+
+  AliExternalTrackParam pt(*daughter[0]), nt(*daughter[1]);
+
+  Double_t psiPair = 4.;
+
+  if(nt.PropagateTo(radiussum,magField) == 0)//propagate tracks to the outside
+    psiPair =  -5.;
+  if(pt.PropagateTo(radiussum,magField) == 0)
+    psiPair = -5.;
+  pt.GetPxPyPz(momPosProp);//Get momentum vectors of tracks after propagation
+  nt.GetPxPyPz(momNegProp);
+
+  Double_t pEle =
+    TMath::Sqrt(momNegProp[0]*momNegProp[0]+momNegProp[1]*momNegProp[1]+momNegProp[2]*momNegProp[2]);//absolute momentum value of negative daughter
+  Double_t pPos =
+    TMath::Sqrt(momPosProp[0]*momPosProp[0]+momPosProp[1]*momPosProp[1]+momPosProp[2]*momPosProp[2]);//absolute momentum value of positive daughter
+
+  Double_t scalarproduct =
+    momPosProp[0]*momNegProp[0]+momPosProp[1]*momNegProp[1]+momPosProp[2]*momNegProp[2];//scalar product of propagated positive and negative daughters' momenta
+
+  Double_t chipair = TMath::ACos(scalarproduct/(pEle*pPos));//Angle between propagated daughter tracks
+
+  return abs(deltat / chipair) <= 1;
 }
