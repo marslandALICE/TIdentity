@@ -509,7 +509,8 @@ private:
   void FillMCFull();                     // Fill all info + TIdenMC from MC to do MC closure test
   void FillTreeMC();
   void FillMCFull_NetParticles();
-  void FastGen();                           // Run over galice.root for Fastgen
+  void FastGen();                           // Run over galice.root for Fastgen 2nd moments
+  void FastGen_NetParticles();              // Run over galice.root for Fastgen higher moments
   void FastGenHigherMoments();     // Run over galice.root for Fastgen and calculate higher moments
   void MCclosureHigherMoments();   // Calculate higher moments for REC and GEN
   void WeakAndMaterial();                   // Look full acceptance, weak decay and material
@@ -855,7 +856,7 @@ private:
   std::vector<float>  fpDownArr;             
   std::vector<float>  fpUpArr;               
   std::vector<float>  fxCentBins;             
-  std::vector<string> fResonances;           
+  std::vector<std::string> fResonances;           
   std::vector<int>    fBaryons;
   //
   // control and QA histograms
