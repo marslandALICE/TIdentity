@@ -206,6 +206,7 @@ fFillDnchDeta(kFALSE),
 fIncludeTOF(kFALSE),
 fUseThnSparse(kFALSE),
 fUseCouts(kFALSE),
+fV0InvMassHists(kFALSE),
 fNSettings(22),
 fNMomBins(0),
 fMomDown(0),
@@ -506,6 +507,7 @@ fFillDnchDeta(kFALSE),
 fIncludeTOF(kFALSE),
 fUseThnSparse(kFALSE),
 fUseCouts(kFALSE),
+fV0InvMassHists(kFALSE),
 fNSettings(22),
 fNMomBins(0),
 fMomDown(0),
@@ -1259,7 +1261,7 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
   //   Clean sample helper histograms
   // ************************************************************************
   //
-  if (fUseCouts && fFillArmPodTree)
+  if (fV0InvMassHists && fFillArmPodTree)
   {
     fHistArmPod            = new TH2F("hArmPod",           "Armenteros-Podolanski plot"                     , 100,-1.,1., 110,0.,0.22);
     fHistInvK0s            = new TH1F("fHistInvK0s",       "control histogram for K0s invariant mass"       , 1000, 0.3,  0.70);
@@ -1309,6 +1311,8 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
   PostData(12, fTreeEvents);
   PostData(13, fTreeDScaled);
   PostData(14, fTreeMCEffCorr);
+
+  fEventCuts.SetManualMode();
 
   std::cout << " Info::marsland: ===== Out of UserCreateOutputObjects ===== " << std::endl;
 
@@ -1371,10 +1375,10 @@ void AliAnalysisTaskTIdentityPID::UserExec(Option_t *)
         //
         // pileup bit: 0bxxxx, where the leftmost bit is the tightest and the rightmost is the loosest cut
         // OOB pileup cut (for Pb-Pb) based on ITS and TPC clusters: 0-> no cut; 1-> default cut (remove all OOB pileup); 2-> looser cut; 3-> even more looser cut; 4-> very loose cut
-        // if (fPileUpTightnessCut4->AcceptEvent(fESD)) { fPileUpBit |= 1 << 3; if (fUseCouts) std::cout << "pileupbit: " << std::bitset<4>(fPileUpBit) << std::endl;}
-        // if (fPileUpTightnessCut3->AcceptEvent(fESD)) { fPileUpBit |= 1 << 2; if (fUseCouts) std::cout << "pileupbit: " << std::bitset<4>(fPileUpBit) << std::endl;}
-        // if (fPileUpTightnessCut2->AcceptEvent(fESD)) { fPileUpBit |= 1 << 1; if (fUseCouts) std::cout << "pileupbit: " << std::bitset<4>(fPileUpBit) << std::endl;}
-        // if (fPileUpTightnessCut1->AcceptEvent(fESD)) { fPileUpBit |= 1 << 0; if (fUseCouts) std::cout << "pileupbit: " << std::bitset<4>(fPileUpBit) << std::endl;}
+        if (fPileUpTightnessCut4->AcceptEvent(fESD)) { fPileUpBit |= 1 << 3; if (fUseCouts) std::cout << "pileupbit: " << std::bitset<4>(fPileUpBit) << std::endl;}
+        if (fPileUpTightnessCut3->AcceptEvent(fESD)) { fPileUpBit |= 1 << 2; if (fUseCouts) std::cout << "pileupbit: " << std::bitset<4>(fPileUpBit) << std::endl;}
+        if (fPileUpTightnessCut2->AcceptEvent(fESD)) { fPileUpBit |= 1 << 1; if (fUseCouts) std::cout << "pileupbit: " << std::bitset<4>(fPileUpBit) << std::endl;}
+        if (fPileUpTightnessCut1->AcceptEvent(fESD)) { fPileUpBit |= 1 << 0; if (fUseCouts) std::cout << "pileupbit: " << std::bitset<4>(fPileUpBit) << std::endl;}
         fEventCuts.SetRejectTPCPileupWithITSTPCnCluCorr(kTRUE,0); // do not apply any pile cut
         if (!fEventCuts.AcceptEvent(fESD)) {cout<< "pileup event " << endl; return;}
       }
@@ -4585,7 +4589,7 @@ void AliAnalysisTaskTIdentityPID::FillCleanSamples()
     if ( ((vecP.Mag())*cos(thetaP)+(vecN.Mag())*cos(thetaN)) <0.00001) {fTrackCutBits=0; continue;}
     fAlfa = ((vecP.Mag())*cos(thetaP)-(vecN.Mag())*cos(thetaN))/((vecP.Mag())*cos(thetaP)+(vecN.Mag())*cos(thetaN));
     fQt   = vecP.Mag()*sin(thetaP);
-    if (fUseCouts) fHistArmPod->Fill(fAlfa,fQt);
+    if (fV0InvMassHists) fHistArmPod->Fill(fAlfa,fQt);
     // fV0s->ChangeMassHypothesis(22);   // ????
     // fV0s->ChangeMassHypothesis(310); // ????
     //
@@ -4633,13 +4637,13 @@ void AliAnalysisTaskTIdentityPID::FillCleanSamples()
       // Apply one leg cut for electrons
       if (!(negNTPCSigmaEl<2. || posNTPCSigmaEl<2.)) {fTrackCutBits=0; continue;}
       //
-      if (fUseCouts) fHistInvPhoton->Fill(photon.M());
+      if (fV0InvMassHists) fHistInvPhoton->Fill(photon.M());
       if (isK0sMass) {fTrackCutBits=0; continue;}
       if (isLambdaMass) {fTrackCutBits=0; continue;}
       if (isAntiLambdaMass) {fTrackCutBits=0; continue;}
       if (!isPhotonMass) {fTrackCutBits=0; continue;}
     } else {
-      if (fUseCouts) {
+      if (fV0InvMassHists) {
         fHistInvK0s->Fill(kaon.M());
         fHistInvLambda->Fill(lambda.M());
         fHistInvAntiLambda->Fill(antiLambda.M());

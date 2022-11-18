@@ -79,7 +79,7 @@ AliAnalysisTaskTIdentityPID* Config_marsland_TIdentityPID(Bool_t getFromAlien, I
       if( (passIndex==3 && periodName.Contains("18")) || (passIndex==2 && periodName.Contains("15")) ) {
         task->SetDefaultEventCuts(kTRUE);
       }
-      task->SetUseCouts(kTRUE);
+      task->SetUseCouts(kFALSE);
       task->SetNEtabins(16);
       task->SetEtaLowerEdge(-0.8);
       task->SetEtaUpperEdge( 0.8);
@@ -95,7 +95,8 @@ AliAnalysisTaskTIdentityPID* Config_marsland_TIdentityPID(Bool_t getFromAlien, I
       task->SetDefaultTrackCuts(kTRUE);
       //
       task->SetFillArmPodTree(kTRUE);
-      task->SetRunOnGrid(kTRUE);
+      task->SetV0InvMassHists(kTRUE);
+      task->SetRunOnGrid(kFALSE);
       const Int_t tmpCentbins = 14;
       Float_t tmpfxCentBins[tmpCentbins] = {0,5,10,20,30,40,50,60,70,80,85,90,95,100};
       task->SetCentralityBinning(tmpCentbins,tmpfxCentBins);

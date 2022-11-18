@@ -243,6 +243,7 @@ public:
   void   SetFillEventInfo(const Bool_t ifEventInfo = kFALSE)          {fEventInfo           = ifEventInfo;}
   void   SetPercentageOfEvents(const Int_t nPercentageOfEvents = 0)   {fPercentageOfEvents = nPercentageOfEvents;}
   void   SetNSettings(const Int_t nSettings = 22)                     {fNSettings = nSettings;}
+  void   SetV0InvMassHists(const Bool_t ifV0InvMassHists = kFALSE)    {fV0InvMassHists      = ifV0InvMassHists;}
 
   //
   Bool_t GetRunOnGrid() const { return fRunOnGrid; }
@@ -534,7 +535,7 @@ private:
   Bool_t CheckIfFromAnyResonance(AliMCParticle *trackMCgen, Float_t etaLow, Float_t etaUp, Float_t pDown, Float_t pUp);
   Bool_t ApplyDCAcutIfNoITSPixel(AliESDtrack *track);
   Bool_t GetSystematicClassIndex(UInt_t cut,Int_t syst);
-  Bool_t CheckPsiPair(AliESDv0* const v0) const;
+  const Bool_t CheckPsiPair(const AliESDv0* v0);
   // ---------------------------------------------------------------------------------
   //                                   Members
   // ---------------------------------------------------------------------------------
@@ -643,6 +644,7 @@ private:
   Bool_t            fIncludeTOF;             // Include TOF information to investigate the efficiency loss effects on observable
   Bool_t            fUseThnSparse;           // in case thnsparse is filled
   Bool_t            fUseCouts;               // for debugging
+  Bool_t            fV0InvMassHists;         // V0 invariant mass for QA
 
   Int_t             fNSettings;
   Int_t             fNMomBins;               // number of mombins --> for 20MeV slice 150 and 10MeV 300
@@ -903,7 +905,7 @@ private:
   AliEventCuts* fPileUpTightnessCut2;
   AliEventCuts* fPileUpTightnessCut1;
 
-  ClassDef(AliAnalysisTaskTIdentityPID, 6);
+  ClassDef(AliAnalysisTaskTIdentityPID, 7);
 
 };
 
