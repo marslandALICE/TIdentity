@@ -1161,12 +1161,14 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
   fHistRapDistFullAccAPr = new TH2F("hRapDistFullAccApr",    "rapidity dist of antiprotons in full acceptance", nSafeBins, -15, 15., 10, 0., 100.);
   fListHist->Add(fHistEmptyEvent);
   fListHist->Add(fHistCentrality);
-  fListHist->Add(fHistCentralityImpPar);
-  fListHist->Add(fHistImpParam);
+  if (fMCtrue) {
+    fListHist->Add(fHistCentralityImpPar);
+    fListHist->Add(fHistImpParam);
+    fListHist->Add(fHistGenMult);
+    fListHist->Add(fHistRapDistFullAccPr);
+    fListHist->Add(fHistRapDistFullAccAPr);
+  }
   fListHist->Add(fHistVertex);
-  fListHist->Add(fHistGenMult);
-  fListHist->Add(fHistRapDistFullAccPr);
-  fListHist->Add(fHistRapDistFullAccAPr);
   fEventInfo_CentralityEstimates  = new TVectorF(3);
   for (Int_t i=0;i<3;i++) (*fEventInfo_CentralityEstimates)[i]=-10.;
   //
