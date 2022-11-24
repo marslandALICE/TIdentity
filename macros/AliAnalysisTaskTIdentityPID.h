@@ -39,6 +39,7 @@ class AliPIDCombined;
 #include "TTreeStream.h"
 #include "AliESDv0Cuts.h"
 #include "AliEventCuts.h"
+#include "TRandom3.h"
 
 // class AliAnalysisTaskPIDetaTreeElectrons : public AliAnalysisTaskPIDV0base {
 class AliAnalysisTaskTIdentityPID : public AliAnalysisTaskSE {
@@ -545,8 +546,6 @@ private:
   TList            * fListHist;               //! list for histograms
   AliESDtrackCuts  * fESDtrackCuts;           //! basic cut variables
   AliESDtrackCuts  * fESDtrackCuts_Bit96;     //! basic cut variables
-  AliESDtrackCuts  * fESDtrackCuts_Bit96_spd;     //! basic cut variables
-  AliESDtrackCuts  * fESDtrackCuts_Bit96_sdd;     //! basic cut variables
   AliESDtrackCuts  * fESDtrackCuts_Bit128;    //! basic cut variables
   AliESDtrackCuts  * fESDtrackCuts_Bit768;    //! basic cut variables
   AliESDtrackCuts  * fESDtrackCutsLoose;      //! basic cut variables for debugging
@@ -578,7 +577,8 @@ private:
   TTree            * fTreeEvents;
   TTree            * fTreeDScaled;
   TTree            * fTreeMCEffCorr;
-  TRandom          fRandom;
+  TTree            * fTreeExpecteds;          // tree with expected dE/dx
+  TRandom3         fRandom;
 
 
   TString            fPeriodName;
@@ -603,7 +603,6 @@ private:
   TH1F             * fHistPhiITScounterC;     // helper histogram for TIdentity tree
 
   THnSparseF       * fHndEdx;                 // histogram which hold all dEdx info
-  THnSparseF       * fHnExpected[22];         // histogram which hold all PIDresponse info
   TH2F              fH2MissCl[4][16];          // histogram which hold all PIDresponse info
 
   TString           fChunkName;

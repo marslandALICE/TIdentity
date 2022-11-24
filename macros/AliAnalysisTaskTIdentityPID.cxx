@@ -38,7 +38,7 @@
 #include "TCanvas.h"
 #include "TObjArray.h"
 #include "TF1.h"
-#include "TRandom.h"
+#include "TRandom3.h"
 #include "TFile.h"
 #include "TDatabasePDG.h"
 #include "AliPDG.h"
@@ -116,8 +116,6 @@ AliAnalysisTaskTIdentityPID::AliAnalysisTaskTIdentityPID()
 : AliAnalysisTaskSE("TaskEbyeRatios"), fEventCuts(0), fPIDResponse(0),fESD(0), fListHist(0),
 fESDtrackCuts(0),
 fESDtrackCuts_Bit96(0),
-fESDtrackCuts_Bit96_spd(0),
-fESDtrackCuts_Bit96_sdd(0),
 fESDtrackCuts_Bit128(0),
 fESDtrackCuts_Bit768(0),
 fESDtrackCutsLoose(0),
@@ -148,6 +146,7 @@ fTreeMCgenMoms(0x0),
 fTreeEvents(0x0),
 fTreeDScaled(0x0),
 fTreeMCEffCorr(0x0),
+fTreeExpecteds(0x0),
 fRandom(0),
 fPeriodName(""),
 fYear(0),
@@ -169,7 +168,6 @@ fHistPhiTPCcounterCITS(0),
 fHistPhiITScounterA(0),
 fHistPhiITScounterC(0),
 fHndEdx(),
-fHnExpected(),
 fH2MissCl(),
 fChunkName(""),
 fTrackCutBits(0),
@@ -417,8 +415,6 @@ AliAnalysisTaskTIdentityPID::AliAnalysisTaskTIdentityPID(const char *name)
 : AliAnalysisTaskSE(name), fEventCuts(0), fPIDResponse(0), fESD(0), fListHist(0),
 fESDtrackCuts(0),
 fESDtrackCuts_Bit96(0),
-fESDtrackCuts_Bit96_spd(0),
-fESDtrackCuts_Bit96_sdd(0),
 fESDtrackCuts_Bit128(0),
 fESDtrackCuts_Bit768(0),
 fESDtrackCutsLoose(0),
@@ -449,6 +445,7 @@ fTreeMCgenMoms(0x0),
 fTreeEvents(0x0),
 fTreeDScaled(0x0),
 fTreeMCEffCorr(0x0),
+fTreeExpecteds(0x0),
 fRandom(0),
 fPeriodName(""),
 fYear(0),
@@ -470,7 +467,6 @@ fHistPhiTPCcounterCITS(0),
 fHistPhiITScounterA(0),
 fHistPhiITScounterC(0),
 fHndEdx(),
-fHnExpected(),
 fH2MissCl(),
 fChunkName(""),
 fTrackCutBits(0),
@@ -806,6 +802,7 @@ fPileUpTightnessCut4(0)
   DefineOutput(12, TTree::Class());
   DefineOutput(13, TTree::Class());
   DefineOutput(14, TTree::Class());
+  DefineOutput(15, TTree::Class());
   // ==========================================
 
 }
@@ -842,7 +839,6 @@ AliAnalysisTaskTIdentityPID::~AliAnalysisTaskTIdentityPID()
   if (fHistInvAntiLambda)   delete fHistInvAntiLambda;
   if (fHistInvPhoton)       delete fHistInvPhoton;
   if (fHndEdx)              delete fHndEdx;
-  for (Int_t i=0;i<fNSettings;i++) { if (fHnExpected[i])   delete fHnExpected[i]; }
   //
   // Marians histograms
   if (fHistPhiTPCcounterA)  delete fHistPhiTPCcounterA;
@@ -868,8 +864,6 @@ AliAnalysisTaskTIdentityPID::~AliAnalysisTaskTIdentityPID()
   if (fPIDCombined) delete fPIDCombined;
   if (fESDtrackCuts)          delete fESDtrackCuts;
   if (fESDtrackCuts_Bit96)    delete fESDtrackCuts_Bit96;
-  if (fESDtrackCuts_Bit96_spd)    delete fESDtrackCuts_Bit96_spd;
-  if (fESDtrackCuts_Bit96_sdd)    delete fESDtrackCuts_Bit96_sdd;
   if (fESDtrackCuts_Bit128)   delete fESDtrackCuts_Bit128;
   if (fESDtrackCuts_Bit768)   delete fESDtrackCuts_Bit768;
   if (fESDtrackCutsLoose)     delete fESDtrackCutsLoose;
@@ -903,8 +897,6 @@ void AliAnalysisTaskTIdentityPID::Initialize()
   // ------------------------------------------------
   //
   // tight DCA cut used by Emil
-  fESDtrackCuts_Bit96_spd = new AliESDtrackCuts("Bit96_spd",""); fESDtrackCuts_Bit96_spd->SetClusterRequirementITS(AliESDtrackCuts::kSPD, AliESDtrackCuts::kNone);
-  fESDtrackCuts_Bit96_sdd = new AliESDtrackCuts("Bit96_sdd",""); fESDtrackCuts_Bit96_sdd->SetClusterRequirementITS(AliESDtrackCuts::kSDD, AliESDtrackCuts::kFirst);
   fESDtrackCuts_Bit96     = new AliESDtrackCuts("fESDtrackCuts_Bit96","");
   fESDtrackCuts_Bit96->SetEtaRange(-100.,100.);
   fESDtrackCuts_Bit96->SetPtRange(0.,100000.);
@@ -1072,39 +1064,6 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
   //
   //
   if (fDefaultEventCuts) fEventCuts.AddQAplotsToList(fListHist); /// fList is your output TList
-  //
-  // ************************************************************************
-  //   histogram of splines
-  // ************************************************************************
-  //
-  if(!fEffMatrix && !fMCtrue)
-  {
-    // 0 --> assumed particle: 0. electron, 1. pion, 2. kaon, 3. proton, 5. deuteron
-    // 1 --> sign
-    // 2 --> Centrality
-    // 3 --> eta
-    // 4 --> momentum
-    // 5 --> Expected Sigma of a given track
-    // 6 --> Expected Mean of a given track
-    const Int_t nExpectedbins = 7;
-    //                                        0    1,    2,                 3,           4,        5,       6
-    Int_t   binsExpected[nExpectedbins]  = {  5,   3,  fNCentbinsData,   fNEtaBins,   fNMomBins,   240,   4000 };  // ????
-    Double_t xminExpected[nExpectedbins] = {  0., -2.,   0.,             fEtaDown,    fMomDown,     1.,   20.  };
-    Double_t xmaxExpected[nExpectedbins] = {  5.,  2.,  100.,            fEtaUp,      fMomUp,      61.,   1020.};
-    TString axisNameExpected[nExpectedbins]   = {"particleType","sign","Centrality"    ,"eta" ,"momentum" ,"ExSigma","ExMean"};
-    TString axisTitleExpected[nExpectedbins]  = {"particleType","sign","Centrality [%]","#eta","#it{p} (GeV/#it{c})", "#sigma","#mu"};
-    for (Int_t i=0;i<fNSettings;i++){
-      if (fDefaultTrackCuts && i==1) break;
-      fHnExpected[i] = new THnSparseF(Form("hExpected_%d",i),Form("hExpected_%d",i),nExpectedbins,binsExpected,xminExpected,xmaxExpected);
-      std::cout << "Number of centrality bins: " << fxCentBins.size() << std::endl;
-      fHnExpected[i]->GetAxis(2)->Set(fNCentbinsData-1,fxCentBins.data());
-      for (Int_t iaxis=0; iaxis<nExpectedbins;iaxis++){
-        fHnExpected[i]->GetAxis(iaxis)->SetName(axisNameExpected[iaxis]);
-        fHnExpected[i]->GetAxis(iaxis)->SetTitle(axisTitleExpected[iaxis]);
-      }
-      fListHist->Add(fHnExpected[i]);
-    }
-  }
   //
   // ************************************************************************
   //   dEdx histograms
@@ -1292,6 +1251,7 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
   fTreeEvents    = ((*fTreeSRedirector)<<"eventInfo").GetTree();
   fTreeDScaled   = ((*fTreeSRedirector)<<"dscaled").GetTree();
   fTreeMCEffCorr = ((*fTreeSRedirector)<<"mcMoms").GetTree();
+  fTreeExpecteds = ((*fTreeSRedirector)<<"expecteds").GetTree();
   //
   // ************************************************************************
   //   Send output objects to container
@@ -1311,6 +1271,7 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
   PostData(12, fTreeEvents);
   PostData(13, fTreeDScaled);
   PostData(14, fTreeMCEffCorr);
+  PostData(15, fTreeExpecteds);
 
   fEventCuts.SetManualMode();
 
@@ -1686,8 +1647,6 @@ void AliAnalysisTaskTIdentityPID::FillTPCdEdxReal()
     // --------------------------------------------------------------
     //
     Bool_t ifDefaultCuts = fESDtrackCuts->AcceptTrack(track);
-    Bool_t fBit96_spd    = fESDtrackCuts_Bit96_spd->AcceptTrack(track);
-    Bool_t fBit96_sdd    = fESDtrackCuts_Bit96_sdd->AcceptTrack(track);
     Bool_t fBit96_base   = fESDtrackCuts_Bit96->AcceptTrack(track);
     Bool_t fBit128       = fESDtrackCuts_Bit128->AcceptTrack(track);
     Bool_t fBit768       = fESDtrackCuts_Bit768->AcceptTrack(track);
@@ -1737,8 +1696,6 @@ void AliAnalysisTaskTIdentityPID::FillTPCdEdxReal()
       if (fFillDistributions) FillTrackVariables(track);
       (*fTreeSRedirector)<<"tracks"<<
       "defCut="    << ifDefaultCuts <<  // default cuts tuned by hand
-      "bit96spd="  << fBit96_spd <<     // cut account for the regions where no ITS-TPC match
-      "bit96sdd="  << fBit96_sdd <<     // cut account for the regions where no ITS-TPC match
       "bit96="     << fBit96_base <<    // tight cuts of 2011 tuned data
       "bit128="    << fBit128 <<        // TPC only tracks cuts
       "bit768="    << fBit768 <<        // Hybrid track cuts
@@ -1807,29 +1764,29 @@ void AliAnalysisTaskTIdentityPID::FillTPCdEdxReal()
     Bool_t ndEdxTPCall  = (fDEdxEl>20 || fDEdxPi>20 || fDEdxKa>20 || fDEdxPr>20 || fDEdxDe>20);
 
     if(!fEffMatrix && fAcceptance && !fMCtrue){
-      for (Int_t i=0; i<fNSettings; i++) {
-        Double_t exMean[5]  = {fDEdxEl,  fDEdxPi,  fDEdxKa,  fDEdxPr,  fDEdxDe};
-        Double_t exSigma[5] = {fSigmaEl, fSigmaPi, fSigmaKa, fSigmaPr, fSigmaDe};
-        if ( ndEdxTPCall && nSigmaTPCall && ifDefaultCuts )
-        {
 
-          if (fDefaultTrackCuts && i==0){
-            for (Int_t iPart = 0; iPart< 5; iPart++){
-              Double_t weightExpected[7] = {Double_t(iPart),Double_t(fSign),fCentrality,fEta,fPtot, exSigma[iPart], exMean[iPart]};
-              fHnExpected[i]->Fill(weightExpected);
-            }
-            break;
-          }
-
-          if (GetSystematicClassIndex(fTrackCutBits,i))
-          {
-            for (Int_t iPart = 0; iPart< 5; iPart++){
-              Double_t weightExpected[7] = {Double_t(iPart),Double_t(fSign),fCentrality,fEta,fPtot, exSigma[iPart], exMean[iPart]};
-              fHnExpected[i]->Fill(weightExpected);
-            }
-          }
-        }
-
+      if ((fPtot < 0.6 && fPtot > 0.2 && ((fNSigmasPiTPC < 3 && fRandom.Rndm() < 0.001) || fNSigmasPiTPC > 3)) || fPtot > 0.6) {
+        Double_t sign = static_cast<Double_t>(fSign);
+        if(!fTreeSRedirector) return;
+        (*fTreeSRedirector)<<"expecteds"<<
+        "cent="                 << fCentrality   <<  // centrality
+        "sign="                 << sign          <<
+        "ptot="                 << fPtot          <<  // momentum
+        "eta="                  << fEta           <<  // eta
+        "phi="                  << fPhi           <<  // eta
+        "dEdxEl="               << fDEdxEl       <<
+        "dEdxPi="               << fDEdxPi       <<
+        "dEdxKa="               << fDEdxKa       <<
+        "dEdxPr="               << fDEdxPr       <<
+        "dEdxDe="               << fDEdxDe       <<
+        "sigmaEl="               << fSigmaEl     <<
+        "sigmaPi="               << fSigmaPi     <<
+        "sigmaKa="               << fSigmaKa     <<
+        "sigmaPr="               << fSigmaPr     <<
+        "sigmaDe="               << fSigmaDe     <<
+        "dEdx="                 << fTPCSignal     <<
+        //
+        "\n";
       }
     }
     //
@@ -2041,8 +1998,6 @@ void AliAnalysisTaskTIdentityPID::FillMCFull()
     //
     // track cuts
     Bool_t ifDefaultCuts = fESDtrackCuts->AcceptTrack(trackReal);
-    Bool_t fBit96_spd = fESDtrackCuts_Bit96_spd->AcceptTrack(trackReal);
-    Bool_t fBit96_sdd = fESDtrackCuts_Bit96_sdd->AcceptTrack(trackReal);
     Bool_t fBit96_base = fESDtrackCuts_Bit96->AcceptTrack(trackReal);
     Bool_t fBit128       = fESDtrackCuts_Bit128->AcceptTrack(trackReal);
     Bool_t fBit768       = fESDtrackCuts_Bit768->AcceptTrack(trackReal);
@@ -2103,8 +2058,6 @@ void AliAnalysisTaskTIdentityPID::FillMCFull()
     if (fWeakAndMaterial){
       (*fTreeSRedirector)<<"fTreeMC"<<
       "defCut="    << ifDefaultCuts <<  // default cuts
-      "bit96spd="  << fBit96_spd <<  // run Number
-      "bit96sdd="  << fBit96_sdd <<  // run Number
       "bit96="     << fBit96_base <<  // run Number
       "bit128="    << fBit128 <<  // run Number
       "bit768="    << fBit768 <<  // run Number
@@ -3223,8 +3176,6 @@ void AliAnalysisTaskTIdentityPID::FillTreeMC()
     //
     // Track cuts from dtector
     Bool_t ifDefaultCuts = fESDtrackCuts->AcceptTrack(trackReal);
-    Bool_t fBit96_spd    = fESDtrackCuts_Bit96_spd->AcceptTrack(trackReal);
-    Bool_t fBit96_sdd    = fESDtrackCuts_Bit96_sdd->AcceptTrack(trackReal);
     Bool_t fBit96_base   = fESDtrackCuts_Bit96->AcceptTrack(trackReal);
     Bool_t fBit128       = fESDtrackCuts_Bit128->AcceptTrack(trackReal);
     Bool_t fBit768       = fESDtrackCuts_Bit768->AcceptTrack(trackReal);
@@ -3272,8 +3223,6 @@ void AliAnalysisTaskTIdentityPID::FillTreeMC()
     if(!fTreeSRedirector) return;
     (*fTreeSRedirector)<<"fTreeMC"<<
     "defCut="    << ifDefaultCuts <<  // default cut
-    "bit96spd="  << fBit96_spd <<  // run Number
-    "bit96sdd="  << fBit96_sdd <<  // run Number
     "bit96="     << fBit96_base <<  // run Number
     "bit128="    << fBit128 <<  // run Number
     "bit768="    << fBit768 <<  // run Number
@@ -6047,7 +5996,6 @@ void AliAnalysisTaskTIdentityPID::CalculateEventInfo()
   // --------------------------------------------------------------
   //
   AliTPCdEdxInfo tpcdEdxInfo;
-  TRandom r;
   for (Int_t itrack=0;itrack<nNumberOfTracks;++itrack)
   {
 
@@ -6445,7 +6393,7 @@ void AliAnalysisTaskTIdentityPID::DumpDownScaledTree()
     if (nclTPC<kNclTPCcut) continue;
     if (TMath::Abs(tgl)>kTglCut) continue;
     if (track->Pt()<kPtCut) continue;
-    if ( (r.Rndm()*(qP*qP) < 0.05) || itsHighDeDx )
+    if ( (fRandom.Rndm()*(qP*qP) < 0.05) || itsHighDeDx )
     {
       if(!fTreeSRedirector) return;
       (*fTreeSRedirector)<<"dscaled"<<
