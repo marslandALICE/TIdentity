@@ -1658,7 +1658,7 @@ void AliAnalysisTaskTIdentityPID::FillTPCdEdxReal()
     if (!(track->GetTPCsignalN()>0)) continue;
     //
     // Get the track variables
-    Float_t closestPar[3];
+    Double_t closestPar[3];
     GetExpecteds(track,closestPar);
     SetCutBitsAndSomeTrackVariables(track,0);
     Int_t tpcNcls = track->GetTPCncls();
@@ -1875,7 +1875,7 @@ void AliAnalysisTaskTIdentityPID::FillTrackVariables(AliESDtrack *track)
     track->GetImpactParametersTPC(pTPC,covTPC);
     tpcCrossedRows = track->GetTPCCrossedRows();
     tpcSignalN = track->GetTPCsignalN();
-    Float_t closestPar[3];
+    Double_t closestPar[3];
     GetExpecteds(track,closestPar);
     SetCutBitsAndSomeTrackVariables(track,0);
     if(nclTPC) sharedTPCClusters = static_cast<Double_t>(track->GetTPCnclsS())/static_cast<Double_t>(nclTPC);
@@ -2046,7 +2046,7 @@ void AliAnalysisTaskTIdentityPID::FillMCFull()
     Int_t itsNcls = trackReal->GetITSNcls();
     //
     if (trackReal -> GetInnerParam())  {
-      Float_t closestPar[3];
+      Double_t closestPar[3];
       GetExpecteds(trackReal,closestPar);
       SetCutBitsAndSomeTrackVariables(trackReal,iPart);
     }
@@ -2730,7 +2730,7 @@ void AliAnalysisTaskTIdentityPID::FillMCFull_NetParticles()
               Bool_t momAccMaxWindow = (ptotMCrec>=fMomDown && ptotMCrec<=fMomUp);
               //
               // Get the cut bit information apply track cuts
-              Float_t closestPar[3];
+              Double_t closestPar[3];
               GetExpecteds(trackReal,closestPar);
               SetCutBitsAndSomeTrackVariables(trackReal,iPart);
               if (!GetSystematicClassIndex(fTrackCutBits,iset)) continue;
@@ -3195,7 +3195,7 @@ void AliAnalysisTaskTIdentityPID::FillTreeMC()
     if (TMath::Abs(pdg) == kPDGde) { iPart = 4; } // select de
     if (iPart == -10) continue; // TODO
     //
-    Float_t closestPar[3];
+    Double_t closestPar[3];
     GetExpecteds(trackReal,closestPar);
     SetCutBitsAndSomeTrackVariables(trackReal,iPart);
     //
@@ -4239,7 +4239,7 @@ void AliAnalysisTaskTIdentityPID::FillEffMatrix()
       if (fPartID == -10) continue;
       //
       // Loop over all track settings
-      Float_t closestPar[3];
+      Double_t closestPar[3];
       GetExpecteds(trackReal,closestPar);
       SetCutBitsAndSomeTrackVariables(trackReal,fPartID);
       //
@@ -4535,6 +4535,8 @@ void AliAnalysisTaskTIdentityPID::FillCleanSamples()
     if ((vecP.Mag() * vecM.Mag())<0.00001) {fTrackCutBits=0; continue;}
     if ((vecN.Mag() * vecM.Mag())<0.00001) {fTrackCutBits=0; continue;}
 
+    if (abs(vecP * vecM) > 1 || abs(vecN * vecM) > 1) continue;
+
     Double_t thetaP  = acos((vecP * vecM)/(vecP.Mag() * vecM.Mag()));
     Double_t thetaN  = acos((vecN * vecM)/(vecN.Mag() * vecM.Mag()));
     if ( ((vecP.Mag())*cos(thetaP)+(vecN.Mag())*cos(thetaN)) <0.00001) {fTrackCutBits=0; continue;}
@@ -4702,13 +4704,13 @@ void AliAnalysisTaskTIdentityPID::FillCleanSamples()
 
 }
 //________________________________________________________________________
-void AliAnalysisTaskTIdentityPID::GetExpecteds(AliESDtrack *track, Float_t closestPar[3])
+void AliAnalysisTaskTIdentityPID::GetExpecteds(AliESDtrack *track, Double_t closestPar[3])
 {
 
   //
   // bettaGamma is not well deifned below bg=0.01 --> below 200MeV protons and deuterons
-  Float_t ptotForBetaGamma = track->GetInnerParam()->GetP();
-  Float_t ptotForBetaGammaThr = 0.2;
+  Double_t ptotForBetaGamma = track->GetInnerParam()->GetP();
+  Double_t ptotForBetaGammaThr = 0.2;
   // if (ptotForBetaGamma<ptotForBetaGammaThr) return;
   //
   // --------------------------------------------------------------
@@ -4778,9 +4780,9 @@ void AliAnalysisTaskTIdentityPID::GetExpecteds(AliESDtrack *track, Float_t close
   //  Find Closest dEdx its corresponding particle and mass
   // --------------------------------------------------------------
   //
-  Float_t values[] = {fDEdxEl, fDEdxPi, fDEdxKa, fDEdxPr, fDEdxDe};
-  Float_t tpcdEdx = track->GetTPCsignal();
-  Float_t smallestDiff = TMath::Abs(tpcdEdx - values[0]);
+  Double_t values[] = {fDEdxEl, fDEdxPi, fDEdxKa, fDEdxPr, fDEdxDe};
+  Double_t tpcdEdx = track->GetTPCsignal();
+  Double_t smallestDiff = TMath::Abs(tpcdEdx - values[0]);
   Int_t closestIndex = 0;
   for (Int_t i = 0; i < 5; i++) {
     Double_t currentDiff = TMath::Abs(tpcdEdx - values[i]);
@@ -4791,7 +4793,7 @@ void AliAnalysisTaskTIdentityPID::GetExpecteds(AliESDtrack *track, Float_t close
   }
   //
   // TF1 f1("f1","AliExternalTrackParam::BetheBlochAleph(x/0.1)",0.1,5)
-  Float_t partMass = 0.;
+  Double_t partMass = 0.;
   TDatabasePDG *pdg = TDatabasePDG::Instance();
   if (closestIndex == 0 ) partMass = pdg->GetParticle(kPDGel)->Mass();   // GetParticle("e+")
   if (closestIndex == 1 ) partMass = pdg->GetParticle(kPDGpi)->Mass();  // GetParticle("pi+")
@@ -6149,7 +6151,7 @@ void AliAnalysisTaskTIdentityPID::CalculateEventInfo()
         //      dEdx counter wrt splines and Bethe bloch
         // --------------------------------------------------------------
         //
-        Float_t closestPar[3];    // closestPar[0] --> closest spline, Int_t(closestPar[1]) --> particle index,  closestPar[2] --> corresponding particle mass
+        Double_t closestPar[3];    // closestPar[0] --> closest spline, Int_t(closestPar[1]) --> particle index,  closestPar[2] --> corresponding particle mass
         GetExpecteds(track,closestPar);
         // std::cout << " aaaaaaaa  " << tpcdEdx << "     "  << closestPar[0] << "    " << closestPar[1] << "      " << closestPar[2]  << "   " << ptotTPC << std::endl;
         (*fEventInfo_CacheTrackdEdxRatio)[10]+=TMath::Log(tpcdEdx/closestPar[0]);    // ???
@@ -6374,7 +6376,7 @@ void AliAnalysisTaskTIdentityPID::DumpDownScaledTree()
       track->GetImpactParametersTPC(pTPC,covTPC);
       tpcCrossedRows = track->GetTPCCrossedRows();
       tpcSignalN = track->GetTPCsignalN();
-      Float_t closestPar[3];
+      Double_t closestPar[3];
       GetExpecteds(track,closestPar);
     }
     UChar_t itsclmap = track->GetITSClusterMap();

@@ -525,7 +525,7 @@ private:
   void BinLogAxis(TH1 *h);
   void CalculateEventInfo();
   void DumpDownScaledTree();
-  void GetExpecteds(AliESDtrack *track, Float_t closestPar[3]);
+  void GetExpecteds(AliESDtrack *track, Double_t closestPar[3]);
   void CreateEventInfoTree();
   void FillGenDistributions();
   //
