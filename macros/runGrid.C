@@ -31,7 +31,9 @@ aliroot -b -q 'runGrid.C(0,0,"test",0,"3","$RUN_ON_GRID_DIR/Ebye/lists/runsONERU
 aliroot -b -q 'runGrid.C(0,0,"test",0,"3","$RUN_ON_GRID_DIR/Ebye/lists/runs-2020-LHC20e3a-pass3.list","PWGPP695_MC_remapping",1,65,2018,"18q",3,"vAN-20210925_ROOT6-1")'
 
 valgrindOption --> 0 --> Normal, 1--> valgrind, 2--> callgrind, 3-->Massif
-modes          --> "test" --> to run over a small set of files (requires alien connection but everything stored locally), "full" --> to run over everything on the grid, "terminate" --> to merge results after "full"
+modes          --> "test"      --> to run over a small set of files (requires alien connection but everything stored locally), 
+                   "full"      --> to run over everything on the grid, 
+                   "terminate" --> to merge results after "full"
 localOrGrid    --> 0 --> Use only one run and run locally, 1 --> run for all runs on the grid
 list           --> defines the data set according to year, period and pass --> "test-2015-LHC15o-pass5_lowIR.list"
 fname          --> output directory name in my home folder in alien
@@ -41,11 +43,12 @@ lhcYear        --> year
 
 */
 
-Bool_t fAddFilteredTrees = kFALSE;
+Bool_t fAddFilteredTrees = kTRUE;
 Bool_t fUseMultSelection = kTRUE;
-const Int_t nTestFiles = 1;
+const Int_t nTestFiles = 2;
 const Int_t nChunksPerJob = 10;
-TString dataBaseDir = "/eos/user/m/marsland/data";
+// TString dataBaseDir = "/eos/user/m/marsland/data";
+TString dataBaseDir = "";
 // TString dataBaseDir = "/media/marsland/Samsung_T5/data";
 TString aliPhysicsTag = "vAN-20201124-1"; //  	vAN-20180828-1  vAN-20181119-1  vAN-20190105_ROOT6-1
 //
@@ -96,7 +99,7 @@ void runGrid(Bool_t fRunLocalFiles = kTRUE, Int_t valgrindOption = 0, TString mo
       esdHandler->SetReadFriends(kFALSE);
       esdHandler->SetNeedField();
       mgr->SetInputEventHandler(esdHandler);
-  }
+    }
   } else {
     if (fDoAOD) {
       AliAODInputHandler* aodHandler = AddAODHandler();
@@ -155,37 +158,48 @@ void runGrid(Bool_t fRunLocalFiles = kTRUE, Int_t valgrindOption = 0, TString mo
   //
   if (!mgr->InitAnalysis()) return;
   mgr->PrintStatus();
+  TChain *chain;
   if (!fRunLocalFiles) {
     // Start analysis in grid.
     mgr->StartAnalysis("grid");   // to set the number of events --> mgr->StartAnalysis("grid",nEvents);
   } else {
     // to run over files stored locally, uncomment this section,
     // and comment out the above lines related to alienHandler and StartAnalysis("grid")
-    TChain *chain = new TChain("esdTree");
-    TString localFiles[] = 
-    {
-      "/alice/data/2018/LHC18q/000296622/pass3/18000296622035.401/AliESDs.root",
-      "/alice/data/2018/LHC18q/000296622/pass3/18000296622035.406/AliESDs.root",
-      "/alice/data/2018/LHC18q/000296622/pass3/18000296622035.411/AliESDs.root",
-      "/alice/data/2018/LHC18q/000296622/pass3/18000296622035.203/AliESDs.root",
-      "/alice/data/2018/LHC18q/000296622/pass3/18000296622035.207/AliESDs.root",
-      "/alice/data/2018/LHC18q/000296622/pass3/18000296622035.209/AliESDs.root",
-      "/alice/data/2018/LHC18q/000296622/pass3/18000296622035.211/AliESDs.root",
-      "/alice/data/2018/LHC18q/000296622/pass3/18000296622035.220/AliESDs.root",
-      "/alice/data/2018/LHC18q/000296622/pass3/18000296622035.228/AliESDs.root",
-      "/alice/data/2018/LHC18q/000296622/pass3/18000296622035.302/AliESDs.root",
-      "/alice/data/2018/LHC18q/000296622/pass3/18000296622035.306/AliESDs.root",
-      "/alice/data/2018/LHC18q/000296622/pass3/18000296622035.325/AliESDs.root",
-      "/alice/data/2018/LHC18q/000296622/pass3/18000296622035.514/AliESDs.root",
-      "/alice/data/2018/LHC18q/000296622/pass3/18000296622035.531/AliESDs.root",
-      "/alice/data/2018/LHC18q/000296622/pass3/18000296622036.503/AliESDs.root",
-      "/alice/data/2018/LHC18q/000296622/pass3/18000296622036.526/AliESDs.root",
-      "/alice/data/2018/LHC18q/000296622/pass3/18000296622036.603/AliESDs.root",
-      "/alice/data/2018/LHC18q/000296622/pass3/18000296622037.309/AliESDs.root",
-      "/alice/data/2018/LHC18q/000296622/pass3/18000296622037.315/AliESDs.root",
-      "/alice/data/2018/LHC18q/000296622/pass3/18000296622037.325/AliESDs.root"
-    };
-    for (int ifile =0; ifile<nTestFiles; ifile++) chain->AddFile(dataBaseDir+localFiles[ifile]);
+    if (isMC!=2){
+      chain = new TChain("esdTree");
+      TString localFiles[] =
+      {
+        "/alice/data/2018/LHC18q/000296622/pass3/18000296622035.401/AliESDs.root",
+        "/alice/data/2018/LHC18q/000296622/pass3/18000296622035.406/AliESDs.root",
+        "/alice/data/2018/LHC18q/000296622/pass3/18000296622035.411/AliESDs.root",
+        "/alice/data/2018/LHC18q/000296622/pass3/18000296622035.203/AliESDs.root",
+        "/alice/data/2018/LHC18q/000296622/pass3/18000296622035.207/AliESDs.root",
+        "/alice/data/2018/LHC18q/000296622/pass3/18000296622035.209/AliESDs.root",
+        "/alice/data/2018/LHC18q/000296622/pass3/18000296622035.211/AliESDs.root",
+        "/alice/data/2018/LHC18q/000296622/pass3/18000296622035.220/AliESDs.root",
+        "/alice/data/2018/LHC18q/000296622/pass3/18000296622035.228/AliESDs.root",
+        "/alice/data/2018/LHC18q/000296622/pass3/18000296622035.302/AliESDs.root",
+        "/alice/data/2018/LHC18q/000296622/pass3/18000296622035.306/AliESDs.root",
+        "/alice/data/2018/LHC18q/000296622/pass3/18000296622035.325/AliESDs.root",
+        "/alice/data/2018/LHC18q/000296622/pass3/18000296622035.514/AliESDs.root",
+        "/alice/data/2018/LHC18q/000296622/pass3/18000296622035.531/AliESDs.root",
+        "/alice/data/2018/LHC18q/000296622/pass3/18000296622036.503/AliESDs.root",
+        "/alice/data/2018/LHC18q/000296622/pass3/18000296622036.526/AliESDs.root",
+        "/alice/data/2018/LHC18q/000296622/pass3/18000296622036.603/AliESDs.root",
+        "/alice/data/2018/LHC18q/000296622/pass3/18000296622037.309/AliESDs.root",
+        "/alice/data/2018/LHC18q/000296622/pass3/18000296622037.315/AliESDs.root",
+        "/alice/data/2018/LHC18q/000296622/pass3/18000296622037.325/AliESDs.root"
+      };
+      for (int ifile =0; ifile<nTestFiles; ifile++) chain->AddFile(dataBaseDir+localFiles[ifile]);
+    } else {
+      chain = new TChain("TE");
+      TString localFiles[] =
+      {
+        // "/media/marsland/Samsung_T5/workdir/ThirdMoment_paper/data/alice/sim/2022/LHC22d1d/244917/001/galice.root" // EPOS
+        "/media/marsland/Samsung_T5/workdir/ThirdMoment_paper/data/alice/sim/2022/LHC22d1a/297595/001/galice.root" // HIJING
+      };
+      for (int ifile =0; ifile<nTestFiles; ifile++) chain->AddFile(dataBaseDir+localFiles[ifile]);
+    }
     chain->Print();
     mgr->StartAnalysis("local",chain);
   }
@@ -266,6 +280,7 @@ AliAnalysisGrid* CreateAlienHandler(Int_t valgrindOption = 0,TString mode="test"
   }
   else if (isMC==2) {  // RUN2 fast MC gen
     std::cout << " Data SOURCE = RUN2 fast MC gen " << std::endl;
+    // /alice/sim/2022/LHC22d1d/244917/001
     plugin->SetAdditionalLibs("pythia6 Tree Geom VMC Physics Minuit Gui Minuit2 STEERBase ESD OADB ANALYSIS ANALYSISalice CDB STEER CORRFW EMCALUtils EMCALrec VZERObase VZEROrec");
     plugin->SetAdditionalRootLibs("libVMC.so libPhysics.so libTree.so libMinuit.so libProof.so libSTEERBase.so libESD.so libAOD.so");
     plugin->SetMCLoop(kTRUE);
@@ -275,6 +290,7 @@ AliAnalysisGrid* CreateAlienHandler(Int_t valgrindOption = 0,TString mode="test"
     plugin->SetGridDataDir(Form("/alice/sim/%d/%s/",year,period.Data()));
     plugin->SetDataPattern("/*/galice.root");
     //       plugin->SetDataPattern("/*/root_archive.zip#galice.root");
+    plugin->SetTreeName("TE");
   }
   else if (isMC==3) {  // RUN1 full MC gen+rec HIJING
     std::cout << " Data SOURCE = RUN1 full MC gen+rec HIJING " << std::endl;
@@ -292,6 +308,7 @@ AliAnalysisGrid* CreateAlienHandler(Int_t valgrindOption = 0,TString mode="test"
     //       plugin->SetSplitMode(Form("production:1-%d", 100));
     plugin->SetGridDataDir(Form("/alice/sim/%d/%s/",year,period.Data()));
     plugin->SetDataPattern("/*/galice.root");
+    plugin->SetTreeName("TE");
   }
   else if (isMC==5) {  // RUN1 full MC gen+rec AMPT
     std::cout << " Data SOURCE = RUN1 full MC gen+rec AMPT " << std::endl;
