@@ -1577,6 +1577,9 @@ void AliAnalysisTaskTIdentityPID::UserExec(Option_t *)
   //
   // in case small stat is enough
   if (fPercentageOfEvents>0 && (fEventCountInFile%fPercentageOfEvents)==0) return;
+
+  // if centrality estimation failed
+  if (fCentrality > 100.) return;
   //
   // ======================================================================
   //   Filling part
