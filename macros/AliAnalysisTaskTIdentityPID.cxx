@@ -3224,6 +3224,10 @@ void AliAnalysisTaskTIdentityPID::FillTreeMC()
     Bool_t dca10h     = TMath::Abs(fTrackDCAxy)<0.0182+0.0350/TMath::Power(fPtMC,1.01);    // 10h tuned loose cut
     Bool_t dcaBaseCut = TMath::Abs(fTrackDCAxy)<0.0208+0.04/TMath::Power(fPtMC,1.01);  // 10h tuned loose cut
     //
+
+    UShort_t tpcFindableCls = trackReal->GetTPCNclsF();
+    UShort_t tpcSharedCls = trackReal->GetTPCnclsS();
+
     // Fill MC closure tree
     if(!fTreeSRedirector) return;
     (*fTreeSRedirector)<<"fTreeMC"<<
@@ -3249,6 +3253,9 @@ void AliAnalysisTaskTIdentityPID::FillTreeMC()
     "itsmult="   << itsNumberOfTracklets <<
     "itsclmult="   << nITSClusters <<    // ITS multiplicity
     "tpcclmult="   << nTPCClusters <<    // ITS multiplicity
+    //
+    "tpcFindableCls=" << tpcFindableCls << // number of findable clusters
+    "tpcSharedCls=" << tpcSharedCls << // number of shared clusters
     //
     "isample="   << sampleNo <<                // sample id for subsample method
     "part="      << iPart <<
