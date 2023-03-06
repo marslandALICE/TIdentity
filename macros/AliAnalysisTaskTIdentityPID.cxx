@@ -4545,8 +4545,8 @@ void AliAnalysisTaskTIdentityPID::FillCleanSamples()
     if ((vecP.Mag() * vecM.Mag())<0.00001) {fTrackCutBits=0; continue;}
     if ((vecN.Mag() * vecM.Mag())<0.00001) {fTrackCutBits=0; continue;}
 
-    if (abs((vecP * vecM)/(vecP.Mag() * vecM.Mag()) > 1)) continue;
-    if (abs((vecN * vecM)/(vecN.Mag() * vecM.Mag()) > 1)) continue;
+    if (abs((vecP * vecM)/(vecP.Mag() * vecM.Mag())) > 1) continue;
+    if (abs((vecN * vecM)/(vecN.Mag() * vecM.Mag())) > 1) continue;
 
     Double_t thetaP  = acos((vecP * vecM)/(vecP.Mag() * vecM.Mag()));
     Double_t thetaN  = acos((vecN * vecM)/(vecN.Mag() * vecM.Mag()));

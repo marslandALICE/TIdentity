@@ -432,9 +432,12 @@ AliAnalysisTaskTIdentityPID* Config_marsland_TIdentityPID(Bool_t getFromAlien, I
       task->SetNEtabins(16);
       task->SetEtaLowerEdge(-0.8);
       task->SetEtaUpperEdge( 0.8);
+      // task->SetNMomBins(300);
+      // task->SetMomLowerEdge(0.2);
+      // task->SetMomUpperEdge(3.2);
       task->SetNMomBins(300);
       task->SetMomLowerEdge(0.2);
-      task->SetMomUpperEdge(3.2);
+      task->SetMomUpperEdge(6.);
       task->fEventCuts.fUseVariablesCorrelationCuts = true;
       //
       // acceptance
