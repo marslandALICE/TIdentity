@@ -1693,6 +1693,8 @@ void AliAnalysisTaskTIdentityPID::FillTPCdEdxReal()
 
     UShort_t tpcFindableCls = track->GetTPCNclsF();
     UShort_t tpcSharedCls = track->GetTPCnclsS();
+    Double_t tofSignal = trackReal->GetTOFsignal();
+    Double_t tofSignalTunedOnData = trackReal->GetTOFsignalTunedOnData();
 
     //
     if (fFillTracks && !fFillOnlyHists)
@@ -1748,6 +1750,8 @@ void AliAnalysisTaskTIdentityPID::FillTPCdEdxReal()
       "katpcpid="  << fNSigmasKaTPC         <<
       "prtpcpid="  << fNSigmasPrTPC         <<
       "prtofpid="  << fNSigmasPrTOF         <<
+      "tofSignal=" << tofSignal         <<
+      "tofSignalTOD=" << tofSignalTunedOnData         <<
       "\n";
     }
     //
@@ -2053,6 +2057,10 @@ void AliAnalysisTaskTIdentityPID::FillMCFull()
       GetExpecteds(trackReal,closestPar);
       SetCutBitsAndSomeTrackVariables(trackReal,iPart);
     }
+
+    Double_t tofSignal = trackReal->GetTOFsignal();
+    Double_t tofSignalTunedOnData = trackReal->GetTOFsignalTunedOnData();
+
     //
     // --------------------------------------------------------------
     //                        Fill the trees
@@ -2119,6 +2127,8 @@ void AliAnalysisTaskTIdentityPID::FillMCFull()
       "chi2tpc="   << fTrackChi2TPC         <<
       "chi2tpccorr=" << fTrackChi2TPCcorr         <<
       // "intrate="   << fIntRate              <<  // interaction rate
+      "tofSignal=" << tofSignal         <<
+      "tofSignalTOD=" << tofSignalTunedOnData         <<
       "\n";
     }
 
@@ -3228,6 +3238,9 @@ void AliAnalysisTaskTIdentityPID::FillTreeMC()
     UShort_t tpcFindableCls = trackReal->GetTPCNclsF();
     UShort_t tpcSharedCls = trackReal->GetTPCnclsS();
 
+    Double_t tofSignal = trackReal->GetTOFsignal();
+    Double_t tofSignalTunedOnData = trackReal->GetTOFsignalTunedOnData();
+
     // Fill MC closure tree
     if(!fTreeSRedirector) return;
     (*fTreeSRedirector)<<"fTreeMC"<<
@@ -3281,6 +3294,8 @@ void AliAnalysisTaskTIdentityPID::FillTreeMC()
     "missCl="    << fMissingCl <<
     "chi2tpc="   << fTrackChi2TPC         <<
     "chi2tpccorr=" << fTrackChi2TPCcorr         <<
+    "tofSignal=" << tofSignal         <<
+    "tofSignalTOD=" << tofSignalTunedOnData         <<
     "\n";
 
   } // ======= end of track loop for MC dEdx filling =======
