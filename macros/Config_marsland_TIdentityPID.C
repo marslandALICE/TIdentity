@@ -79,24 +79,15 @@ AliAnalysisTaskTIdentityPID* Config_marsland_TIdentityPID(Bool_t getFromAlien, I
       if( (passIndex==3 && periodName.Contains("18")) || (passIndex==2 && periodName.Contains("15")) ) {
         task->SetDefaultEventCuts(kTRUE);
       }
+      task->SetRunOnGrid(kFALSE);
       task->SetUseCouts(kTRUE);
-      task->SetNEtabins(16);
-      task->SetEtaLowerEdge(-0.8);
-      task->SetEtaUpperEdge( 0.8);
-      task->SetNMomBins(300);
-      task->SetMomLowerEdge(0.);
-      task->SetMomUpperEdge(6.);
-      task->SetDeDxBinWidth(1);
-      task->SetDeDxLowerEdge(20.);
-      task->SetDeDxUpperEdge(1020.);
+      //
+      task->SetFillEventInfo(kTRUE);
       task->SetFillAllCutVariables(kTRUE);
       task->SetFillDistributions(kTRUE);
-      task->SetFillEventInfo(kTRUE);
       task->SetDefaultTrackCuts(kTRUE);
-      //
       task->SetFillArmPodTree(kTRUE);
       task->SetV0InvMassHists(kTRUE);
-      task->SetRunOnGrid(kTRUE);
       const Int_t tmpCentbins = 14;
       Float_t tmpfxCentBins[tmpCentbins] = {0,5,10,20,30,40,50,60,70,80,85,90,95,100};
       task->SetCentralityBinning(tmpCentbins,tmpfxCentBins);
@@ -124,11 +115,6 @@ AliAnalysisTaskTIdentityPID* Config_marsland_TIdentityPID(Bool_t getFromAlien, I
       task->SetUseCouts(kFALSE);
       task->SetDefaultTrackCuts(kTRUE);
       task->SetNEtabins(16);
-      task->SetEtaLowerEdge(-0.8);
-      task->SetEtaUpperEdge( 0.8);
-      task->SetNMomBins(300);
-      task->SetMomLowerEdge(0.2);
-      task->SetMomUpperEdge(3.2);
       task->SetFillAllCutVariables(kTRUE);
       task->SetFillDistributions(kTRUE);
       task->SetFillEventInfo(kTRUE);
@@ -432,12 +418,9 @@ AliAnalysisTaskTIdentityPID* Config_marsland_TIdentityPID(Bool_t getFromAlien, I
       task->SetNEtabins(16);
       task->SetEtaLowerEdge(-0.8);
       task->SetEtaUpperEdge( 0.8);
-      // task->SetNMomBins(300);
-      // task->SetMomLowerEdge(0.2);
-      // task->SetMomUpperEdge(3.2);
-      task->SetNMomBins(300);
+      task->SetNMomBins(250);
       task->SetMomLowerEdge(0.2);
-      task->SetMomUpperEdge(6.);
+      task->SetMomUpperEdge(5.2);
       task->fEventCuts.fUseVariablesCorrelationCuts = true;
       //
       // acceptance
@@ -1026,9 +1009,9 @@ void SetDefaults(AliAnalysisTaskTIdentityPID *defaultTask, Int_t year, TString p
   defaultTask->SetNEtabins(16);
   defaultTask->SetEtaLowerEdge(-0.8);
   defaultTask->SetEtaUpperEdge( 0.8);
-  defaultTask->SetNMomBins(150);
-  defaultTask->SetMomLowerEdge(0.1);
-  defaultTask->SetMomUpperEdge(3.1);
+  defaultTask->SetNMomBins(250);
+  defaultTask->SetMomLowerEdge(0.2);
+  defaultTask->SetMomUpperEdge(5.2);
   defaultTask->SetNGenprotonBins(100);
   defaultTask->SetPercentageOfEvents(0);
 

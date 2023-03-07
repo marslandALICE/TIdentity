@@ -509,9 +509,9 @@ private:
   void FillTPCdEdxReal();                   // Main function to fill all info + TIden
   void FillTrackVariables(AliESDtrack *track);
   void FillTPCdEdxCheck();                  // Quick check for the TPC dEdx
-  void FillMCFull();                     // Fill all info + TIdenMC from MC to do MC closure test
-  void FillTreeMC();
+  void FillMCFull_piKpr();                     // Fill all info + TIdenMC from MC to do MC closure test
   void FillMCFull_NetParticles();
+  void FillTreeMC();
   void FastGen();                           // Run over galice.root for Fastgen 2nd moments
   void FastGen_NetParticles();              // Run over galice.root for Fastgen higher moments
   void FastGenHigherMoments();     // Run over galice.root for Fastgen and calculate higher moments
@@ -602,7 +602,6 @@ private:
   TH1F             * fHistPhiITScounterA;     // helper histogram for TIdentity tree
   TH1F             * fHistPhiITScounterC;     // helper histogram for TIdentity tree
 
-  THnSparseF       * fHndEdx;                 // histogram which hold all dEdx info
   TH2F              fH2MissCl[4][16];          // histogram which hold all PIDresponse info
 
   TString           fChunkName;
