@@ -73,9 +73,9 @@ public:
   };
 
   enum trackCutBit {
-    kNCrossedRowsTPC60=0,
+    kNCrossedRowsTPC70=0,
     kNCrossedRowsTPC80=1,
-    kNCrossedRowsTPC100=2,
+    kNCrossedRowsTPC90=2,
     kMaxChi2PerClusterTPCSmall=3,
     kMaxChi2PerClusterTPC=4,
     kMaxChi2PerClusterTPCLarge=5,
@@ -109,8 +109,8 @@ public:
 
   enum cutSettings {
     kCutReference=0,
-    kCutCrossedRowsTPC60=1,
-    kCutCrossedRowsTPC100=2,
+    kCutCrossedRowsTPC70=1,
+    kCutCrossedRowsTPC90=2,
     kCutMaxChi2PerClusterTPCSmall=3,
     kCutMaxChi2PerClusterTPCLarge=4,
     kCutMaxDCAToVertexXYPtDepSmall=5,

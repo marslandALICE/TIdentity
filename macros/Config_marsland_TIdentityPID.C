@@ -414,7 +414,7 @@ AliAnalysisTaskTIdentityPID* Config_marsland_TIdentityPID(Bool_t getFromAlien, I
       task->SetNSettings(1);
       task->SetMCTrackOriginType(0);   // 0:full scan, 1: prim
       task->SetCorrectForMissCl(0);
-      task->SetUseCouts(kFALSE);
+      task->SetUseCouts(kTRUE);
       task->SetDefaultTrackCuts(kTRUE);
       task->SetRapidityType(0);      // 0:pseudorapidity, 1: rapidity
       task->SetUsePtCut(0);          // 0: tpc momcut, 1: vertex momcut, 2: pT cut
@@ -422,12 +422,6 @@ AliAnalysisTaskTIdentityPID* Config_marsland_TIdentityPID(Bool_t getFromAlien, I
       task->SetFillEventInfo(kTRUE);
       task->SetIncludeITScuts(kTRUE);
       task->SetFillArmPodTree(kFALSE);
-      task->SetNEtabins(16);
-      task->SetEtaLowerEdge(-0.8);
-      task->SetEtaUpperEdge( 0.8);
-      task->SetNMomBins(250);
-      task->SetMomLowerEdge(0.2);
-      task->SetMomUpperEdge(5.2);
       task->fEventCuts.fUseVariablesCorrelationCuts = true;
       //
       // acceptance

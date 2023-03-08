@@ -1075,9 +1075,9 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
   if(fEffMatrix && !fRunOnGrid)
   {
     const Int_t ndim=5;
-    Int_t nbins0[ndim]  ={3,8, 40       ,16        ,50  };
-    Double_t xmin0[ndim]={0,0, fMomDown ,fEtaDown  ,0.  };
-    Double_t xmax0[ndim]={3,80,fMomUp   ,fEtaUp    ,6.25};
+    Int_t nbins0[ndim]  ={3,10, 50       ,16        ,50  };
+    Double_t xmin0[ndim]={0,0,  fMomDown ,fEtaDown  ,0.  };
+    Double_t xmax0[ndim]={3,100,fMomUp   ,fEtaUp    ,6.25};
     fHistPosEffMatrixRec  =new THnF("fHistPosEffMatrixRec","fHistPosEffMatrixRec",ndim, nbins0,xmin0,xmax0);
     fHistNegEffMatrixRec  =new THnF("fHistNegEffMatrixRec","fHistNegEffMatrixRec",ndim, nbins0,xmin0,xmax0);
     fHistPosEffMatrixGen  =new THnF("fHistPosEffMatrixGen","fHistPosEffMatrixGen",ndim, nbins0,xmin0,xmax0);
@@ -1097,7 +1097,7 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
     //
     //
     const Int_t ndimScan=6;
-    Int_t nbinsScan[ndimScan]   = {2, fNSettings,           3,10, 40       ,16   };
+    Int_t nbinsScan[ndimScan]   = {2, fNSettings,           3,10, 50       ,16   };
     Double_t xminScan[ndimScan] = {0, 0,                    0,0,  fMomDown ,fEtaDown };
     Double_t xmaxScan[ndimScan] = {2, Double_t(fNSettings), 3,100,fMomUp   ,fEtaUp };
     fHistPosEffMatrixScanRec  =new THnF("fHistPosEffMatrixScanRec","fHistPosEffMatrixScanRec",ndimScan, nbinsScan,xminScan,xmaxScan);
@@ -2359,11 +2359,8 @@ void AliAnalysisTaskTIdentityPID::FillMCFull_NetParticles()
   TVectorF fMomNetKaRec(nMoments);    TVectorF fNRMomNetKaRec(nMoments);
   TVectorF fMomNetPrRec(nMoments);    TVectorF fNRMomNetPrRec(nMoments);
   //
-  Bool_t bEventVertexZSmall      = (TMath::Abs(fVz)<6 && TMath::Abs(fVz)>0.2);
   Bool_t bCutReference           = (TMath::Abs(fVz)<7 && TMath::Abs(fVz)>0.15);
   Bool_t bEventVertexZLarge      = (TMath::Abs(fVz)<8 && TMath::Abs(fVz)>0.1);
-  Bool_t bEventVertexZALICE      = (TMath::Abs(fVz)<10);
-  Bool_t bEventVertexZALICETight = (TMath::Abs(fVz)<7);
   //
   // setting scan
   for (Int_t iset=0; iset<fNSettings; iset++){
@@ -2372,10 +2369,7 @@ void AliAnalysisTaskTIdentityPID::FillMCFull_NetParticles()
     if (!mainSettings) continue;
     //
     // event Vz cuts
-    if      (iset==kCutEventVertexZSmall      && !bEventVertexZSmall)      continue;
-    else if (iset==kCutEventVertexZLarge      && !bEventVertexZLarge)      continue;
-    else if (iset==kCutEventVertexZALICE      && !bEventVertexZALICE)      continue;
-    else if (iset==kCutEventVertexZALICETight && !bEventVertexZALICETight) continue;
+    if (iset==kCutEventVertexZLarge      && !bEventVertexZLarge)      continue;
     else if ( !bCutReference ) continue;
     //
     // Acceptance scan
@@ -5154,27 +5148,34 @@ UInt_t AliAnalysisTaskTIdentityPID::SetCutBitsAndSomeTrackVariables(AliESDtrack 
   Bool_t cleanKaTOF = ((TMath::Abs(nSigmasKaTOF)<=2.5));
   Bool_t cleanKaTOFTRD = ((TMath::Abs(nSigmasKaTOF)<=1.2) && TOFSignalDz<1. && TOFSignalDx<1. && nclsTRD>100);
   //
+  // Bool_t dca11h     = TMath::Abs(fTrackDCAxy)<0.0105+0.0350/TMath::Power(fPt,1.1);    
+  // Bool_t dca10h     = TMath::Abs(fTrackDCAxy)<0.0182+0.0350/TMath::Power(fPt,1.01);   
+  Bool_t dcaBaseCut = TMath::Abs(fTrackDCAxy)<0.0208+0.04/TMath::Power(fPt,1.01);  
+  Bool_t dcaLoose   = TMath::Abs(fTrackDCAxy)<0.4;  // 10h tuned loose cut
+  //
   // Systematic settings
   fTrackCutBits=0;
   //
+  // Crossed rows
   if (fCorrectForMissCl==1){
-    if (fNcl>=70) (fTrackCutBits |= 1 << kNCrossedRowsTPC60);
+    if (fNcl>=70) (fTrackCutBits |= 1 << kNCrossedRowsTPC70);
     if (fNcl>=80) (fTrackCutBits |= 1 << kNCrossedRowsTPC80);
-    if (fNcl>=90) (fTrackCutBits |= 1 << kNCrossedRowsTPC100);
+    if (fNcl>=90) (fTrackCutBits |= 1 << kNCrossedRowsTPC90);
   } else if (fCorrectForMissCl==2){
-    if (fNclCorr>=70) (fTrackCutBits |= 1 << kNCrossedRowsTPC60);
+    if (fNclCorr>=70) (fTrackCutBits |= 1 << kNCrossedRowsTPC70);
     if (fNclCorr>=80) (fTrackCutBits |= 1 << kNCrossedRowsTPC80);
-    if (fNclCorr>=90) (fTrackCutBits |= 1 << kNCrossedRowsTPC100);
+    if (fNclCorr>=90) (fTrackCutBits |= 1 << kNCrossedRowsTPC90);
     // cout <<  "ncls  = " << fNclCorr <<  " --- " << fNcl << endl;
   } else {
-    if (fTrackTPCCrossedRows>=60)  (fTrackCutBits |= 1 << kNCrossedRowsTPC60);
-    if (fTrackTPCCrossedRows>=80)  (fTrackCutBits |= 1 << kNCrossedRowsTPC80);
-    if (fTrackTPCCrossedRows>=100) (fTrackCutBits |= 1 << kNCrossedRowsTPC100);
+    if (fTrackTPCCrossedRows>=70) (fTrackCutBits |= 1 << kNCrossedRowsTPC70);
+    if (fTrackTPCCrossedRows>=80) (fTrackCutBits |= 1 << kNCrossedRowsTPC80);
+    if (fTrackTPCCrossedRows>=90) (fTrackCutBits |= 1 << kNCrossedRowsTPC90);
   }
   //
   // Special treatment of the 2018 pass3 and 2015 pass2 data
+  // Chi2 TPC
   if ( (fYear==2015&&fPassIndex==2) || (fYear==2018&&fPassIndex==3) ){
-    if (fTrackChi2TPC<2.0) (fTrackCutBits |= 1 << kMaxChi2PerClusterTPCSmall);
+    if (fTrackChi2TPC<2.2) (fTrackCutBits |= 1 << kMaxChi2PerClusterTPCSmall);
     if (fTrackChi2TPC<2.5) (fTrackCutBits |= 1 << kMaxChi2PerClusterTPC);
     if (fTrackChi2TPC<3.0) (fTrackCutBits |= 1 << kMaxChi2PerClusterTPCLarge);
   } else {
@@ -5190,34 +5191,23 @@ UInt_t AliAnalysisTaskTIdentityPID::SetCutBitsAndSomeTrackVariables(AliESDtrack 
       if (fTrackChi2TPC<5.0) (fTrackCutBits |= 1 << kMaxChi2PerClusterTPCLarge);   // ????
     }
   }
-
-  Bool_t dca11h     = TMath::Abs(fTrackDCAxy)<0.0105+0.0350/TMath::Power(fPt,1.1);    // 10h tuned loose cut
-  Bool_t dca10h     = TMath::Abs(fTrackDCAxy)<0.0182+0.0350/TMath::Power(fPt,1.01);    // 10h tuned loose cut
-  Bool_t dcaBaseCut = TMath::Abs(fTrackDCAxy)<0.0208+0.04/TMath::Power(fPt,1.01);  // 10h tuned loose cut
-  Bool_t dcaLoose   = TMath::Abs(fTrackDCAxy)<0.4;  // 10h tuned loose cut
-  if (dca10h)     (fTrackCutBits |= 1 << kMaxDCAToVertexXYPtDepSmall);
+  // 
+  // DCAxy
   if (dcaBaseCut) (fTrackCutBits |= 1 << kMaxDCAToVertexXYPtDep);
   if (dcaLoose)   (fTrackCutBits |= 1 << kMaxDCAToVertexXYPtDepLarge);
   //
-  if (TMath::Abs(fTrackDCAz)<2.0) (fTrackCutBits |= 1 << kVertexZSmall);
-  if (TMath::Abs(fTrackDCAz)<3.0) (fTrackCutBits |= 1 << kVertexZ);
-  if (TMath::Abs(fTrackDCAz)<4.0) (fTrackCutBits |= 1 << kVertexZLarge);
+  // DCAz
+  if (TMath::Abs(fTrackDCAz)<0.15) (fTrackCutBits |= 1 << kVertexZSmall);
+  if (TMath::Abs(fTrackDCAz)<1.00) (fTrackCutBits |= 1 << kVertexZ);
   //
-  if (TMath::Abs(fVz)<6 && TMath::Abs(fVz)>0.2 ) (fTrackCutBits |= 1 << kEventVertexZSmall);
+  // Event vertex z
   if (TMath::Abs(fVz)<7 && TMath::Abs(fVz)>0.15) (fTrackCutBits |= 1 << kEventVertexZ);
   if (TMath::Abs(fVz)<8 && TMath::Abs(fVz)>0.1 ) (fTrackCutBits |= 1 << kEventVertexZLarge);
-  if (TMath::Abs(fVz)<10 ) (fTrackCutBits |= 1 << kEventVertexZALICE);
-  if (TMath::Abs(fVz)<7  ) (fTrackCutBits |= 1 << kEventVertexZALICETight);
   //
-  if (fTrackRequireITSRefit)                           (fTrackCutBits |= 1 << kRequireITSRefit);
-  if (fTrackIsFirstITSlayer || fTrackIsSecondITSlayer) (fTrackCutBits |= 1 << kPixelRequirementITS);
-  if (fTrackNewITScut)                                 (fTrackCutBits |= 1 << kNewITSCut);
-  //
-  // dangerous cuts
+  // track length cut --> dangerous cuts because it creates momentum dependent efficiency
   if (fTrackLengthInActiveZone>=90)  (fTrackCutBits |= 1 << kActiveZoneSmall);
-  if (fTrackLengthInActiveZone>=100) (fTrackCutBits |= 1 << kActiveZone);
-  if (fTrackLengthInActiveZone>=110) (fTrackCutBits |= 1 << kActiveZoneLarge);
   //
+  // NCl in dEdx calculation
   if (fTrackTPCSignalN>=60) (fTrackCutBits |= 1 << kTPCSignalNSmall);
   if (fTrackTPCSignalN>=70) (fTrackCutBits |= 1 << kTPCSignalN);
   if (fTrackTPCSignalN>=80) (fTrackCutBits |= 1 << kTPCSignalNLarge);
@@ -5276,77 +5266,77 @@ Bool_t AliAnalysisTaskTIdentityPID::GetSystematicClassIndex(UInt_t cut,Int_t sys
 
     case kCutReference:   // 0 -->  Reference
     {
-      Int_t fCutArrTmp[fnCutBins] = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDep, kVertexZ, kEventVertexZ, kPixelRequirementITS, kNewITSCut, kRequireITSRefit,1,1};
+      Int_t fCutArrTmp[fnCutBins] = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDep, kVertexZ, kEventVertexZ, 1,1,1,1,1};
       for(Int_t i=0;i<fnCutBins;i++) fCutArr[i] = fCutArrTmp[i];
     }
     break;
     //
-    case kCutCrossedRowsTPC60:  // 1 -->  CRows60
+    case kCutCrossedRowsTPC70:  // 1 -->  CRows70
     {
-      Int_t fCutArrTmp[fnCutBins] = {kNCrossedRowsTPC60,  kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDep, kVertexZ, kEventVertexZ, kPixelRequirementITS, kNewITSCut, kRequireITSRefit,1,1};
+      Int_t fCutArrTmp[fnCutBins] = {kNCrossedRowsTPC70,  kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDep, kVertexZ, kEventVertexZ, 1,1,1,1,1};
       for(Int_t i=0;i<fnCutBins;i++) fCutArr[i] = fCutArrTmp[i];
     }
     break;
     //
-    case kCutCrossedRowsTPC100:  // 2 -->  CRows100
+    case kCutCrossedRowsTPC90:  // 2 -->  CRows90
     {
-      Int_t fCutArrTmp[fnCutBins] = {kNCrossedRowsTPC100, kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDep, kVertexZ, kEventVertexZ, kPixelRequirementITS, kNewITSCut, kRequireITSRefit,1,1};
+      Int_t fCutArrTmp[fnCutBins] = {kNCrossedRowsTPC90, kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDep, kVertexZ, kEventVertexZ, 1,1,1,1,1};
       for(Int_t i=0;i<fnCutBins;i++) fCutArr[i] = fCutArrTmp[i];
     }
     break;
     //
     case kCutMaxChi2PerClusterTPCSmall:   // 3 -->  Chi2TPCSmall
     {
-      Int_t fCutArrTmp[fnCutBins] = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPCSmall, kMaxDCAToVertexXYPtDep, kVertexZ, kEventVertexZ, kPixelRequirementITS, kNewITSCut, kRequireITSRefit,1,1};
+      Int_t fCutArrTmp[fnCutBins] = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPCSmall, kMaxDCAToVertexXYPtDep, kVertexZ, kEventVertexZ, 1,1,1,1,1};
       for(Int_t i=0;i<fnCutBins;i++) fCutArr[i] = fCutArrTmp[i];
     }
     break;
     //
     case kCutMaxChi2PerClusterTPCLarge:   // 4 -->  Chi2TPCLarge
     {
-      Int_t fCutArrTmp[fnCutBins] = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPCLarge, kMaxDCAToVertexXYPtDep, kVertexZ, kEventVertexZ, kPixelRequirementITS, kNewITSCut, kRequireITSRefit,1,1};
+      Int_t fCutArrTmp[fnCutBins] = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPCLarge, kMaxDCAToVertexXYPtDep, kVertexZ, kEventVertexZ, 1,1,1,1,1};
       for(Int_t i=0;i<fnCutBins;i++) fCutArr[i] = fCutArrTmp[i];
     }
     break;
     //
     case kCutMaxDCAToVertexXYPtDepSmall:   // 5 -->  kMaxDCAToVertexXYPtDepSmall
     {
-      Int_t fCutArrTmp[fnCutBins] = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDepSmall, kVertexZ, kEventVertexZ, kPixelRequirementITS, kNewITSCut, kRequireITSRefit,1,1};
+      Int_t fCutArrTmp[fnCutBins] = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDepSmall, kVertexZ, kEventVertexZ, 1,1,1,1,1};
       for(Int_t i=0;i<fnCutBins;i++) fCutArr[i] = fCutArrTmp[i];
     }
     break;
     //
     case kCutMaxDCAToVertexXYPtDepLarge:   // 6 -->  kMaxDCAToVertexXYPtDepLarge
     {
-      Int_t fCutArrTmp[fnCutBins] = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDepLarge, kVertexZ, kEventVertexZ, kPixelRequirementITS, kNewITSCut, kRequireITSRefit,1,1};
+      Int_t fCutArrTmp[fnCutBins] = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDepLarge, kVertexZ, kEventVertexZ, 1,1,1,1,1};
       for(Int_t i=0;i<fnCutBins;i++) fCutArr[i] = fCutArrTmp[i];
     }
     break;
     //
     case kCutVertexZSmall:   // 7 -->  kVertexZSmall
     {
-      Int_t fCutArrTmp[fnCutBins] = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDep, kVertexZSmall, kEventVertexZ, kPixelRequirementITS, kNewITSCut, kRequireITSRefit,1,1};
+      Int_t fCutArrTmp[fnCutBins] = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDep, kVertexZSmall, kEventVertexZ, 1,1,1,1,1};
       for(Int_t i=0;i<fnCutBins;i++) fCutArr[i] = fCutArrTmp[i];
     }
     break;
     //
     case kCutVertexZLarge:   // 8 -->  kVertexZLarge
     {
-      Int_t fCutArrTmp[fnCutBins] = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDep, kVertexZLarge, kEventVertexZ, kPixelRequirementITS, kNewITSCut, kRequireITSRefit,1,1};
+      Int_t fCutArrTmp[fnCutBins] = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDep, kVertexZLarge, kEventVertexZ, 1,1,1,1,1};
       for(Int_t i=0;i<fnCutBins;i++) fCutArr[i] = fCutArrTmp[i];
     }
     break;
     //
     case kCutEventVertexZSmall:  // 9 -->  kEventVertexZSmall
     {
-      Int_t fCutArrTmp[fnCutBins] = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDep, kVertexZ, kEventVertexZSmall, kPixelRequirementITS, kNewITSCut, kRequireITSRefit,1,1};
+      Int_t fCutArrTmp[fnCutBins] = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDep, kVertexZ, kEventVertexZSmall, 1,1,1,1,1};
       for(Int_t i=0;i<fnCutBins;i++) fCutArr[i] = fCutArrTmp[i];
     }
     break;
     //
     case kCutEventVertexZLarge:  // 10 -->  kEventVertexZLarge
     {
-      Int_t fCutArrTmp[fnCutBins] = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDep, kVertexZ, kEventVertexZLarge, kPixelRequirementITS, kNewITSCut, kRequireITSRefit,1,1};
+      Int_t fCutArrTmp[fnCutBins] = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDep, kVertexZ, kEventVertexZLarge, 1,1,1,1,1};
       for(Int_t i=0;i<fnCutBins;i++) fCutArr[i] = fCutArrTmp[i];
     }
     break;
@@ -5378,35 +5368,35 @@ Bool_t AliAnalysisTaskTIdentityPID::GetSystematicClassIndex(UInt_t cut,Int_t sys
     //
     case kCutTPCSignalN:  // 14 -->  kTPCSignalN
     {
-      Int_t fCutArrTmp[fnCutBins] = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDep, kVertexZ, kEventVertexZ, kPixelRequirementITS, kNewITSCut, kRequireITSRefit,kTPCSignalN,1};
+      Int_t fCutArrTmp[fnCutBins] = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDep, kVertexZ, kEventVertexZ, 1,1,1,kTPCSignalN,1};
       for(Int_t i=0;i<fnCutBins;i++) fCutArr[i] = fCutArrTmp[i];
     }
     break;
     //
     case kCutActiveZone:  // 15 -->  kActiveZone
     {
-      Int_t fCutArrTmp[fnCutBins] = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDep, kVertexZ, kEventVertexZ, kPixelRequirementITS, kNewITSCut, kRequireITSRefit,1,kActiveZone};
+      Int_t fCutArrTmp[fnCutBins] = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDep, kVertexZ, kEventVertexZ, 1,1,1,1,kActiveZone};
       for(Int_t i=0;i<fnCutBins;i++) fCutArr[i] = fCutArrTmp[i];
     }
     break;
     //
     case kCutTPCSignalNActiveZone:  // 16 -->  kTPCSignalN + kActiveZone
     {
-      Int_t fCutArrTmp[fnCutBins] = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDep, kVertexZ, kEventVertexZ, kPixelRequirementITS, kNewITSCut, kRequireITSRefit,kTPCSignalN,kActiveZone};
+      Int_t fCutArrTmp[fnCutBins] = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDep, kVertexZ, kEventVertexZ, 1,1,1,kTPCSignalN,kActiveZone};
       for(Int_t i=0;i<fnCutBins;i++) fCutArr[i] = fCutArrTmp[i];
     }
     break;
     //
     case kCutTPCSignalNSmallActiveZoneSmall:  // 17 -->  tightest cut kTPCSignalNSmall + kActiveZoneSmall
     {
-      Int_t fCutArrTmp[fnCutBins] = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDep, kVertexZ, kEventVertexZ, kPixelRequirementITS, kNewITSCut, kRequireITSRefit,kTPCSignalNSmall,kActiveZoneSmall};
+      Int_t fCutArrTmp[fnCutBins] = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDep, kVertexZ, kEventVertexZ, 1,1,1,kTPCSignalNSmall,kActiveZoneSmall};
       for(Int_t i=0;i<fnCutBins;i++) fCutArr[i] = fCutArrTmp[i];
     }
     break;
     //
     case kCutTPCSignalNLargeActiveZoneLarge:  // 18 -->  kTPCSignalNLarge + kActiveZoneLarge
     {
-      Int_t fCutArrTmp[fnCutBins] = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDep, kVertexZ, kEventVertexZ, kPixelRequirementITS, kNewITSCut, kRequireITSRefit,kTPCSignalNLarge,kActiveZoneLarge};
+      Int_t fCutArrTmp[fnCutBins] = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDep, kVertexZ, kEventVertexZ, 1,1,1,kTPCSignalNLarge,kActiveZoneLarge};
       for(Int_t i=0;i<fnCutBins;i++) fCutArr[i] = fCutArrTmp[i];
     }
     break;
@@ -5418,14 +5408,14 @@ Bool_t AliAnalysisTaskTIdentityPID::GetSystematicClassIndex(UInt_t cut,Int_t sys
     //
     case kCutEventVertexZALICE:  // 19 -->  kEventVertexZALICE
     {
-      Int_t fCutArrTmp[fnCutBins] = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDep, kVertexZ, kEventVertexZALICE, kPixelRequirementITS, kNewITSCut, kRequireITSRefit,1,1};
+      Int_t fCutArrTmp[fnCutBins] = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDep, kVertexZ, kEventVertexZALICE, 1,1,1,1,1};
       for(Int_t i=0;i<fnCutBins;i++) fCutArr[i] = fCutArrTmp[i];
     }
     break;
     //
     case kCutEventVertexZALICETight:  // 20 -->  kEventVertexZALICETight
     {
-      Int_t fCutArrTmp[fnCutBins] = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDep, kVertexZ, kEventVertexZALICETight, kPixelRequirementITS, kNewITSCut, kRequireITSRefit,1,1};
+      Int_t fCutArrTmp[fnCutBins] = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDep, kVertexZ, kEventVertexZALICETight, 1,1,1,1,1};
       for(Int_t i=0;i<fnCutBins;i++) fCutArr[i] = fCutArrTmp[i];
     }
     break;
