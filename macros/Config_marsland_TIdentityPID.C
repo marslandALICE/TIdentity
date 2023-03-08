@@ -92,6 +92,13 @@ AliAnalysisTaskTIdentityPID* Config_marsland_TIdentityPID(Bool_t getFromAlien, I
       Float_t tmpfxCentBins[tmpCentbins] = {0,5,10,20,30,40,50,60,70,80,85,90,95,100};
       task->SetCentralityBinning(tmpCentbins,tmpfxCentBins);
       task->fEventCuts.fUseVariablesCorrelationCuts = true;
+
+      if (periodName.Contains("18q"))
+        task->SetRunNumberForExpecteds(296433);
+      else if (periodName.Contains("18r"))
+        task->SetRunNumberForExpecteds(296749);
+      else if (periodName.Contains("15o"))
+        task->SetRunNumberForExpecteds(246087);
     }
     break;
     case 5:{
@@ -445,6 +452,7 @@ AliAnalysisTaskTIdentityPID* Config_marsland_TIdentityPID(Bool_t getFromAlien, I
       const Int_t tmpNbaryons = 7;
       Int_t tmpBaryonArr[tmpNbaryons] = {2212,2112,2224,2214,2114,1114,3122};  // {p,n,delta++,delta+,delta0,delta-,Lambda,}
       task->SetMCBaryonArray(tmpNbaryons,tmpBaryonArr);
+
     }
     break;
 

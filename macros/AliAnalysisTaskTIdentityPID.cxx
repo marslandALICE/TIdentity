@@ -204,6 +204,8 @@ fIncludeTOF(kFALSE),
 fUseThnSparse(kFALSE),
 fUseCouts(kFALSE),
 fV0InvMassHists(kFALSE),
+fRunNumberForExpecteds(0),
+fFillExpecteds(kFALSE),
 fNSettings(22),
 fNMomBins(0),
 fMomDown(0),
@@ -502,6 +504,8 @@ fIncludeTOF(kFALSE),
 fUseThnSparse(kFALSE),
 fUseCouts(kFALSE),
 fV0InvMassHists(kFALSE),
+fRunNumberForExpecteds(0),
+fFillExpecteds(kFALSE),
 fNSettings(22),
 fNMomBins(0),
 fMomDown(0),
@@ -774,6 +778,7 @@ fPileUpTightnessCut4(0)
       }
     }
   }
+
   // Initialize miaaing cluter map
   // const Int_t nParticles=4;
   // const Int_t nCentBins=9;
@@ -889,6 +894,7 @@ void AliAnalysisTaskTIdentityPID::Initialize()
   std::cout << " Info::marsland: ===== In the Initialize ===== " << std::endl;
   if (fRunFastSimulation)    { std::cout << " Info::marsland: !!! We are running fast simulation return !!! " << std::endl; return; }
   if (fRunFastHighMomentCal) { std::cout << " Info::marsland: !!! We are running fast high moment calculation return !!! " << std::endl; return; }
+  //
   // fESDtrackCuts = AliESDtrackCuts::GetStandardITSTPCTrackCuts2010(kTRUE,1);
   //
   // ------------------------------------------------
@@ -1325,6 +1331,12 @@ void AliAnalysisTaskTIdentityPID::UserExec(Option_t *)
     MultSelection = (AliMultSelection*) fESD-> FindListObject("MultSelection");
     fRunNo = fESD->GetRunNumber();
     //
+    // if the run number is specified, fill expecteds only for that run. otherwise fill for any run
+    if (fRunNumberForExpecteds > 0 && fRunOnGrid)
+      fFillExpecteds = (fRunNo == fRunNumberForExpecteds);
+    else
+      fFillExpecteds = kTRUE;
+    //
     static Int_t timeStampCache = -1;
     if (!fMCtrue) {
       fTimeStamp = fESD->GetTimeStampCTPBCCorr();
@@ -1596,6 +1608,7 @@ void AliAnalysisTaskTIdentityPID::FillTPCdEdxReal()
   // Get the event
   AliVEvent *event=InputEvent();
   if (CountEmptyEvents(2)<1) return;
+
   //
   // --------------------------------------------------------------
   //  Main track loop
@@ -1744,8 +1757,7 @@ void AliAnalysisTaskTIdentityPID::FillTPCdEdxReal()
     Bool_t ndEdxTPCall  = (fDEdxEl>20 || fDEdxPi>20 || fDEdxKa>20 || fDEdxPr>20 || fDEdxDe>20);
 
     if(!fEffMatrix && fAcceptance && !fMCtrue){
-
-      if ((fPtot < 0.6 && fPtot > 0.2 && ((fNSigmasPiTPC < 3 && fRandom.Rndm() < 0.001) || fNSigmasPiTPC > 3)) || fPtot > 0.6) {
+      if (fFillExpecteds && fEvent < 5 && (fNSigmasPiTPC >= 3 || (fNSigmasPiTPC < 3 && fRandom.Rndm() < 0.001))) {
         Double_t sign = static_cast<Double_t>(fSign);
         if(!fTreeSRedirector) return;
         (*fTreeSRedirector)<<"expecteds"<<
@@ -3045,8 +3057,11 @@ void AliAnalysisTaskTIdentityPID::FillTreeMC()
     UShort_t tpcSharedCls = trackReal->GetTPCnclsS();
     Float_t dca[2], covar[3];
     trackReal->GetImpactParameters(dca, covar);
-    Double_t tofSignal = trackReal->GetTOFsignal();
     Double_t tofSignalTunedOnData = trackReal->GetTOFsignalTunedOnData();
+    Double_t length = trackReal->GetIntegratedLength();
+    Double_t tofSignal = trackReal->GetTOFsignal();
+    Double_t beta = -.05;
+    if((length > 0) && (tofSignal > 0)) beta = length / 2.99792458e-2 / tofSignal;
     //
     // Fill MC closure tree
     if(!fTreeSRedirector) return;
@@ -3073,6 +3088,7 @@ void AliAnalysisTaskTIdentityPID::FillTreeMC()
     "tpcSharedCls=" << tpcSharedCls << // number of shared clusters
     "tofSignal=" << tofSignal         <<
     "tofSignalTOD=" << tofSignalTunedOnData         <<
+    "beta=" << beta         <<
     "dcaxy="     << fTrackDCAxy <<
     "dcaz="      << fTrackDCAz <<
     "cRows="     << fTrackTPCCrossedRows  <<
@@ -4155,6 +4171,7 @@ void AliAnalysisTaskTIdentityPID::FillCleanSamples()
 
   // Fill Clean Pions from K0s
   if (fUseCouts) std::cout << " Info::marsland: ===== In the FillCleanSamples ===== " << std::endl;
+
   if (fPIDResponse) {
     fPIDResponse->GetTPCResponse().SetBetheBlochParameters(1.28778e+00/50., 3.13539e+01, TMath::Exp(-3.16327e+01), 1.87901e+00, 6.41583e+00);
   }

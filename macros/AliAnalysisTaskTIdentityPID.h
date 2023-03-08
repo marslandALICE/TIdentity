@@ -245,6 +245,7 @@ public:
   void   SetPercentageOfEvents(const Int_t nPercentageOfEvents = 0)   {fPercentageOfEvents = nPercentageOfEvents;}
   void   SetNSettings(const Int_t nSettings = 22)                     {fNSettings = nSettings;}
   void   SetV0InvMassHists(const Bool_t ifV0InvMassHists = kFALSE)    {fV0InvMassHists      = ifV0InvMassHists;}
+  void   SetRunNumberForExpecteds(const Int_t ifRunNumberForExpecteds = 0)    {fRunNumberForExpecteds = ifRunNumberForExpecteds;}
 
   //
   Bool_t GetRunOnGrid() const { return fRunOnGrid; }
@@ -643,6 +644,8 @@ private:
   Bool_t            fUseThnSparse;           // in case thnsparse is filled
   Bool_t            fUseCouts;               // for debugging
   Bool_t            fV0InvMassHists;         // V0 invariant mass for QA
+  Int_t             fRunNumberForExpecteds;  // Run number in which to fill the expecteds tree
+  Bool_t            fFillExpecteds;
 
   Int_t             fNSettings;
   Int_t             fNMomBins;               // number of mombins --> for 20MeV slice 150 and 10MeV 300
@@ -860,6 +863,7 @@ private:
   std::vector<float>  fxCentBins;             
   std::vector<std::string> fResonances;           
   std::vector<int>    fBaryons;
+  
   //
   // control and QA histograms
   //
