@@ -5315,16 +5315,15 @@ Bool_t AliAnalysisTaskTIdentityPID::GetSystematicClassIndex(UInt_t cut,Int_t sys
   5 -->  Chi2TPCLarge
   6 -->  kMaxDCAToVertexXYPtDepLarge
   7 -->  kVertexZSmall
-  8 -->  kVertexZLarge
-  9 -->  kEventVertexZLarge
-  10 -->  kSharedCls
-  11 -->  kFindableClsLoose
-  12 -->  kFindableClsLoosest
-  13 -->  kPileupLoose
-  14 -->  kBFieldPos
-  15 -->  kBFieldNeg
-  16 -->  kTPCSignalNSmall
-  17 -->  kTPCSignalNLarge
+  8 -->  kEventVertexZLarge
+  9 -->  kSharedCls
+  10 -->  kFindableClsLoose
+  11 -->  kFindableClsLoosest
+  12 -->  kPileupLoose
+  13 -->  kBFieldPos
+  14 -->  kBFieldNeg
+  15 -->  kTPCSignalNSmall
+  16 -->  kTPCSignalNLarge
   */
 
   const Int_t fnCutBins=10;
@@ -5388,70 +5387,63 @@ Bool_t AliAnalysisTaskTIdentityPID::GetSystematicClassIndex(UInt_t cut,Int_t sys
     }
     break;
     //
-    case kCutVertexZLarge:   // 8 -->  kVertexZLarge
+    case kCutEventVertexZLarge:  // 8 -->  kEventVertexZLarge
     {
       Int_t fCutArrTmp[fnCutBins] = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDep, kVertexZ, kEventVertexZ, kPileup, kSharedCls, kFindableCls,kTPCSignalN,1};
       for(Int_t i=0;i<fnCutBins;i++) fCutArr[i] = fCutArrTmp[i];
     }
     break;
     //
-    case kCutEventVertexZLarge:  // 9 -->  kEventVertexZLarge
-    {
-      Int_t fCutArrTmp[fnCutBins] = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDep, kVertexZ, kEventVertexZ, kPileup, kSharedCls, kFindableCls,kTPCSignalN,1};
-      for(Int_t i=0;i<fnCutBins;i++) fCutArr[i] = fCutArrTmp[i];
-    }
-    break;
-    //
-    case kCutSharedCls:   // 10 -->  kSharedCls
+    case kCutSharedCls:   // 9 -->  kSharedCls
     {
       Int_t fCutArrTmp[fnCutBins] = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDep, kVertexZ, kEventVertexZ, kPileup, kSharedClsLoose, kFindableCls,kTPCSignalN,1};
       for(Int_t i=0;i<fnCutBins;i++) fCutArr[i] = fCutArrTmp[i];
     }
     break;
     //
-    case kCutFindableClsLoose:   // 11 -->  kFindableClsLoose
+    case kCutFindableClsLoose:   // 10 -->  kFindableClsLoose
     {
       Int_t fCutArrTmp[fnCutBins] = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDep, kVertexZ, kEventVertexZ, kPileup, kSharedCls, kFindableClsLoose,kTPCSignalN,1};
       for(Int_t i=0;i<fnCutBins;i++) fCutArr[i] = fCutArrTmp[i];
     }
     break;
     //
-    case kCutFindableClsLoosest:   // 12 -->  kFindableClsLoosest
+    case kCutFindableClsLoosest:   // 11 -->  kFindableClsLoosest
     {
       Int_t fCutArrTmp[fnCutBins] = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDep, kVertexZ, kEventVertexZ, kPileup, kSharedCls, kFindableClsLoosest,kTPCSignalN,1};
       for(Int_t i=0;i<fnCutBins;i++) fCutArr[i] = fCutArrTmp[i];
     }
     break;
     //
-    case kCutPileupLoose:   // 13 -->  kPileupLoose
+    case kCutPileupLoose:   // 12 -->  kPileupLoose
     {
       Int_t fCutArrTmp[fnCutBins] = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDep, kVertexZ, kEventVertexZ, kPileup, kSharedCls, kFindableCls,kTPCSignalN,1};
       for(Int_t i=0;i<fnCutBins;i++) fCutArr[i] = fCutArrTmp[i];
     }
     break;
     //
-    case kCutBFieldPos:   // 14 -->  kBFieldPos
+    case kCutBFieldPos:   // 13 -->  kBFieldPos
     {
       Int_t fCutArrTmp[fnCutBins] = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDep, kVertexZ, kEventVertexZ, kPileup, kSharedCls, kFindableCls,kTPCSignalN,kBFieldPos};
       for(Int_t i=0;i<fnCutBins;i++) fCutArr[i] = fCutArrTmp[i];
     }
     break;
     //
-    case kCutBFieldNeg:   // 15 --> kBFieldNeg
+    case kCutBFieldNeg:   // 14 --> kBFieldNeg
     {
       Int_t fCutArrTmp[fnCutBins] = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDep, kVertexZ, kEventVertexZ, kPileup, kSharedCls, kFindableCls,kTPCSignalN,kBFieldNeg};
       for(Int_t i=0;i<fnCutBins;i++) fCutArr[i] = fCutArrTmp[i];
     }
     break;
     //
-    case kCutTPCSignalNSmall:   // 16 --> kTPCSignalNSmall
+    case kCutTPCSignalNSmall:   // 15 --> kTPCSignalNSmall
     {
       Int_t fCutArrTmp[fnCutBins] = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDep, kVertexZ, kEventVertexZ, kPileup, kSharedCls, kFindableCls,kTPCSignalNSmall,1};
       for(Int_t i=0;i<fnCutBins;i++) fCutArr[i] = fCutArrTmp[i];
     }
     break;
     //
-    case kCutTPCSignalNLarge:   // 17 --> kTPCSignalNLarge
+    case kCutTPCSignalNLarge:   // 16 --> kTPCSignalNLarge
     {
       Int_t fCutArrTmp[fnCutBins] = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDep, kVertexZ, kEventVertexZ, kPileup, kSharedCls, kFindableCls,kTPCSignalNLarge,1};
       for(Int_t i=0;i<fnCutBins;i++) fCutArr[i] = fCutArrTmp[i];
