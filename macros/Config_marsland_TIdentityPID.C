@@ -437,6 +437,22 @@ AliAnalysisTaskTIdentityPID* Config_marsland_TIdentityPID(Bool_t getFromAlien, I
       task->SetMCMomScanArray(tmpMomBinsMC, tmppDownArr,   tmppUpArr);
       task->SetCentralityBinning(tmpCentbins,tmpfxCentBins);
 
+      std::vector<Double_t> effMatrixMomBins = {
+                      0.20, 0.22, 0.24, 0.26, 0.28, 0.30, 0.32, 0.34, 0.36, 0.38,
+                      0.40, 0.42, 0.44, 0.46, 0.48, 0.50, 0.52, 0.54, 0.56, 0.58,
+                      0.60, 0.62, 0.64, 0.66, 0.68, 0.70, 0.72, 0.74, 0.76, 0.78,
+                      0.80, 0.82, 0.84, 0.86, 0.88, 0.90, 0.92, 0.94, 0.96, 0.98,
+                      1.00, 1.02, 1.04, 1.06, 1.08, 1.10, 1.12, 1.14, 1.16, 1.18,
+                      1.20, 1.22, 1.24, 1.26, 1.28, 1.30, 1.32, 1.34, 1.36, 1.38,
+                      1.40, 1.44, 1.48, 1.52, 1.56, 1.60, 1.64, 1.68, 1.72, 1.76,
+                      1.80, 1.84, 1.88, 1.92, 1.96, 2.00, 2.04, 2.08, 2.12, 2.16,
+                      2.20, 2.40, 2.60, 2.80, 3.00, 3.20, 3.40, 3.60, 3.80, 4.00,
+                      4.20, 4.40, 4.60, 4.80, 5.00, 5.20
+      };
+      std::vector<Double_t> effMatrixCentBins = {0,5,10,20,30,40,50,60,70,80,85,90,95,100};
+      task->SetEffMatrixMomBins(effMatrixMomBins);
+      task->SetEffMatrixCentBins(effMatrixCentBins);
+
       // resonances to exclude
       const Int_t tmpNresonances = 1;
       TString tmpResArr[tmpNresonances] = {"xxx"};
@@ -1032,6 +1048,25 @@ void SetDefaults(AliAnalysisTaskTIdentityPID *defaultTask, Int_t year, TString p
   defaultTask->SetMCEtaScanArray(tmpEtaBinsMC, tmpetaDownArr, tmpetaUpArr);
   defaultTask->SetMCMomScanArray(tmpMomBinsMC, tmppDownArr,   tmppUpArr);
 
+  std::vector<Double_t> effMatrixMomBins = {0.2};
+  std::vector<Double_t> effMatrixCentBins = {0.};
+  std::vector<Double_t> effMatrixEtaBins = {-0.8};
+
+  for (Int_t iMom = 1; iMom <= 50; iMom++) {
+    effMatrixMomBins.push_back(effMatrixMomBins.back() + (5.2 - 0.2) / 50.);
+  }
+  for (Int_t iCent = 1; iCent <= 10; iCent++) {
+    effMatrixCentBins.push_back(effMatrixCentBins.back() + 10.);
+  }
+  for (Int_t iEta = 1; iEta <= 16; iEta++) {
+    effMatrixEtaBins.push_back(effMatrixEtaBins.back() + 0.1);
+  }
+
+  defaultTask->SetEffMatrixMomBins(effMatrixMomBins);
+  defaultTask->SetEffMatrixCentBins(effMatrixCentBins);
+  defaultTask->SetEffMatrixEtaBins(effMatrixEtaBins);
+  defaultTask->SetEffMatrixNSigmasTOF(2.5);
+
   // Boolians which are by default === ON ===
   defaultTask->SetRunOnGrid(kFALSE);
   defaultTask->SetIsMCtrue(kFALSE);
@@ -1050,7 +1085,6 @@ void SetDefaults(AliAnalysisTaskTIdentityPID *defaultTask, Int_t year, TString p
   defaultTask->SetFillHigherMomentsMCclosure(kFALSE);
   defaultTask->SetFillDnchDeta(kFALSE);
   defaultTask->SetIncludeTOF(kFALSE);
-  defaultTask->SetUseThnSparse(kFALSE);
   defaultTask->SetUseCouts(kFALSE);
   defaultTask->SetWeakAndMaterial(kFALSE);
   defaultTask->SetFillEventInfo(kFALSE);
@@ -1062,10 +1096,6 @@ void SetDefaults(AliAnalysisTaskTIdentityPID *defaultTask, Int_t year, TString p
 
   // Setters for the systematic uncertainty checks
   defaultTask->SetSystCentEstimator(0);
-  defaultTask->SetSystDCAxy(0);
-  defaultTask->SetSystNCrossedRows(0);
-  defaultTask->SetSystTPCChi2(0);
-  defaultTask->SetSystVz(0);
 
 }
 // ____________________________________________________________________________________________

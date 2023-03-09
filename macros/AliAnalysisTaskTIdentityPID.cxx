@@ -201,7 +201,6 @@ fRapidityType(0),
 fSisterCheck(0),
 fFillDnchDeta(kFALSE),
 fIncludeTOF(kFALSE),
-fUseThnSparse(kFALSE),
 fUseCouts(kFALSE),
 fV0InvMassHists(kFALSE),
 fRunNumberForExpecteds(0),
@@ -297,6 +296,7 @@ fTheta(0),
 fPhi(0),
 fSign(0),
 fTPCShared(0),
+fTPCFindable(0),
 fNcl(0),
 fNclCorr(0),
 fNResBins(0),
@@ -305,6 +305,10 @@ fNEtaWinBinsMC(-100),
 fNMomBinsMC(-100),
 fNCentBinsMC(-100),
 fGenprotonBins(-100),
+fEffMatrixMomBins(0),
+fEffMatrixCentBins(0),
+fEffMatrixEtaBins(0),
+fEffMatrixNSigmasTOF(0),
 fNResModeMC(2),
 fNCentbinsData(14),
 fMissingCl(0.),
@@ -315,6 +319,7 @@ fIntRate(0),
 fRunNo(0),
 fBField(0),
 fBeamType(0),
+fIsMCPileup(0),
 fTrackProbElTPC(0),
 fTrackProbPiTPC(0),
 fTrackProbKaTPC(0),
@@ -352,10 +357,6 @@ fHasTrack0FirstITSlayer(0),
 fHasTrack1FirstITSlayer(0),
 fHasV0FirstITSlayer(0),
 fSystCentEstimatetor(0),
-fSystCrossedRows(0),
-fSystDCAxy(0),
-fSystChi2(0),
-fSystVz(0),
 fetaDownArr(),
 fetaUpArr(),
 fcentDownArr(),
@@ -378,7 +379,6 @@ fHistCentrality(0),
 fHistCentralityImpPar(0),
 fHistImpParam(0),
 fHistVertex(0),
-fHistdEdxTPC(0),
 fHistArmPod(0),
 fEventInfo_PhiTPCdcarA(0),
 fEventInfo_PhiTPCdcarC(0),
@@ -501,7 +501,6 @@ fRapidityType(0),
 fSisterCheck(0),
 fFillDnchDeta(kFALSE),
 fIncludeTOF(kFALSE),
-fUseThnSparse(kFALSE),
 fUseCouts(kFALSE),
 fV0InvMassHists(kFALSE),
 fRunNumberForExpecteds(0),
@@ -597,6 +596,7 @@ fTheta(0),
 fPhi(0),
 fSign(0),
 fTPCShared(0),
+fTPCFindable(0),
 fNcl(0),
 fNclCorr(0),
 fNResBins(0),
@@ -605,6 +605,10 @@ fNEtaWinBinsMC(-100),
 fNMomBinsMC(-100),
 fNCentBinsMC(-100),
 fGenprotonBins(-100),
+fEffMatrixMomBins(0),
+fEffMatrixCentBins(0),
+fEffMatrixEtaBins(0),
+fEffMatrixNSigmasTOF(0),
 fNResModeMC(2),
 fNCentbinsData(14),
 fMissingCl(0.),
@@ -615,6 +619,7 @@ fIntRate(0),
 fRunNo(0),
 fBField(0),
 fBeamType(0),
+fIsMCPileup(0),
 fTrackProbElTPC(0),
 fTrackProbPiTPC(0),
 fTrackProbKaTPC(0),
@@ -652,10 +657,6 @@ fHasTrack0FirstITSlayer(0),
 fHasTrack1FirstITSlayer(0),
 fHasV0FirstITSlayer(0),
 fSystCentEstimatetor(0),
-fSystCrossedRows(0),
-fSystDCAxy(0),
-fSystChi2(0),
-fSystVz(0),
 fetaDownArr(),
 fetaUpArr(),
 fcentDownArr(),
@@ -678,7 +679,6 @@ fHistCentrality(0),
 fHistCentralityImpPar(0),
 fHistImpParam(0),
 fHistVertex(0),
-fHistdEdxTPC(0),
 fHistArmPod(0),
 fEventInfo_PhiTPCdcarA(0),
 fEventInfo_PhiTPCdcarC(0),
@@ -825,7 +825,6 @@ AliAnalysisTaskTIdentityPID::~AliAnalysisTaskTIdentityPID()
   if (fHistNegEffMatrixScanRec) delete fHistNegEffMatrixScanRec;
   if (fHistPosEffMatrixScanGen) delete fHistPosEffMatrixScanGen;
   if (fHistNegEffMatrixScanGen) delete fHistNegEffMatrixScanGen;
-  if (fHistdEdxTPC)         delete fHistdEdxTPC;
   if (fHistEmptyEvent)      delete fHistEmptyEvent;
   if (fHistCentrality)      delete fHistCentrality;
   if (fHistCentralityImpPar)delete fHistCentralityImpPar;
@@ -1075,13 +1074,32 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
   if(fEffMatrix && !fRunOnGrid)
   {
     const Int_t ndim=5;
-    Int_t nbins0[ndim]  ={3,10, 50       ,16        ,50  };
-    Double_t xmin0[ndim]={0,0,  fMomDown ,fEtaDown  ,0.  };
-    Double_t xmax0[ndim]={3,100,fMomUp   ,fEtaUp    ,6.25};
-    fHistPosEffMatrixRec  =new THnF("fHistPosEffMatrixRec","fHistPosEffMatrixRec",ndim, nbins0,xmin0,xmax0);
-    fHistNegEffMatrixRec  =new THnF("fHistNegEffMatrixRec","fHistNegEffMatrixRec",ndim, nbins0,xmin0,xmax0);
-    fHistPosEffMatrixGen  =new THnF("fHistPosEffMatrixGen","fHistPosEffMatrixGen",ndim, nbins0,xmin0,xmax0);
-    fHistNegEffMatrixGen  =new THnF("fHistNegEffMatrixGen","fHistNegEffMatrixGen",ndim, nbins0,xmin0,xmax0);
+    Int_t nbins0[ndim] ={3,
+                         (Int_t) fEffMatrixCentBins.size() - 1,
+                         (Int_t) fEffMatrixMomBins.size() - 1,
+                         (Int_t) fEffMatrixEtaBins.size() - 1,
+                         50
+    };
+
+    std::vector<Double_t> particlesBins = {0., 1., 2., 3.};
+    std::vector<Double_t> centBins = fEffMatrixCentBins;
+    std::vector<Double_t> momBins = fEffMatrixMomBins;
+    std::vector<Double_t> etaBins = fEffMatrixEtaBins;
+    std::vector<Double_t> phiBins = {0.};
+    for (Int_t i = 1; i <= 50; i++) {
+      phiBins.push_back(i * 6.25 / 50.);
+    }
+
+    std::vector<std::vector<Double_t>> effMatrixBins = {particlesBins,
+                                                        centBins,
+                                                        momBins,
+                                                        etaBins,
+                                                        phiBins};
+
+    fHistPosEffMatrixRec  =new THnF("fHistPosEffMatrixRec", "fHistPosEffMatrixRec", ndim, nbins0, effMatrixBins);
+    fHistNegEffMatrixRec  =new THnF("fHistNegEffMatrixRec", "fHistNegEffMatrixRec", ndim, nbins0, effMatrixBins);
+    fHistPosEffMatrixGen  =new THnF("fHistPosEffMatrixGen", "fHistPosEffMatrixGen", ndim, nbins0, effMatrixBins);
+    fHistNegEffMatrixGen  =new THnF("fHistNegEffMatrixGen", "fHistNegEffMatrixGen", ndim, nbins0, effMatrixBins);
     TString axisNameEff[ndim]  = {"particle"      ,"Centrality"     ,"momentum"      ,"eta"  ,"phi"};
     TString axisTitleEff[ndim] = {"particle type" ,"Centrality (%)" ,"#it{p}_{T} (GeV/#it{c})" ,"#eta" ,"#phi"};
     for (Int_t iEff=0; iEff<ndim;iEff++){
@@ -1096,16 +1114,38 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
     fListHist->Add(fHistNegEffMatrixGen);
     //
     //
-    const Int_t ndimScan=6;
-    Int_t nbinsScan[ndimScan]   = {2, fNSettings,           3,10, 50       ,16   };
-    Double_t xminScan[ndimScan] = {0, 0,                    0,0,  fMomDown ,fEtaDown };
-    Double_t xmaxScan[ndimScan] = {2, Double_t(fNSettings), 3,100,fMomUp   ,fEtaUp };
-    fHistPosEffMatrixScanRec  =new THnF("fHistPosEffMatrixScanRec","fHistPosEffMatrixScanRec",ndimScan, nbinsScan,xminScan,xmaxScan);
-    fHistNegEffMatrixScanRec  =new THnF("fHistNegEffMatrixScanRec","fHistNegEffMatrixScanRec",ndimScan, nbinsScan,xminScan,xmaxScan);
-    fHistPosEffMatrixScanGen  =new THnF("fHistPosEffMatrixScanGen","fHistPosEffMatrixScanGen",ndimScan, nbinsScan,xminScan,xmaxScan);
-    fHistNegEffMatrixScanGen  =new THnF("fHistNegEffMatrixScanGen","fHistNegEffMatrixScanGen",ndimScan, nbinsScan,xminScan,xmaxScan);
-    TString axisNameEffScan[ndimScan]  = {"detector", "systematic", "particle"      ,"Centrality"     ,"momentum"      ,"eta"  };
-    TString axisTitleEffScan[ndimScan] = {"detector", "setting",    "particle type" ,"Centrality (%)" ,"#it{p}_{T} (GeV/#it{c})" ,"#eta"};
+    const Int_t ndimScan=7;
+    Int_t nbinsScan[ndimScan] ={2,
+                                2,
+                                fNSettings,
+                                3,
+                                (Int_t) fEffMatrixCentBins.size() - 1,
+                                (Int_t) fEffMatrixMomBins.size() - 1,
+                                (Int_t) fEffMatrixEtaBins.size() - 1
+    };
+
+    std::vector<Double_t> detectorBins = {0., 1., 2.};
+    std::vector<Double_t> originBins = {0., 1., 2.};
+    std::vector<Double_t> settingsBins = {0.};
+    for (Int_t i = 1; i <= fNSettings; i++) {
+      settingsBins.push_back(i);
+    }
+
+    std::vector<std::vector<Double_t>> effMatrixScanBins = {detectorBins,
+                                                            originBins,
+                                                            settingsBins,
+                                                            particlesBins,
+                                                            centBins,
+                                                            momBins,
+                                                            etaBins};
+
+    fHistPosEffMatrixScanRec  =new THnF("fHistPosEffMatrixScanRec", "fHistPosEffMatrixScanRec", ndimScan, nbinsScan, effMatrixScanBins);
+    fHistNegEffMatrixScanRec  =new THnF("fHistNegEffMatrixScanRec", "fHistNegEffMatrixScanRec", ndimScan, nbinsScan, effMatrixScanBins);
+    fHistPosEffMatrixScanGen  =new THnF("fHistPosEffMatrixScanGen", "fHistPosEffMatrixScanGen", ndimScan, nbinsScan, effMatrixScanBins);
+    fHistNegEffMatrixScanGen  =new THnF("fHistNegEffMatrixScanGen", "fHistNegEffMatrixScanGen", ndimScan, nbinsScan, effMatrixScanBins);
+
+    TString axisNameEffScan[ndimScan]  = {"detector", "origin", "systematic", "particle"      ,"Centrality"     ,"momentum"      ,"eta"  };
+    TString axisTitleEffScan[ndimScan] = {"detector", "isprimary", "setting",    "particle type" ,"Centrality (%)" ,"#it{p}_{T} (GeV/#it{c})" ,"#eta"};
     for (Int_t iEff=0; iEff<ndimScan;iEff++){
       fHistPosEffMatrixScanRec->GetAxis(iEff)->SetName(axisNameEffScan[iEff]);  fHistPosEffMatrixScanRec->GetAxis(iEff)->SetTitle(axisTitleEffScan[iEff]);
       fHistNegEffMatrixScanRec->GetAxis(iEff)->SetName(axisNameEffScan[iEff]);  fHistNegEffMatrixScanRec->GetAxis(iEff)->SetTitle(axisTitleEffScan[iEff]);
@@ -2408,8 +2448,8 @@ void AliAnalysisTaskTIdentityPID::FillMCFull_NetParticles()
               // Select real trigger event and reject other pile up vertices
               isTPCPileup = AliAnalysisUtils::IsParticleFromOutOfBunchPileupCollision(iTrack,fMCEvent);
               isITSPileup = AliAnalysisUtils::IsSameBunchPileupInGeneratedEvent(fMCEvent, "Hijing");
-              Bool_t ispileup = (isTPCPileup || isITSPileup);
-              if (ipileup==0 && ispileup) continue;
+              fIsMCPileup = (isTPCPileup || isITSPileup);
+              if (ipileup==0 && fIsMCPileup) continue;
               //
               // initialize the dummy particle id
               fElMCgen =-100.; fPiMCgen =-100.; fKaMCgen =-100.; fPrMCgen =-100.;
@@ -2447,7 +2487,7 @@ void AliAnalysisTaskTIdentityPID::FillMCFull_NetParticles()
               Bool_t momAccMaxWindow = (ptotMCgen>=fMomDown && ptotMCgen<=fMomUp);
               //
               // Fill eff Matrix
-              if (fEffMatrix && !fRunOnGrid && etaAccMaxWindow && momAccMaxWindow && ieta==0 && imom==0 && iorig==0 && ispileup==0){
+              if (fEffMatrix && !fRunOnGrid && etaAccMaxWindow && momAccMaxWindow && ieta==0 && imom==0 && iorig==0 && ipileup==1){
                 //
                 // Eff matrix phi etc.
                 if (iset==kCutReference){
@@ -2457,11 +2497,11 @@ void AliAnalysisTaskTIdentityPID::FillMCFull_NetParticles()
                 }
                 //
                 // systematic scan
-                Double_t xxxGenSystScan[6]={0.,Float_t(iset),Float_t(iPart),fCentrality,ptotMCgen,etaMCgen};
+                Double_t xxxGenSystScan[7]={0.,static_cast<Double_t>(bPrim),Float_t(iset),Float_t(iPart),fCentrality,ptotMCgen,etaMCgen};
                 if (pdg>0) fHistPosEffMatrixScanGen->Fill(xxxGenSystScan);
                 if (pdg<0) fHistNegEffMatrixScanGen->Fill(xxxGenSystScan);
                 // generated does not know about TOF
-                Double_t xxxGenSystScanTOF[6]={1.,Float_t(iset),Float_t(iPart),fCentrality,ptotMCgen,etaMCgen};
+                Double_t xxxGenSystScanTOF[7]={1.,static_cast<Double_t>(bPrim),Float_t(iset),Float_t(iPart),fCentrality,ptotMCgen,etaMCgen};
                 if (pdg>0) fHistPosEffMatrixScanGen->Fill(xxxGenSystScanTOF);
                 if (pdg<0) fHistNegEffMatrixScanGen->Fill(xxxGenSystScanTOF);
               }
@@ -2509,8 +2549,8 @@ void AliAnalysisTaskTIdentityPID::FillMCFull_NetParticles()
               // select pile up
               isTPCPileup = AliAnalysisUtils::IsParticleFromOutOfBunchPileupCollision(lab,fMCEvent);
               isITSPileup = AliAnalysisUtils::IsSameBunchPileupInGeneratedEvent(fMCEvent, "Hijing");
-              Bool_t ispileup = (isTPCPileup || isITSPileup);
-              if (ipileup==0 && ispileup) continue;
+              fIsMCPileup = (isTPCPileup || isITSPileup);
+              if (ipileup==0 && fIsMCPileup) continue;
               //
               // check the origin of the track
               Bool_t bPrim     = fMCStack->IsPhysicalPrimary(lab);
@@ -2561,26 +2601,26 @@ void AliAnalysisTaskTIdentityPID::FillMCFull_NetParticles()
               if (!GetSystematicClassIndex(fTrackCutBits,iset)) continue;
               //
               // Fill Efficiency Matrices
-              if (fEffMatrix && !fRunOnGrid && etaAccMaxWindow && momAccMaxWindow && ieta==0 && imom==0 && iorig==0 && ispileup==0){
+              if (fEffMatrix && !fRunOnGrid && etaAccMaxWindow && momAccMaxWindow && ieta==0 && imom==0 && iorig==3 && ipileup==1){
                 //
                 // Eff matrix with phi etc. for the default setting
-                if (iset==kCutReference){
+                if (iset==kCutReference && bPrim){
                   Double_t xxxRec[5]={Float_t(iPart),fCentrality,ptotMCrec,etaMCrec,phiMCRec};
                   if (pdg>0) fHistPosEffMatrixRec->Fill(xxxRec);
                   if (pdg<0) fHistNegEffMatrixRec->Fill(xxxRec);
                 }
                 //
                 // TPC eff matrix for all settings
-                Double_t xxxRecSystScan[6]={0.,Float_t(iset),Float_t(iPart),fCentrality,ptotMCrec,etaMCrec};
+                Double_t xxxRecSystScan[7]={0.,static_cast<Double_t>(bPrim),Float_t(iset),Float_t(iPart),fCentrality,ptotMCrec,etaMCrec};
                 if (pdg>0) fHistPosEffMatrixScanRec->Fill(xxxRecSystScan);
                 if (pdg<0) fHistNegEffMatrixScanRec->Fill(xxxRecSystScan);
                 //
                 // TOF+TPC eff matrix for all settings
-                Bool_t piTOF = (TMath::Abs(fPIDResponse->NumberOfSigmasTOF(trackReal, AliPID::kPion))  <=2.5);
-                Bool_t kaTOF = (TMath::Abs(fPIDResponse->NumberOfSigmasTOF(trackReal, AliPID::kKaon))  <=2.5);
-                Bool_t prTOF = (TMath::Abs(fPIDResponse->NumberOfSigmasTOF(trackReal, AliPID::kProton))<=2.5);
+                Bool_t piTOF = (TMath::Abs(fPIDResponse->NumberOfSigmasTOF(trackReal, AliPID::kPion))  <= fEffMatrixNSigmasTOF);
+                Bool_t kaTOF = (TMath::Abs(fPIDResponse->NumberOfSigmasTOF(trackReal, AliPID::kKaon))  <= fEffMatrixNSigmasTOF);
+                Bool_t prTOF = (TMath::Abs(fPIDResponse->NumberOfSigmasTOF(trackReal, AliPID::kProton))<= fEffMatrixNSigmasTOF);
                 if ( (piTOF && iPart==0) ||  (kaTOF && iPart==1) || (prTOF && iPart==2) ) {
-                  Double_t xxxRecTOF[6]={1.,Float_t(iset),Float_t(iPart),fCentrality,ptotMCrec,etaMCrec};
+                  Double_t xxxRecTOF[7]={1.,static_cast<Double_t>(bPrim),Float_t(iset),Float_t(iPart),fCentrality,ptotMCrec,etaMCrec};
                   if (pdg>0) fHistPosEffMatrixScanRec->Fill(xxxRecTOF);
                   if (pdg<0) fHistNegEffMatrixScanRec->Fill(xxxRecTOF);
                 }
@@ -5045,6 +5085,7 @@ UInt_t AliAnalysisTaskTIdentityPID::SetCutBitsAndSomeTrackVariables(AliESDtrack 
   track->GetImpactParameters(pv,cov); // p[0]=fD; p[1]=fZ; cov[0]=fCdd; cov[1]=fCdz; cov[2]=fCzz;
   fTrackDCAxy = pv[0];
   fTrackDCAz  = pv[1];
+
   //
   // TPC related quantities
   Bool_t cleanDeTPC = kFALSE;
@@ -5054,6 +5095,7 @@ UInt_t AliAnalysisTaskTIdentityPID::SetCutBitsAndSomeTrackVariables(AliESDtrack 
     fTrackTPCSignalN     = track->GetTPCsignalN();
     fTrackTPCCrossedRows = Float_t(track->GetTPCCrossedRows());
     fTPCShared = track->GetTPCnclsS();
+    fTPCFindable = track->GetTPCNclsF();
     fMissingCl = track->GetTPCClusterInfo(3,0,0,159);
     goldenChi2 = track->GetChi2TPCConstrainedVsGlobal(fVertex);
     fTrackLengthInActiveZone = track->GetLengthInActiveZone(1,3,230, track->GetBz(),0,0);
@@ -5152,6 +5194,13 @@ UInt_t AliAnalysisTaskTIdentityPID::SetCutBitsAndSomeTrackVariables(AliESDtrack 
   // Bool_t dca10h     = TMath::Abs(fTrackDCAxy)<0.0182+0.0350/TMath::Power(fPt,1.01);   
   Bool_t dcaBaseCut = TMath::Abs(fTrackDCAxy)<0.0208+0.04/TMath::Power(fPt,1.01);  
   Bool_t dcaLoose   = TMath::Abs(fTrackDCAxy)<0.4;  // 10h tuned loose cut
+
+  Bool_t sharedCls = kFALSE;
+  Bool_t sharedClsLoose = kFALSE;
+  if (fTrackTPCCrossedRows > 0 && fNcl > 0) {
+    sharedCls = fTPCShared / fTrackTPCCrossedRows < 0.25 && fTPCShared / fNcl < 0.3;
+    sharedClsLoose = fTPCShared / fTrackTPCCrossedRows < 0.25;
+  }
   //
   // Systematic settings
   fTrackCutBits=0;
@@ -5191,6 +5240,17 @@ UInt_t AliAnalysisTaskTIdentityPID::SetCutBitsAndSomeTrackVariables(AliESDtrack 
       if (fTrackChi2TPC<5.0) (fTrackCutBits |= 1 << kMaxChi2PerClusterTPCLarge);   // ????
     }
   }
+  //
+  // Shared TPC clusters
+  if (sharedCls) (fTrackCutBits |= 1 << kSharedCls);
+  if (sharedClsLoose) (fTrackCutBits |= 1 << kSharedClsLoose);
+  //
+  // Found TPC clusters
+  if (fTPCFindable > 0) {
+    if (fTrackTPCCrossedRows / fTPCFindable > 0.87) (fTrackCutBits |= 1 << kFindableCls);
+    if (fTrackTPCCrossedRows / fTPCFindable > 0.80) (fTrackCutBits |= 1 << kFindableClsLoose);
+    if (fTrackTPCCrossedRows / fTPCFindable > 0.75) (fTrackCutBits |= 1 << kFindableClsLoosest);
+  }
   // 
   // DCAxy
   if (dcaBaseCut) (fTrackCutBits |= 1 << kMaxDCAToVertexXYPtDep);
@@ -5205,12 +5265,25 @@ UInt_t AliAnalysisTaskTIdentityPID::SetCutBitsAndSomeTrackVariables(AliESDtrack 
   if (TMath::Abs(fVz)<8 && TMath::Abs(fVz)>0.1 ) (fTrackCutBits |= 1 << kEventVertexZLarge);
   //
   // track length cut --> dangerous cuts because it creates momentum dependent efficiency
-  if (fTrackLengthInActiveZone>=90)  (fTrackCutBits |= 1 << kActiveZoneSmall);
+  if (fTrackLengthInActiveZone>=90)  (fTrackCutBits |= 1 << kActiveZone);
   //
   // NCl in dEdx calculation
   if (fTrackTPCSignalN>=60) (fTrackCutBits |= 1 << kTPCSignalNSmall);
   if (fTrackTPCSignalN>=70) (fTrackCutBits |= 1 << kTPCSignalN);
   if (fTrackTPCSignalN>=80) (fTrackCutBits |= 1 << kTPCSignalNLarge);
+  //
+  // pile-up
+  if (!fMCtrue) { // real data
+    if (fPileUpBit & 1 << 0) (fTrackCutBits |= 1 << kPileup);
+    if (fPileUpBit & 1 << 1) (fTrackCutBits |= 1 << kPileupLoose);
+  } else {
+    if (fIsMCPileup) (fTrackCutBits |= 1 << kPileup);
+    else (fTrackCutBits |= 1 << kPileupLoose);
+  }
+  //
+  // B field polarity
+  if (fBField > 0) (fTrackCutBits |= 1 << kBFieldPos);
+  if (fBField < 0) (fTrackCutBits |= 1 << kBFieldNeg);
   //
   // --------------------------------------------------------------------
   //                    Clean sample selections
@@ -5235,28 +5308,23 @@ Bool_t AliAnalysisTaskTIdentityPID::GetSystematicClassIndex(UInt_t cut,Int_t sys
   /*
   syst:
   0 -->  Reference
-  1 -->  CRows60
-  2 -->  CRows100
-  3 -->  Chi2TPCDmall
-  4 -->  Chi2TPCLarge
-  5 -->  DCAXYSmall
-  6 -->  DCAXYLarge
-  7 -->  VZSmall
-  8 -->  VZLarge
-  9 -->  EventVertexZSmall
-  10 --> EventVertexZLarge
-  11 --> RequireITSRefit
-  12 --> NewITSCut
-  13 --> PixelRequirementITS
-  // extra settings
-  14 --> kTPCSignalN,
-  15 --> kActiveZone,
-  16 --> kTPCSignalN+kActiveZone,
-  17 --> kTPCSignalNSmall+kActiveZoneSmall,
-  18 --> kTPCSignalNLarge,kActiveZoneLarge,
-  //
-  19 --> kTPCSignalNLarge,kActiveZoneLarge,
-  20 --> kTPCSignalNLarge,kActiveZoneLarge,
+  1 -->  CRows70
+  2 -->  CRows90
+  3 -->  ActiveZone
+  4 -->  Chi2TPCSmall
+  5 -->  Chi2TPCLarge
+  6 -->  kMaxDCAToVertexXYPtDepLarge
+  7 -->  kVertexZSmall
+  8 -->  kVertexZLarge
+  9 -->  kEventVertexZLarge
+  10 -->  kSharedCls
+  11 -->  kFindableClsLoose
+  12 -->  kFindableClsLoosest
+  13 -->  kPileupLoose
+  14 -->  kBFieldPos
+  15 -->  kBFieldNeg
+  16 -->  kTPCSignalNSmall
+  17 -->  kTPCSignalNLarge
   */
 
   const Int_t fnCutBins=10;
@@ -5266,160 +5334,130 @@ Bool_t AliAnalysisTaskTIdentityPID::GetSystematicClassIndex(UInt_t cut,Int_t sys
 
     case kCutReference:   // 0 -->  Reference
     {
-      Int_t fCutArrTmp[fnCutBins] = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDep, kVertexZ, kEventVertexZ, 1,1,1,1,1};
+      Int_t fCutArrTmp[fnCutBins] = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDep, kVertexZ, kEventVertexZ, 1, kSharedCls, kFindableCls,kTPCSignalN,1};
       for(Int_t i=0;i<fnCutBins;i++) fCutArr[i] = fCutArrTmp[i];
     }
     break;
     //
     case kCutCrossedRowsTPC70:  // 1 -->  CRows70
     {
-      Int_t fCutArrTmp[fnCutBins] = {kNCrossedRowsTPC70,  kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDep, kVertexZ, kEventVertexZ, 1,1,1,1,1};
+      Int_t fCutArrTmp[fnCutBins] = {kNCrossedRowsTPC70,  kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDep, kVertexZ, kEventVertexZ, kPileup, kSharedCls, kFindableCls,kTPCSignalN,1};
       for(Int_t i=0;i<fnCutBins;i++) fCutArr[i] = fCutArrTmp[i];
     }
     break;
     //
     case kCutCrossedRowsTPC90:  // 2 -->  CRows90
     {
-      Int_t fCutArrTmp[fnCutBins] = {kNCrossedRowsTPC90, kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDep, kVertexZ, kEventVertexZ, 1,1,1,1,1};
+      Int_t fCutArrTmp[fnCutBins] = {kNCrossedRowsTPC90,  kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDep, kVertexZ, kEventVertexZ, kPileup, kSharedCls, kFindableCls,kTPCSignalN,1};
       for(Int_t i=0;i<fnCutBins;i++) fCutArr[i] = fCutArrTmp[i];
     }
     break;
     //
-    case kCutMaxChi2PerClusterTPCSmall:   // 3 -->  Chi2TPCSmall
+    case kCutActiveZone:  // 3 -->  ActiveZone
     {
-      Int_t fCutArrTmp[fnCutBins] = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPCSmall, kMaxDCAToVertexXYPtDep, kVertexZ, kEventVertexZ, 1,1,1,1,1};
+      Int_t fCutArrTmp[fnCutBins] = {kActiveZone,  kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDep, kVertexZ, kEventVertexZ, kPileup, kSharedCls, kFindableCls,kTPCSignalN,1};
       for(Int_t i=0;i<fnCutBins;i++) fCutArr[i] = fCutArrTmp[i];
     }
     break;
     //
-    case kCutMaxChi2PerClusterTPCLarge:   // 4 -->  Chi2TPCLarge
+    case kCutMaxChi2PerClusterTPCSmall:   // 4 -->  Chi2TPCSmall
     {
-      Int_t fCutArrTmp[fnCutBins] = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPCLarge, kMaxDCAToVertexXYPtDep, kVertexZ, kEventVertexZ, 1,1,1,1,1};
+      Int_t fCutArrTmp[fnCutBins] = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPCSmall, kMaxDCAToVertexXYPtDep, kVertexZ, kEventVertexZ, kPileup, kSharedCls, kFindableCls,kTPCSignalN,1};
       for(Int_t i=0;i<fnCutBins;i++) fCutArr[i] = fCutArrTmp[i];
     }
     break;
     //
-    case kCutMaxDCAToVertexXYPtDepSmall:   // 5 -->  kMaxDCAToVertexXYPtDepSmall
+    case kCutMaxChi2PerClusterTPCLarge:   // 5 -->  Chi2TPCLarge
     {
-      Int_t fCutArrTmp[fnCutBins] = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDepSmall, kVertexZ, kEventVertexZ, 1,1,1,1,1};
+      Int_t fCutArrTmp[fnCutBins] = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPCLarge, kMaxDCAToVertexXYPtDep, kVertexZ, kEventVertexZ, kPileup, kSharedCls, kFindableCls,kTPCSignalN,1};
       for(Int_t i=0;i<fnCutBins;i++) fCutArr[i] = fCutArrTmp[i];
     }
     break;
     //
     case kCutMaxDCAToVertexXYPtDepLarge:   // 6 -->  kMaxDCAToVertexXYPtDepLarge
     {
-      Int_t fCutArrTmp[fnCutBins] = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDepLarge, kVertexZ, kEventVertexZ, 1,1,1,1,1};
+      Int_t fCutArrTmp[fnCutBins] = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDepLarge, kVertexZ, kEventVertexZ, kPileup, kSharedCls, kFindableCls,kTPCSignalN,1};
       for(Int_t i=0;i<fnCutBins;i++) fCutArr[i] = fCutArrTmp[i];
     }
     break;
     //
     case kCutVertexZSmall:   // 7 -->  kVertexZSmall
     {
-      Int_t fCutArrTmp[fnCutBins] = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDep, kVertexZSmall, kEventVertexZ, 1,1,1,1,1};
+      Int_t fCutArrTmp[fnCutBins] = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDep, kVertexZSmall, kEventVertexZ, kPileup, kSharedCls, kFindableCls,kTPCSignalN,1};
       for(Int_t i=0;i<fnCutBins;i++) fCutArr[i] = fCutArrTmp[i];
     }
     break;
     //
     case kCutVertexZLarge:   // 8 -->  kVertexZLarge
     {
-      Int_t fCutArrTmp[fnCutBins] = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDep, kVertexZLarge, kEventVertexZ, 1,1,1,1,1};
+      Int_t fCutArrTmp[fnCutBins] = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDep, kVertexZ, kEventVertexZ, kPileup, kSharedCls, kFindableCls,kTPCSignalN,1};
       for(Int_t i=0;i<fnCutBins;i++) fCutArr[i] = fCutArrTmp[i];
     }
     break;
     //
-    case kCutEventVertexZSmall:  // 9 -->  kEventVertexZSmall
+    case kCutEventVertexZLarge:  // 9 -->  kEventVertexZLarge
     {
-      Int_t fCutArrTmp[fnCutBins] = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDep, kVertexZ, kEventVertexZSmall, 1,1,1,1,1};
+      Int_t fCutArrTmp[fnCutBins] = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDep, kVertexZ, kEventVertexZ, kPileup, kSharedCls, kFindableCls,kTPCSignalN,1};
       for(Int_t i=0;i<fnCutBins;i++) fCutArr[i] = fCutArrTmp[i];
     }
     break;
     //
-    case kCutEventVertexZLarge:  // 10 -->  kEventVertexZLarge
+    case kCutSharedCls:   // 10 -->  kSharedCls
     {
-      Int_t fCutArrTmp[fnCutBins] = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDep, kVertexZ, kEventVertexZLarge, 1,1,1,1,1};
+      Int_t fCutArrTmp[fnCutBins] = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDep, kVertexZ, kEventVertexZ, kPileup, kSharedClsLoose, kFindableCls,kTPCSignalN,1};
       for(Int_t i=0;i<fnCutBins;i++) fCutArr[i] = fCutArrTmp[i];
     }
     break;
     //
-    case kCutRequireITSRefit:  // 11 -->  no kRequireITSRefit
+    case kCutFindableClsLoose:   // 11 -->  kFindableClsLoose
     {
-      Int_t fCutArrTmp[fnCutBins] = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDep, kVertexZ, kEventVertexZ, 1, 1, 1, 1 ,1};
+      Int_t fCutArrTmp[fnCutBins] = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDep, kVertexZ, kEventVertexZ, kPileup, kSharedCls, kFindableClsLoose,kTPCSignalN,1};
       for(Int_t i=0;i<fnCutBins;i++) fCutArr[i] = fCutArrTmp[i];
     }
     break;
     //
-    case kCutPixelRequirementITS:  // 12 --> no  kNewITSCut
+    case kCutFindableClsLoosest:   // 12 -->  kFindableClsLoosest
     {
-      Int_t fCutArrTmp[fnCutBins] = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDep, kVertexZ, kEventVertexZ, kPixelRequirementITS, 1, kRequireITSRefit,1,1};
+      Int_t fCutArrTmp[fnCutBins] = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDep, kVertexZ, kEventVertexZ, kPileup, kSharedCls, kFindableClsLoosest,kTPCSignalN,1};
       for(Int_t i=0;i<fnCutBins;i++) fCutArr[i] = fCutArrTmp[i];
     }
     break;
     //
-    case kCutNewITSCut:  // 13 -->  kPixelRequirementITS
+    case kCutPileupLoose:   // 13 -->  kPileupLoose
     {
-      Int_t fCutArrTmp[fnCutBins] = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDep, kVertexZ, kEventVertexZ, 1, kNewITSCut, kRequireITSRefit,1,1};
+      Int_t fCutArrTmp[fnCutBins] = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDep, kVertexZ, kEventVertexZ, kPileup, kSharedCls, kFindableCls,kTPCSignalN,1};
       for(Int_t i=0;i<fnCutBins;i++) fCutArr[i] = fCutArrTmp[i];
     }
     break;
     //
-    // ----------------------------------------------------------------------------------------------------
-    //                                              Dangerous cuts
-    // ----------------------------------------------------------------------------------------------------
-    //
-    case kCutTPCSignalN:  // 14 -->  kTPCSignalN
+    case kCutBFieldPos:   // 14 -->  kBFieldPos
     {
-      Int_t fCutArrTmp[fnCutBins] = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDep, kVertexZ, kEventVertexZ, 1,1,1,kTPCSignalN,1};
+      Int_t fCutArrTmp[fnCutBins] = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDep, kVertexZ, kEventVertexZ, kPileup, kSharedCls, kFindableCls,kTPCSignalN,kBFieldPos};
       for(Int_t i=0;i<fnCutBins;i++) fCutArr[i] = fCutArrTmp[i];
     }
     break;
     //
-    case kCutActiveZone:  // 15 -->  kActiveZone
+    case kCutBFieldNeg:   // 15 --> kBFieldNeg
     {
-      Int_t fCutArrTmp[fnCutBins] = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDep, kVertexZ, kEventVertexZ, 1,1,1,1,kActiveZone};
+      Int_t fCutArrTmp[fnCutBins] = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDep, kVertexZ, kEventVertexZ, kPileup, kSharedCls, kFindableCls,kTPCSignalN,kBFieldNeg};
       for(Int_t i=0;i<fnCutBins;i++) fCutArr[i] = fCutArrTmp[i];
     }
     break;
     //
-    case kCutTPCSignalNActiveZone:  // 16 -->  kTPCSignalN + kActiveZone
+    case kCutTPCSignalNSmall:   // 16 --> kTPCSignalNSmall
     {
-      Int_t fCutArrTmp[fnCutBins] = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDep, kVertexZ, kEventVertexZ, 1,1,1,kTPCSignalN,kActiveZone};
+      Int_t fCutArrTmp[fnCutBins] = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDep, kVertexZ, kEventVertexZ, kPileup, kSharedCls, kFindableCls,kTPCSignalNSmall,1};
       for(Int_t i=0;i<fnCutBins;i++) fCutArr[i] = fCutArrTmp[i];
     }
     break;
     //
-    case kCutTPCSignalNSmallActiveZoneSmall:  // 17 -->  tightest cut kTPCSignalNSmall + kActiveZoneSmall
+    case kCutTPCSignalNLarge:   // 17 --> kTPCSignalNLarge
     {
-      Int_t fCutArrTmp[fnCutBins] = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDep, kVertexZ, kEventVertexZ, 1,1,1,kTPCSignalNSmall,kActiveZoneSmall};
+      Int_t fCutArrTmp[fnCutBins] = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDep, kVertexZ, kEventVertexZ, kPileup, kSharedCls, kFindableCls,kTPCSignalNLarge,1};
       for(Int_t i=0;i<fnCutBins;i++) fCutArr[i] = fCutArrTmp[i];
     }
     break;
     //
-    case kCutTPCSignalNLargeActiveZoneLarge:  // 18 -->  kTPCSignalNLarge + kActiveZoneLarge
-    {
-      Int_t fCutArrTmp[fnCutBins] = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDep, kVertexZ, kEventVertexZ, 1,1,1,kTPCSignalNLarge,kActiveZoneLarge};
-      for(Int_t i=0;i<fnCutBins;i++) fCutArr[i] = fCutArrTmp[i];
-    }
-    break;
-    //
-    // ----------------------------------------------------------------------------------------------------
-    //                                              Extra vZ cuts
-    // ----------------------------------------------------------------------------------------------------
-    //
-    //
-    case kCutEventVertexZALICE:  // 19 -->  kEventVertexZALICE
-    {
-      Int_t fCutArrTmp[fnCutBins] = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDep, kVertexZ, kEventVertexZALICE, 1,1,1,1,1};
-      for(Int_t i=0;i<fnCutBins;i++) fCutArr[i] = fCutArrTmp[i];
-    }
-    break;
-    //
-    case kCutEventVertexZALICETight:  // 20 -->  kEventVertexZALICETight
-    {
-      Int_t fCutArrTmp[fnCutBins] = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDep, kVertexZ, kEventVertexZALICETight, 1,1,1,1,1};
-      for(Int_t i=0;i<fnCutBins;i++) fCutArr[i] = fCutArrTmp[i];
-    }
-    break;
-
     default:
     {
       Int_t fCutArrTmp[fnCutBins] = {0};
@@ -6203,7 +6241,7 @@ void AliAnalysisTaskTIdentityPID::DumpDownScaledTree()
 
 }
 
-const Bool_t AliAnalysisTaskTIdentityPID::CheckPsiPair(const AliESDv0* v0)
+Bool_t AliAnalysisTaskTIdentityPID::CheckPsiPair(const AliESDv0* v0)
 {
   // Angle between daughter momentum plane and plane
   // taken from AliESDv0KineCuts

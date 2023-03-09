@@ -79,32 +79,31 @@ public:
     kMaxChi2PerClusterTPCSmall=3,
     kMaxChi2PerClusterTPC=4,
     kMaxChi2PerClusterTPCLarge=5,
-    kMaxDCAToVertexXYPtDepSmall=6,
-    kMaxDCAToVertexXYPtDep=7,
-    kMaxDCAToVertexXYPtDepLarge=8,
-    kVertexZSmall=9,
-    kVertexZ=10,
-    kVertexZLarge=11,
-    kEventVertexZSmall=12,
-    kEventVertexZ=13,
-    kEventVertexZLarge=14,
-    kRequireITSRefit=15,
-    kPixelRequirementITS=16,
-    kNewITSCut=17,
-    kActiveZoneSmall=18,
-    kActiveZone=19,
-    kActiveZoneLarge=20,
-    kTPCSignalNSmall=21,
-    kTPCSignalN=22,
-    kTPCSignalNLarge=23,
-    kCleanPrTOF=24,
-    kCleanKaTOF=25,
-    kCleanKaTOFTRD=26,
-    kTrackProbKaTOF=27,
-    kTrackProbPrTOF=28,
-    kCleanDeTOF=29,
-    kEventVertexZALICE=30,
-    kEventVertexZALICETight=31,
+    kMaxDCAToVertexXYPtDep=6,
+    kMaxDCAToVertexXYPtDepLarge=7,
+    kVertexZSmall=8,
+    kVertexZ=9,
+    kEventVertexZ=10,
+    kEventVertexZLarge=11,
+    kActiveZone=12,
+    kTPCSignalNSmall=13,
+    kTPCSignalN=14,
+    kTPCSignalNLarge=16,
+    kCleanPrTOF=17,
+    kCleanKaTOF=18,
+    kCleanKaTOFTRD=19,
+    kTrackProbKaTOF=20,
+    kTrackProbPrTOF=21,
+    kCleanDeTOF=22,
+    kPileup=23,
+    kPileupLoose=24,
+    kSharedCls=25,
+    kSharedClsLoose=26,
+    kFindableCls=27,
+    kFindableClsLoose=28,
+    kFindableClsLoosest=29,
+    kBFieldPos=30,
+    kBFieldNeg=31
   };
 
   enum cutSettings {
@@ -129,6 +128,14 @@ public:
     kCutTPCSignalNLargeActiveZoneLarge=18,
     kCutEventVertexZALICE=19,
     kCutEventVertexZALICETight=20,
+    kCutSharedCls=21,
+    kCutFindableClsLoose=22,
+    kCutFindableClsLoosest=23,
+    kCutPileupLoose=24,
+    kCutBFieldPos=25,
+    kCutBFieldNeg=26,
+    kCutTPCSignalNSmall=27,
+    kCutTPCSignalNLarge=28
   };
 
   enum centEst {
@@ -238,7 +245,6 @@ public:
   void   SetSisterCheck(const Int_t ifSisterCheck = 0)                {fSisterCheck         = ifSisterCheck;}
   void   SetFillDnchDeta(const Bool_t ifDnchDetaCal = kFALSE)         {fFillDnchDeta        = ifDnchDetaCal;}
   void   SetIncludeTOF(const Bool_t ifIncludeTOF = kFALSE)            {fIncludeTOF          = ifIncludeTOF;}
-  void   SetUseThnSparse(const Bool_t ifUseThnSparse = kFALSE)        {fUseThnSparse        = ifUseThnSparse;}
   void   SetUseCouts(const Bool_t ifUseCouts = kFALSE)                {fUseCouts            = ifUseCouts;}
   void   SetWeakAndMaterial(const Bool_t ifWeakAndMaterial = kFALSE)  {fWeakAndMaterial     = ifWeakAndMaterial;}
   void   SetFillEventInfo(const Bool_t ifEventInfo = kFALSE)          {fEventInfo           = ifEventInfo;}
@@ -252,10 +258,6 @@ public:
 
   // Setters for the systematic uncertainty checks
   void   SetSystCentEstimator(const Int_t systCentEstimator = 0)  {fSystCentEstimatetor = systCentEstimator;}
-  void   SetSystDCAxy(const Int_t systDCAxy = 0)                  {fSystDCAxy           = systDCAxy;}
-  void   SetSystNCrossedRows(const Int_t systNCrossedRows = 0)    {fSystCrossedRows     = systNCrossedRows;}
-  void   SetSystTPCChi2(const Int_t systTPCChi2 = 0)              {fSystChi2            = systTPCChi2;}
-  void   SetSystVz(const Int_t systVz = 0)                        {fSystVz              = systVz;}
 
   // Setters for the eta momentum dEdx and centrality bins
   void   SetSampleDeDxUpperEdge(const Float_t dEdxCleanUp = 200.) {fDEdxCleanUp         = dEdxCleanUp;}
@@ -263,13 +265,18 @@ public:
   void   SetDeDxLowerEdge(const Float_t dEdxLowerEdge = 20.)      {fDEdxDown            = dEdxLowerEdge;}
   void   SetDeDxUpperEdge(const Float_t dEdxUpperEdge = 1020.)    {fDEdxUp              = dEdxUpperEdge;}
 
-  void   SetEtaLowerEdge(const Float_t etaLowerEdge = -0.8)      {fEtaDown             = etaLowerEdge;}
-  void   SetEtaUpperEdge(const Float_t etaUpperEdge = 0.8)       {fEtaUp               = etaUpperEdge;}
+  void   SetEtaLowerEdge(const Float_t etaLowerEdge = -0.8)       {fEtaDown             = etaLowerEdge;}
+  void   SetEtaUpperEdge(const Float_t etaUpperEdge = 0.8)        {fEtaUp               = etaUpperEdge;}
   void   SetNEtabins(const Int_t nEtaBins = 20)                   {fNEtaBins            = nEtaBins;}
   void   SetMomLowerEdge(const Float_t momLowerEdge = 0.)         {fMomDown             = momLowerEdge;}
   void   SetMomUpperEdge(const Float_t momUpperEdge = 12.)        {fMomUp               = momUpperEdge;}
   void   SetNMomBins(const Int_t nMombins = 600)                  {fNMomBins            = nMombins;}
   void   SetNGenprotonBins(const Int_t nGenprotonBins = 100)      {fGenprotonBins       = nGenprotonBins;}
+
+  void   SetEffMatrixMomBins(const std::vector<Double_t> nEffMatrixMomBins) {fEffMatrixMomBins = nEffMatrixMomBins;}
+  void   SetEffMatrixCentBins(const std::vector<Double_t> nEffMatrixCentBins) {fEffMatrixCentBins = nEffMatrixCentBins;}
+  void   SetEffMatrixEtaBins(const std::vector<Double_t> nEffMatrixEtaBins) {fEffMatrixEtaBins = nEffMatrixEtaBins;}
+  void   SetEffMatrixNSigmasTOF(const Double_t nEffMatrixNSigmasTOF) {fEffMatrixNSigmasTOF = nEffMatrixNSigmasTOF;}
 
   // Set the binning of centrality
   void SetCentralityBinning(const Int_t tmpCentbins, Float_t tmpfxCentBins[])
@@ -537,7 +544,7 @@ private:
   Bool_t CheckIfFromAnyResonance(AliMCParticle *trackMCgen, Float_t etaLow, Float_t etaUp, Float_t pDown, Float_t pUp);
   Bool_t ApplyDCAcutIfNoITSPixel(AliESDtrack *track);
   Bool_t GetSystematicClassIndex(UInt_t cut,Int_t syst);
-  const Bool_t CheckPsiPair(const AliESDv0* v0);
+  Bool_t CheckPsiPair(const AliESDv0* v0);
   // ---------------------------------------------------------------------------------
   //                                   Members
   // ---------------------------------------------------------------------------------
@@ -641,7 +648,6 @@ private:
 
   Bool_t            fFillDnchDeta;           // switch on calculation of the dncdeta for fastgens
   Bool_t            fIncludeTOF;             // Include TOF information to investigate the efficiency loss effects on observable
-  Bool_t            fUseThnSparse;           // in case thnsparse is filled
   Bool_t            fUseCouts;               // for debugging
   Bool_t            fV0InvMassHists;         // V0 invariant mass for QA
   Int_t             fRunNumberForExpecteds;  // Run number in which to fill the expecteds tree
@@ -752,6 +758,7 @@ private:
   Float_t            fPhi;                    // azimut angle
   Int_t              fSign;                   // sign of the particle
   Int_t              fTPCShared;              // number of shared clusters
+  Int_t              fTPCFindable;            // number of findable clusters
   Int_t              fNcl;                    // number of points used for dEdx
   Int_t              fNclCorr;                // number of points used for dEdx
 
@@ -761,6 +768,12 @@ private:
   Int_t              fNMomBinsMC;
   Int_t              fNCentBinsMC;
   Int_t              fGenprotonBins;
+
+  std::vector<Double_t> fEffMatrixMomBins;
+  std::vector<Double_t> fEffMatrixCentBins;
+  std::vector<Double_t> fEffMatrixEtaBins;
+  Double_t           fEffMatrixNSigmasTOF;
+
   Int_t              fNResModeMC;
   Int_t              fNCentbinsData;
   Float_t            fMissingCl;
@@ -771,6 +784,7 @@ private:
   Int_t              fRunNo;
   Float_t            fBField;
   TString            fBeamType;
+  Bool_t             fIsMCPileup;
 
   // Cut variables
   Double_t fTrackProbElTPC;
@@ -822,10 +836,6 @@ private:
   //  Field (--)  --> run interval is [138364, 139510]
   //  ------------------------------------------------
   Int_t              fSystCentEstimatetor;   // 0 --> "V0M"   ||| -1 -->  "TRK" ||| +1 --> "CL1"
-  Int_t              fSystCrossedRows;       // 0 -->  80     ||| -1 -->   60   ||| +1 -->  100
-  Int_t              fSystDCAxy;             // 0 --> default ||| -1 --> -sigma ||| +1 --> +sigma
-  Int_t              fSystChi2;              // 0 -->  4      ||| -1 -->    3   ||| +1 -->   5
-  Int_t              fSystVz;                // 0 -->  10     ||| -1 -->    8   ||| +1 -->   12
   Float_t            fNetPiFirstMoments[2][4][10][8];    //[fNResModeMC][fNMomBinsMC][fNCentBinsMC][fNEtaWinBinsMC]
   Float_t            fNetKaFirstMoments[2][4][10][8];    //[fNResModeMC][fNMomBinsMC][fNCentBinsMC][fNEtaWinBinsMC]
   Float_t            fNetPrFirstMoments[2][4][10][8];    //[fNResModeMC][fNMomBinsMC][fNCentBinsMC][fNEtaWinBinsMC]
@@ -880,7 +890,6 @@ private:
   TH1F             * fHistCentralityImpPar;         // control histogram for centrality
   TH1F             * fHistImpParam;           // control histogram for impact parameter
   TH1F             * fHistVertex;             // control histogram for vertexZ
-  THnF             * fHistdEdxTPC;            // 5D hist of dEdx from all TPC
   TH2F             * fHistArmPod;             // control histogram for Armanteros Podolanski plot
   //
   // Counters for Marian
