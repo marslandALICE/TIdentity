@@ -411,7 +411,7 @@ AliAnalysisTaskTIdentityPID* Config_marsland_TIdentityPID(Bool_t getFromAlien, I
         task->SetDefaultEventCuts(kTRUE);
         std::cout << " special settings for 18q pass3 and 15o pass2 " << std::endl;
       }
-      task->SetNSettings(1);
+      task->SetNSettings(7);
       task->SetMCTrackOriginType(0);   // 0:full scan, 1: prim
       task->SetCorrectForMissCl(0);
       task->SetUseCouts(kTRUE);
