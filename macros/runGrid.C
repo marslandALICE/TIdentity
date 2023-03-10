@@ -18,16 +18,9 @@ R__ADD_INCLUDE_PATH($PWD)
 #include "AliMCEventHandler.h"
 #include "AliESDInputHandler.h"
 
-#include <string>
-#include <fstream>
-
-using namespace std;
-
 AliAnalysisGrid* CreateAlienHandler(Int_t, TString, Int_t, TString, TString, Int_t);
 class  AliAnalysisManager;
 class  AliAnalysisAlien;
-
-vector<TString> readFilelist(TString filelist);
 
 /*
 
@@ -50,14 +43,13 @@ lhcYear        --> year
 
 */
 
-Bool_t fAddFilteredTrees = kFALSE;
+Bool_t fAddFilteredTrees = kTRUE;
 Bool_t fUseMultSelection = kTRUE;
-Int_t nTestFiles = 1;
+const Int_t nTestFiles = 2;
 const Int_t nChunksPerJob = 10;
 // TString dataBaseDir = "/eos/user/m/marsland/data";
+TString dataBaseDir = "";
 // TString dataBaseDir = "/media/marsland/Samsung_T5/data";
-// TString dataBaseDir = "../data";
-TString dataBaseDir = "/home/ceres/fokin/work/jalien/jalien-cache/LFN/";
 TString aliPhysicsTag = "vAN-20201124-1"; //  	vAN-20180828-1  vAN-20181119-1  vAN-20190105_ROOT6-1
 //
 // debugging options
@@ -67,7 +59,7 @@ TString fMassif    = "/usr/bin/valgrind --tool=massif ";
 
 Bool_t fDoAOD = kFALSE;
 
-void runGrid(Bool_t fRunLocalFiles = kTRUE, Int_t valgrindOption = 0, TString mode="test",Int_t localOrGrid=0, TString passStr="1", TString list = "", TString fname="EbyeIterPID", Int_t isMC=0, Int_t setType=3, Int_t lhcYear=2015, TString periodName="15o", Int_t passIndex=2, TString physicsTagForFullTest="vAN-20201124-1", TString localFilesList="files.txt")
+void runGrid(Bool_t fRunLocalFiles = kTRUE, Int_t valgrindOption = 0, TString mode="test",Int_t localOrGrid=0, TString passStr="1", TString list = "", TString fname="EbyeIterPID", Int_t isMC=0, Int_t setType=3, Int_t lhcYear=2015, TString periodName="15o", Int_t passIndex=2, TString physicsTagForFullTest="vAN-20201124-1")
 {
 
   aliPhysicsTag=physicsTagForFullTest;
@@ -173,149 +165,43 @@ void runGrid(Bool_t fRunLocalFiles = kTRUE, Int_t valgrindOption = 0, TString mo
   } else {
     // to run over files stored locally, uncomment this section,
     // and comment out the above lines related to alienHandler and StartAnalysis("grid")
-    TChain *chain = new TChain("esdTree");
-    TString localFiles_LHC18q[] = {
-      "/alice/data/2018/LHC18q/000296622/pass3/18000296622033.515/AliESDs.root",
-      "/alice/data/2018/LHC18q/000296622/pass3/18000296622038.309/AliESDs.root",
-      "/alice/data/2018/LHC18q/000296622/pass3/18000296622025.131/AliESDs.root",
-      "/alice/data/2018/LHC18q/000296622/pass3/18000296622027.508/AliESDs.root",
-      "/alice/data/2018/LHC18q/000296622/pass3/18000296622028.427/AliESDs.root",
-      "/alice/data/2018/LHC18q/000296622/pass3/18000296622028.121/AliESDs.root",
-      "/alice/data/2018/LHC18q/000296622/pass3/18000296622039.612/AliESDs.root",
-      "/alice/data/2018/LHC18q/000296622/pass3/18000296622029.529/AliESDs.root",
-      "/alice/data/2018/LHC18q/000296622/pass3/18000296622030.123/AliESDs.root",
-      "/alice/data/2018/LHC18q/000296622/pass3/18000296622032.508/AliESDs.root",
-      "/alice/data/2018/LHC18q/000296622/pass3/18000296622035.205/AliESDs.root",
-      "/alice/data/2018/LHC18q/000296622/pass3/18000296622037.314/AliESDs.root",
-      "/alice/data/2018/LHC18q/000296622/pass3/18000296622024.431/AliESDs.root",
-      "/alice/data/2018/LHC18q/000296622/pass3/18000296622037.511/AliESDs.root",
-      "/alice/data/2018/LHC18q/000296622/pass3/18000296622032.113/AliESDs.root",
-      "/alice/data/2018/LHC18q/000296622/pass3/18000296622028.521/AliESDs.root",
-      "/alice/data/2018/LHC18q/000296622/pass3/18000296622039.100/AliESDs.root",
-      "/alice/data/2018/LHC18q/000296622/pass3/18000296622030.214/AliESDs.root",
-      "/alice/data/2018/LHC18q/000296622/pass3/18000296622030.427/AliESDs.root",
-      "/alice/data/2018/LHC18q/000296622/pass3/18000296622022.514/AliESDs.root",
-      "/alice/data/2018/LHC18q/000296622/pass3/18000296622033.606/AliESDs.root",
-      "/alice/data/2018/LHC18q/000296622/pass3/18000296622035.403/AliESDs.root",
-      "/alice/data/2018/LHC18q/000296622/pass3/18000296622020.429/AliESDs.root",
-      "/alice/data/2018/LHC18q/000296622/pass3/18000296622027.408/AliESDs.root",
-      "/alice/data/2018/LHC18q/000296622/pass3/18000296622028.411/AliESDs.root",
-      "/alice/data/2018/LHC18q/000296622/pass3/18000296622023.226/AliESDs.root",
-      "/alice/data/2018/LHC18q/000296622/pass3/18000296622038.118/AliESDs.root",
-      "/alice/data/2018/LHC18q/000296622/pass3/18000296622033.107/AliESDs.root",
-      "/alice/data/2018/LHC18q/000296622/pass3/18000296622025.505/AliESDs.root",
-      "/alice/data/2018/LHC18q/000296622/pass3/18000296622033.425/AliESDs.root",
-      "/alice/data/2018/LHC18q/000296622/pass3/18000296622020.500/AliESDs.root",
-      "/alice/data/2018/LHC18q/000296622/pass3/18000296622035.402/AliESDs.root",
-      "/alice/data/2018/LHC18q/000296622/pass3/18000296622026.522/AliESDs.root",
-      "/alice/data/2018/LHC18q/000296622/pass3/18000296622035.315/AliESDs.root",
-      "/alice/data/2018/LHC18q/000296622/pass3/18000296622038.108/AliESDs.root",
-      "/alice/data/2018/LHC18q/000296622/pass3/18000296622035.325/AliESDs.root",
-      "/alice/data/2018/LHC18q/000296622/pass3/18000296622026.131/AliESDs.root",
-      "/alice/data/2018/LHC18q/000296622/pass3/18000296622026.616/AliESDs.root",
-      "/alice/data/2018/LHC18q/000296622/pass3/18000296622021.201/AliESDs.root",
-      "/alice/data/2018/LHC18q/000296622/pass3/18000296622022.200/AliESDs.root",
-      "/alice/data/2018/LHC18q/000296622/pass3/18000296622038.419/AliESDs.root",
-      "/alice/data/2018/LHC18q/000296622/pass3/18000296622026.529/AliESDs.root",
-      "/alice/data/2018/LHC18q/000296622/pass3/18000296622026.323/AliESDs.root",
-      "/alice/data/2018/LHC18q/000296622/pass3/18000296622029.427/AliESDs.root",
-      "/alice/data/2018/LHC18q/000296622/pass3/18000296622025.323/AliESDs.root",
-      "/alice/data/2018/LHC18q/000296622/pass3/18000296622026.221/AliESDs.root",
-      "/alice/data/2018/LHC18q/000296622/pass3/18000296622023.330/AliESDs.root",
-      "/alice/data/2018/LHC18q/000296622/pass3/18000296622022.206/AliESDs.root",
-      "/alice/data/2018/LHC18q/000296622/pass3/18000296622039.230/AliESDs.root",
-      "/alice/data/2018/LHC18q/000296622/pass3/18000296622033.206/AliESDs.root",
-      "/alice/data/2010/LHC10h/000139025/pass3/10000139025052.200/AliESDs.root",
-      "/alice/data/2010/LHC10h/000139025/pass3/10000139025052.130/AliESDs.root"
-    };
-    TString localFiles_LHC15o_pass2[] = {
-      "../jalien-cache/LFN/alice/data/2015/LHC15o/000246540/pass2/15000246540021.114/AliESDs.root",
-      "../jalien-cache/LFN/alice/data/2015/LHC15o/000246540/pass2/15000246540026.106/AliESDs.root",
-      "../jalien-cache/LFN/alice/data/2015/LHC15o/000246540/pass2/15000246540029.112/AliESDs.root",
-      "../jalien-cache/LFN/alice/data/2015/LHC15o/000246540/pass2/15000246540022.104/AliESDs.root",
-      "../jalien-cache/LFN/alice/data/2015/LHC15o/000246540/pass2/15000246540033.103/AliESDs.root",
-      "../jalien-cache/LFN/alice/data/2015/LHC15o/000246540/pass2/15000246540034.114/AliESDs.root",
-      "../jalien-cache/LFN/alice/data/2015/LHC15o/000246540/pass2/15000246540034.103/AliESDs.root",
-      "../jalien-cache/LFN/alice/data/2015/LHC15o/000246540/pass2/15000246540036.200/AliESDs.root",
-      "../jalien-cache/LFN/alice/data/2015/LHC15o/000246540/pass2/15000246540024.100/AliESDs.root",
-      "../jalien-cache/LFN/alice/data/2015/LHC15o/000246540/pass2/15000246540033.109/AliESDs.root",
-      "../jalien-cache/LFN/alice/data/2015/LHC15o/000246540/pass2/15000246540025.209/AliESDs.root",
-      "../jalien-cache/LFN/alice/data/2015/LHC15o/000246540/pass2/15000246540019.113/AliESDs.root",
-      "../jalien-cache/LFN/alice/data/2015/LHC15o/000246540/pass2/15000246540036.110/AliESDs.root",
-      "../jalien-cache/LFN/alice/data/2015/LHC15o/000246540/pass2/15000246540026.107/AliESDs.root",
-      "../jalien-cache/LFN/alice/data/2015/LHC15o/000246540/pass2/15000246540024.109/AliESDs.root",
-      // "../jalien-cache/LFN/alice/data/2015/LHC15o/000246540/pass2/15000246540034.107/AliESDs.root",
-      "../jalien-cache/LFN/alice/data/2015/LHC15o/000246540/pass2/15000246540020.105/AliESDs.root",
-      "../jalien-cache/LFN/alice/data/2015/LHC15o/000246540/pass2/15000246540026.109/AliESDs.root",
-      "../jalien-cache/LFN/alice/data/2015/LHC15o/000246540/pass2/15000246540033.100/AliESDs.root",
-      "../jalien-cache/LFN/alice/data/2015/LHC15o/000246540/pass2/15000246540034.110/AliESDs.root",
-      "../jalien-cache/LFN/alice/data/2015/LHC15o/000246540/pass2/15000246540030.105/AliESDs.root",
-      "../jalien-cache/LFN/alice/data/2015/LHC15o/000246540/pass2/15000246540025.102/AliESDs.root",
-      "../jalien-cache/LFN/alice/data/2015/LHC15o/000246540/pass2/15000246540022.112/AliESDs.root",
-      "../jalien-cache/LFN/alice/data/2015/LHC15o/000246540/pass2/15000246540020.106/AliESDs.root",
-      "../jalien-cache/LFN/alice/data/2015/LHC15o/000246540/pass2/15000246540025.112/AliESDs.root",
-      // "../jalien-cache/LFN/alice/data/2015/LHC15o/000246540/pass2/15000246540032.107/AliESDs.root",
-      "../jalien-cache/LFN/alice/data/2015/LHC15o/000246540/pass2/15000246540023.102/AliESDs.root",
-      "../jalien-cache/LFN/alice/data/2015/LHC15o/000246540/pass2/15000246540032.112/AliESDs.root",
-      "../jalien-cache/LFN/alice/data/2015/LHC15o/000246540/pass2/15000246540032.106/AliESDs.root",
-      "../jalien-cache/LFN/alice/data/2015/LHC15o/000246540/pass2/15000246540022.206/AliESDs.root",
-      "../jalien-cache/LFN/alice/data/2015/LHC15o/000246540/pass2/15000246540027.100/AliESDs.root",
-      "../jalien-cache/LFN/alice/data/2015/LHC15o/000246540/pass2/15000246540021.104/AliESDs.root",
-      "../jalien-cache/LFN/alice/data/2015/LHC15o/000246540/pass2/15000246540029.102/AliESDs.root",
-      "../jalien-cache/LFN/alice/data/2015/LHC15o/000246540/pass2/15000246540027.113/AliESDs.root",
-      "../jalien-cache/LFN/alice/data/2015/LHC15o/000246540/pass2/15000246540020.100/AliESDs.root",
-      "../jalien-cache/LFN/alice/data/2015/LHC15o/000246540/pass2/15000246540039.108/AliESDs.root",
-      "../jalien-cache/LFN/alice/data/2015/LHC15o/000246540/pass2/15000246540038.104/AliESDs.root",
-      "../jalien-cache/LFN/alice/data/2015/LHC15o/000246540/pass2/15000246540038.103/AliESDs.root",
-      "../jalien-cache/LFN/alice/data/2015/LHC15o/000246540/pass2/15000246540023.111/AliESDs.root",
-      "../jalien-cache/LFN/alice/data/2015/LHC15o/000246540/pass2/15000246540039.110/AliESDs.root",
-      "../jalien-cache/LFN/alice/data/2015/LHC15o/000246540/pass2/15000246540035.114/AliESDs.root",
-      "../jalien-cache/LFN/alice/data/2015/LHC15o/000246540/pass2/15000246540022.107/AliESDs.root",
-      "../jalien-cache/LFN/alice/data/2015/LHC15o/000246540/pass2/15000246540022.100/AliESDs.root",
-      "../jalien-cache/LFN/alice/data/2015/LHC15o/000246540/pass2/15000246540022.114/AliESDs.root",
-      "../jalien-cache/LFN/alice/data/2015/LHC15o/000246540/pass2/15000246540028.101/AliESDs.root",
-      "../jalien-cache/LFN/alice/data/2015/LHC15o/000246540/pass2/15000246540024.108/AliESDs.root",
-      "../jalien-cache/LFN/alice/data/2015/LHC15o/000246540/pass2/15000246540024.106/AliESDs.root",
-      "../jalien-cache/LFN/alice/data/2015/LHC15o/000246540/pass2/15000246540033.101/AliESDs.root",
-      "../jalien-cache/LFN/alice/data/2015/LHC15o/000246540/pass2/15000246540023.100/AliESDs.root",
-      "../jalien-cache/LFN/alice/data/2015/LHC15o/000246540/pass2/15000246540027.106/AliESDs.root"
-    };
-    TString localFiles_LHC15o_pass1[] = 
-    {
-      "/alice/data/2015/LHC15o/000246540/pass1/15000246540021.114/AliESDs.root",
-      "/alice/data/2015/LHC15o/000246540/pass1/15000246540025.209/AliESDs.root",
-      "/alice/data/2015/LHC15o/000246540/pass1/15000246540020.105/AliESDs.root",
-      "/alice/data/2015/LHC15o/000246540/pass1/15000246540032.112/AliESDs.root",
-      "/alice/data/2015/LHC15o/000246540/pass1/15000246540021.104/AliESDs.root",
-      "/alice/data/2015/LHC15o/000246540/pass1/15000246540038.104/AliESDs.root",
-      "/alice/data/2015/LHC15o/000246540/pass1/15000246540035.114/AliESDs.root",
-      "/alice/data/2015/LHC15o/000246540/pass1/15000246540022.100/AliESDs.root",
-      "/alice/data/2015/LHC15o/000246540/pass1/15000246540022.114/AliESDs.root",
-      "/alice/data/2015/LHC15o/000246540/pass1/15000246540023.100/AliESDs.root"
-    };
-    TString localFiles_LHC10h[] = 
-    {
-      "/alice/data/2010/LHC10h/000139025/pass3/10000139025052.200/AliESDs.root",
-      "/alice/data/2010/LHC10h/000139025/pass3/10000139025052.130/AliESDs.root",
-      "/alice/data/2010/LHC10h/000139025/pass3/10000139025030.90/AliESDs.root",
-      "/alice/data/2010/LHC10h/000139025/pass3/10000139025062.80/AliESDs.root",
-      "/alice/data/2010/LHC10h/000139025/pass3/10000139025032.30/AliESDs.root",
-      "/alice/data/2010/LHC10h/000139025/pass3/10000139025055.50/AliESDs.root",
-      "/alice/data/2010/LHC10h/000139025/pass3/10000139025016.60/AliESDs.root",
-      "/alice/data/2010/LHC10h/000139025/pass3/10000139025028.70/AliESDs.root",
-      "/alice/data/2010/LHC10h/000139025/pass3/10000139025013.40/AliESDs.root",
-      "/alice/data/2010/LHC10h/000139025/pass3/10000139025028.200/AliESDs.root"
-    };
-    TString* localFiles = localFiles_LHC18q;
-
-    if (localFilesList == "") {
-      for (int ifile =0; ifile<nTestFiles; ifile++) chain->AddFile(dataBaseDir+localFiles_LHC10h[ifile]);
+    if (isMC!=2){
+      chain = new TChain("esdTree");
+      TString localFiles[] =
+      {
+        "/alice/data/2018/LHC18q/000296622/pass3/18000296622035.401/AliESDs.root",
+        "/alice/data/2018/LHC18q/000296622/pass3/18000296622035.406/AliESDs.root",
+        "/alice/data/2018/LHC18q/000296622/pass3/18000296622035.411/AliESDs.root",
+        "/alice/data/2018/LHC18q/000296622/pass3/18000296622035.203/AliESDs.root",
+        "/alice/data/2018/LHC18q/000296622/pass3/18000296622035.207/AliESDs.root",
+        "/alice/data/2018/LHC18q/000296622/pass3/18000296622035.209/AliESDs.root",
+        "/alice/data/2018/LHC18q/000296622/pass3/18000296622035.211/AliESDs.root",
+        "/alice/data/2018/LHC18q/000296622/pass3/18000296622035.220/AliESDs.root",
+        "/alice/data/2018/LHC18q/000296622/pass3/18000296622035.228/AliESDs.root",
+        "/alice/data/2018/LHC18q/000296622/pass3/18000296622035.302/AliESDs.root",
+        "/alice/data/2018/LHC18q/000296622/pass3/18000296622035.306/AliESDs.root",
+        "/alice/data/2018/LHC18q/000296622/pass3/18000296622035.325/AliESDs.root",
+        "/alice/data/2018/LHC18q/000296622/pass3/18000296622035.514/AliESDs.root",
+        "/alice/data/2018/LHC18q/000296622/pass3/18000296622035.531/AliESDs.root",
+        "/alice/data/2018/LHC18q/000296622/pass3/18000296622036.503/AliESDs.root",
+        "/alice/data/2018/LHC18q/000296622/pass3/18000296622036.526/AliESDs.root",
+        "/alice/data/2018/LHC18q/000296622/pass3/18000296622036.603/AliESDs.root",
+        "/alice/data/2018/LHC18q/000296622/pass3/18000296622037.309/AliESDs.root",
+        "/alice/data/2018/LHC18q/000296622/pass3/18000296622037.315/AliESDs.root",
+        "/alice/data/2018/LHC18q/000296622/pass3/18000296622037.325/AliESDs.root"
+      };
+      for (int ifile =0; ifile<nTestFiles; ifile++) chain->AddFile(dataBaseDir+localFiles[ifile]);
     } else {
-      vector<TString> localFilesTxt = readFilelist(localFilesList);
-      for (TString localFile : localFilesTxt) chain->AddFile(localFile);
+      chain = new TChain("TE");
+      TString localFiles[] =
+      {
+        // "/media/marsland/Samsung_T5/workdir/ThirdMoment_paper/data/alice/sim/2022/LHC22d1d/244917/001/galice.root" // EPOS
+        "/media/marsland/Samsung_T5/workdir/ThirdMoment_paper/data/alice/sim/2022/LHC22d1a/297595/001/galice.root" // HIJING
+      };
+      for (int ifile =0; ifile<nTestFiles; ifile++) chain->AddFile(dataBaseDir+localFiles[ifile]);
     }
     chain->Print();
-    mgr->StartAnalysis("local", chain);
+    mgr->StartAnalysis("local",chain);
   }
 
 }
@@ -475,20 +361,4 @@ AliAnalysisGrid* CreateAlienHandler(Int_t valgrindOption = 0,TString mode="test"
   plugin->SetKeepLogs(kTRUE); // keep the log files
 
   return plugin;
-}
-
-vector<TString> readFilelist(TString filelist) {
-    string line;
-    ifstream inputfile;
-    inputfile.open(filelist);
-
-    vector<TString> ret;
-
-    while (getline(inputfile, line)) {
-        ret.push_back(line);
-    }
-
-    inputfile.close();
-
-    return ret;
 }
