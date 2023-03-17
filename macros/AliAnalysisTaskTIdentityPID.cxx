@@ -2411,8 +2411,8 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
         // if (!mainSettings) continue;
         //
         // event Vz cuts
-        if (iset==kCutEventVertexZLarge && !bEventVertexZLarge) continue;
-        else if ( !bCutReference ) continue;
+        if (iset == kCutEventVertexZLarge && !bEventVertexZLarge) continue;
+        else if (iset != kCutEventVertexZLarge && !bCutReference) continue;
         //
         // Acceptance scan
         for (Int_t ieta=0; ieta<fNEtaWinBinsMC; ieta++){
@@ -2582,7 +2582,6 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
                   if (!trackReal-> GetInnerParam()) continue;
                   if (!fESDtrackCutsLoose->AcceptTrack(trackReal))  continue;    // Loose Cuts
                   if (!(trackReal->GetTPCsignalN()>0)) continue;
-                  if (!ifDefaultCuts) continue;
                   if (!ifDCAcutIfNoITSPixel) continue;
                   //
                   // acceptance cuts
@@ -3099,6 +3098,13 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
         Double_t tofSignal = trackReal->GetTOFsignal();
         Double_t beta = -.05;
         if((length > 0) && (tofSignal > 0)) beta = length / 2.99792458e-2 / tofSignal;
+
+        // Bool_t settings[17];
+        TVectorF settings(17);
+        for (Int_t i = 0; i < 17;i++) {
+          settings[i] = (Float_t) GetSystematicClassIndex(fTrackCutBits, i);
+        }
+
         //
         // Fill MC closure tree
         if(!fTreeSRedirector) return;
@@ -3109,6 +3115,7 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
         "gid="       << fEventGID <<  //  global event ID
         "dEdx="      << fTPCSignalMC <<    // dEdx of mc track
         "cutBit="    << fTrackCutBits <<  //  Systematic Cuts
+        "settings.="    << &settings <<  //  Systematic settings
         "sign="      << fSignMC <<         // sign
         "ptot="      << fPtotMC <<         // tpc momentum
         "p="         << pMC <<             // vertex momentum
@@ -5198,12 +5205,6 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
       Bool_t dcaBaseCut = TMath::Abs(fTrackDCAxy)<0.0208+0.04/TMath::Power(fPt,1.01);
       Bool_t dcaLoose   = TMath::Abs(fTrackDCAxy)<0.4;  // 10h tuned loose cut
 
-      Bool_t sharedCls = kFALSE;
-      Bool_t sharedClsLoose = kFALSE;
-      if (fTrackTPCCrossedRows > 0 && fNcl > 0) {
-        sharedCls = (fTPCShared / fTrackTPCCrossedRows < 0.25) && (fTPCShared / fNcl < 0.3);
-        sharedClsLoose = fTPCShared / fTrackTPCCrossedRows < 0.25;
-      }
       //
       // Systematic settings
       fTrackCutBits=0;
@@ -5245,6 +5246,12 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
       }
       //
       // Shared TPC clusters
+      Bool_t sharedCls = kFALSE;
+      Bool_t sharedClsLoose = kFALSE;
+      if (fTrackTPCCrossedRows > 0 && fNcl > 0) {
+        sharedCls = (fTPCShared / fTrackTPCCrossedRows < 0.25) && (fTPCShared / fNcl < 0.3);
+        sharedClsLoose = fTPCShared / fTrackTPCCrossedRows < 0.25;
+      }
       if (sharedCls) (fTrackCutBits |= 1 << kSharedCls);
       if (sharedClsLoose) (fTrackCutBits |= 1 << kSharedClsLoose);
       //
@@ -5437,7 +5444,7 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
         //
         default:
         {
-          fCutArr = {0};
+          fCutArr = {};
         }
 
       }
