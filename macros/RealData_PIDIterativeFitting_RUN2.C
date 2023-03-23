@@ -34,12 +34,16 @@
 #include "TVectorD.h"
 #include "TF1.h"
 #include "TLegend.h"
+
+#include "ROOT/RDataFrame.hxx"
+
 #include <fstream>
 #include <iostream>
 #include <iomanip>
 using namespace std;
 using std::cout;
 using std::setw;
+using ROOT::RDataFrame;
 
 
 // ******************************************************************************************************************************
@@ -138,6 +142,7 @@ const Float_t fMomRangeDown   = 0.1;
 const Float_t fMomRangeUp     = 3.1;
 const Int_t   fnCentBins      = 9;
 Float_t xCentBins[] = {0, 5,  10,  20, 30, 40, 50, 60, 70, 80};
+Float_t xEtaBins[] = {-0.8,-0.7,-0.6,-0.5,-0.4,-0.3,-0.2,-0.1, 0., 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8};
 
 // ******************************************************************************************************************************
 // ******************************************************************************************************************************
@@ -256,6 +261,7 @@ TFile * splinesFile=NULL;
 TString fitFunctionGenGaus = "[0]*exp(-(TMath::Abs(x-[1])/[2])**[3])*(1+TMath::Erf([4]*(x-[1])/[2]/TMath::Sqrt(2)))";
 // TString fitFunctionGenGaus = "[0]*exp(-(abs(x-[1])/[2])**[3])*(1+TMath::Erf([4]*(x-[1])/[2]/1.414213))";
 Float_t fEtaDown, fCentDown;
+Float_t fEtaUp, fCentUp;
 Int_t particleBin,centBin,etaBin,momBin,signBin;
 TString centEtaStr = "";
 TString corrStr = "";
@@ -273,6 +279,7 @@ enum ParticleType {
 } pType;
 TString particleStr[]={"el", "pi", "ka", "pr", "de", "kaTOF", "prTOF"};
 
+TString expectedsFile = "/Volumes/Extern/data/expectedTree.root";
 
 // Main Functions for iterative fitting procedure
 void          SmoothAmplitudes(TString fileFit, TString fileSample, TString fileOut, const Int_t nSlice, Int_t iIter);
@@ -317,6 +324,7 @@ TCanvas      *GetFitResCanvas(TObjArray *arr, TObjArray *arrclean, TObjArray *ar
 TH2D         *TH2Subset(TH2D *h,Int_t binx1, Int_t binx2, Int_t biny1, Int_t biny2);
 void          MakeAnimation(Int_t iIter, TH1D* h1ToGif, TH2D* h2Danimation, Double_t pt, Double_t ptMin, Double_t ptMax);
 
+void          CreateSplinesFromExpectedsTree(TString expectedsFile);
 
 
 // Set functions for the parameters
@@ -414,6 +422,8 @@ void RealData_PIDIterativeFitting_RUN2(TString corr="", Int_t sign=0, TString fi
   // Get eta and cent info
   fEtaDown     = etaMin;
   fCentDown    = centMin;
+  fEtaUp       = etaMax;
+  fCentUp      = centMax;
   Double_t etaBinCenter = (etaMin + etaMax)/2.;
   centEtaStr = Form("cent_%3.2f_%3.2f_Eta_%3.2f_%3.2f",centMin,centMax,etaMin,etaMax);
   corrStr = corr;
@@ -772,7 +782,7 @@ void IterativeFitting(Int_t iIter, const Int_t nSlice, const Double_t ptMin, con
     g5->GetParameters(&par[20]);
 
     TF1 *total = new TF1("total","g1+g2+g3+g4+g5",dEdxMin,dEdxMax);
-    total->SetLineWidth(3); total->SetLineColor(2); total->SetParameters(par); // total->SetNpx(nBinsInLookUpTable);
+    total->SetLineWidth(3); total->SetLineColor(2); total->SetParameters(par);  total->SetNpx(nBinsInLookUpTable);
 
     // Some setters for the total fit
     SetTotalFitParameters(iIter,islice,nSlice,total,arrMean,arrSigma,arrMeanWindow,cleanParams,h1D,pt);
@@ -2035,9 +2045,9 @@ void EstimateKS(Int_t iks, TH2D *h2DKS)
       // } else {
       //   h1CleanSamples[iParticle] = GetClean1DSlice(hCleanSamples[iParticle], Form("h1D%s_slice_%f" ,particleStr[iParticle].Data()),Double_t(ptDownBin));
       // }
-      h1CleanSamples[iParticle] = GetClean1DSlice(hCleanSamples[iParticle], Form("h1D%s_slice_%f" ,particleStr[iParticle].Data()),Double_t(ptDownBin));
-      h1ExpectedMean[iParticle]  = GetClean1DSlice(hExpectedMean[iParticle], Form("h1D%s_ExMean_slice_%f",particleStr[iParticle].Data()),Double_t(ptDownBinExpected));
-      h1ExpectedSigma[iParticle] = GetClean1DSlice(hExpectedSigma[iParticle],Form("h1D%s_ExSigma_slice_%f",particleStr[iParticle].Data()),Double_t(ptDownBinExpected));
+      h1CleanSamples[iParticle] = GetClean1DSlice(hCleanSamples[iParticle], Form("h1D%s_slice_%d" ,particleStr[iParticle].Data(), ptDownBin), ptDownBin);
+      h1ExpectedMean[iParticle]  = GetClean1DSlice(hExpectedMean[iParticle], Form("h1D%s_ExMean_slice_%d",particleStr[iParticle].Data(), ptDownBin), ptDownBinExpected);
+      h1ExpectedSigma[iParticle] = GetClean1DSlice(hExpectedSigma[iParticle],Form("h1D%s_ExSigma_slice_%d",particleStr[iParticle].Data(), ptDownBin),ptDownBinExpected);
     }
 
     // Get Expected Mean and Sigma
@@ -2521,9 +2531,9 @@ void FitAllSamples(const Int_t nSlice, const Double_t ptMin, const Double_t ptMa
       // } else {
       //   h1CleanSamples[iParticle] = GetClean1DSlice(hCleanSamples[iParticle], Form("h1D%s_slice_%f" ,particleStr[iParticle].Data()),Double_t(ptDownBin));
       // }
-      h1CleanSamples[iParticle] = GetClean1DSlice(hCleanSamples[iParticle], Form("h1D%s_slice_%f" ,particleStr[iParticle].Data()),Double_t(ptDownBin));
-      h1ExpectedMean[iParticle]  = GetClean1DSlice(hExpectedMean[iParticle], Form("h1D%s_ExMean_slice_%f",particleStr[iParticle].Data()), Double_t(ptDownBinExpected));
-      h1ExpectedSigma[iParticle] = GetClean1DSlice(hExpectedSigma[iParticle],Form("h1D%s_ExSigma_slice_%f",particleStr[iParticle].Data()), Double_t(ptDownBinExpected));
+      h1CleanSamples[iParticle] = GetClean1DSlice(hCleanSamples[iParticle], Form("h1D%s_slice_%d" ,particleStr[iParticle].Data(), ptDownBin), ptDownBin);
+      h1ExpectedMean[iParticle]  = GetClean1DSlice(hExpectedMean[iParticle], Form("h1D%s_ExMean_slice_%d",particleStr[iParticle].Data(), ptDownBin), ptDownBinExpected);
+      h1ExpectedSigma[iParticle] = GetClean1DSlice(hExpectedSigma[iParticle],Form("h1D%s_ExSigma_slice_%d",particleStr[iParticle].Data(), ptDownBin), ptDownBinExpected);
       h1CleanSamplesFreeKS[iParticle] = (TH1D*)h1CleanSamples[iParticle]->Clone();
     }
 
@@ -4425,7 +4435,7 @@ TCanvas *GetFitResCanvas(TObjArray *arr, TObjArray *arrclean, TObjArray *arrscal
   }
 
 
-  TCanvas *can = new TCanvas("can", "can", 1400, 900);
+  TCanvas *can = new TCanvas("can", "can", 6000, 4000);
   can->Divide(6,4);
 
   // ++++++++++++++++++  Sigmas +++++++++++++++++
@@ -4991,21 +5001,10 @@ void ReadHistograms()
   else if (fSign==1 ) hCleanSamples[6] = (TH2D *)inputFile->Get(Form("h2DallPrTOFPos%s_%s",corrStr.Data(),centEtaStr.Data()));
   else if (fSign==-1) hCleanSamples[6] = (TH2D *)inputFile->Get(Form("h2DallPrTOFNeg%s_%s",corrStr.Data(),centEtaStr.Data()));
   //
-  // Expected Mean
-  hExpectedMean[0]  = (TH2D *)splinesFile->Get(Form("h2Expected_0_%s",centEtaStr.Data()));
-  hExpectedMean[1]  = (TH2D *)splinesFile->Get(Form("h2Expected_1_%s",centEtaStr.Data()));
-  hExpectedMean[2]  = (TH2D *)splinesFile->Get(Form("h2Expected_2_%s",centEtaStr.Data()));
-  hExpectedMean[3]  = (TH2D *)splinesFile->Get(Form("h2Expected_3_%s",centEtaStr.Data()));
-  hExpectedMean[4]  = (TH2D *)splinesFile->Get(Form("h2Expected_4_%s",centEtaStr.Data()));
+  CreateSplinesFromExpectedsTree(expectedsFile);
+  //
   hExpectedMean[5]  = (TH2D*)hExpectedMean[2]->Clone();  hExpectedMean[5]->SetName(Form("h2Expected_5_%s",centEtaStr.Data()));
   hExpectedMean[6]  = (TH2D*)hExpectedMean[3]->Clone();  hExpectedMean[6]->SetName(Form("h2Expected_6_%s",centEtaStr.Data()));
-  //
-  // Expected Sigma
-  hExpectedSigma[0] = (TH2D *)splinesFile->Get(Form("h2ExpectedSigma_0_%s",centEtaStr.Data()));
-  hExpectedSigma[1] = (TH2D *)splinesFile->Get(Form("h2ExpectedSigma_1_%s",centEtaStr.Data()));
-  hExpectedSigma[2] = (TH2D *)splinesFile->Get(Form("h2ExpectedSigma_2_%s",centEtaStr.Data()));
-  hExpectedSigma[3] = (TH2D *)splinesFile->Get(Form("h2ExpectedSigma_3_%s",centEtaStr.Data()));
-  hExpectedSigma[4] = (TH2D *)splinesFile->Get(Form("h2ExpectedSigma_4_%s",centEtaStr.Data()));
   hExpectedSigma[5]  = (TH2D*)hExpectedSigma[2]->Clone();  hExpectedSigma[5]->SetName(Form("h2ExpectedSigma_5_%s",centEtaStr.Data()));
   hExpectedSigma[6]  = (TH2D*)hExpectedSigma[3]->Clone();  hExpectedSigma[6]->SetName(Form("h2ExpectedSigma_6_%s",centEtaStr.Data()));
   //
@@ -5267,10 +5266,12 @@ void MakeAnimation(Int_t iIter, TH1D* h1ToGif, TH2D* h2Danimation, Double_t pt, 
   h1ToGif->SetTitle("");
   h1ToGif->GetXaxis()->SetTitle("TPC dE/dx Signal");
   h1ToGif->Draw();
-  if (iIter == 3) gifC.Print("Iteration3.gif+100");   // delay in between plots is 120*10 ms
-  if (iIter == 4) gifC.Print("Iteration4.gif+100");   // delay in between plots is 120*10 ms
-  if (iIter == 5) gifC.Print("Iteration5.gif+100");   // delay in between plots is 120*10 ms
-  if (iIter == 6) gifC.Print("Iteration6.gif+100");   // delay in between plots is 120*10 ms
+  if (iIter == 3) gifC.Print(Form("Iteration3_%s.gif+100", centEtaStr.Data()));   // delay in between plots is 120*10 ms
+  if (iIter == 4) gifC.Print(Form("Iteration4_%s.gif+100", centEtaStr.Data()));   // delay in between plots is 120*10 ms
+  if (iIter == 5) gifC.Print(Form("Iteration5_%s.gif+100", centEtaStr.Data()));   // delay in between plots is 120*10 ms
+  if (iIter == 6) gifC.Print(Form("Iteration6_%s.gif+100", centEtaStr.Data()));   // delay in between plots is 120*10 ms
+  if (iIter == 7) gifC.Print(Form("Iteration7_%s.gif+100", centEtaStr.Data()));   // delay in between plots is 120*10 ms
+  if (iIter == 8) gifC.Print(Form("Iteration8_%s.gif+100", centEtaStr.Data()));   // delay in between plots is 120*10 ms
   h2Danimation->GetListOfFunctions()->Remove(lineSlice);
 }
 
@@ -5312,4 +5313,24 @@ void  ModifyExpectedMeanAndApplyVariableSkewness(Double_t *arrMean, Double_t *ar
     delete gengaus;
   }
 
+}
+
+void CreateSplinesFromExpectedsTree(TString expectedsFile)
+{
+  auto rdfExpecteds = RDataFrame("expecteds", expectedsFile);
+
+  std::vector<TString> particles = {"El", "Pi", "Ka", "Pr", "De"};
+  TString centEtaStr = Form("cent_%3.2f_%3.2f_Eta_%3.2f_%3.2f", fCentDown, fCentUp, fEtaDown, fEtaUp);
+  TString centEtaFilter = Form("cent >= %f && cent < %f && eta >= %f && eta < %f", fCentDown, fCentUp, fEtaDown, fEtaUp);
+
+  for (UInt_t iPart = 0; iPart < particles.size(); iPart++) {
+    hExpectedMean[iPart] = (TH2D*) rdfExpecteds.Filter(centEtaFilter.Data())
+                           .Filter(Form("dEdx%s > 0", particles.at(iPart).Data()))
+                           .Histo2D({Form("h2Expected_%d_%s", iPart, centEtaStr.Data()), Form("Expected mean %s;ptot;dEdx", particles.at(iPart).Data()),
+                                    150, 0.1, 3., 1000, 25., 1000.}, "ptot", Form("dEdx%s", particles.at(iPart).Data())).GetPtr()->Clone();
+    hExpectedSigma[iPart] = (TH2D*) rdfExpecteds.Filter(centEtaFilter.Data())
+                           .Filter(Form("dEdx%s > 0", particles.at(iPart).Data()))
+                           .Histo2D({Form("h2Expected_%d_%s", iPart, centEtaStr.Data()), Form("Expected sigma %s;ptot;dEdx", particles.at(iPart).Data()),
+                                    150, 0.1, 3., 1000, 2., 60.}, "ptot", Form("sigma%s", particles.at(iPart).Data())).GetPtr()->Clone();
+  }
 }
