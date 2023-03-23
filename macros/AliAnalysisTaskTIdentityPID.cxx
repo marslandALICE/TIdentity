@@ -5114,7 +5114,7 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
         Float_t ptotForBetaGammaThr = 0.2;
         Double_t nSigmasDeTPC = (ptotForBetaGamma>ptotForBetaGammaThr) ? fPIDResponse->NumberOfSigmasTPC(track, AliPID::kDeuteron) : 0.;
         cleanDeTPC = ((TMath::Abs(nSigmasDeTPC)<=2.));
-        fNcl       = Float_t(track->GetTPCncls());
+        fNcl       = track->GetTPCncls();
         // fTrackChi2TPC  = (fNcl>0) ? TMath::Sqrt(TMath::Abs(track->GetTPCchi2()/fNcl)) : -1;  // ???
         fTrackChi2TPC  = (fNcl>0) ? TMath::Abs(track->GetTPCchi2()/fNcl) : -1;  // ???
         //
@@ -5249,7 +5249,7 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
       Bool_t sharedCls = kFALSE;
       Bool_t sharedClsLoose = kFALSE;
       if (fTrackTPCCrossedRows > 0 && fNcl > 0) {
-        sharedCls = (fTPCShared / fTrackTPCCrossedRows < 0.25) && (fTPCShared / fNcl < 0.3);
+        sharedCls = (fTPCShared / fTrackTPCCrossedRows < 0.25) && (fTPCShared / static_cast<Float_t>(fNcl) < 0.3);
         sharedClsLoose = fTPCShared / fTrackTPCCrossedRows < 0.25;
       }
       if (sharedCls) (fTrackCutBits |= 1 << kSharedCls);
