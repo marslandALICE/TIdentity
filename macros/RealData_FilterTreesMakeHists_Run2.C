@@ -1,6 +1,6 @@
 /*
 
-meld /home/marsland/Desktop/ubuntu_desktop/workdir/code/RealData_FilterTreesMakeHists.C /u/marsland/PHD/macros/marsland_EbyeRatios/RealData_FilterTreesMakeHists.C
+meld /home/marsland/Desktop/ubuntu_desktop/workdir/code/RealData_FilterTreesMakeHists.C /u/marsland/PHD/macros/marsland_EbyeRatios/RealData_FilterTreesMakeHists_Run2.C
 
 events->Draw("pileUp1DITS/multTPC","multTPC-pileUp1DITS<1000 && pileUp1DITS/multTPC<1.4 && pileUp1DITS/multTPC>0.005")
 events->Draw("multV0/multTPC/2.55","multTPC-pileUp1DITS<1000 && pileUp1DITS/multTPC<1.4 && pileUp1DITS/multTPC>0.005","same")
@@ -31,8 +31,6 @@ TFile f("events.root")
 treeEvent = events
 makeAliasesEvent()
 EventFlat.SetAlias("multTPCITS","(multSSD+multSDD)/2.38")
-treeEvent->Draw("nPileUpSum:tpcMult-multTPCITS:shiftM","centV0<80&&spdvz!=0&&shiftM<0","colz",1000000)
-EventFlat.Draw("nPileUpSum:tpcMult-multTPCITS:shiftM","spdvz!=0&&shiftM<0","colz",1000000)
 EventFlat.Draw("tpcMult-multTPCITS:nPileUpSum","centV0<80&&spdvz!=0","",100000)
 EventFlat.Draw("multV0:tpcMult-multTPCITS","centV0<80&&spdvz!=0","",100000)
 //
@@ -52,9 +50,6 @@ EventFlat.Draw("multV0:multTPCITS-tpcMult","centV0<80&&spdvz!=0","",100000)
 EventFlat.Draw("multV0:tpcMult-multTPCITS","centV0<80&&spdvz!=0","",100000)
 EventFlat.Draw("tpcMult-multTPCITS:nPileUpSum","centV0<80&&spdvz!=0","",100000)
 EventFlat.Draw("nPileUpSum:tpcMult-multTPCITS","centV0<80&&spdvz!=0","",100000)
-EventFlat.Draw("nPileUpSum:tpcMult-multTPCITS:shiftM","centV0<80&&spdvz!=0","colz",100000)
-EventFlat.Draw("nPileUpSum:tpcMult-multTPCITS:shiftM","centV0<80&&spdvz!=0&&shiftM>0","colz",100000)
-EventFlat.Draw("nPileUpSum:tpcMult-multTPCITS:shiftM","centV0<80&&spdvz!=0&&shiftM<0","colz",100000)
 
 
 
@@ -109,7 +104,6 @@ void ProcessDScaledTree();
 void ProcessHighPtTree();
 void ProcessEventTree();
 void PlotTimeSeriesPerSector(TString performanceEventList);
-void PlotTimeSeriesFullPeriod(TString performanceEventList);
 void CreateSplinesFromTHnSparse(Int_t icent, Int_t ieta);
 Bool_t ApplyTreeSelection(Int_t syst, UInt_t cutBit);
 TGraphErrors * ProfileToGraphErrors(TH2F * h2);
@@ -183,30 +177,6 @@ TH2F *h2DCleanPiTOF[nCentBins][nEtaBins];          TString hName2DCleanPiTOF[nCe
 //
 TH2F *h2DClean[nParticles][nCentBins][nEtaBins];
 TString hName2DClean[nParticles][nCentBins][nEtaBins];
-//
-// ----------------------------------------------------------------------------------------------------------------------
-TH2F *h2DallCorr[nCentBins][nEtaBins];                 TString hName2DallCorr[nCentBins][nEtaBins];
-TH2F *h2DposCorr[nCentBins][nEtaBins];                 TString hName2DposCorr[nCentBins][nEtaBins];
-TH2F *h2DnegCorr[nCentBins][nEtaBins];                 TString hName2DnegCorr[nCentBins][nEtaBins];
-//
-TH2F *h2DallPrTOFCorr[nCentBins][nEtaBins];            TString hName2DallPrTOFCorr[nCentBins][nEtaBins];
-TH2F *h2DallPrTOFPosCorr[nCentBins][nEtaBins];         TString hName2DallPrTOFPosCorr[nCentBins][nEtaBins];
-TH2F *h2DallPrTOFNegCorr[nCentBins][nEtaBins];         TString hName2DallPrTOFNegCorr[nCentBins][nEtaBins];
-//
-TH2F *h2DallKaTOFCorr[nCentBins][nEtaBins];            TString hName2DallKaTOFCorr[nCentBins][nEtaBins];
-TH2F *h2DallKaTOFPosCorr[nCentBins][nEtaBins];         TString hName2DallKaTOFPosCorr[nCentBins][nEtaBins];
-TH2F *h2DallKaTOFNegCorr[nCentBins][nEtaBins];         TString hName2DallKaTOFNegCorr[nCentBins][nEtaBins];
-//
-TH2F *h2DCleanPiKineCutCorr[nCentBins][nEtaBins];      TString hName2DCleanPiKineCutCorr[nCentBins][nEtaBins];
-TH2F *h2DCleanPrKineCutCorr[nCentBins][nEtaBins];      TString hName2DCleanPrKineCutCorr[nCentBins][nEtaBins];
-TH2F *h2DCleanElKineCutCorr[nCentBins][nEtaBins];      TString hName2DCleanElKineCutCorr[nCentBins][nEtaBins];
-//
-TH2F *h2DCleanKaTOFTRDCorr[nCentBins][nEtaBins];       TString hName2DCleanKaTOFTRDCorr[nCentBins][nEtaBins];
-TH2F *h2DCleanKaBayesCorr[nCentBins][nEtaBins];        TString hName2DCleanKaBayesCorr[nCentBins][nEtaBins];
-TH2F *h2DCleanPiTightCorr[nCentBins][nEtaBins];        TString hName2DCleanPiTightCorr[nCentBins][nEtaBins];
-TH2F *h2DCleanPiTOFCorr[nCentBins][nEtaBins];          TString hName2DCleanPiTOFCorr[nCentBins][nEtaBins];
-//
-TH2F *h2DCleanCorr[nParticles][nCentBins][nEtaBins];   TString hName2DCleanCorr[nParticles][nCentBins][nEtaBins];
 // ----------------------------------------------------------------------------------------------------------------------
 //
 // Expecteds
@@ -368,7 +338,7 @@ TFile *fhist=NULL;
 TFile *fdEdxMap=NULL;
 TTree *dataTree=NULL, *armtree=NULL, *eventtree=NULL, *dscaltree=NULL, *highPttree=NULL;
 THnSparse *fhnExpected=NULL;
-TTreeSRedirector *treeStream=0, *histStream=0, *histStreamCorr, *debugStream=0, *splinesStream=0;
+TTreeSRedirector *treeStream=0, *histStream=0, *debugStream=0, *splinesStream=0;
 TH1D  *hEta=0x0, *hCent=0x0, *hMom=0x0;
 TCutG *pionCutG=0, *antiProtonCutG=0, *protonCutG=0;
 TStopwatch timer;
@@ -389,7 +359,6 @@ TH2F *hevents_itsLayer0V02D_inbunchCut=NULL;
 TH2F *hevents_itsLayer0V02D=NULL;
 TH2F *hevents_pileUpITS2D_inbunchCut=NULL;
 TH2F *hevents_pileUpITS2D=NULL;
-TH2F *htracks_shiftM_nPileUpPrim=NULL;
 TH2F *hevents_secMultITS0_primMultITS=NULL;
 TH1F *hevents_pileUpV01D=NULL;
 TH1F *hevents_pileUpITS1D=NULL;
@@ -482,25 +451,22 @@ enum cutSettings {
 
 
 Bool_t fQAtimeSeriesExist = kTRUE;
-Int_t    fInPileUpLow     = 0;
-Int_t    fInPileUpHigh    = 0;
+Int_t    fInPileupTPCCut  = 0;
 Double_t fInTimeSeriesEff = 0.;
-Int_t    fInVzPileup      = 0;
 Int_t    fPeriod          = 0;
 //
 TString dEdxMapStr = "";
 TString timeSeriesMap = "";
-// TString MapDirName = "/home/marsland/Desktop/ubuntu_desktop/workdir/TEST/filterTreesMakeHists";
-TString MapDirName = "/lustre/nyx/alice/users/marsland/Maps/dEdxCorrection_PileUp";
-// Double_t testEntries  = 1000000;
-Double_t testEntries  = -1.;
+TString MapDirName = "/home/marsland/Desktop/ubuntu_desktop/workdir/Data/IlyaEos";
+Double_t testEntries  = 100000;
+// Double_t testEntries  = -1.;
 // Bool_t testIntegratedHist=kTRUE;
 Bool_t testIntegratedHist=kFALSE;
 Bool_t fillTIdenTree=kTRUE;
 
 
 
-void RealData_FilterTreesMakeHists(TString plotVS, TString cutON, Int_t systSet, TString dFile, Int_t period, Int_t kPileUpLow, Int_t kPileUpHigh, Double_t kTimeSeriesEff, Int_t kVzPileup)
+void RealData_FilterTreesMakeHists_Run2(TString plotVS, TString cutON, Int_t systSet, TString dFile, Int_t period, Int_t kPileupTPCCut, Double_t kTimeSeriesEff)
 {
   //
   // plotVS: "ptot", "pT", "p"
@@ -508,73 +474,26 @@ void RealData_FilterTreesMakeHists(TString plotVS, TString cutON, Int_t systSet,
 
   /*
 
-  meld /home/marsland/Desktop/ubuntu_desktop/workdir/code/RealData_FilterTreesMakeHists.C /u/marsland/PHD/macros/marsland_EbyeRatios/RealData_FilterTreesMakeHists.C
+  meld /home/marsland/Desktop/ubuntu_desktop/workdir/RUN_ON_GRID/Ebye/code/RealData_FilterTreesMakeHists_Run2.C /home/marsland/Desktop/ubuntu_desktop/github/TIdentity3D/TIdentity/macros/RealData_FilterTreesMakeHists_Run2.C
 
-
-  /home/marsland/Desktop/ubuntu_desktop/workdir/fourthMomentAnalysis/test_data
+  cd /home/marsland/Desktop/ubuntu_desktop/workdir/fourthMomentAnalysis/test_data
   aliroot -l
-  // TString file = "/lustre/nyx/alice/users/marsland/pFluct/files/analysis/Data/PbPb/Real/RUN2/LHC15o_pass1/LHC15o_pass1_NoSelection_20082019/mergedRuns/mergeddEdx/000246087/Sub_0/filteredTreesAndTracks/AnalysisResults_tree1.root";
-  // TString file = "/lustre/nyx/alice/users/marsland/pFluct/files/analysis/Data/PbPb/Real/RUN2/LHC18q_pass1_NoSelection_20082019/mergedRuns/mergeddEdx/000296377/Sub_35/filteredTreesAndTracks/AnalysisResults_tree2.root"
-
- TString file = "/home/marsland/Desktop/ubuntu_desktop/workdir/Data/IlyaEos/AnalysisResults_data.root"
-  .L /u/marsland/PHD/macros/marsland_EbyeRatios/RealData_FilterTreesMakeHists.C+
-  RealData_FilterTreesMakeHists("ptot","p",21,file,0  ,-100000,1000,    0.88, 0)
-  RealData_FilterTreesMakeHists("ptot","p",0,file,0  ,-100000,1000,    0.88, 0)
-
-  RealData_FilterTreesMakeHists("ptot","p",21,file,0  ,-100000,100000,    0.88, 0)
-  RealData_FilterTreesMakeHists("ptot","p",0,file,0  ,-100000,100000,    0.88, 0)
-
-  RealData_FilterTreesMakeHists("ptot","p",0,file,0  ,-100000,100000,  0,    0)
-  RealData_FilterTreesMakeHists("ptot","p",0,file,0  , 2000,8000,      0.88, 0)
-
-  RealData_FilterTreesMakeHists("ptot","p",0,file,0  ,-50000,1000,    0.88, 0)   // full correction and selection
-  RealData_FilterTreesMakeHists("ptot","p",0,file,0  ,-50000,50000, 0,    0)     // no correction
-  ProcessExpectedHists("AnalysisResults_hist.root",)
-
-
-  aliroot -l
-  TString file = "/home/marsland/Desktop/ubuntu_desktop/workdir/TEST/filterTreesMakeHists/lustre/nyx/alice/users/marsland/alice-tpc-notes/JIRA/ATO-465/data/LHC18q/LHC18q_pass1_AllRuns/merged/000295908/filteredTrees/AnalysisResults_filteredTree10.root"
-  .L /home/marsland/Desktop/ubuntu_desktop/workdir/code/RealData_FilterTreesMakeHists.C+
-  RealData_FilterTreesMakeHists("ptot","p",0,file,1  ,1, 1000, 0.85, 0)   // full correction and selection
-
-
-  cd /home/marsland/Desktop/ubuntu_desktop/workdir/TEST/filterTreesMakeHists
-  aliroot -l
-  .L /u/marsland/PHD/macros/marsland_EbyeRatios/RealData_FilterTreesMakeHists.C+
-  // .L /home/marsland/Desktop/ubuntu_desktop/workdir/code/RealData_FilterTreesMakeHists.C+
-  ProcessExpectedHists("ptot","p",0, "AnalysisResults_hist.root")
-
-   aliroot -l
   TString file = "/home/marsland/Desktop/ubuntu_desktop/workdir/Data/IlyaEos/AnalysisResults_data.root"
-  .L /home/marsland/Desktop/ubuntu_desktop/workdir/code/RealData_FilterTreesMakeHists.C+
-  RealData_FilterTreesMakeHists("ptot","p",0,file,1  ,1, 1000, 0.85, 0)   // full correction and selection
-
-
+  .L /home/marsland/Desktop/ubuntu_desktop/workdir/RUN_ON_GRID/Ebye/code/RealData_FilterTreesMakeHists_Run2.C+
+  RealData_FilterTreesMakeHists_Run2("ptot","p",0,file ,1, 1, 0.85)   // full correction and selection
 
   */
   //
-  fInPileUpLow     = kPileUpLow;
-  fInPileUpHigh    = kPileUpHigh;
+  fInPileupTPCCut  = kPileupTPCCut;
   fInTimeSeriesEff = kTimeSeriesEff;
-  fInVzPileup      = kVzPileup;
-  cout << " fInPileUpLow     = " <<  fInPileUpLow << endl;
-  cout << " fInPileUpHigh    = " <<  fInPileUpHigh << endl;
+  cout << " fInPileupTPCCut     = " <<  fInPileupTPCCut << endl;
   cout << " fInTimeSeriesEff = " <<  fInTimeSeriesEff << endl;
-  cout << " fInVzPileup      = " <<  fInVzPileup << endl;
   cout << " setting          = " <<  systSet << endl;
   //
   fSystSet         = systSet;
   fPlotVS          = plotVS;
   fCutON           = cutON;
   fPeriod          = period;
-  //
-  if (fPeriod==0)  dEdxMapStr = Form("%s/lustre/nyx/alice/users/miranov/NOTESData/alice-tpc-notes/JIRA/PWGPP-538/alice/data/2015/LHC15o/pass1/dEdxFit.root",MapDirName.Data());
-  if (fPeriod==1)  dEdxMapStr = Form("%s/lustre/nyx/alice/users/miranov/NOTESData/alice-tpc-notes/JIRA/PWGPP-538/alice/data/2018/LHC18q/pass1/dEdxFit.root",MapDirName.Data());
-  if (fPeriod==2)  dEdxMapStr = Form("%s/lustre/nyx/alice/users/miranov/NOTESData/alice-tpc-notes/JIRA/PWGPP-538/alice/data/2018/LHC18r/pass1/dEdxFit.root",MapDirName.Data());
-  //
-  // if (oldMap)  dEdxMapStr = Form("%s/old/dEdxFit.root",MapDirName.Data());
-  // else dEdxMapStr = Form("%s/lustre/nyx/alice/users/miranov/NOTESData/alice-tpc-notes/JIRA/PWGPP-538/alice/data/2015/LHC15o/pass1/dEdxFit.root",MapDirName.Data());
-  //
   cout << "  ------------ > dEdx Map = " << dEdxMapStr << endl;
   //
   fdata      = TFile::Open(dFile);
@@ -613,7 +532,6 @@ void RealData_FilterTreesMakeHists(TString plotVS, TString cutON, Int_t systSet,
   if (treeStream)  delete treeStream;
   if (debugStream) delete debugStream;
   if (histStream)  delete histStream;
-  if (histStreamCorr) delete histStreamCorr;
   //
   for (Int_t icent=0; icent<nCentBins; icent++) delete tidenTreeStream[icent];
 
@@ -709,6 +627,8 @@ void ProcessDataHists()
       Double_t pileUp1DITS = (multSSD+multSDD)/2.38;
       Double_t multV0 = fevents_vZeroMult->Sum();
       Double_t multT0 = fevents_tZeroMult->Sum();
+      Double_t primMult    = fevents_primMult;
+      Double_t trackTgl    = TMath::Abs(TMath::SinH(ftracks_eta));
       //
       // in bunch pileup cut
       Double_t primMultITS = (*fevents_itsVertexInfo)[2];
@@ -716,7 +636,7 @@ void ProcessDataHists()
       Double_t secMultITS  = secMultITS0 - inbunchCutSlope*primMultITS;
       //
       // Define the cuts
-      Bool_t tpcPileUpCut     = ((multTPC-pileUp1DITS) > fInPileUpLow  && (multTPC-pileUp1DITS) < fInPileUpHigh);
+      Bool_t tpcPileUpCut     = ( ftracks_cutBit & (1 << fInPileupTPCCut) );
       Bool_t timeSeriesCut    = (fITSTPCeffTrack > fInTimeSeriesEff);
       Bool_t inbunchPileUpCut = (secMultITS < (inbunchCutRMS*primMultITS+inbunchCutOffSet));
       Bool_t spdVzCut         = (fevents_spdvz!=0 && TMath::Abs(fevents_spdvz)<10);
@@ -770,36 +690,8 @@ void ProcessDataHists()
     //
     // Event Cuts --> pile up and time series cut
     if (acceptEvent<0) continue;
-    //
-    // --------------------------------------------------------------------------------
-    // Apply dEdx correction for a given track at a given eta
-    // --------------------------------------------------------------------------------
-    //
-    // Double_t shiftM      = 0.5*((*fevents_tpcVertexInfo)[1]+(*fevents_tpcVertexInfo)[0]);   // old version ???
-    // Double_t norm        = 1-TMath::Abs(shiftM/210.);
-    // Double_t nPileUpPrim = ((*fevents_tpcVertexInfo)[3]+(*fevents_tpcVertexInfo)[4])/norm;  // old version ???
-    //
-    Double_t shiftM  = 0.5*((*fevents_tpcVertexInfo)[1]+(*fevents_tpcVertexInfo)[0])-25.;
-    Double_t multSSD = (*fevents_itsClustersPerLayer)[4]+(*fevents_itsClustersPerLayer)[5];
-    Double_t multSDD = (*fevents_itsClustersPerLayer)[2]+(*fevents_itsClustersPerLayer)[3];
-    Double_t pileUp1DITS = (multSSD+multSDD)/2.38;
-    Double_t nPileUpSumCorr = ((*fevents_tpcVertexInfo)[3]+(*fevents_tpcVertexInfo)[4])-0.05*pileUp1DITS;
-    Double_t nPileUpPrim = nPileUpSumCorr/(1-TMath::Abs(shiftM/210.));
-    Double_t primMult    = fevents_primMult;
-    Double_t trackTgl    = TMath::Abs(TMath::SinH(ftracks_eta));
-    //
-    Double_t params1[]  = {shiftM,nPileUpPrim,primMult,trackTgl};
-    Double_t params0[]  = {primMult,trackTgl};
-    Double_t dEdxCorr0 =  hdEdxAShifttMNTglDist_meanGFitNoPileUp->Eval(params0);
-    Double_t dEdxCorr1 =  hdEdxAShifttMNTglDist_meanGFitAll     ->Eval(params1);
-    Double_t dEdxCorr0ND = AliNDLocalRegression::GetCorrND(1,primMult,trackTgl+0);
-    Double_t dEdxCorr1ND = AliNDLocalRegression::GetCorrND(2,shiftM,nPileUpPrim,primMult,trackTgl+0);
-    Double_t dEdxCorr  =  ftracks_dEdx-50*dEdxCorr1;
-    //
-    // Vz pileup cut
-    if ( shiftM<0 && fInVzPileup== 1 ) continue;
-    if ( shiftM>0 && fInVzPileup==-1 ) continue;
-    htracks_shiftM_nPileUpPrim->Fill(shiftM,nPileUpPrim);
+    Double_t primMult = fevents_primMult;
+    Double_t trackTgl = TMath::Abs(TMath::SinH(ftracks_eta));
     //
     // dump some debug histogram
     if (ftracks_dcaxy>-10 && ftracks_dcaxy<10)   htracks_dcaxy2D ->Fill(ftracks_pT,ftracks_dcaxy);
@@ -839,7 +731,6 @@ void ProcessDataHists()
           (*tidenTreeStream[icent])<<"tracks"<<
           "gid="                  << ftracks_gid          <<  //  global event ID
           "dEdx="                 << ftracks_dEdx         <<  //  dEdx of the track
-          "dEdxCorr="             << dEdxCorr             <<  //  corrected dEdx
           "sign="                 << ftracks_sign         <<  //  charge
           "ptot="                 << ftracks_ptot         <<  //  TPC momentum
           "eta="                  << ftracks_eta          <<  //  eta
@@ -857,22 +748,17 @@ void ProcessDataHists()
       "intrate="              << ftracks_intrate      <<  //  interaction rate
       "cutBit="               << ftracks_cutBit       <<  //  Systematic Cuts
       "dEdx="                 << ftracks_dEdx         <<  //  dEdx of the track
-      "dEdxCorr="             << dEdxCorr             <<  //  corrected dEdx
       "sign="                 << ftracks_sign         <<  //  charge
       "ptot="                 << ftracks_ptot         <<  //  TPC momentum
       "pT="                   << ftracks_pT           <<  //  transverse momentum
       "eta="                  << ftracks_eta          <<  //  eta
       "phi="                  << ftracks_phi          <<  //  eta
       "cent="                 << ftracks_cent         <<  //  centrality
-      "dEdxCorr0="            << dEdxCorr0            <<  //  centrality
-      "dEdxCorr1="            << dEdxCorr1            <<  //  4D correction using Eval inteface
       //
       "fevents_tpcVertexInfo.=" << fevents_tpcVertexInfo <<
       "fevents_itsClustersPerLayer.=" << fevents_itsClustersPerLayer <<
-      "shiftM="               << shiftM               <<  // interaction rate
       "primMult="             << primMult             <<  // interaction rate
       "tgl="                  << trackTgl             <<  // interaction rate
-      "nPileUpPrim="          << nPileUpPrim          <<  // interaction rate
       "cRows="                << ftracks_cRows        <<  // interaction rate
       "chi2tpc="              << ftracks_chi2tpc      <<  // interaction rate
       "dcaz="                 << ftracks_dcaz         <<  // interaction rate
@@ -926,27 +812,6 @@ void ProcessDataHists()
 
         if (etaCentString && vertexPcut && systCut && cleanDeCutTOF)    h2DClean[4][icent][ieta]->Fill(ftracks_ptot,ftracks_dEdx);
         if (etaCentString && vertexPcut && systCut && cleanKaCutTOFTRD) h2DClean[2][icent][ieta]->Fill(ftracks_ptot,ftracks_dEdx);
-        //
-        //
-        //
-        if (etaCentString && vertexPcut && systCut          ) h2DallCorr[icent][ieta]->Fill(ftracks_ptot,dEdxCorr);
-        if (etaCentString && vertexPcut && systCut && parPos) h2DposCorr[icent][ieta]->Fill(ftracks_ptot,dEdxCorr);
-        if (etaCentString && vertexPcut && systCut && parNeg) h2DnegCorr[icent][ieta]->Fill(ftracks_ptot,dEdxCorr);
-        //
-        if (etaCentString && vertexPcut && systCut && kaTOF)           h2DallKaTOFCorr[icent][ieta]   ->Fill(ftracks_ptot,dEdxCorr);
-        if (etaCentString && vertexPcut && systCut && kaTOF && parPos) h2DallKaTOFPosCorr[icent][ieta]->Fill(ftracks_ptot,dEdxCorr);
-        if (etaCentString && vertexPcut && systCut && kaTOF && parNeg) h2DallKaTOFNegCorr[icent][ieta]->Fill(ftracks_ptot,dEdxCorr);
-        //
-        if (etaCentString && vertexPcut && systCut && prTOF)           h2DallPrTOFCorr[icent][ieta]   ->Fill(ftracks_ptot,dEdxCorr);
-        if (etaCentString && vertexPcut && systCut && prTOF && parPos) h2DallPrTOFPosCorr[icent][ieta]->Fill(ftracks_ptot,dEdxCorr);
-        if (etaCentString && vertexPcut && systCut && prTOF && parNeg) h2DallPrTOFNegCorr[icent][ieta]->Fill(ftracks_ptot,dEdxCorr);
-        //
-        if (etaCentString && vertexPcut && systCut && cleanKaCutBayes)  h2DCleanKaBayesCorr[icent][ieta]->Fill(ftracks_ptot,dEdxCorr);
-        if (etaCentString && vertexPcut && systCut && cleanKaCutTOFTRD) h2DCleanKaTOFTRDCorr[icent][ieta]->Fill(ftracks_ptot,dEdxCorr);
-
-        if (etaCentString && vertexPcut && systCut && cleanDeCutTOF)    h2DCleanCorr[4][icent][ieta]->Fill(ftracks_ptot,dEdxCorr);
-        if (etaCentString && vertexPcut && systCut && cleanKaCutTOFTRD) h2DCleanCorr[2][icent][ieta]->Fill(ftracks_ptot,dEdxCorr);
-
       }
     }
 
@@ -1001,12 +866,6 @@ void ProcessEventTree()
       }
     }
     //
-    //
-    Double_t shiftM0 = 0.5*((*fevents_tpcVertexInfo)[1]+(*fevents_tpcVertexInfo)[0]);
-    Double_t norm0   = 1-TMath::Abs(shiftM0/210.);
-    Double_t nPileUpPrim0 = ((*fevents_tpcVertexInfo)[3]+(*fevents_tpcVertexInfo)[4])/norm0;
-    Double_t primMult0    = fevents_primMult;
-    //
     //  TPC ITS matching eff from time series
     Double_t fITSTPCeffEvent = (fQAtimeSeriesExist && fgrTimeSeriesEventWeighted)   ? fgrTimeSeriesEventWeighted  ->Eval(fevents_timestamp) : 1;
     Double_t fITSTPCeffTrack = (fQAtimeSeriesExist && fgrTimeSeriesNTracksWeighted) ? fgrTimeSeriesNTracksWeighted->Eval(fevents_timestamp) : 1;
@@ -1045,15 +904,8 @@ void ProcessEventTree()
     "tpcTrackBeforeClean=" << fevents_tpcTrackBeforeClean     <<  //  TPC momentum
     "nTracksStored=" << fevents_nTracksStored     <<  //  TPC momentum
     //
-    "shiftM="         << shiftM0             <<  //  TPC momentum
-    "norm="           << norm0               <<  //  TPC momentum
-    "nPileUpPrim="    << nPileUpPrim0        <<  //  TPC momentum
-    "primMult="       << primMult0           <<  //  TPC momentum
-    //
-    "pileUpCutLow="         << fInPileUpLow          <<  // interaction rate
-    "pileUpCutHigh="        << fInPileUpHigh          <<  // interaction rate
+    "pileupTPCCut="         << fInPileupTPCCut          <<  // interaction rate
     "tSeriesCut="           << fInTimeSeriesEff          <<  // interaction rate
-    "vzSideCut="            << fInVzPileup          <<  // interaction rate
     "\n";
     eventCount++;
 
@@ -1126,8 +978,8 @@ void ProcessExpectedHists(TString plotVS, TString cutON, Int_t systSet, TString 
 
   cd /home/marsland/Desktop/ubuntu_desktop/workdir/TEST/filterTreesMakeHists
   aliroot -l
-  .L /u/marsland/PHD/macros/marsland_EbyeRatios/RealData_FilterTreesMakeHists.C+
-  // .L /home/marsland/Desktop/ubuntu_desktop/workdir/code/RealData_FilterTreesMakeHists.C+
+  .L /u/marsland/PHD/macros/marsland_EbyeRatios/RealData_FilterTreesMakeHists_Run2.C+
+  // .L /home/marsland/Desktop/ubuntu_desktop/workdir/RUN_ON_GRID/Ebye/code/RealData_FilterTreesMakeHists_Run2.C+
   TString input = "/lustre/nyx/alice/users/marsland/pFluct/files/analysis/Data/PbPb/Real/RUN2/LHC15o_pass1_NoSelection_06082019/mergedRuns/mergedHists/AnalysisResults_hist.root"
   ProcessExpectedHists("ptot","p",0, input)
 
@@ -1268,7 +1120,7 @@ void ProcessCleanSamples()
       Bool_t bAlltiggers = (bMB || bCentral || bSemiCentral || bMB10 );
       //
       // Define the cuts
-      Bool_t tpcPileUpCut     = ((multTPC-pileUp1DITS) > fInPileUpLow  && (multTPC-pileUp1DITS) < fInPileUpHigh);
+      Bool_t tpcPileUpCut     = ( ftracks_cutBit & (1 << fInPileupTPCCut) );
       Bool_t timeSeriesCut    = (fITSTPCeffTrack > fInTimeSeriesEff);
       Bool_t inbunchPileUpCut = (secMultITS < (0.05*primMultITS+50));
       Bool_t spdVzCut         = (fevents_spdvz!=0 && TMath::Abs(fevents_spdvz)<7);
@@ -1281,41 +1133,9 @@ void ProcessCleanSamples()
     //
     // Event Cuts --> pile up and time series cut
     if (acceptEvent<0) continue;
-    //
-    // Apply dEdx correction for a given track at a given eta
-    // treeEvent->SetAlias("multTPCITS","((multSSD+multSDD)/2.38)");
-    // Double_t shiftM      = 0.5*((*fevents_tpcVertexInfo)[1]+(*fevents_tpcVertexInfo)[0]); // old version ???
-    // Double_t norm        = 1-TMath::Abs(shiftM/210.);
-    // Double_t nPileUpPrim = ((*fevents_tpcVertexInfo)[3]+(*fevents_tpcVertexInfo)[4])/norm; // old version
-    //
-    Double_t shiftM   = 0.5*((*fevents_tpcVertexInfo)[1]+(*fevents_tpcVertexInfo)[0])-25.;
     Double_t primMult = fevents_primMult;
-    Double_t multSSD = (*fevents_itsClustersPerLayer)[4]+(*fevents_itsClustersPerLayer)[5];
-    Double_t multSDD = (*fevents_itsClustersPerLayer)[2]+(*fevents_itsClustersPerLayer)[3];
-    Double_t pileUp1DITS = (multSSD+multSDD)/2.38;
-    Double_t nPileUpSumCorr = ((*fevents_tpcVertexInfo)[3]+(*fevents_tpcVertexInfo)[4])-0.05*pileUp1DITS;
-    Double_t nPileUpPrim = nPileUpSumCorr/(1-TMath::Abs(shiftM/210.));
-    //
     Double_t trackTglPos  = TMath::Abs(TMath::SinH(ffArmPodTree_eta0));
-    Double_t params1Pos[] = {shiftM,nPileUpPrim,primMult,trackTglPos};
-    Double_t dEdxCorr1Pos =  hdEdxAShifttMNTglDist_meanGFitAll->Eval(params1Pos);
-    Double_t dEdxCorrPos  =  ffArmPodTree_dEdx0-50*dEdxCorr1Pos;
-    //
     Double_t trackTglNeg  = TMath::Abs(TMath::SinH(ffArmPodTree_eta1));
-    Double_t params1Neg[] = {shiftM,nPileUpPrim,primMult,trackTglNeg};
-    Double_t dEdxCorr1Neg =  hdEdxAShifttMNTglDist_meanGFitAll->Eval(params1Neg);
-    Double_t dEdxCorrNeg  =  ffArmPodTree_dEdx1-50*dEdxCorr1Neg;
-    //
-    // for crosscheck
-    // Double_t params0[]  = {primMult,trackTgl};
-    // Double_t dEdxCorr0 =  hdEdxAShifttMNTglDist_meanGFitNoPileUp->Eval(params0);
-    // Double_t dEdxCorr0ND = AliNDLocalRegression::GetCorrND(1,primMult,trackTgl+0);
-    // Double_t dEdxCorr1ND = AliNDLocalRegression::GetCorrND(2,shiftM,nPileUpPrim,primMult,trackTgl+0);
-    //
-    //
-    // Vz pileup cut
-    if ( shiftM<0 && fInVzPileup== 1 ) continue;
-    if ( shiftM>0 && fInVzPileup==-1 ) continue;
     //
     // dump tidentree
     if (testIntegratedHist){
@@ -1331,7 +1151,6 @@ void ProcessCleanSamples()
       "alfa="                 << ffArmPodTree_alfa         <<  //  centrality
       "qt="                   << ffArmPodTree_qt         <<  //  centralit
       //
-      "dEdxCorr0="            << dEdxCorrPos             <<  //  dEdx of the track
       "tgl0="                 << trackTglPos             <<  // interaction rate
       "dEdx0="                << ffArmPodTree_dEdx0         <<  //  dEdx of the track
       "sign0="                << ffArmPodTree_sign0         <<  //  charge
@@ -1341,7 +1160,6 @@ void ProcessCleanSamples()
       "eta0="                 << ffArmPodTree_eta0          <<  //  eta
       "phi0="                 << ffArmPodTree_phi0          <<  //  eta
       //
-      "dEdxCorr1="            << dEdxCorrNeg             <<  //  dEdx of the track
       "tgl1="                 << trackTglNeg             <<  // interaction rate
       "dEdx1="                << ffArmPodTree_dEdx1         <<  //  dEdx of the track
       "sign1="                << ffArmPodTree_sign1         <<  //  charge
@@ -1353,11 +1171,7 @@ void ProcessCleanSamples()
       //
       "fevents_tpcVertexInfo.=" << fevents_tpcVertexInfo <<
       "fevents_itsClustersPerLayer.=" << fevents_itsClustersPerLayer <<
-      "dEdxCorr1Pos="         << dEdxCorr1Pos            <<  //  4D correction using Eval inteface
-      "dEdxCorr1Neg="         << dEdxCorr1Neg            <<  //  4D correction using Eval inteface
-      "shiftM="               << shiftM               <<  // interaction rate
       "primMult="             << primMult             <<  // interaction rate
-      "nPileUpPrim="          << nPileUpPrim          <<  // interaction rate
       "\n";
     }
 
@@ -1373,9 +1187,9 @@ void ProcessCleanSamples()
         }
         //
         Bool_t vertexPcut=kFALSE;
-        if(fCutON=="pT")   vertexPcut = (ffArmPodTree_pT0>=ptotMin      && ffArmPodTree_pT0<=ptotMax);
-        if(fCutON=="ptot") vertexPcut = (ffArmPodTree_ptot0>=ptotMin    && ffArmPodTree_ptot0<=ptotMax);
-        if(fCutON=="p")    vertexPcut = (ffArmPodTree_p0>=ptotMin && ffArmPodTree_p0<=ptotMax);
+        if(fCutON=="pT")   vertexPcut = (ffArmPodTree_pT0>=ptotMin   && ffArmPodTree_pT0<=ptotMax);
+        if(fCutON=="ptot") vertexPcut = (ffArmPodTree_ptot0>=ptotMin && ffArmPodTree_ptot0<=ptotMax);
+        if(fCutON=="p")    vertexPcut = (ffArmPodTree_p0>=ptotMin    && ffArmPodTree_p0<=ptotMax);
         //
         Bool_t cleanCutPiTOF0 = ( TMath::Abs(ffArmPodTree_nSigmasPiTOF0)<2. );
         Bool_t cleanCutPiTOF1 = ( TMath::Abs(ffArmPodTree_nSigmasPiTOF1)<2. );
@@ -1384,39 +1198,32 @@ void ProcessCleanSamples()
         //
         Bool_t cleanCutPi    = ( TMath::Abs(ffArmPodTree_alfa)<0.5 );
         Bool_t cleanCutEl    = ( (ffArmPodTree_qt<0.005) && (TMath::Abs(ffArmPodTree_alfa)<0.5) );
-        Bool_t piK0cut       = ( Bool_t(piFromK0) );
+        Bool_t piK0cut       = (  Bool_t(piFromK0) );
         Bool_t piPixelcut    = ( !Bool_t(v0haspixel) );
         Bool_t cleanCutPiKineCut = ( (ffArmPodTree_qt>0.14) && (ffArmPodTree_purity==2) );
         Bool_t cleanCutElKineCut = ( (ffArmPodTree_qt<0.01) && (ffArmPodTree_purity==2) );
         Bool_t cleanCutPrKineCut = ( (ffArmPodTree_qt<0.12) && (ffArmPodTree_qt>0.01) && (ffArmPodTree_purity==2) && TMath::Abs(ffArmPodTree_nSigmasPrTOF0)<3. && TMath::Abs(ffArmPodTree_nSigmasPrTOF1)<3. );
         //
-        // before correction
-        if (etaCentString && vertexPcut && cleanCutEl) { h2DClean[0][icent][ieta]->Fill(ffArmPodTree_ptot0,ffArmPodTree_dEdx0);     h2DClean[0][icent][ieta]->Fill(ffArmPodTree_ptot1,ffArmPodTree_dEdx1);}
-        if (etaCentString && vertexPcut && cleanCutPi && piK0cut && piPixelcut) { h2DCleanPiTight[icent][ieta]->Fill(ffArmPodTree_ptot0,ffArmPodTree_dEdx0); h2DCleanPiTight[icent][ieta]->Fill(ffArmPodTree_ptot1,ffArmPodTree_dEdx1);}
-        if (etaCentString && vertexPcut && cleanCutPi && piK0cut && cleanCutPiTOF0) h2DClean[1][icent][ieta]->Fill(ffArmPodTree_ptot1,ffArmPodTree_dEdx1);
-        if (etaCentString && vertexPcut && cleanCutPi && piK0cut && cleanCutPiTOF1) h2DClean[1][icent][ieta]->Fill(ffArmPodTree_ptot0,ffArmPodTree_dEdx0);
-        if (etaCentString && vertexPcut && cleanCutPi && cleanCutPiTOF0) h2DCleanPiTOF[icent][ieta]->Fill(ffArmPodTree_ptot0,ffArmPodTree_dEdx0);
-        if (etaCentString && vertexPcut && cleanCutPi && cleanCutPiTOF1) h2DCleanPiTOF[icent][ieta]->Fill(ffArmPodTree_ptot1,ffArmPodTree_dEdx1);
-        if (etaCentString && vertexPcut && cleanCutPrTOF0) h2DClean[3][icent][ieta]->Fill(ffArmPodTree_ptot0,ffArmPodTree_dEdx0);
-        if (etaCentString && vertexPcut && cleanCutPrTOF1) h2DClean[3][icent][ieta]->Fill(ffArmPodTree_ptot1,ffArmPodTree_dEdx1);
-        //
-        // Corrected histograms
-        if (etaCentString && vertexPcut && cleanCutEl) { h2DCleanCorr[0][icent][ieta]->Fill(ffArmPodTree_ptot0,dEdxCorrPos);     h2DCleanCorr[0][icent][ieta]->Fill(ffArmPodTree_ptot1,dEdxCorrNeg);}
-        if (etaCentString && vertexPcut && cleanCutPi && piK0cut && piPixelcut) { h2DCleanPiTightCorr[icent][ieta]->Fill(ffArmPodTree_ptot0,dEdxCorrPos); h2DCleanPiTightCorr[icent][ieta]->Fill(ffArmPodTree_ptot1,dEdxCorrNeg);}
-        if (etaCentString && vertexPcut && cleanCutPi && piK0cut && cleanCutPiTOF0) h2DCleanCorr[1][icent][ieta]->Fill(ffArmPodTree_ptot1,dEdxCorrNeg);
-        if (etaCentString && vertexPcut && cleanCutPi && piK0cut && cleanCutPiTOF1) h2DCleanCorr[1][icent][ieta]->Fill(ffArmPodTree_ptot0,dEdxCorrPos);
-        if (etaCentString && vertexPcut && cleanCutPi && cleanCutPiTOF0) h2DCleanPiTOFCorr[icent][ieta]->Fill(ffArmPodTree_ptot0,dEdxCorrPos);
-        if (etaCentString && vertexPcut && cleanCutPi && cleanCutPiTOF1) h2DCleanPiTOFCorr[icent][ieta]->Fill(ffArmPodTree_ptot1,dEdxCorrNeg);
-        if (etaCentString && vertexPcut && cleanCutPrTOF0) h2DCleanCorr[3][icent][ieta]->Fill(ffArmPodTree_ptot0,dEdxCorrPos);
-        if (etaCentString && vertexPcut && cleanCutPrTOF1) h2DCleanCorr[3][icent][ieta]->Fill(ffArmPodTree_ptot1,dEdxCorrNeg);
+        // clean sample histograms
+        if (etaCentString && vertexPcut && cleanCutEl){ 
+          h2DClean[0][icent][ieta]->Fill(ffArmPodTree_ptot0,ffArmPodTree_dEdx0);     
+          h2DClean[0][icent][ieta]->Fill(ffArmPodTree_ptot1,ffArmPodTree_dEdx1);
+        }
+        if (etaCentString && vertexPcut && cleanCutPi && piK0cut && piPixelcut){ 
+          h2DCleanPiTight[icent][ieta]->Fill(ffArmPodTree_ptot0,ffArmPodTree_dEdx0); 
+          h2DCleanPiTight[icent][ieta]->Fill(ffArmPodTree_ptot1,ffArmPodTree_dEdx1);
+        }
+        if (etaCentString && vertexPcut && cleanCutPi && piK0cut && cleanCutPiTOF0) h2DClean[1][icent][ieta]  ->Fill(ffArmPodTree_ptot1,ffArmPodTree_dEdx1);
+        if (etaCentString && vertexPcut && cleanCutPi && piK0cut && cleanCutPiTOF1) h2DClean[1][icent][ieta]  ->Fill(ffArmPodTree_ptot0,ffArmPodTree_dEdx0);
+        if (etaCentString && vertexPcut && cleanCutPi && cleanCutPiTOF0)            h2DCleanPiTOF[icent][ieta]->Fill(ffArmPodTree_ptot0,ffArmPodTree_dEdx0);
+        if (etaCentString && vertexPcut && cleanCutPi && cleanCutPiTOF1)            h2DCleanPiTOF[icent][ieta]->Fill(ffArmPodTree_ptot1,ffArmPodTree_dEdx1);
+        if (etaCentString && vertexPcut && cleanCutPrTOF0)                          h2DClean[3][icent][ieta]  ->Fill(ffArmPodTree_ptot0,ffArmPodTree_dEdx0);
+        if (etaCentString && vertexPcut && cleanCutPrTOF1)                          h2DClean[3][icent][ieta]  ->Fill(ffArmPodTree_ptot1,ffArmPodTree_dEdx1);
         //
         // Kine cuts
         if (etaCentString && vertexPcut && cleanCutPiKineCut) { h2DCleanPiKineCut[icent][ieta]->Fill(ffArmPodTree_ptot0,ffArmPodTree_dEdx0); h2DCleanPiKineCut[icent][ieta]->Fill(ffArmPodTree_ptot1,ffArmPodTree_dEdx1);}
         if (etaCentString && vertexPcut && cleanCutElKineCut) { h2DCleanElKineCut[icent][ieta]->Fill(ffArmPodTree_ptot0,ffArmPodTree_dEdx0); h2DCleanElKineCut[icent][ieta]->Fill(ffArmPodTree_ptot1,ffArmPodTree_dEdx1);}
         if (etaCentString && vertexPcut && cleanCutPrKineCut) { h2DCleanPrKineCut[icent][ieta]->Fill(ffArmPodTree_ptot0,ffArmPodTree_dEdx0); h2DCleanPrKineCut[icent][ieta]->Fill(ffArmPodTree_ptot1,ffArmPodTree_dEdx1);}
-        if (etaCentString && vertexPcut && cleanCutPiKineCut) { h2DCleanPiKineCutCorr[icent][ieta]->Fill(ffArmPodTree_ptot0,dEdxCorrPos); h2DCleanPiKineCutCorr[icent][ieta]->Fill(ffArmPodTree_ptot1,dEdxCorrNeg);}
-        if (etaCentString && vertexPcut && cleanCutElKineCut) { h2DCleanElKineCutCorr[icent][ieta]->Fill(ffArmPodTree_ptot0,dEdxCorrPos); h2DCleanElKineCutCorr[icent][ieta]->Fill(ffArmPodTree_ptot1,dEdxCorrNeg);}
-        if (etaCentString && vertexPcut && cleanCutPrKineCut) { h2DCleanPrKineCutCorr[icent][ieta]->Fill(ffArmPodTree_ptot0,dEdxCorrPos); h2DCleanPrKineCutCorr[icent][ieta]->Fill(ffArmPodTree_ptot1,dEdxCorrNeg);}
 
       }
     }
@@ -1457,19 +1264,17 @@ void CreateSplinesFromTHnSparse(Int_t icent, Int_t ieta)
 void InitInitials()
 {
 
-  TString outputFileNameTree     = Form("Trees_Syst%d_PlotVS_%s_CutON_%s_%d_%d_%3.2f_%d.root"    ,fSystSet,fPlotVS.Data(),fCutON.Data(),fInPileUpLow,fInPileUpHigh,fInTimeSeriesEff,fInVzPileup);
-  TString outputFileNameHist     = Form("Hists_Syst%d_PlotVS_%s_CutON_%s_%d_%d_%3.2f_%d.root"    ,fSystSet,fPlotVS.Data(),fCutON.Data(),fInPileUpLow,fInPileUpHigh,fInTimeSeriesEff,fInVzPileup);
-  TString outputFileNameHistCorr = Form("HistsCorr_Syst%d_PlotVS_%s_CutON_%s_%d_%d_%3.2f_%d.root",fSystSet,fPlotVS.Data(),fCutON.Data(),fInPileUpLow,fInPileUpHigh,fInTimeSeriesEff,fInVzPileup);
-  TString debugFile              = Form("Debug_Syst%d_PlotVS_%s_CutON_%s_%d_%d_%3.2f_%d.root"    ,fSystSet,fPlotVS.Data(),fCutON.Data(),fInPileUpLow,fInPileUpHigh,fInTimeSeriesEff,fInVzPileup);
+  TString outputFileNameTree     = Form("Trees_Syst%d_PlotVS_%s_CutON_%s_%d_%3.2f.root"    ,fSystSet,fPlotVS.Data(),fCutON.Data(),fInPileupTPCCut,fInTimeSeriesEff);
+  TString outputFileNameHist     = Form("Hists_Syst%d_PlotVS_%s_CutON_%s_%d_%3.2f.root"    ,fSystSet,fPlotVS.Data(),fCutON.Data(),fInPileupTPCCut,fInTimeSeriesEff);
+  TString debugFile              = Form("Debug_Syst%d_PlotVS_%s_CutON_%s_%d_%3.2f.root"    ,fSystSet,fPlotVS.Data(),fCutON.Data(),fInPileupTPCCut,fInTimeSeriesEff);
   treeStream      = new TTreeSRedirector(outputFileNameTree,"recreate");
   histStream      = new TTreeSRedirector(outputFileNameHist,"recreate");
-  histStreamCorr  = new TTreeSRedirector(outputFileNameHistCorr,"recreate");
   debugStream     = new TTreeSRedirector(debugFile,"recreate");
   //
   //
   if (fillTIdenTree){
     for (Int_t icent=0; icent<nCentBins; icent++){
-      TString idenStrName = Form("TIdenTree_Syst%d_cent_%3.2f_%3.2f_PlotVS_%s_CutON_%s_%d_%d_%3.2f_%d.root",fSystSet,centBinning[icent],centBinning[icent+1],fPlotVS.Data(),fCutON.Data(),fInPileUpLow,fInPileUpHigh,fInTimeSeriesEff,fInVzPileup);
+      TString idenStrName = Form("TIdenTree_Syst%d_cent_%3.2f_%3.2f_PlotVS_%s_CutON_%s_%d_%3.2f.root",fSystSet,centBinning[icent],centBinning[icent+1],fPlotVS.Data(),fCutON.Data(),fInPileupTPCCut,fInTimeSeriesEff);
       tidenTreeStream[icent] = new TTreeSRedirector(idenStrName,"recreate");
     }
   }
@@ -1491,7 +1296,6 @@ void InitInitials()
   hevents_ITSTPCeff                = new TH1F("hevents_ITSTPCeff"                 ,"hevents_ITSTPCeff"                  ,1000,0.,1.2);
   //
   //
-  htracks_shiftM_nPileUpPrim  = new TH2F("htracks_shiftM_nPileUpPrim"          ,"htracks_shiftM_nPileUpPrim"         ,1000,-200,200., 1000 ,0., 10000. );
   htracks_dcaxy2D             = new TH2F("htracks_dcaxy2D"                     ,"htracks_dcaxy2D"  ,ptNbins,ptotMin,ptotMax, 400 ,-10., 10. );
   htracks_dcaz2D              = new TH2F("htracks_dcaz2D"                      ,"htracks_dcaz2D"   ,ptNbins,ptotMin,ptotMax, 400 ,-10., 10. );
   htracks_ncltpc2D            = new TH2F("htracks_ncltpc2D"                    ,"htracks_ncltpc2D" ,ptNbins,ptotMin,ptotMax, 140 , 30., 170.);
@@ -1574,57 +1378,6 @@ void InitInitials()
         hName2DClean[ipart][icent][ieta] = Form("h2DClean%s_%s", parName[ipart].Data(), centEtaStr.Data());
         h2DClean[ipart][icent][ieta]     = new TH2F(hName2DClean[ipart][icent][ieta],hName2DClean[ipart][icent][ieta]  ,ptNbins,ptotMin,ptotMax,dEdxNbins,dEdxMin,dEdxMax);
       }
-      //
-      h2DallCorr[icent][ieta]=NULL;   h2DposCorr[icent][ieta]=NULL;   h2DnegCorr[icent][ieta]=NULL;
-      hName2DallCorr[icent][ieta]=Form("h2DallCorr_%s",centEtaStr.Data());
-      hName2DposCorr[icent][ieta]=Form("h2DposCorr_%s",centEtaStr.Data());
-      hName2DnegCorr[icent][ieta]=Form("h2DnegCorr_%s",centEtaStr.Data());
-      h2DallCorr[icent][ieta] = new TH2F(hName2DallCorr[icent][ieta], hName2DallCorr[icent][ieta] ,ptNbins,ptotMin,ptotMax,dEdxNbins,dEdxMin,dEdxMax);
-      h2DposCorr[icent][ieta] = new TH2F(hName2DposCorr[icent][ieta], hName2DposCorr[icent][ieta] ,ptNbins,ptotMin,ptotMax,dEdxNbins,dEdxMin,dEdxMax);
-      h2DnegCorr[icent][ieta] = new TH2F(hName2DnegCorr[icent][ieta], hName2DnegCorr[icent][ieta] ,ptNbins,ptotMin,ptotMax,dEdxNbins,dEdxMin,dEdxMax);
-      //
-      h2DallPrTOFCorr[icent][ieta]=NULL;      h2DallPrTOFPosCorr[icent][ieta]=NULL;      h2DallPrTOFNegCorr[icent][ieta]=NULL;
-      hName2DallPrTOFCorr[icent][ieta]   =Form("h2DallPrTOFCorr_%s"   ,centEtaStr.Data());
-      hName2DallPrTOFPosCorr[icent][ieta]=Form("h2DallPrTOFPosCorr_%s",centEtaStr.Data());
-      hName2DallPrTOFNegCorr[icent][ieta]=Form("h2DallPrTOFNegCorr_%s",centEtaStr.Data());
-      h2DallPrTOFCorr[icent][ieta]     = new TH2F(hName2DallPrTOFCorr[icent][ieta]    ,hName2DallPrTOFCorr[icent][ieta]     ,ptNbins,ptotMin,ptotMax,dEdxNbins,dEdxMin,dEdxMax);
-      h2DallPrTOFPosCorr[icent][ieta]  = new TH2F(hName2DallPrTOFPosCorr[icent][ieta] ,hName2DallPrTOFPosCorr[icent][ieta]  ,ptNbins,ptotMin,ptotMax,dEdxNbins,dEdxMin,dEdxMax);
-      h2DallPrTOFNegCorr[icent][ieta]  = new TH2F(hName2DallPrTOFNegCorr[icent][ieta] ,hName2DallPrTOFNegCorr[icent][ieta]  ,ptNbins,ptotMin,ptotMax,dEdxNbins,dEdxMin,dEdxMax);
-      //
-      h2DallKaTOFCorr[icent][ieta]=NULL;      h2DallKaTOFPosCorr[icent][ieta]=NULL;      h2DallKaTOFNegCorr[icent][ieta]=NULL;
-      hName2DallKaTOFCorr[icent][ieta]   =Form("h2DallKaTOFCorr_%s"   ,centEtaStr.Data());
-      hName2DallKaTOFPosCorr[icent][ieta]=Form("h2DallKaTOFPosCorr_%s",centEtaStr.Data());
-      hName2DallKaTOFNegCorr[icent][ieta]=Form("h2DallKaTOFNegCorr_%s",centEtaStr.Data());
-      h2DallKaTOFCorr[icent][ieta]     = new TH2F(hName2DallKaTOFCorr[icent][ieta]    ,hName2DallKaTOFCorr[icent][ieta]     ,ptNbins,ptotMin,ptotMax,dEdxNbins,dEdxMin,dEdxMax);
-      h2DallKaTOFPosCorr[icent][ieta]  = new TH2F(hName2DallKaTOFPosCorr[icent][ieta] ,hName2DallKaTOFPosCorr[icent][ieta]  ,ptNbins,ptotMin,ptotMax,dEdxNbins,dEdxMin,dEdxMax);
-      h2DallKaTOFNegCorr[icent][ieta]  = new TH2F(hName2DallKaTOFNegCorr[icent][ieta] ,hName2DallKaTOFNegCorr[icent][ieta]  ,ptNbins,ptotMin,ptotMax,dEdxNbins,dEdxMin,dEdxMax);
-        //
-      h2DCleanPiKineCutCorr[icent][ieta]=NULL;      h2DCleanPrKineCutCorr[icent][ieta]=NULL;      h2DCleanElKineCutCorr[icent][ieta]=NULL;
-      hName2DCleanPiKineCutCorr[icent][ieta]   =Form("h2DCleanPi_KineCutCorr_%s" ,centEtaStr.Data());
-      hName2DCleanPrKineCutCorr[icent][ieta]   =Form("h2DCleanPr_KineCutCorr_%s" ,centEtaStr.Data());
-      hName2DCleanElKineCutCorr[icent][ieta]   =Form("h2DCleanEl_KineCutCorr_%s" ,centEtaStr.Data());
-      h2DCleanPiKineCutCorr[icent][ieta]  = new TH2F(hName2DCleanPiKineCutCorr[icent][ieta] ,hName2DCleanPiKineCutCorr[icent][ieta]  ,ptNbins,ptotMin,ptotMax,dEdxNbins,dEdxMin,dEdxMax);
-      h2DCleanPrKineCutCorr[icent][ieta]  = new TH2F(hName2DCleanPrKineCutCorr[icent][ieta] ,hName2DCleanPrKineCutCorr[icent][ieta]  ,ptNbins,ptotMin,ptotMax,dEdxNbins,dEdxMin,dEdxMax);
-      h2DCleanElKineCutCorr[icent][ieta]  = new TH2F(hName2DCleanElKineCutCorr[icent][ieta] ,hName2DCleanElKineCutCorr[icent][ieta]  ,ptNbins,ptotMin,ptotMax,dEdxNbins,dEdxMin,dEdxMax);
-      //
-      h2DCleanKaTOFTRDCorr[icent][ieta]=NULL;  h2DCleanKaBayesCorr[icent][ieta]=NULL;  h2DCleanPiTightCorr[icent][ieta]=NULL;  h2DCleanPiTOFCorr[icent][ieta]=NULL;
-      hName2DCleanKaTOFTRDCorr[icent][ieta] = Form("h2DCleanKa_TOFTRDCorr_%s"   ,centEtaStr.Data());
-      hName2DCleanKaBayesCorr[icent][ieta] = Form("h2DCleanKa_BayesCorr_%s"   ,centEtaStr.Data());
-      hName2DCleanPiTightCorr[icent][ieta] = Form("h2DCleanPi_TightCorr_%s"   ,centEtaStr.Data());
-      hName2DCleanPiTOFCorr[icent][ieta] = Form("h2DCleanPi_TOFCorr_%s"   ,centEtaStr.Data());
-      h2DCleanKaTOFTRDCorr[icent][ieta]     = new TH2F(hName2DCleanKaTOFTRDCorr[icent][ieta],hName2DCleanKaTOFTRDCorr[icent][ieta]  ,ptNbins,ptotMin,ptotMax,dEdxNbins,dEdxMin,dEdxMax);
-      h2DCleanKaBayesCorr[icent][ieta]     = new TH2F(hName2DCleanKaBayesCorr[icent][ieta],hName2DCleanKaBayesCorr[icent][ieta]  ,ptNbins,ptotMin,ptotMax,dEdxNbins,dEdxMin,dEdxMax);
-      h2DCleanPiTightCorr[icent][ieta]     = new TH2F(hName2DCleanPiTightCorr[icent][ieta],hName2DCleanPiTightCorr[icent][ieta]  ,ptNbins,ptotMin,ptotMax,dEdxNbins,dEdxMin,dEdxMax);
-      h2DCleanPiTOFCorr[icent][ieta]     = new TH2F(hName2DCleanPiTOFCorr[icent][ieta],hName2DCleanPiTOFCorr[icent][ieta]  ,ptNbins,ptotMin,ptotMax,dEdxNbins,dEdxMin,dEdxMax);
-      //
-      for (Int_t ipart=0; ipart<nParticles; ipart++)
-      {
-        h2DCleanCorr[ipart][icent][ieta]=NULL;
-        hName2DCleanCorr[ipart][icent][ieta] = Form("h2DClean%sCorr_%s", parName[ipart].Data(), centEtaStr.Data());
-        h2DCleanCorr[ipart][icent][ieta]     = new TH2F(hName2DCleanCorr[ipart][icent][ieta],hName2DCleanCorr[ipart][icent][ieta]  ,ptNbins,ptotMin,ptotMax,dEdxNbins,dEdxMin,dEdxMax);
-      }
-
-
     }
   }
   //
@@ -1645,67 +1398,31 @@ Bool_t ApplyTreeSelection(Int_t syst, UInt_t cutBit)
 {
 
   /*
-  kNCrossedRowsTPC60=0,
-  kNCrossedRowsTPC80=1,
-  kNCrossedRowsTPC100=2,
-  kMaxChi2PerClusterTPCSmall=3,
-  kMaxChi2PerClusterTPC=4,
-  kMaxChi2PerClusterTPCLarge=5,
-  kMaxDCAToVertexXYPtDepSmall=6,
-  kMaxDCAToVertexXYPtDep=7,
-  kMaxDCAToVertexXYPtDepLarge=8,
-  kVertexZSmall=9,
-  kVertexZ=10,
-  kVertexZLarge=11,
-  kEventVertexZSmall=12,
-  kEventVertexZ=13,
-  kEventVertexZLarge=14,
-  kRequireITSRefit=15,
-  kPixelRequirementITS=16,
-  kNewITSCut=17,
-  kActiveZoneSmall=18,
-  kActiveZone=19,
-  kActiveZoneLarge=20,
-  kTPCSignalNSmall=21,
-  kTPCSignalN=22,
-  kTPCSignalNLarge=23,
-  kCleanPrTOF=24,
-  kCleanKaTOF=25,
-  kCleanKaTOFTRD=26,
-  kTrackProbKaTOF=27,
-  kTrackProbPrTOF=28,
-  kCleanDeTOF=29,
-  kEventVertexZALICE=30,
-  kEventVertexZALICETight=31,
-  */
-
-  /*
-  kCutReference=0,
-  kCutCrossedRowsTPC60=1,
-  kCutCrossedRowsTPC100=2,
-  kCutMaxChi2PerClusterTPCSmall=3,
-  kCutMaxChi2PerClusterTPCLarge=4,
-  kCutMaxDCAToVertexXYPtDepSmall=5,
-  kCutMaxDCAToVertexXYPtDepLarge=6,
-  kCutVertexZSmall=7,
-  kCutVertexZLarge=8,
-  kCutEventVertexZSmall=9,
-  kCutEventVertexZLarge=10,
-  kCutRequireITSRefit=11,
-  kCutNewITSCut=12,
-  kCutPixelRequirementITS=13,
-  //
+  syst:
+  0 -->  Reference
+  1 -->  CRows60
+  2 -->  CRows100
+  3 -->  Chi2TPCDmall
+  4 -->  Chi2TPCLarge
+  5 -->  DCAXYSmall
+  6 -->  DCAXYLarge
+  7 -->  VZSmall
+  8 -->  VZLarge
+  9 -->  EventVertexZSmall
+  10 --> EventVertexZLarge
+  11 --> RequireITSRefit
+  12 --> NewITSCut
+  13 --> PixelRequirementITS
   // extra settings
+  14 --> kTPCSignalN,
+  15 --> kActiveZone,
+  16 --> kTPCSignalN+kActiveZone,
+  17 --> kTPCSignalNSmall+kActiveZoneSmall,
+  18 --> kTPCSignalNLarge,kActiveZoneLarge,
   //
-  kCutTPCSignalN=14,
-  kCutActiveZone=15,
-  kCutTPCSignalNActiveZone=16,
-  kCutTPCSignalNSmallActiveZoneSmall=17,
-  kCutTPCSignalNLargeActiveZoneLarge=18,
-  kCutEventVertexZALICE=19,
-  kCutEventVertexZALICETight=20,
+  19 --> kTPCSignalNLarge,kActiveZoneLarge,
+  20 --> kTPCSignalNLarge,kActiveZoneLarge,
   */
-
   std::vector<Int_t> fCutArr;
 
   switch(syst) {
@@ -1822,8 +1539,8 @@ Bool_t ApplyTreeSelection(Int_t syst, UInt_t cutBit)
   //
   //  Apply conditions
   Bool_t cutAll = kTRUE;
-  for (Bool_t cut : fCutArr) {
-    if (!cut) {
+  for (Int_t cut : fCutArr) {
+    if ( (cutBit & (1 << cut)) == kFALSE ) {
       cutAll = kFALSE;
       break;
     }
@@ -1914,39 +1631,6 @@ void WriteHistsToFile()
       }
     }
   }
-
-
-  histStreamCorr->GetFile()->cd();
-  for (Int_t icent=0; icent<nCentBins; icent++){
-    for (Int_t ieta=0; ieta<nEtaBins; ieta++){
-      //
-      if (testIntegratedHist && ieta>0) continue;
-      //
-      if(h2DallCorr[icent][ieta])  h2DallCorr[icent][ieta]->Write();
-      if(h2DposCorr[icent][ieta])  h2DposCorr[icent][ieta]->Write();
-      if(h2DnegCorr[icent][ieta])  h2DnegCorr[icent][ieta]->Write();
-      //
-      if(h2DallPrTOFCorr[icent][ieta])     h2DallPrTOFCorr[icent][ieta]->Write();
-      if(h2DallPrTOFPosCorr[icent][ieta])  h2DallPrTOFPosCorr[icent][ieta]->Write();
-      if(h2DallPrTOFNegCorr[icent][ieta])  h2DallPrTOFNegCorr[icent][ieta]->Write();
-      if(h2DallKaTOFCorr[icent][ieta])     h2DallKaTOFCorr[icent][ieta]->Write();
-      if(h2DallKaTOFPosCorr[icent][ieta])  h2DallKaTOFPosCorr[icent][ieta]->Write();
-      if(h2DallKaTOFNegCorr[icent][ieta])  h2DallKaTOFNegCorr[icent][ieta]->Write();
-      //
-      if(h2DCleanPiKineCutCorr[icent][ieta]) h2DCleanPiKineCutCorr[icent][ieta]->Write();
-      if(h2DCleanPrKineCutCorr[icent][ieta]) h2DCleanPrKineCutCorr[icent][ieta]->Write();
-      if(h2DCleanElKineCutCorr[icent][ieta]) h2DCleanElKineCutCorr[icent][ieta]->Write();
-      //
-      if(h2DCleanKaTOFTRDCorr[icent][ieta]) h2DCleanKaTOFTRDCorr[icent][ieta]->Write();
-      if(h2DCleanKaBayesCorr[icent][ieta])  h2DCleanKaBayesCorr[icent][ieta]->Write();
-      if(h2DCleanPiTightCorr[icent][ieta])  h2DCleanPiTightCorr[icent][ieta]->Write();
-      if(h2DCleanPiTOFCorr[icent][ieta])    h2DCleanPiTOFCorr[icent][ieta]->Write();
-      //
-      for (Int_t ipart=0; ipart<nParticles; ipart++){
-        if(h2DCleanCorr[ipart][icent][ieta]) h2DCleanCorr[ipart][icent][ieta]->Write();
-      }
-    }
-  }
   //
   debugStream->GetFile()->cd();
   if(hevents_secMultITS0_primMultITS)  hevents_secMultITS0_primMultITS  ->Write();
@@ -1960,7 +1644,6 @@ void WriteHistsToFile()
   //
   if(hevents_V0M_CL0)               hevents_V0M_CL0  ->Write();
   if(hevents_V0M_CL0_After)         hevents_V0M_CL0_After  ->Write();
-  if(htracks_shiftM_nPileUpPrim)    htracks_shiftM_nPileUpPrim  ->Write();
   if(hevents_pileUpV01D)            hevents_pileUpV01D  ->Write();
   if(hevents_pileUpITS1D)           hevents_pileUpITS1D  ->Write();
   if(hevents_ITSTPCeff)             hevents_ITSTPCeff  ->Write();
@@ -2122,7 +1805,6 @@ void SetBranchAddresses()
     eventtree->SetBranchAddress("tpcVertexInfo."      ,&fevents_tpcVertexInfo);
     eventtree->SetBranchAddress("itsVertexInfo."      ,&fevents_itsVertexInfo);
 
-    eventtree->SetAlias("shiftM"       ,"0.5*(tpcVertexInfo.fElements[1]+tpcVertexInfo.fElements[0])");
     eventtree->SetAlias("nPileUpPrim"  ,"(tpcVertexInfo.fElements[3]+tpcVertexInfo.fElements[4])");
   }
 
@@ -2144,20 +1826,6 @@ void SetBranchAddresses()
     highPttree->SetBranchAddress("fileName."       ,&fhighPt_fileName);
     highPttree->SetBranchAddress("vtxESD."         ,&fhighPt_vtxESD);
   }
-  //
-  // "downscaleCounter="<<downscaleCounter<<
-  // "fLowPtTrackDownscaligF="<<fLowPtTrackDownscaligF<<
-  // "selectionPtMask="<<selectionPtMask<<          // high pt trigger mask
-  // "selectionPIDMask="<<selectionPIDMask<<         // selection PIDmask
-  //
-  // Initialize Map
-  fdEdxMap   = TFile::Open(dEdxMapStr);
-  hdEdxAShifttMNTglDist_meanGFitAll      = (AliNDLocalRegression*)fdEdxMap->Get("hdEdxAShifttMNTglDist_meanGFitA");
-  hdEdxAShifttMNTglDist_meanGFitNoPileUp = (AliNDLocalRegression*)fdEdxMap->Get("hdEdxAShifttMNTglDist_meanGFit0");
-  //
-  // This is needed in case you want to use it in TF1 or TTreeFormula
-  AliNDLocalRegression::AddVisualCorrection(hdEdxAShifttMNTglDist_meanGFitAll,2); //register correction - 4 parameters
-  AliNDLocalRegression::AddVisualCorrection(hdEdxAShifttMNTglDist_meanGFitNoPileUp,1); //register correction - 2 parameters
 
 }
 //____________________________________________________________________________________________________________
@@ -2168,7 +1836,7 @@ void PlotTimeSeriesPerSector(TString performanceEventList)
   /*
 
 
-  .L /home/marsland/Desktop/ubuntu_desktop/workdir/code/RealData_FilterTreesMakeHists.C+
+  .L /home/marsland/Desktop/ubuntu_desktop/workdir/RUN_ON_GRID/Ebye/code/RealData_FilterTreesMakeHists_Run2.C+
   TString file15o0="/lustre/nyx/alice/users/marsland/Maps/dEdxCorrection_PileUp/timeSeries_15o_246272.list"
   TString file15o="/lustre/nyx/alice/users/marsland/Maps/dEdxCorrection_PileUp/timeSeries_15o.list"
   TString file18q="/lustre/nyx/alice/users/marsland/Maps/dEdxCorrection_PileUp/timeSeries_18q.list"
@@ -2202,93 +1870,6 @@ void PlotTimeSeriesPerSector(TString performanceEventList)
   canvas->cd(2);
   treeTimeAll->Draw("hisTimeEffITSDist.binMedian:T","hisTimeEffITSDist.binMedian>0.5");
 
-
-}
-//____________________________________________________________________________________________________________
-void PlotTimeSeriesFullPeriod(TString performanceEventList)
-{
-
-  /*
-
-
-  .L /home/marsland/Desktop/ubuntu_desktop/workdir/code/RealData_FilterTreesMakeHists.C+
-  TString file15o0="/lustre/nyx/alice/users/marsland/Maps/dEdxCorrection_PileUp/timeSeries_15o_246272.list"
-  TString file15o="/lustre/nyx/alice/users/marsland/Maps/dEdxCorrection_PileUp/timeSeries_15o.list"
-  TString file18q="/lustre/nyx/alice/users/marsland/Maps/dEdxCorrection_PileUp/timeSeries_18q.list"
-  TString file18r="/lustre/nyx/alice/users/marsland/Maps/dEdxCorrection_PileUp/timeSeries_18r.list"
-  PlotTimeSeriesFullPeriod(file18q);
-
-
-  */
-
-  TString file15o="/lustre/nyx/alice/users/marsland/Maps/dEdxCorrection_PileUp/timeSeries_15o.list";
-  TString file18q="/lustre/nyx/alice/users/marsland/Maps/dEdxCorrection_PileUp/timeSeries_18q.list";
-  TString file18r="/lustre/nyx/alice/users/marsland/Maps/dEdxCorrection_PileUp/timeSeries_18r.list";
-
-  TChain *chain15o = AliXRDPROOFtoolkit::MakeChainRandom(file15o,"hisTimeEffITSDist",0,1000);
-  Double_t entries0  =  chain15o->Draw("binMedian>>hisEff(300,0.5,1)","binMedian>0.5","");
-
-  TChain *chain18q = AliXRDPROOFtoolkit::MakeChainRandom(file18q,"hisTimeEffITSDist",0,1000);
-  Double_t entries1  =  chain18q->Draw("binMedian>>hisEff(300,0.5,1)","binMedian>0.5","");
-
-  TChain *chain18r = AliXRDPROOFtoolkit::MakeChainRandom(file18r,"hisTimeEffITSDist",0,1000);
-  Double_t entries2  =  chain18r->Draw("binMedian>>hisEff(300,0.5,1)","binMedian>0.5","");
-
-  TString dEdxMapStr = "/lustre/nyx/alice/users/marsland/Maps/dEdxCorrection_PileUp/lustre/nyx/alice/users/miranov/NOTESData/alice-tpc-notes/JIRA/PWGPP-538/alice/data/2015/LHC15o/pass1/dEdxFit.root";
-  TFile *dEdxMap = TFile::Open(dEdxMapStr);
-  AliNDLocalRegression *hdEdxAShifttMNTglDist_meanGFitAll      = hdEdxAShifttMNTglDist_meanGFitAll      = (AliNDLocalRegression*)dEdxMap->Get("hdEdxAShifttMNTglDist_meanGFitA");
-  AliNDLocalRegression *hdEdxAShifttMNTglDist_meanGFitNoPileUp = hdEdxAShifttMNTglDist_meanGFitNoPileUp = (AliNDLocalRegression*)dEdxMap->Get("hdEdxAShifttMNTglDist_meanGFit0");
-  AliNDLocalRegression::AddVisualCorrection(hdEdxAShifttMNTglDist_meanGFitAll,2); //register correction - 4 parameters
-  AliNDLocalRegression::AddVisualCorrection(hdEdxAShifttMNTglDist_meanGFitNoPileUp,1); //register correction - 2 parameters
-  //
-  TF2* f2DdEdxCorrMap     = new TF2("f2DdEdxCorrMap"    ,"AliNDLocalRegression::GetCorrND(2,x,y,0,0)"   ,-100,100,0,6000); // x: pileupvZ, y: pileUpMult, z:primary mult: t:pZ/pt
-  TF1* f1DdEdxCorrMap500  = new TF1("f1DdEdxCorrMap500" ,"AliNDLocalRegression::GetCorrND(2,x,500,0,0)",-100,100);
-  TF1* f1DdEdxCorrMap1000 = new TF1("f1DdEdxCorrMap1000","AliNDLocalRegression::GetCorrND(2,x,1000,0,0)",-100,100);
-  TF1* f1DdEdxCorrMap2000 = new TF1("f1DdEdxCorrMap2000","AliNDLocalRegression::GetCorrND(2,x,2000,0,0)",-100,100);
-  TF1* f1DdEdxCorrMap4000 = new TF1("f1DdEdxCorrMap4000","AliNDLocalRegression::GetCorrND(2,x,4000,0,0)",-100,100);
-  TF1* f1DdEdxCorrMap6000 = new TF1("f1DdEdxCorrMap6000","AliNDLocalRegression::GetCorrND(2,x,6000,0,0)",-100,100);
-  const Int_t color[] = {kBlack, kRed+1 , kBlue+1, kGreen+3, kMagenta+1, kOrange-1,kCyan+2,kYellow+2, kRed, kGreen};
-  f1DdEdxCorrMap500  -> SetLineColor(color[0]);
-  f1DdEdxCorrMap1000 -> SetLineColor(color[1]);
-  f1DdEdxCorrMap2000 -> SetLineColor(color[2]);
-  f1DdEdxCorrMap4000 -> SetLineColor(color[3]);
-  f1DdEdxCorrMap6000 -> SetLineColor(color[4]);
-  //
-  f1DdEdxCorrMap500  -> SetLineWidth(2);
-  f1DdEdxCorrMap1000 -> SetLineWidth(2);
-  f1DdEdxCorrMap2000 -> SetLineWidth(2);
-  f1DdEdxCorrMap4000 -> SetLineWidth(2);
-  f1DdEdxCorrMap6000 -> SetLineWidth(2);
-
-  TF2 *f2D = (TF2*)f2DdEdxCorrMap->Clone();
-  TF1 *f0 = (TF1*)f1DdEdxCorrMap500->Clone();
-  TF1 *f1 = (TF1*)f1DdEdxCorrMap1000->Clone();
-  TF1 *f2 = (TF1*)f1DdEdxCorrMap2000->Clone();
-  TF1 *f3 = (TF1*)f1DdEdxCorrMap4000->Clone();
-  TF1 *f4 = (TF1*)f1DdEdxCorrMap6000->Clone();
-
-  //
-  // TCanvas *canvas = new TCanvas("canvas","canvas",1200,700);
-  // canvas->cd();
-  // f2DdEdxCorrMap->Draw("colz");
-  // TCanvas *canvas1 = new TCanvas("canvas1","canvas1",1200,700);
-  // canvas1->cd();
-  // f1DdEdxCorrMap6000->Draw();
-  // f1DdEdxCorrMap500->Draw("same");
-  // f1DdEdxCorrMap1000->Draw("same");
-  // f1DdEdxCorrMap2000->Draw("same");
-  // f1DdEdxCorrMap4000->Draw("same");
-  //
-
-  TTreeSRedirector *maps12D = new TTreeSRedirector("maps12D.root","recreate");
-  maps12D->GetFile()->cd();
-  f2D->Write();
-  f0->Write();
-  f1->Write();
-  f2->Write();
-  f3->Write();
-  f4->Write();
-  delete maps12D;
 
 }
 //____________________________________________________________________________________________________________
