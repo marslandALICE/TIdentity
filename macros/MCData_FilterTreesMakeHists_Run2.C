@@ -420,8 +420,8 @@ void ProcessDataHists()
       //
       //
       // Fill final histograms
-      if ( fSystSet==21 && TMath::Abs(ffTreeMC_dcaxy) > 3.2 ) continue;
-      if ( fSystSet==21 && TMath::Abs(ffTreeMC_dcaz)  > 2.4 ) continue;
+      // if ( fSystSet==21 && TMath::Abs(ffTreeMC_dcaxy) > 3.2 ) continue;
+      // if ( fSystSet==21 && TMath::Abs(ffTreeMC_dcaz)  > 2.4 ) continue;
       htracks_dcaxy1D  ->Fill(ffTreeMC_dcaxy);
       htracks_dcaz1D   ->Fill(ffTreeMC_dcaz);
       htracks_ncltpc1D ->Fill(ffTreeMC_ncltpc);
@@ -626,28 +626,22 @@ Bool_t ApplyTreeSelection(Int_t syst, UInt_t cutBit)
   /*
   syst:
   0 -->  Reference
-  1 -->  CRows60
-  2 -->  CRows100
-  3 -->  Chi2TPCDmall
-  4 -->  Chi2TPCLarge
-  5 -->  DCAXYSmall
-  6 -->  DCAXYLarge
-  7 -->  VZSmall
-  8 -->  VZLarge
-  9 -->  EventVertexZSmall
-  10 --> EventVertexZLarge
-  11 --> RequireITSRefit
-  12 --> NewITSCut
-  13 --> PixelRequirementITS
-  // extra settings
-  14 --> kTPCSignalN,
-  15 --> kActiveZone,
-  16 --> kTPCSignalN+kActiveZone,
-  17 --> kTPCSignalNSmall+kActiveZoneSmall,
-  18 --> kTPCSignalNLarge,kActiveZoneLarge,
-  //
-  19 --> kTPCSignalNLarge,kActiveZoneLarge,
-  20 --> kTPCSignalNLarge,kActiveZoneLarge,
+  1 -->  kNCrossedRowsTPC70
+  2 -->  kNCrossedRowsTPC90
+  3 -->  kActiveZone
+  4 -->  kMaxChi2PerClusterTPCSmall
+  5 -->  kMaxChi2PerClusterTPCLarge
+  6 -->  kMaxDCAToVertexXYPtDepLarge
+  7 -->  kVertexZSmall
+  8 -->  kEventVertexZLarge
+  9 -->  kSharedClsLoose
+  10 --> kFindableClsLoose
+  11 --> kFindableClsLoosest
+  12 --> kPileupLoose
+  13 --> kBFieldPos
+  13 --> kBFieldNeg
+  13 --> kTPCSignalNSmall
+  13 --> kTPCSignalNLarge
   */
 
 std::vector<Int_t> fCutArr;
@@ -971,7 +965,7 @@ void PrepareEffMatrix(TString matrixFile, Int_t detectorCom, Int_t systSetting, 
 
   */
   fSystSet = systSetting;
-  if (systSetting>20) fSystSet=0;
+  if (systSetting>16) fSystSet=0;
 
   gStyle->SetPadRightMargin(0.15);
   gROOT->ProcessLine(".x ~/bin/color.C");
