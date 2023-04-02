@@ -62,6 +62,7 @@ void effMatrix1D(Int_t effType,Int_t pid, Int_t cent);
 void effMatrix2D(Int_t pid, Int_t cent);
 void MeanEffInAcceptance(Int_t pid);
 void ModifyEffMatrix(THnF *hnF);
+void FillQAHistograms(Bool_t beforeCuts = kTRUE);
 
 // ======= Modification part =======
 const Int_t colors[] = {kBlack, kRed+1 , kBlue+1, kGreen+3, kMagenta+1, kOrange-1,kCyan+2,kYellow+2, kRed, kGreen};
@@ -162,6 +163,13 @@ Float_t ffTreeMC_chi2tpc=0;
 Float_t ffTreeMC_phi=0;
 Float_t ffTreeMC_nsigmatofka=0;
 Float_t ffTreeMC_nsigmatofpr=0;
+UShort_t ffTreeMC_tpcFindableCls=0;
+UShort_t ffTreeMC_tpcSharedCls=0;
+Float_t ffTreeMC_lengthInActiveZone=0;
+Float_t ffTreeMC_tpcSignalN=0;
+Float_t ffTreeMC_bField=0;
+Int_t ffTreeMC_itsclmult=0;
+Int_t ffTreeMC_tpcclmult=0;
 //
 // evets tree variables
 Int_t fevents_run=0;
@@ -226,6 +234,26 @@ TH2F *hfTreeMC_ncltpc2D=NULL;
 TH2F *hfTreeMC_dcaxy2D_After=NULL;
 TH2F *hfTreeMC_dcaz2D_After=NULL;
 TH2F *hfTreeMC_ncltpc2D_After=NULL;
+//
+TH1F* hfTreeMC_cRows = nullptr;
+TH1F* hfTreeMC_activeZone = nullptr;
+TH1F* hfTreeMC_chi2tpc = nullptr;
+TH1F* hfTreeMC_vZ = nullptr;
+TH2F* hfTreeMC_sharedCls = nullptr;
+TH1F* hfTreeMC_findableCls = nullptr;
+TH2F* hfTreeMC_pileup = nullptr;
+TH1F* hfTreeMC_bField = nullptr;
+TH1F* hfTreeMC_tpcSignalN = nullptr;
+//
+TH1F* hfTreeMC_cRows_After = nullptr;
+TH1F* hfTreeMC_activeZone_After = nullptr;
+TH1F* hfTreeMC_chi2tpc_After = nullptr;
+TH1F* hfTreeMC_vZ_After = nullptr;
+TH2F* hfTreeMC_sharedCls_After = nullptr;
+TH1F* hfTreeMC_findableCls_After = nullptr;
+TH2F* hfTreeMC_pileup_After = nullptr;
+TH1F* hfTreeMC_bField_After = nullptr;
+TH1F* hfTreeMC_tpcSignalN_After = nullptr;
 //
 TH1F *htracks_dcaxy1D=NULL;
 TH1F *htracks_dcaz1D=NULL;
@@ -400,9 +428,9 @@ void ProcessDataHists()
     if (acceptEvent<0) continue;
     //
     // dump some debug histogram
-    if (ffTreeMC_dcaxy>-10 && ffTreeMC_dcaxy<10)   hfTreeMC_dcaxy2D ->Fill(ffTreeMC_pT,ffTreeMC_dcaxy);
-    if (ffTreeMC_dcaz>-10  && ffTreeMC_dcaz<10)    hfTreeMC_dcaz2D  ->Fill(ffTreeMC_pT,ffTreeMC_dcaz);
-    if (ffTreeMC_ncltpc>30 && ffTreeMC_ncltpc<170) hfTreeMC_ncltpc2D->Fill(ffTreeMC_pT,Float_t(ffTreeMC_ncltpc));
+    // if (ffTreeMC_dcaxy>-10 && ffTreeMC_dcaxy<10)   hfTreeMC_dcaxy2D ->Fill(ffTreeMC_pT,ffTreeMC_dcaxy);
+    // if (ffTreeMC_dcaz>-10  && ffTreeMC_dcaz<10)    hfTreeMC_dcaz2D  ->Fill(ffTreeMC_pT,ffTreeMC_dcaz);
+    // if (ffTreeMC_ncltpc>30 && ffTreeMC_ncltpc<170) hfTreeMC_ncltpc2D->Fill(ffTreeMC_pT,Float_t(ffTreeMC_ncltpc));
     //
     // Retrieve cut setting
     Bool_t systCut = ApplyTreeSelection(fSystSet, ffTreeMC_cutBit);
@@ -415,8 +443,11 @@ void ProcessDataHists()
     Bool_t originCut = (fTrackOrigin) ? (ffTreeMC_origin==0) : (ffTreeMC_origin>-1);
     Bool_t pileupCut = (fPileUpSet) ? kTRUE : (ffTreeMC_itspileup==0 && ffTreeMC_tpcpileup==0);
     //
+    FillQAHistograms(kTRUE);
+    //
     // dump tidentree
     if (systCut && etaAcc && momAcc && dcaCut && originCut && pileupCut){
+      FillQAHistograms(kFALSE);
       //
       //
       // Fill final histograms
@@ -546,7 +577,26 @@ void InitInitials()
   hfTreeMC_dcaxy2D_After        = new TH2F("hfTreeMC_dcaxy2D_After" ,"hfTreeMC_dcaxy2D_After"  ,ptNbins,ptotMin,ptotMax, 400 ,-10., 10. );
   hfTreeMC_dcaz2D_After         = new TH2F("hfTreeMC_dcaz2D_After"  ,"hfTreeMC_dcaz2D_After"   ,ptNbins,ptotMin,ptotMax, 400 ,-10., 10. );
   hfTreeMC_ncltpc2D_After       = new TH2F("hfTreeMC_ncltpc2D_After","hfTreeMC_ncltpc2D_After" ,ptNbins,ptotMin,ptotMax, 140 , 30., 170.);
-
+  //
+  hfTreeMC_cRows             = new TH1F("hfTreeMC_cRows", "hfTreeMC_cRows", 160, 0, 160.);
+  hfTreeMC_activeZone        = new TH1F("hfTreeMC_activeZone", "hfTreeMC_activeZone", 160, 0, 160.);
+  hfTreeMC_chi2tpc           = new TH1F("hfTreeMC_chi2tpc", "hfTreeMC_chi2tpc", 100, 0, 10.);
+  hfTreeMC_vZ                = new TH1F("hfTreeMC_vZ", "hfTreeMC_vZ", 100, -10, 10.);
+  hfTreeMC_sharedCls         = new TH2F("hfTreeMC_sharedCls", "hfTreeMC_sharedCls", 150, 0, 1.5, 150, 0, 1.5);
+  hfTreeMC_findableCls       = new TH1F("hfTreeMC_findableCls", "hfTreeMC_findableCls", 150, 0, 1.5);
+  hfTreeMC_pileup            = new TH2F("hfTreeMC_pileup", "hfTreeMC_pileup", 100, 0, 7e6, 100, 0, 4e5);
+  hfTreeMC_bField            = new TH1F("hfTreeMC_bField", "hfTreeMC_bField", 120, -6, 6);
+  hfTreeMC_tpcSignalN        = new TH1F("hfTreeMC_tpcSignalN", "hfTreeMC_tpcSignalN", 160, 0, 160.);
+  //
+  hfTreeMC_cRows_After       = new TH1F("hfTreeMC_cRows_After", "hfTreeMC_cRows_After", 160, 0, 160.);
+  hfTreeMC_activeZone_After  = new TH1F("hfTreeMC_activeZone_After", "hfTreeMC_activeZone_After", 160, 0, 160.);
+  hfTreeMC_chi2tpc_After     = new TH1F("hfTreeMC_chi2tpc_After", "hfTreeMC_chi2tpc_After", 100, 0, 10.);
+  hfTreeMC_vZ_After          = new TH1F("hfTreeMC_vZ_After", "hfTreeMC_vZ_After", 100, -10, 10.);
+  hfTreeMC_sharedCls_After   = new TH2F("hfTreeMC_sharedCls_After", "hfTreeMC_sharedCls_After", 150, 0, 1.5, 150, 0, 1.5);
+  hfTreeMC_findableCls_After = new TH1F("hfTreeMC_findableCls_After", "hfTreeMC_findableCls_After", 150, 0, 1.5);
+  hfTreeMC_pileup_After      = new TH2F("hfTreeMC_pileup_After", "hfTreeMC_pileup_After", 150, 0, 1.5, 150, 0, 1.5);
+  hfTreeMC_bField_After      = new TH1F("hfTreeMC_bField_After", "hfTreeMC_bField_After", 120, -6, 6);
+  hfTreeMC_tpcSignalN_After  = new TH1F("hfTreeMC_tpcSignalN_After", "hfTreeMC_tpcSignalN_After", 160, 0, 160.);
 
   htracks_dcaxy1D             = new TH1F("htracks_dcaxy1D"                     ,"htracks_dcaxy1D"   ,1600 ,-4., 4. );
   htracks_dcaz1D              = new TH1F("htracks_dcaz1D"                      ,"htracks_dcaz1D"    ,1600 ,-4., 4. );
@@ -848,6 +898,26 @@ void WriteHistsToFile()
   if(hfTreeMC_dcaz2D_After)    hfTreeMC_dcaz2D_After   ->Write();
   if(hfTreeMC_ncltpc2D_After)  hfTreeMC_ncltpc2D_After ->Write();
   //
+  if (hfTreeMC_cRows) hfTreeMC_cRows->Write();
+  if (hfTreeMC_activeZone) hfTreeMC_activeZone->Write();
+  if (hfTreeMC_chi2tpc) hfTreeMC_chi2tpc->Write();
+  if (hfTreeMC_vZ) hfTreeMC_vZ->Write();
+  if (hfTreeMC_sharedCls) hfTreeMC_sharedCls->Write();
+  if (hfTreeMC_findableCls) hfTreeMC_findableCls->Write();
+  if (hfTreeMC_pileup) hfTreeMC_pileup->Write();
+  if (hfTreeMC_bField) hfTreeMC_bField->Write();
+  if (hfTreeMC_tpcSignalN) hfTreeMC_tpcSignalN->Write();
+  //
+  if (hfTreeMC_cRows_After) hfTreeMC_cRows_After->Write();
+  if (hfTreeMC_activeZone_After) hfTreeMC_activeZone_After->Write();
+  if (hfTreeMC_chi2tpc_After) hfTreeMC_chi2tpc_After->Write();
+  if (hfTreeMC_vZ_After) hfTreeMC_vZ_After->Write();
+  if (hfTreeMC_sharedCls_After) hfTreeMC_sharedCls_After->Write();
+  if (hfTreeMC_findableCls_After) hfTreeMC_findableCls_After->Write();
+  if (hfTreeMC_pileup_After) hfTreeMC_pileup_After->Write();
+  if (hfTreeMC_bField_After) hfTreeMC_bField_After->Write();
+  if (hfTreeMC_tpcSignalN_After) hfTreeMC_tpcSignalN_After->Write();
+  //
   if(htracks_dcaxy1D)    htracks_dcaxy1D  ->Write();
   if(htracks_dcaz1D)     htracks_dcaz1D   ->Write();
   if(htracks_ncltpc1D)   htracks_ncltpc1D ->Write();
@@ -928,6 +998,13 @@ void SetBranchAddresses()
     mctree->SetBranchAddress("phi"       ,&ffTreeMC_phi);
     mctree->SetBranchAddress("nsigmatofka"       ,&ffTreeMC_nsigmatofka);
     mctree->SetBranchAddress("nsigmatofpr"       ,&ffTreeMC_nsigmatofpr);
+    mctree->SetBranchAddress("tpcFindableCls"       ,&ffTreeMC_tpcFindableCls);
+    mctree->SetBranchAddress("tpcSharedCls"       ,&ffTreeMC_tpcSharedCls);
+    mctree->SetBranchAddress("lengthInActiveZone"       ,&ffTreeMC_lengthInActiveZone);
+    mctree->SetBranchAddress("tpcSignalN"       ,&ffTreeMC_tpcSignalN);
+    mctree->SetBranchAddress("bField"       ,&ffTreeMC_bField);
+    mctree->SetBranchAddress("itsclmult"       ,&ffTreeMC_itsclmult);
+    mctree->SetBranchAddress("tpcclmult"       ,&ffTreeMC_tpcclmult);
 
   }
 
@@ -1280,4 +1357,36 @@ void MeanEffInAcceptance(Int_t pid)
   h2CentEta[1][pid]->Write();
 
 
+}
+
+void FillQAHistograms(Bool_t beforeCuts = kTRUE) {
+  if (beforeCuts) {
+    hfTreeMC_cRows->Fill(ffTreeMC_cRows);
+    hfTreeMC_activeZone->Fill(ffTreeMC_lengthInActiveZone);
+    hfTreeMC_chi2tpc->Fill(ffTreeMC_chi2tpc);
+    hfTreeMC_dcaxy2D->Fill(ffTreeMC_pT, ffTreeMC_dcaxy);
+    hfTreeMC_dcaz2D->Fill(ffTreeMC_pT, ffTreeMC_dcaz);
+    hfTreeMC_vZ->Fill(ffTreeMC_vZ);
+    hfTreeMC_sharedCls->Fill(static_cast<Double_t>(ffTreeMC_tpcSharedCls) / ffTreeMC_ncltpc, static_cast<Double_t>(ffTreeMC_tpcSharedCls) / ffTreeMC_cRows);
+    hfTreeMC_findableCls->Fill(ffTreeMC_tpcFindableCls);
+    hfTreeMC_pileup->Fill(ffTreeMC_tpcclmult, ffTreeMC_itsclmult);
+    hfTreeMC_bField->Fill(ffTreeMC_bField);
+    hfTreeMC_tpcSignalN->Fill(ffTreeMC_tpcSignalN);
+
+    hfTreeMC_ncltpc2D->Fill(ffTreeMC_pT, ffTreeMC_ncltpc);
+  } else {
+    hfTreeMC_cRows_After->Fill(ffTreeMC_cRows);
+    hfTreeMC_activeZone_After->Fill(ffTreeMC_lengthInActiveZone);
+    hfTreeMC_chi2tpc_After->Fill(ffTreeMC_chi2tpc);
+    hfTreeMC_dcaxy2D_After->Fill(ffTreeMC_pT, ffTreeMC_dcaxy);
+    hfTreeMC_dcaz2D_After->Fill(ffTreeMC_pT, ffTreeMC_dcaz);
+    hfTreeMC_vZ_After->Fill(ffTreeMC_vZ);
+    hfTreeMC_sharedCls_After->Fill(static_cast<Double_t>(ffTreeMC_tpcSharedCls) / ffTreeMC_ncltpc, static_cast<Double_t>(ffTreeMC_tpcSharedCls) / ffTreeMC_cRows);
+    hfTreeMC_findableCls_After->Fill(ffTreeMC_tpcFindableCls);
+    hfTreeMC_pileup_After->Fill(ffTreeMC_tpcclmult, ffTreeMC_itsclmult);
+    hfTreeMC_bField_After->Fill(ffTreeMC_bField);
+    hfTreeMC_tpcSignalN_After->Fill(ffTreeMC_tpcSignalN);
+
+    hfTreeMC_ncltpc2D_After->Fill(ffTreeMC_pT, ffTreeMC_ncltpc);
+  }
 }
