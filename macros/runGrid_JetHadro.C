@@ -147,7 +147,7 @@ void runGrid_JetHadro(Bool_t fRunLocalFiles = kTRUE, Int_t valgrindOption = 0, T
   //
   // Filtered tree
   if (fAddFilteredTrees && isMC==0) {
-    //AliAnalysisTask *ana = AddTaskFilteredTreeLocal("",isMC);
+    AliAnalysisTask *ana = AddTaskFilteredTreeLocal("",isMC);
   }
   //
   // My task --> has to be compiled here instead of including
@@ -190,7 +190,7 @@ void runGrid_JetHadro(Bool_t fRunLocalFiles = kTRUE, Int_t valgrindOption = 0, T
         "/alice/data/2018/LHC18q/000296622/pass3/18000296622035.409/AliESDs.root", //5.02 TeV PbPb data //410
         "/alice/data/2018/LHC18q/000296622/pass3/18000296622035.410/AliESDs.root" //5.02 TeV PbPb data
         //"/alice/data/2017/LHC17p/000282008/pass1_FAST/17000282008038.211/AliESDs.root", //5.02 TeV pp data
-        //"/alice/data/2017/LHC17q/000282365/pass1_FAST/17000282365039.911/AliESDs.root " //5.02 TeV pp data
+        //"/alice/data/2017/LHC17q/000282365/pass1_FAST/17000282365039.911/AliESDs.root" //5.02 TeV pp data
       };
       for (int ifile =0; ifile<nTestFiles; ifile++) chain->AddFile(dataBaseDir+localFiles[ifile]);
     }

@@ -58,7 +58,8 @@ AliAnalysisJetHadro* Config_siweyhmi_JetHadro(Bool_t getFromAlien, Int_t setting
   AliEmcalJetTask *pKtChJetTask = AliEmcalJetTask::AddTaskEmcalJet("usedefault", "usedefault", AliJetContainer::kt_algorithm, 0.4, AliJetContainer::kChargedJet, 0.15, 0, 0.005, AliJetContainer::E_scheme, "Jet", 0., kFALSE, kFALSE);
   pKtChJetTask->SelectCollisionCandidates(kPhysSel);
   pKtChJetTask->SetUseNewCentralityEstimation(kTRUE);
-  pKtChJetTask->SetForceBeamType(AliAnalysisTaskEmcal::kAA);
+  if (year == 2017) {pKtChJetTask->SetForceBeamType(AliAnalysisTaskEmcal::kpp);}
+  if (year == 2018) {pKtChJetTask->SetForceBeamType(AliAnalysisTaskEmcal::kAA);}
   pKtChJetTask->SetNCentBins(5);
 
   //Rho task
@@ -66,7 +67,8 @@ AliAnalysisJetHadro* Config_siweyhmi_JetHadro(Bool_t getFromAlien, Int_t setting
   RhoTask->SelectCollisionCandidates(kPhysSel);
   RhoTask->SetExcludeLeadJets(2);
   RhoTask->SetUseNewCentralityEstimation(kTRUE);
-  RhoTask->SetForceBeamType(AliAnalysisTaskEmcal::kAA);
+  if (year == 2017) {RhoTask->SetForceBeamType(AliAnalysisTaskEmcal::kpp);}
+  if (year == 2018) {RhoTask->SetForceBeamType(AliAnalysisTaskEmcal::kAA);}
   RhoTask->SetNCentBins(5);
 
   RhoTask->RemoveJetContainer(0);
@@ -91,9 +93,12 @@ AliAnalysisJetHadro* Config_siweyhmi_JetHadro(Bool_t getFromAlien, Int_t setting
 
   jetCont02->SetJetRadius(0.4);
   jetCont02->SetName("detJets");
-  jetCont02->SetRhoName(sRhoName);
-  TString fRhoName = jetCont02->GetRhoName();
-  std::cout << " Rho Name is " << fRhoName << endl;
+  if (year != 2017) {
+    jetCont02->SetRhoName(sRhoName);
+    TString fRhoName = jetCont02->GetRhoName();
+    std::cout << " Rho Name is " << fRhoName << endl;
+  }
+
   jetCont02->PrintCuts();
 
   TTree *lookUpTree=NULL;
@@ -128,7 +133,6 @@ AliAnalysisJetHadro* Config_siweyhmi_JetHadro(Bool_t getFromAlien, Int_t setting
       task->SetJetMinPtSub(40.0);
       task->SetPercentageOfEvents(0); //sets so it saves 1 out of every n events inclusive = 400. Jets = 40 w/ 40 GeV min jet requirement
       //
-
     }
     break;
     case 1:{
@@ -357,6 +361,17 @@ AliAnalysisJetHadro* Config_siweyhmi_JetHadro(Bool_t getFromAlien, Int_t setting
       const Int_t tmpNresonances = 1;
       TString tmpResArr[tmpNresonances] = {"xxx"};
       task->SetMCResonanceArray(tmpNresonances,tmpResArr);
+
+      //
+      task->SetFillBGJetsFJTree(kFALSE);
+      task->SetFillFastJet(kFALSE);
+
+      //Set these in the wagon configuration CHANGE
+      task->SetFillIncTracks(kTRUE);
+      task->SetFillJetEMCConst(kTRUE);
+      task->SetJetMinPtSub(40.0);
+      task->SetPercentageOfEvents(0); //sets so it saves 1 out of every n events inclusive = 400. Jets = 40 w/ 40 GeV min jet requirement
+      //
     }
     break;
     case 61:{
