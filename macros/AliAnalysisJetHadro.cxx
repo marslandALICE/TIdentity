@@ -1694,12 +1694,22 @@ Bool_t AliAnalysisJetHadro::Run()
   //
   if (fMCtrue && fEffMatrix && fESD){
     // FillEffMatrix();
+    fhasAcceptedFJjet = 0;
+    fhasRealFJjet = 0;
+    fhasAcceptedEMCjet = 0;
+    fhasRealEMCjet = 0;
+    frhoFJ = -2.0;
+    fjetRhoVal = -2.0;
+
     FillMCFull_NetParticles();
     if (fFillArmPodTree) FillCleanSamples();
     if (fEventInfo) {CalculateEventInfo(); CreateEventInfoTree();}
     FindJetsFJGen();
     FindJetsEMC();
-    FindJetsFJ();
+    if (fFillFastJet){
+      FindJetsFJ();
+    }
+    FillEventTree();
     if (fUseCouts)  std::cout << " Info::siweyhmi: (full MC analysis) End of Filling part = " << fEventCountInFile << std::endl;
     return kTRUE;
   }
@@ -1726,7 +1736,7 @@ void AliAnalysisJetHadro::FindJetsEMC()
   TString fRhoName = fJetContainer->GetRhoName();
   if (fUseCouts) cout << "Rho Name is " << fRhoName << endl;
 
-  fjetRhoVal = -2.0;
+  fjetRhoVal = 0.0;
   if (fJetContainer->GetRhoParameter()) fjetRhoVal = fJetContainer->GetRhoVal();
   if (fUseCouts) cout << "In FindJetsEMC Rho value is " << fjetRhoVal << endl;
   //
