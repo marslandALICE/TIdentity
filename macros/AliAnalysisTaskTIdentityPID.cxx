@@ -2443,7 +2443,7 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
                 // ----------------------------   MC generated pure MC particles  --------------------------
                 // -----------------------------------------------------------------------------------------
                 //
-                if (iset == 0 && ipileup == 1){ // for Gen level MC no need to run all settings
+                if (iset == 0){ // for Gen level MC no need to run all settings
                   for (Int_t iTrack = 0; iTrack < fMCEvent->GetNumberOfTracks(); iTrack++)
                   {
                     // track loop
@@ -2490,27 +2490,29 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
                     Bool_t momAccMaxWindow = (ptotMCgen>=fMomDown && ptotMCgen<=fMomUp);
                     //
                     // Fill eff Matrix
-                    if (fEffMatrix && !fRunOnGrid && etaAccMaxWindow && momAccMaxWindow && ieta==0 && imom==0 && iorig==0 && ipileup==1){
+                    if (fEffMatrix && !fRunOnGrid && etaAccMaxWindow && momAccMaxWindow && ieta==0 && imom==0 && ipileup==1 && iset == 0){
                       //
                       // Eff matrix phi etc.
-                      if (iset==kCutReference){
+                      if (iset==kCutReference && bPrim && !fIsMCPileup){
                         Double_t xxxGen[5]={Float_t(iPart),fCentrality,ptotMCgen,etaMCgen,phiMCGen};
                         if (pdg>0) fHistPosEffMatrixGen->Fill(xxxGen);
                         if (pdg<0) fHistNegEffMatrixGen->Fill(xxxGen);
                       }
                       //
                       // systematic scan
-                      Double_t xxxGenSystScan[7]={0.,static_cast<Double_t>(bPrim),Float_t(iset),Float_t(iPart),fCentrality,ptotMCgen,etaMCgen};
-                      if (pdg>0) fHistPosEffMatrixScanGen->Fill(xxxGenSystScan);
-                      if (pdg<0) fHistNegEffMatrixScanGen->Fill(xxxGenSystScan);
-                      // generated does not know about TOF
-                      Double_t xxxGenSystScanTOF[7]={1.,static_cast<Double_t>(bPrim),Float_t(iset),Float_t(iPart),fCentrality,ptotMCgen,etaMCgen};
-                      if (pdg>0) fHistPosEffMatrixScanGen->Fill(xxxGenSystScanTOF);
-                      if (pdg<0) fHistNegEffMatrixScanGen->Fill(xxxGenSystScanTOF);
+                      if (bPrim && !fIsMCPileup && (iorig == 0 || iorig == 3)) {
+                        Double_t xxxGenSystScan[7]={0.,static_cast<Double_t>(iorig > 0),Float_t(iset),Float_t(iPart),fCentrality,ptotMCgen,etaMCgen};
+                        if (pdg>0) fHistPosEffMatrixScanGen->Fill(xxxGenSystScan);
+                        if (pdg<0) fHistNegEffMatrixScanGen->Fill(xxxGenSystScan);
+                        // generated does not know about TOF
+                        Double_t xxxGenSystScanTOF[7]={1.,static_cast<Double_t>(iorig > 0),Float_t(iset),Float_t(iPart),fCentrality,ptotMCgen,etaMCgen};
+                        if (pdg>0) fHistPosEffMatrixScanGen->Fill(xxxGenSystScanTOF);
+                        if (pdg<0) fHistNegEffMatrixScanGen->Fill(xxxGenSystScanTOF);
+                      }
                     }
                     //
                     // fill the moments
-                    if (etaAcc && momAcc){
+                    if (etaAcc && momAcc && bPrim && !fIsMCPileup){
                       nTracksgen++;
                       if ( fPiMCgen>-1 && pdg<0) genNeg[kPi]++;
                       if ( fKaMCgen>-1 && pdg<0) genNeg[kKa]++;
@@ -2603,28 +2605,30 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
                   if (!GetSystematicClassIndex(fTrackCutBits,iset)) continue;
                   //
                   // Fill Efficiency Matrices
-                  if (fEffMatrix && !fRunOnGrid && etaAccMaxWindow && momAccMaxWindow && ieta==0 && imom==0 && iorig==3 && ipileup==1){
+                  if (fEffMatrix && !fRunOnGrid && etaAccMaxWindow && momAccMaxWindow && ieta==0 && imom==0 && ipileup==1){
                     //
                     // Eff matrix with phi etc. for the default setting
-                    if (iset==kCutReference && bPrim){
+                    if (iset==kCutReference){
                       Double_t xxxRec[5]={Float_t(iPart),fCentrality,ptotMCrec,etaMCrec,phiMCRec};
                       if (pdg>0) fHistPosEffMatrixRec->Fill(xxxRec);
                       if (pdg<0) fHistNegEffMatrixRec->Fill(xxxRec);
                     }
                     //
-                    // TPC eff matrix for all settings
-                    Double_t xxxRecSystScan[7]={0.,static_cast<Double_t>(bPrim),Float_t(iset),Float_t(iPart),fCentrality,ptotMCrec,etaMCrec};
-                    if (pdg>0) fHistPosEffMatrixScanRec->Fill(xxxRecSystScan);
-                    if (pdg<0) fHistNegEffMatrixScanRec->Fill(xxxRecSystScan);
-                    //
-                    // TOF+TPC eff matrix for all settings
-                    Bool_t piTOF = (TMath::Abs(fPIDResponse->NumberOfSigmasTOF(trackReal, AliPID::kPion))  <= fEffMatrixNSigmasTOF);
-                    Bool_t kaTOF = (TMath::Abs(fPIDResponse->NumberOfSigmasTOF(trackReal, AliPID::kKaon))  <= fEffMatrixNSigmasTOF);
-                    Bool_t prTOF = (TMath::Abs(fPIDResponse->NumberOfSigmasTOF(trackReal, AliPID::kProton))<= fEffMatrixNSigmasTOF);
-                    if ( (piTOF && iPart==0) ||  (kaTOF && iPart==1) || (prTOF && iPart==2) ) {
-                      Double_t xxxRecTOF[7]={1.,static_cast<Double_t>(bPrim),Float_t(iset),Float_t(iPart),fCentrality,ptotMCrec,etaMCrec};
-                      if (pdg>0) fHistPosEffMatrixScanRec->Fill(xxxRecTOF);
-                      if (pdg<0) fHistNegEffMatrixScanRec->Fill(xxxRecTOF);
+                    if ((iorig == 0 || iorig == 3)) {
+                      // TPC eff matrix for all settings
+                      Double_t xxxRecSystScan[7]={0.,static_cast<Double_t>(iorig > 0),Float_t(iset),Float_t(iPart),fCentrality,ptotMCrec,etaMCrec};
+                      if (pdg>0) fHistPosEffMatrixScanRec->Fill(xxxRecSystScan);
+                      if (pdg<0) fHistNegEffMatrixScanRec->Fill(xxxRecSystScan);
+                      //
+                      // TOF+TPC eff matrix for all settings
+                      Bool_t piTOF = (TMath::Abs(fPIDResponse->NumberOfSigmasTOF(trackReal, AliPID::kPion))  <= fEffMatrixNSigmasTOF);
+                      Bool_t kaTOF = (TMath::Abs(fPIDResponse->NumberOfSigmasTOF(trackReal, AliPID::kKaon))  <= fEffMatrixNSigmasTOF);
+                      Bool_t prTOF = (TMath::Abs(fPIDResponse->NumberOfSigmasTOF(trackReal, AliPID::kProton))<= fEffMatrixNSigmasTOF);
+                      if ( (piTOF && iPart==0) ||  (kaTOF && iPart==1) || (prTOF && iPart==2) ) {
+                        Double_t xxxRecTOF[7]={1.,static_cast<Double_t>(iorig > 0),Float_t(iset),Float_t(iPart),fCentrality,ptotMCrec,etaMCrec};
+                        if (pdg>0) fHistPosEffMatrixScanRec->Fill(xxxRecTOF);
+                        if (pdg<0) fHistNegEffMatrixScanRec->Fill(xxxRecTOF);
+                      }
                     }
                   }
                   //
