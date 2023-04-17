@@ -100,8 +100,8 @@ public:
     kSharedCls=25,
     kSharedClsLoose=26,
     kFindableCls=27,
-    kFindableClsLoose=28,
-    kFindableClsLoosest=29,
+    kFindableClsTight=28,
+    kFindableClsLoose=29,
     kBFieldPos=30,
     kBFieldNeg=31
   };
@@ -117,8 +117,8 @@ public:
     kCutVertexZSmall=7,
     kCutEventVertexZLarge=8,
     kCutSharedCls=9,
-    kCutFindableClsLoose=10,
-    kCutFindableClsLoosest=11,
+    kCutFindableClsTight=10,
+    kCutFindableClsLoose=11,
     kCutPileupLoose=12,
     kCutBFieldPos=13,
     kCutBFieldNeg=14,

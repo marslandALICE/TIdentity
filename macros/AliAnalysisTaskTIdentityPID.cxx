@@ -5257,9 +5257,9 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
       //
       // Found TPC clusters
       if (fTPCFindable > 0) {
-        if (fTrackTPCCrossedRows / fTPCFindable > 0.87) (fTrackCutBits |= 1 << kFindableCls);
-        if (fTrackTPCCrossedRows / fTPCFindable > 0.80) (fTrackCutBits |= 1 << kFindableClsLoose);
-        if (fTrackTPCCrossedRows / fTPCFindable > 0.75) (fTrackCutBits |= 1 << kFindableClsLoosest);
+        if (fTrackTPCCrossedRows / fTPCFindable > 0.80) (fTrackCutBits |= 1 << kFindableCls);
+        if (fTrackTPCCrossedRows / fTPCFindable > 0.85) (fTrackCutBits |= 1 << kFindableClsTight);
+        if (fTrackTPCCrossedRows / fTPCFindable > 0.75) (fTrackCutBits |= 1 << kFindableClsLoose);
       }
       //
       // DCAxy
@@ -5327,8 +5327,8 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
       7 -->  kVertexZSmall
       8 -->  kEventVertexZLarge
       9 -->  kSharedCls
-      10 -->  kFindableClsLoose
-      11 -->  kFindableClsLoosest
+      10 -->  kFindableClsTight
+      11 -->  kFindableClsLoose
       12 -->  kPileupLoose
       13 -->  kBFieldPos
       14 -->  kBFieldNeg
@@ -5400,15 +5400,15 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
         }
         break;
         //
-        case kCutFindableClsLoose:   // 10 -->  kFindableClsLoose
+        case kCutFindableClsTight:   // 10 -->  kFindableClsTight
         {
-          fCutArr = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDep, kVertexZ, kEventVertexZ, kPileup, kSharedCls, kFindableClsLoose,kTPCSignalN};
+          fCutArr = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDep, kVertexZ, kEventVertexZ, kPileup, kSharedCls, kFindableClsTight,kTPCSignalN};
         }
         break;
         //
-        case kCutFindableClsLoosest:   // 11 -->  kFindableClsLoosest
+        case kCutFindableClsLoose:   // 11 -->  kFindableClsLoose
         {
-          fCutArr = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDep, kVertexZ, kEventVertexZ, kPileup, kSharedCls, kFindableClsLoosest,kTPCSignalN};
+          fCutArr = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDep, kVertexZ, kEventVertexZ, kPileup, kSharedCls, kFindableClsLoose,kTPCSignalN};
         }
         break;
         //
