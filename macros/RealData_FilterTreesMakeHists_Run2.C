@@ -138,17 +138,25 @@ const Double_t dEdxNbins = 1000;   // ??? be careful it must match with the anal
 Double_t dEdxMin = 20;
 Double_t dEdxMax = 1020;
 //
-const Double_t ptNbins = 150;   // mostly for real data analysis
-Double_t ptotMin = 0.1;
-Double_t ptotMax = 3.1;
+// const Double_t ptNbins = 150;   // mostly for real data analysis
+// Double_t ptotMin = 0.1;
+// Double_t ptotMax = 3.1;
+const Double_t ptNbins = 250;   // mostly for real data analysis
+Double_t ptotMin = 0.2;
+Double_t ptotMax = 5.2;
 //
-const Int_t nEtaBins = 16;  // ???
+// const Int_t nEtaBins = 16;  // ???
+// Double_t etaMin = -0.8;
+// Double_t etaMax = 0.8;
+const Int_t nEtaBins = 8;  // ???
 Double_t etaMin = -0.8;
 Double_t etaMax = 0.8;
 //
 const Int_t nCentDim = 14;
-const Int_t nEtaDim = 17;
-Float_t etaBinning[nEtaDim]   = {-0.8,-0.7,-0.6,-0.5,-0.4,-0.3,-0.2,-0.1, 0., 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8};
+// const Int_t nEtaDim = 17;
+// Float_t etaBinning[nEtaDim]   = {-0.8,-0.7,-0.6,-0.5,-0.4,-0.3,-0.2,-0.1, 0., 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8};
+const Int_t nEtaDim = 9;
+Float_t etaBinning[nEtaDim]   = {-0.8,-0.6,-0.4,-0.2, 0., 0.2, 0.4, 0.6, 0.8};
 Float_t centBinning[nCentDim] = { 0., 5., 10., 20., 30., 40., 50., 60., 70., 80., 85., 90., 95., 100.};
 //
 TTreeSRedirector *tidenTreeStream[nCentBins];
@@ -161,6 +169,10 @@ TH2F *h2Dneg[nCentBins][nEtaBins];                 TString hName2Dneg[nCentBins]
 TH2F *h2DallPrTOF[nCentBins][nEtaBins];            TString hName2DallPrTOF[nCentBins][nEtaBins];
 TH2F *h2DallPrTOFPos[nCentBins][nEtaBins];         TString hName2DallPrTOFPos[nCentBins][nEtaBins];
 TH2F *h2DallPrTOFNeg[nCentBins][nEtaBins];         TString hName2DallPrTOFNeg[nCentBins][nEtaBins];
+//
+TH2F *h2DallBkgTOF[nCentBins][nEtaBins];            TString hName2DallBkgTOF[nCentBins][nEtaBins];
+TH2F *h2DallBkgTOFPos[nCentBins][nEtaBins];         TString hName2DallBkgTOFPos[nCentBins][nEtaBins];
+TH2F *h2DallBkgTOFNeg[nCentBins][nEtaBins];         TString hName2DallBkgTOFNeg[nCentBins][nEtaBins];
 //
 TH2F *h2DallKaTOF[nCentBins][nEtaBins];            TString hName2DallKaTOF[nCentBins][nEtaBins];
 TH2F *h2DallKaTOFPos[nCentBins][nEtaBins];         TString hName2DallKaTOFPos[nCentBins][nEtaBins];
@@ -415,20 +427,12 @@ enum trackCutBit {
   kSharedCls=25,
   kSharedClsLoose=26,
   kFindableCls=27,
-  kFindableClsLoose=28,
-  kFindableClsLoosest=29,
+  kFindableClsTight=28,
+  kFindableClsLoose=29,
   kBFieldPos=30,
   kBFieldNeg=31
 };
-TString parName[nParticles] = {"El", "Pi", "Ka", "Pr", "De"};
-enum parType
-{
-  kEl=0,
-  kPi=1,
-  kKa=2,
-  kPr=3,
-  kDe=4
-};
+
 enum cutSettings {
   kCutReference=0,
   kCutCrossedRowsTPC70=1,
@@ -440,13 +444,23 @@ enum cutSettings {
   kCutVertexZSmall=7,
   kCutEventVertexZLarge=8,
   kCutSharedCls=9,
-  kCutFindableClsLoose=10,
-  kCutFindableClsLoosest=11,
+  kCutFindableClsTight=10,
+  kCutFindableClsLoose=11,
   kCutPileupLoose=12,
   kCutBFieldPos=13,
   kCutBFieldNeg=14,
   kCutTPCSignalNSmall=15,
   kCutTPCSignalNLarge=16
+};
+
+TString parName[nParticles] = {"El", "Pi", "Ka", "Pr", "De"};
+enum parType
+{
+  kEl=0,
+  kPi=1,
+  kKa=2,
+  kPr=3,
+  kDe=4
 };
 
 
@@ -614,6 +628,7 @@ void ProcessDataHists()
     static ULong64_t gidCache = -1;
     static Int_t acceptEvent = -1;
     if (gidCache!=ULong64_t(ftracks_gid)) {
+      eventCount++;
       gidCache=ULong64_t(ftracks_gid);
       //
       //  TPC ITS matching eff from time series
@@ -807,6 +822,10 @@ void ProcessDataHists()
         if (etaCentString && vertexPcut && systCut && prTOF && parPos) h2DallPrTOFPos[icent][ieta]->Fill(ftracks_ptot,ftracks_dEdx);
         if (etaCentString && vertexPcut && systCut && prTOF && parNeg) h2DallPrTOFNeg[icent][ieta]->Fill(ftracks_ptot,ftracks_dEdx);
         //
+        if (etaCentString && vertexPcut && systCut && !prTOF)           h2DallBkgTOF[icent][ieta]   ->Fill(ftracks_ptot,ftracks_dEdx);
+        if (etaCentString && vertexPcut && systCut && !prTOF && parPos) h2DallBkgTOFPos[icent][ieta]->Fill(ftracks_ptot,ftracks_dEdx);
+        if (etaCentString && vertexPcut && systCut && !prTOF && parNeg) h2DallBkgTOFNeg[icent][ieta]->Fill(ftracks_ptot,ftracks_dEdx);
+        //
         if (etaCentString && vertexPcut && systCut && cleanKaCutBayes)  h2DCleanKaBayes[icent][ieta]->Fill(ftracks_ptot,ftracks_dEdx);
         if (etaCentString && vertexPcut && systCut && cleanKaCutTOFTRD) h2DCleanKaTOFTRD[icent][ieta]->Fill(ftracks_ptot,ftracks_dEdx);
 
@@ -817,7 +836,7 @@ void ProcessDataHists()
 
   }  // tree loop
   timer.Stop(); timer.Print();
-  std::cout << " ========= ProcessDataHists DONE ========= #events = " << eventCount << std::endl;
+  std::cout << " ========= ProcessEventTree DONE ========= #events = " << eventCount << std::endl;
 
 }
 //____________________________________________________________________________________________________________
@@ -912,7 +931,7 @@ void ProcessEventTree()
 
   }  // tree loop
   timer.Stop(); timer.Print();
-  std::cout << " ========= ProcessDataHists DONE ========= #events = " << eventCount << std::endl;
+  std::cout << " ========= ProcessDScaledTree DONE ========= #events = " << eventCount << std::endl;
 
 }
 //____________________________________________________________________________________________________________
@@ -1050,7 +1069,7 @@ void ProcessCleanSamples()
   timer.Reset(); timer.Start();
   std::cout << " ========= ProcessCleanSamples ========= " << std::endl;
   Double_t nTreeEntriesAll = armtree -> GetEntries();
-  Double_t nTreeEntries    = nTreeEntriesAll;
+  Double_t nTreeEntries    = (testEntries>0) ? testEntries : nTreeEntriesAll;
   cout << " Data Tree entries = " << nTreeEntriesAll << endl;
   if (nTreeEntriesAll<10) { std::cout << " === upss data tree is empty === " << std::endl; return; }
   //
@@ -1200,9 +1219,10 @@ void ProcessCleanSamples()
         Bool_t cleanCutEl    = ( (ffArmPodTree_qt<0.005) && (TMath::Abs(ffArmPodTree_alfa)<0.5) );
         Bool_t piK0cut       = (  Bool_t(piFromK0) );
         Bool_t piPixelcut    = ( !Bool_t(v0haspixel) );
-        Bool_t cleanCutPiKineCut = ( (ffArmPodTree_qt>0.14) && (ffArmPodTree_purity==2) );
-        Bool_t cleanCutElKineCut = ( (ffArmPodTree_qt<0.01) && (ffArmPodTree_purity==2) );
-        Bool_t cleanCutPrKineCut = ( (ffArmPodTree_qt<0.12) && (ffArmPodTree_qt>0.01) && (ffArmPodTree_purity==2) && TMath::Abs(ffArmPodTree_nSigmasPrTOF0)<3. && TMath::Abs(ffArmPodTree_nSigmasPrTOF1)<3. );
+        Bool_t cleanCutPiKineCut = ( (ffArmPodTree_qt>0.14) && ((ffArmPodTree_purity >> 3) & 1) );
+        Bool_t cleanCutElKineCut = ( (ffArmPodTree_qt<0.01) && ((ffArmPodTree_purity >> 5) & 1) );
+        Bool_t cleanCutPrKineCut = ( (ffArmPodTree_qt<0.12) && (ffArmPodTree_qt>0.01) && ((ffArmPodTree_purity >> 4) & 1) && TMath::Abs(ffArmPodTree_nSigmasPrTOF0)<3. && TMath::Abs(ffArmPodTree_nSigmasPrTOF1)<3. );
+
         //
         // clean sample histograms
         if (etaCentString && vertexPcut && cleanCutEl){ 
@@ -1346,6 +1366,14 @@ void InitInitials()
       h2DallPrTOFPos[icent][ieta]  = new TH2F(hName2DallPrTOFPos[icent][ieta] ,hName2DallPrTOFPos[icent][ieta]  ,ptNbins,ptotMin,ptotMax,dEdxNbins,dEdxMin,dEdxMax);
       h2DallPrTOFNeg[icent][ieta]  = new TH2F(hName2DallPrTOFNeg[icent][ieta] ,hName2DallPrTOFNeg[icent][ieta]  ,ptNbins,ptotMin,ptotMax,dEdxNbins,dEdxMin,dEdxMax);
       //
+      h2DallBkgTOF[icent][ieta]=NULL;      h2DallBkgTOFPos[icent][ieta]=NULL;      h2DallBkgTOFNeg[icent][ieta]=NULL;
+      hName2DallBkgTOF[icent][ieta]   =Form("h2DallBkgTOF_%s"   ,centEtaStr.Data());
+      hName2DallBkgTOFPos[icent][ieta]=Form("h2DallBkgTOFPos_%s",centEtaStr.Data());
+      hName2DallBkgTOFNeg[icent][ieta]=Form("h2DallBkgTOFNeg_%s",centEtaStr.Data());
+      h2DallBkgTOF[icent][ieta]     = new TH2F(hName2DallBkgTOF[icent][ieta]    ,hName2DallBkgTOF[icent][ieta]     ,ptNbins,ptotMin,ptotMax,dEdxNbins,dEdxMin,dEdxMax);
+      h2DallBkgTOFPos[icent][ieta]  = new TH2F(hName2DallBkgTOFPos[icent][ieta] ,hName2DallBkgTOFPos[icent][ieta]  ,ptNbins,ptotMin,ptotMax,dEdxNbins,dEdxMin,dEdxMax);
+      h2DallBkgTOFNeg[icent][ieta]  = new TH2F(hName2DallBkgTOFNeg[icent][ieta] ,hName2DallBkgTOFNeg[icent][ieta]  ,ptNbins,ptotMin,ptotMax,dEdxNbins,dEdxMin,dEdxMax);
+      //
       h2DallKaTOF[icent][ieta]=NULL;      h2DallKaTOFPos[icent][ieta]=NULL;      h2DallKaTOFNeg[icent][ieta]=NULL;
       hName2DallKaTOF[icent][ieta]   =Form("h2DallKaTOF_%s"   ,centEtaStr.Data());
       hName2DallKaTOFPos[icent][ieta]=Form("h2DallKaTOFPos_%s",centEtaStr.Data());
@@ -1487,15 +1515,15 @@ Bool_t ApplyTreeSelection(Int_t syst, UInt_t cutBit)
     }
     break;
     //
-    case kCutFindableClsLoose:   // 10 -->  kFindableClsLoose
+    case kCutFindableClsTight:   // 10 -->  kFindableClsTight
     {
-      fCutArr = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDep, kVertexZ, kEventVertexZ, kPileup, kSharedCls, kFindableClsLoose,kTPCSignalN};
+      fCutArr = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDep, kVertexZ, kEventVertexZ, kPileup, kSharedCls, kFindableClsTight,kTPCSignalN};
     }
     break;
     //
-    case kCutFindableClsLoosest:   // 11 -->  kFindableClsLoosest
+    case kCutFindableClsLoose:   // 11 -->  kFindableClsLoose
     {
-      fCutArr = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDep, kVertexZ, kEventVertexZ, kPileup, kSharedCls, kFindableClsLoosest,kTPCSignalN};
+      fCutArr = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDep, kVertexZ, kEventVertexZ, kPileup, kSharedCls, kFindableClsLoose,kTPCSignalN};
     }
     break;
     //
@@ -1609,6 +1637,11 @@ void WriteHistsToFile()
       if(h2DallPrTOF[icent][ieta])     h2DallPrTOF[icent][ieta]->Write();
       if(h2DallPrTOFPos[icent][ieta])  h2DallPrTOFPos[icent][ieta]->Write();
       if(h2DallPrTOFNeg[icent][ieta])  h2DallPrTOFNeg[icent][ieta]->Write();
+      //
+      if(h2DallBkgTOF[icent][ieta])     h2DallBkgTOF[icent][ieta]->Write();
+      if(h2DallBkgTOFPos[icent][ieta])  h2DallBkgTOFPos[icent][ieta]->Write();
+      if(h2DallBkgTOFNeg[icent][ieta])  h2DallBkgTOFNeg[icent][ieta]->Write();
+      //
       if(h2DallKaTOF[icent][ieta])     h2DallKaTOF[icent][ieta]->Write();
       if(h2DallKaTOFPos[icent][ieta])  h2DallKaTOFPos[icent][ieta]->Write();
       if(h2DallKaTOFNeg[icent][ieta])  h2DallKaTOFNeg[icent][ieta]->Write();
