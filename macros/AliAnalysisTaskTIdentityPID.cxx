@@ -1597,7 +1597,7 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
       if (fPercentageOfEvents>0 && (fEventCountInFile%fPercentageOfEvents)==0) return;
 
       // if centrality estimation failed
-      if (fCentrality > 100.) return;
+      // if (fCentrality > 100.) return;
       //
       // ======================================================================
       //   Filling part
@@ -5197,9 +5197,9 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
       Float_t nSigmasKaTOF = fPIDResponse->NumberOfSigmasTOF(track, AliPID::kKaon,    fPIDResponse->GetTOFResponse().GetTimeZero());
       Float_t nSigmasPrTOF = fPIDResponse->NumberOfSigmasTOF(track, AliPID::kProton,  fPIDResponse->GetTOFResponse().GetTimeZero());
       Float_t nSigmasDeTOF = fPIDResponse->NumberOfSigmasTOF(track, AliPID::kDeuteron,fPIDResponse->GetTOFResponse().GetTimeZero());
-      Bool_t cleanPrTOF = ((TMath::Abs(nSigmasPrTOF)<=2.5));
-      Bool_t cleanDeTOF = ((TMath::Abs(nSigmasDeTOF)<=3.0));
-      Bool_t cleanKaTOF = ((TMath::Abs(nSigmasKaTOF)<=2.5));
+      Bool_t cleanPrTOF = ((TMath::Abs(nSigmasPrTOF)<=fEffMatrixNSigmasTOF));
+      Bool_t cleanDeTOF = ((TMath::Abs(nSigmasDeTOF)<=fEffMatrixNSigmasTOF));
+      Bool_t cleanKaTOF = ((TMath::Abs(nSigmasKaTOF)<=fEffMatrixNSigmasTOF));
       Bool_t cleanKaTOFTRD = ((TMath::Abs(nSigmasKaTOF)<=1.2) && TOFSignalDz<1. && TOFSignalDx<1. && nclsTRD>100);
       //
       // Bool_t dca11h     = TMath::Abs(fTrackDCAxy)<0.0105+0.0350/TMath::Power(fPt,1.1);
@@ -5301,7 +5301,7 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
       //                    Clean sample selections
       // --------------------------------------------------------------------
       //
-      // 2.5 nsigma TOF protons and kaons for amplitude estimation
+      // variable nsigma TOF protons and kaons for amplitude estimation
       if (cleanPrTOF) (fTrackCutBits |= 1 << kCleanPrTOF);
       if (cleanKaTOF) (fTrackCutBits |= 1 << kCleanKaTOF);
       //
