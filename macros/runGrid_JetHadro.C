@@ -30,8 +30,9 @@ class  AliAnalysisTaskRho;
 Example usage:
 
 cd /home/marsland/Desktop/ubuntu_desktop/workdir/RUN_ON_GRID/Ebye/test/root6_based/4thMoment_29092021
-aliroot -b -q 'runGrid_JetHadro.C(0,0,"test",0,"3","$RUN_ON_GRID_DIR/Ebye/lists/runsONERUN-2020-LHC20e3a-pass3.list","PWGPP695_MC_remapping",1,65,2018,"18q",3,"vAN-20210925_ROOT6-1")'
-aliroot -b -q 'runGrid_JetHadro.C(0,0,"test",0,"3","$RUN_ON_GRID_DIR/Ebye/lists/runs-2020-LHC20e3a-pass3.list","PWGPP695_MC_remapping",1,65,2018,"18q",3,"vAN-20210925_ROOT6-1")'
+aliroot -b -q 'runGrid_JetHadro.C(0,0,"test",0,"3","$RUN_ON_GRID_DIR/Ebye/lists/runsTest-2020-LHC20e3a-pass3.list","PWGPP695_MC_remapping",1,60,2018,"18q",3,"vAN-20210925_ROOT6-1")'
+aliroot -b -q 'runGrid_JetHadro.C(0,0,"test",0,"3","$RUN_ON_GRID_DIR/Ebye/lists/runsIlya1run-2018-LHC18q-pass3.list","PWGPP695_MC_remapping",0,0,2018,"18q",3,"vAN-20210925_ROOT6-1")'
+
 
 valgrindOption --> 0 --> Normal, 1--> valgrind, 2--> callgrind, 3-->Massif
 modes          --> "test" --> to run over a small set of files (requires alien connection but everything stored locally), "full" --> to run over everything on the grid, "terminate" --> to merge results after "full"
@@ -48,7 +49,7 @@ Bool_t fAddTIdentityTask = kTRUE;
 Bool_t fAddJetFinderTask = kTRUE;
 Bool_t fAddFilteredTrees = kTRUE;
 Bool_t fUseMultSelection = kTRUE;
-const Int_t nTestFiles = 10;
+const Int_t nTestFiles = 1;
 const Int_t nChunksPerJob = 20;
 TString dataBaseDir = "/Users/sierraweyhmiller/Sierra/Caines_Research_Yr2/JetHadro/data";
 TString aliPhysicsTag = "vAN-20201124-1"; //  	vAN-20180828-1  vAN-20181119-1  vAN-20190105_ROOT6-1
