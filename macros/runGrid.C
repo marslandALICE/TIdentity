@@ -55,13 +55,12 @@ lhcYear        --> year
 */
 
 Bool_t fAddFilteredTrees = kTRUE;
-Bool_t fUseMultSelection = kTRUE;
 Bool_t fAddJetHadroTask  = kTRUE;
-Bool_t fAddJetFinderTask = kTRUE;
 Bool_t fAddTIdentityTask = kTRUE;
 // 
 const Int_t nTestFiles = 1;
 const Int_t nChunksPerJob = 15;
+Bool_t fUseMultSelection = kTRUE;
 // TString dataBaseDir = "/eos/user/m/marsland/data";
 // TString dataBaseDir = "";
 TString dataBaseDir = "/media/marsland/Samsung_T5/data";

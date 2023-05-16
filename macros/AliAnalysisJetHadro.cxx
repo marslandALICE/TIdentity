@@ -369,8 +369,7 @@ fEffMatrixNSigmasTOF(0)
   gSystem->AddIncludePath("-I$ALICE_PHYSICS/include");
   gSystem->Load("libANALYSIS");
   gSystem->Load("libANALYSISalice");
-  .L /u/marsland/PHD/macros/marsland_EbyeRatios/AliAnalysisJetHadro.cxx++
-  .L /lustre/nyx/alice/users/marsland/train/trunk/marsland_EbyeRatios/AliAnalysisJetHadro.cxx++
+  .L AliAnalysisJetHadro.cxx++
   */
 }
 
@@ -628,8 +627,6 @@ fEffMatrixNSigmasTOF(0)
   gSystem->Load("libANALYSISalice");
   gSystem->AddIncludePath("-I$ALICE_ROOT/include");
   gSystem->AddIncludePath("-I$ALICE_PHYSICS/include");
-  gSystem->AddIncludePath("-I/lustre/nyx/alice/users/marsland/alicehub/sw/ubuntu1404_x86-64/AliPhysics/master-1/include");
-  gSystem->AddIncludePath("-I/lustre/nyx/alice/users/marsland/alicehub/AliPhysics/PWGPP");
   .L AliAnalysisJetHadro.cxx++
   */
   std::cout << " Info::siweyhmi:===================================================================================="<< std::endl;
@@ -882,13 +879,13 @@ void AliAnalysisJetHadro::UserCreateOutputObjects()
   // ************************************************************************
   //
   fTreejetsEMCconst  = ((*fTreeSRedirector)<<"jetsEMCconst").GetTree();
-  fTreejetsFJ    = ((*fTreeSRedirector)<<"jetsFJ").GetTree();
-  fTreejetsFJBG  = ((*fTreeSRedirector)<<"jetsFJBG").GetTree();
-  fTreejetEMC       = ((*fTreeSRedirector)<<"jetEMC").GetTree();
-  fTreejetsFJconst = ((*fTreeSRedirector)<<"jetsFJconst").GetTree();
-  fTreejetResonance = ((*fTreeSRedirector)<<"jetResonance").GetTree();
-  fTreejetEvents    = ((*fTreeSRedirector)<<"jeteventInfo").GetTree();
-  fTreejetsFJGen = ((*fTreeSRedirector)<<"jetsFJGen").GetTree();
+  fTreejetsFJ        = ((*fTreeSRedirector)<<"jetsFJ").GetTree();
+  fTreejetsFJBG      = ((*fTreeSRedirector)<<"jetsFJBG").GetTree();
+  fTreejetEMC        = ((*fTreeSRedirector)<<"jetEMC").GetTree();
+  fTreejetsFJconst   = ((*fTreeSRedirector)<<"jetsFJconst").GetTree();
+  fTreejetResonance  = ((*fTreeSRedirector)<<"jetResonance").GetTree();
+  fTreejetEvents     = ((*fTreeSRedirector)<<"jeteventInfo").GetTree();
+  fTreejetsFJGen     = ((*fTreeSRedirector)<<"jetsFJGen").GetTree();
   //
   // ************************************************************************
   //   Send output objects to container
@@ -915,7 +912,7 @@ Bool_t AliAnalysisJetHadro::Run()
   //
   // main event loop
   //
-  if (fRunOnGrid) fUseCouts=kFALSE; // for security
+  // if (fRunOnGrid) fUseCouts=kFALSE; // for security
   if (fUseCouts) std::cout << " Info::siweyhmi: ===== In the UserExec ===== " << std::endl;
   //
   // Check Monte Carlo information and other access first:
@@ -1166,7 +1163,7 @@ Bool_t AliAnalysisJetHadro::Run()
     // ------------------------------------------------
     //
     // if (fMCtrue && TMath::Abs(fVz) > 15) return;   // For MC put fixed cut
-    if (TMath::Abs(fVz)>15) return kFALSE;
+    if (TMath::Abs(fVz)>10) return kFALSE;
     //
     if (fVertex && isVertexOk) fHistVertex->Fill(fVz);
     else return kFALSE;
@@ -1365,7 +1362,7 @@ void AliAnalysisJetHadro::FindJetsEMC()
       // Get the track variables
       Double_t closestPar[3];
       GetExpecteds(esdtrack,closestPar);
-      SetCutBitsAndSomeTrackVariables(esdtrack,0);
+      SetCutBitsAndSomeTrackVariables(esdtrack);
       Int_t tpcNcls = esdtrack->GetTPCncls();
       Int_t nTPCClusters = fESD->GetNumberOfTPCClusters();
       AliVMultiplicity *multiObj = fESD->GetMultiplicity();
@@ -1479,252 +1476,284 @@ void AliAnalysisJetHadro::FindJetsFJ()
   if (fUseCouts) std::cout << " Info::siweyhmi: ===== In the FindJetsFJ ===== " << std::endl;
   //
   // Create jetwrapper with the same settings used in FindJetsEMC
-  Float_t jetRadius = 0.4;
-  Float_t bgJetRadius = 0.2;
-  Float_t jetAbsEtaCut = 0.5;
-  Float_t bgJetAbsEtaCut = 0.7;
-  Float_t pT_sub_min = 10.0;
+  int nJetRadiusBins = 3;
+  int nSettings = 3;
+  float fTrackPt = 0.15;
+  float fGhostArea = 0.005;
+  float bgJetAbsEtaCut = 0.7;           // fixed
+  float bgJetRadius = 0.2;              // fixed
+  // 
+  float jetRadius  = 0.4;      // can be 0.2, 0.4, 0.6
+  float pT_sub_min = 10.0;    // can be 40, 60, 80
+  std::vector<float>  fJetRadius;
+  std::vector<float>  fPtSubMin;
+  fJetRadius.resize(nJetRadiusBins);
+  fJetRadius[0] = 0.2;
+  fJetRadius[1] = 0.4;
+  fJetRadius[2] = 0.6;
+  fPtSubMin.resize(nJetRadiusBins);
 
-  //SOME CODE FROM NIMA
-  AliFJWrapper *fFastJetWrapper;
-  fFastJetWrapper = new AliFJWrapper("fFastJetWrapper","fFastJetWrapper");
-  fFastJetWrapper->Clear();
-  fFastJetWrapper->SetR(jetRadius);
-  fFastJetWrapper->SetAlgorithm(fastjet::JetAlgorithm::antikt_algorithm);
-  fFastJetWrapper->SetRecombScheme(fastjet::RecombinationScheme::E_scheme); // fFastJetWrapper->SetRecombScheme(fastjet::RecombinationScheme::pt_scheme);
-  fFastJetWrapper->SetStrategy(fastjet::Strategy::Best);
-  fFastJetWrapper->SetGhostArea(0.005);
-  fFastJetWrapper->SetAreaType(fastjet::AreaType::passive_area);
-  std::vector<int> trackTTIndex;
-  trackTTIndex.clear();
-  //
-  // Access and loop over container
-  // auto tracks = this->GetTrackContainer("detTracks");
-  // for (auto esdtrack : tracks->accepted()){...}
-  //
-  std::vector<fastjet::PseudoJet> particlesEmbeddedSubtracted; //will be filled with your subtracted event
-  std::vector<fastjet::PseudoJet> particlesEmbedded; //fill this with your event
-  double particleEtaCut = 0.9;
-  //
-  // loop over esd tracks and add their four vector to wrapper
-  for (Int_t iTrack = 0; iTrack < fESD->GetNumberOfTracks(); iTrack++) {
-    AliESDtrack* track = fESD->GetTrack(iTrack);
-    if (!track->GetInnerParam()) continue;
-    if (!fESDtrackCuts->AcceptTrack(track)) continue;
-    if (!(track->GetTPCsignalN()>0)) continue;
-    //
-    if (track->Pt() < 0.15 || TMath::Abs(track->Eta()) >= 0.9) continue;
-    fFastJetWrapper->AddInputVector(track->Px(), track->Py(), track->Pz(), TMath::Sqrt(track->P()*track->P()+0.13957*0.13957),iTrack);
-    particlesEmbedded.push_back(fastjet::PseudoJet(track->Px(), track->Py(), track->Pz(), TMath::Sqrt(track->P()*track->P()+0.13957*0.13957) ) ); //filling with event
-  }
+  for (int iset=0; iset<nSettings; iset++){
+    for (int iJetRadius=0; iJetRadius<nJetRadiusBins; iJetRadius++){
+      Float_t jetAbsEtaCut = 0.9-jetRadius;   // fixed
+      
+      //
+      //SOME CODE FROM NIMA
+      AliFJWrapper *fFastJetWrapper;
+      fFastJetWrapper = new AliFJWrapper("fFastJetWrapper","fFastJetWrapper");
+      fFastJetWrapper->Clear();
+      fFastJetWrapper->SetR(fJetRadius[iJetRadius]);
+      fFastJetWrapper->SetAlgorithm(fastjet::JetAlgorithm::antikt_algorithm);
+      fFastJetWrapper->SetRecombScheme(fastjet::RecombinationScheme::E_scheme); // fFastJetWrapper->SetRecombScheme(fastjet::RecombinationScheme::pt_scheme);
+      fFastJetWrapper->SetStrategy(fastjet::Strategy::Best);
+      fFastJetWrapper->SetGhostArea(fGhostArea);
+      fFastJetWrapper->SetAreaType(fastjet::AreaType::passive_area);
+      std::vector<int> trackTTIndex;
+      trackTTIndex.clear();
+      //
+      // Access and loop over container
+      // auto tracks = this->GetTrackContainer("detTracks");
+      // for (auto esdtrack : tracks->accepted()){...}
+      //
+      std::vector<fastjet::PseudoJet> particlesEmbeddedSubtracted; //will be filled with your subtracted event
+      std::vector<fastjet::PseudoJet> particlesEmbedded; //fill this with your event
+      double particleEtaCut = 0.9;
+      //
+      // loop over esd tracks and add their four vector to wrapper --> identical to track container in EMC jet
+      for (Int_t iTrack = 0; iTrack < fESD->GetNumberOfTracks(); iTrack++) {
+        AliESDtrack* track = fESD->GetTrack(iTrack);
+        if (!track->GetInnerParam()) continue;
+        if (!(track->GetTPCsignalN()>0)) continue;
+        //
+        // if (!fESDtrackCuts->AcceptTrack(track)) continue; // defaul tracks selection
+        Double_t closestPar[3];
+        GetExpecteds(track,closestPar);
+        SetCutBitsAndSomeTrackVariables(track);
+        if (!GetSystematicClassIndex(fTrackCutBits,iset)) continue;
+        //
+        if (track->Pt() < fTrackPt || TMath::Abs(track->Eta()) >= 0.9) continue;
+        fFastJetWrapper->AddInputVector(track->Px(), track->Py(), track->Pz(), TMath::Sqrt(track->P()*track->P()+0.13957*0.13957),iTrack);
+        particlesEmbedded.push_back(fastjet::PseudoJet(track->Px(), track->Py(), track->Pz(), TMath::Sqrt(track->P()*track->P()+0.13957*0.13957) ) );
 
-  fastjet::JetMedianBackgroundEstimator bgE;
-  fastjet::Selector selectorBG = !fastjet::SelectorNHardest(2) * fastjet::SelectorAbsEtaMax(particleEtaCut); //set the max eta cut on the estimator, then get rid of 2 highest pt jets
-  //bgE.set_selector(selectorBG);
-  fastjet::JetDefinition jetDefBG(fastjet::kt_algorithm, bgJetRadius, fastjet::E_scheme, fastjet::Best); //define the kT jet finding which will do the average background estimation
-  fastjet::GhostedAreaSpec ghostSpecBG(particleEtaCut, 1, 0.005); //this ghost area might be too small and increase processing time too much
-  fastjet::AreaDefinition areaDefBG(fastjet::active_area_explicit_ghosts, ghostSpecBG);
-  fastjet::ClusterSequenceArea cluster_seq_BG(particlesEmbedded, jetDefBG, areaDefBG);
-  std::vector<fastjet::PseudoJet> jetsBG = sorted_by_pt(selectorBG(cluster_seq_BG.inclusive_jets())); //find the kT jets
-  bgE.set_jets(jetsBG);  // give the kT jets to the background estimator
+      }
+      //
+      // background jet definitions
+      fastjet::JetMedianBackgroundEstimator bgE;
+      fastjet::Selector selectorBG = !fastjet::SelectorNHardest(2) * fastjet::SelectorAbsEtaMax(particleEtaCut); //set the max eta cut on the estimator, then get rid of 2 highest pt jets
+      bgE.set_selector(selectorBG);
+      fastjet::JetDefinition jetDefBG(fastjet::kt_algorithm, bgJetRadius, fastjet::E_scheme, fastjet::Best); //define the kT jet finding which will do the average background estimation
+      fastjet::GhostedAreaSpec ghostSpecBG(particleEtaCut, 1, 0.005); //this ghost area might be too small and increase processing time too much
+      fastjet::AreaDefinition areaDefBG(fastjet::active_area_explicit_ghosts, ghostSpecBG);
+      fastjet::ClusterSequenceArea cluster_seq_BG(particlesEmbedded, jetDefBG, areaDefBG);
+      std::vector<fastjet::PseudoJet> jetsBG = sorted_by_pt(selectorBG(cluster_seq_BG.inclusive_jets())); //find the kT jets
+      bgE.set_jets(jetsBG);  // give the kT jets to the background estimator
+      frhoFJ = bgE.rho();
+      //
+      // start of background jet loop
+      for (Int_t ijet=0; ijet<Int_t(jetsBG.size()); ijet++) {
+        fastjet::PseudoJet jet = jetsBG[ijet];
+        if (jet.pt() < 0.15 || jet.perp() > 1000.0 || TMath::Abs(jet.eta()) >= bgJetAbsEtaCut) continue;
+        Float_t jetpt = jet.pt();
+        Float_t jetphi = jet.phi();
+        Float_t jeteta = jet.eta();
+        Float_t jetArea = jet.area();
+        Float_t jetptsub = jetpt - frhoFJ*jetArea;
+        Int_t jetNum = jetsBG.size();
+        Int_t Njets = jetsBG.size();
 
-  frhoFJ = bgE.rho();
+        if (fFilljetsFJBGTree)
+        {
+          (*fTreeSRedirector)<<"jetsFJBG"<<
+          "gid="            << fEventGID << //  global event ID
+          "syst="           << iset << //  syst setting
+          "bjJetRadius="    << bgJetRadius << // jet Radius
+          "bgJetAbsEtaCut=" << bgJetAbsEtaCut << //abs eta cut for jet
+          "jetNum="         << jetNum <<    //  number of jets
+          "jetpt="          << jetpt <<     //  global event ID
+          "jetphi="         << jetphi <<    //  global event ID
+          "jeteta="         << jeteta <<    //  global event ID
+          "jetptsub="       << jetptsub << //bg sub jet pt (pt - rho*Area)
+          "rhoFJ="          << frhoFJ << //event rho
+          "jetArea="        << jetArea << //jet area
+          "cent="           << fCentrality  <<  //  centrality
+          "\n";
+        }
+      } // end of background jet loop
+      //
+      // background subtraction on the constituent level TODO
+      // fastjet::contrib::ConstituentSubtractor subtractorConstituent(&bgE); //add the background estimator to the correct subtractor
+      // subtractorConstituent.set_common_bge_for_rho_and_rhom(true); //CHECK : should not be the case since particles have mass
+      // subtractorConstituent.set_max_standardDeltaR(0.25); // set the max event wise subtraction distance
+      // particlesEmbeddedSubtracted = subtractorConstituent.subtract_event(particlesEmbedded, particleEtaCut); //perform subtraction and fill the subtracted event container
+      //
+      // run jet finder using wrapper
+      fFastJetWrapper->Run();
+      std::vector<fastjet::PseudoJet> jets = fFastJetWrapper->GetInclusiveJets();
 
-  for (Int_t ijet=0; ijet<Int_t(jetsBG.size()); ijet++) {
-    fastjet::PseudoJet jet = jetsBG[ijet];
-    if (jet.pt() < 0.15 || jet.perp() > 1000.0 || TMath::Abs(jet.eta()) >= bgJetAbsEtaCut) continue;
-    Float_t jetpt = jet.pt();
-    Float_t jetphi = jet.phi();
-    Float_t jeteta = jet.eta();
-    Float_t jetArea = jet.area();
-    Float_t jetptsub = jetpt - frhoFJ*jetArea;
-    Int_t jetNum = jetsBG.size();
-    Int_t Njets = jetsBG.size();
+      // start of jet loop
+      for (Int_t ijet=0; ijet<Int_t(jets.size()); ijet++){
+        fastjet::PseudoJet jet = jets[ijet];
+        if (jet.pt() < 0.15 || jet.perp() > 1000.0 || TMath::Abs(jet.eta()) >= jetAbsEtaCut) continue;
+        fhasAcceptedFJjet = 1;
+        Float_t jetpt = jet.pt();
+        Float_t jetphi = jet.phi();
+        Float_t jeteta = jet.eta();
+        Float_t jetArea = jet.area();
+        Float_t jetptsub = jetpt - frhoFJ*jetArea;
+        Int_t jetNum = jets.size();
 
-    if (fFilljetsFJBGTree)
-    {
-      (*fTreeSRedirector)<<"jetsFJBG"<<
-      "gid="       << fEventGID << //  global event ID
-      "bjJetRadius=" << bgJetRadius << // jet Radius
-      "bgJetAbsEtaCut=" << bgJetAbsEtaCut << //abs eta cut for jet
-      "jetNum="    << jetNum <<    //  number of jets
-      "jetpt="     << jetpt <<     //  global event ID
-      "jetphi="    << jetphi <<    //  global event ID
-      "jeteta="    << jeteta <<    //  global event ID
-      "jetptsub=" << jetptsub << //bg sub jet pt (pt - rho*Area)
-      "rhoFJ="      << frhoFJ << //event rho
-      "jetArea="    << jetArea << //jet area
-      "cent="      << fCentrality  <<  //  centrality
-      "\n";
+        if (jetptsub > pT_sub_min)
+        {
+          fhasRealFJjet = 1;
+        }
+
+        //
+        std::vector<fastjet::PseudoJet> constituents(fFastJetWrapper->GetJetConstituents(ijet));
+        Int_t nConstituents = constituents.size();
+
+        (*fTreeSRedirector)<<"jetsFJ"<<
+        "gid="          << fEventGID << //  global event ID
+        "syst="            << iset << //  syst setting
+        "jetRadius="    << fJetRadius[iJetRadius] << // jet Radius
+        "jetAbsEtaCut=" << jetAbsEtaCut << //abs eta cut for jet
+        "jetNum="       << jetNum <<    //  number of jets
+        "jetpt="        << jetpt <<     //  global event ID
+        "jetphi="       << jetphi <<    //  global event ID
+        "jeteta="       << jeteta <<    //  global event ID
+        "nConst="       << nConstituents <<    //  global event ID
+        "cent="         << fCentrality           <<  //  centrality
+        "jetptsub="     << jetptsub << //bg sub jet pt (pt - rho*Area)
+        "rhoFJ="        << frhoFJ << //event rho
+        "jetArea="      << jetArea << //jet area
+        "\n";
+        
+        if (jetptsub <= pT_sub_min) continue;
+        for(Int_t i = 0; i < nConstituents; i++)
+        {
+          fastjet::PseudoJet &constituent = constituents[i];
+          Int_t trackIndex = constituent.user_index();
+          AliESDtrack* trackConst = fESD->GetTrack(trackIndex);
+
+          //Track cuts start
+          fDEdxEl=-100;  fDEdxPi=-100;  fDEdxKa=-100;  fDEdxPr=-100;  fDEdxDe=-100;
+          fSigmaEl=-100; fSigmaPi=-100; fSigmaKa=-100; fSigmaPr=-100; fSigmaDe=-100;
+
+          fTrackCutBits=0;  // reset the bits for the next track
+
+          //
+          // --------------------------------------------------------------
+          //      Get relevant track info and set cut bits
+          // --------------------------------------------------------------
+          //
+          Bool_t ifDefaultCuts = fESDtrackCuts->AcceptTrack(trackConst);
+          Bool_t fBit96_base   = fESDtrackCuts_Bit96->AcceptTrack(trackConst);
+          Bool_t fBit128       = fESDtrackCuts_Bit128->AcceptTrack(trackConst);
+          Bool_t fBit768       = fESDtrackCuts_Bit768->AcceptTrack(trackConst);
+          Bool_t ifDCAcutIfNoITSPixel = ApplyDCAcutIfNoITSPixel(trackConst);
+          // if (!trackConst->GetInnerParam()) continue;               // Ask if track is in the TPC
+          // if (!fESDtrackCutsLoose->AcceptTrack(trackConst))  continue;    // Loose cuts
+          // if (!(trackConst->GetTPCsignalN()>0)) continue;
+          //
+          // Get the track variables
+          Double_t closestPar[3];
+          GetExpecteds(trackConst,closestPar);
+          SetCutBitsAndSomeTrackVariables(trackConst);
+          Int_t tpcNcls = trackConst->GetTPCncls();
+          Int_t nTPCClusters = fESD->GetNumberOfTPCClusters();
+          Int_t nITSClusters = 0;
+          AliVMultiplicity *multiObj = fESD->GetMultiplicity();
+          for(Int_t j=2;j<6;j++) nITSClusters += multiObj->GetNumberOfITSClusters(j);
+          //
+          // different dca cuts
+          // TMath::Abs(fTrackDCAxy)< 0.3
+          Bool_t dca11h     = TMath::Abs(fTrackDCAxy)<0.0105+0.0350/TMath::Power(fPt,1.1);    // 10h tuned loose cut
+          Bool_t dca10h     = TMath::Abs(fTrackDCAxy)<0.0182+0.0350/TMath::Power(fPt,1.01);   // 10h tuned loose cut
+          Bool_t dcaBaseCut = TMath::Abs(fTrackDCAxy)<0.0208+0.04/TMath::Power(fPt,1.01);     // 10h tuned loose cut
+
+
+          (*fTreeSRedirector)<<"jetsFJconst"<<
+          "gid="       << fEventGID << //  global event ID
+          "syst="      << iset << //  syst setting
+          "jetRadius=" << fJetRadius[iJetRadius] << // jet Radius
+          "jetAbsEtaCut=" << jetAbsEtaCut << //abs eta cut for jet
+          "jetNum="    << jetNum <<    //  number of jets
+          "jetpt="     << jetpt <<     //  global event ID
+          "jetphi="    << jetphi <<    //  global event ID
+          "jeteta="    << jeteta <<    //  global event ID
+          "nConst="    << nConstituents <<    //  global event ID
+
+          "jetptsub="  << jetptsub << //bg sub jet pt (pt - rho*Area)
+          "rhoFJ="       << frhoFJ << //event rho
+          "jetArea="   << jetArea << //jet area
+
+          "defCut="    << ifDefaultCuts <<  // default cuts tuned by hand
+          "bit96="     << fBit96_base <<    // tight cuts of 2011 tuned data
+          "bit128="    << fBit128 <<        // TPC only tracks cuts
+          "bit768="    << fBit768 <<        // Hybrid track cuts
+          "pixCut="    << ifDCAcutIfNoITSPixel <<    // cut: apply a DCAcut If No ITS Pixel
+          "run="       << fRunNo <<                  // run Number
+          "bField="    << fBField <<                 // magnetic filed
+          "pileupbit=" << fPileUpBit <<              // flag for pileup selection
+          "primMult="  << fNContributors <<          //  #prim tracks
+          //
+          "dcabase="  << dcaBaseCut <<  //  TPC multiplicity
+          "dca10h="   << dca10h <<  //  TPC multiplicity
+          "dca11h="   << dca11h <<  //  TPC multiplicity
+          //
+          "tpcmult="   << fTPCMult <<                //  TPC track multiplicity
+          "itsclmult=" << nITSClusters <<    // ITS multiplicity
+          "tpcclmult=" << nTPCClusters <<    // ITS multiplicity
+          //
+          "eventtime=" << fTimeStamp            <<  // event timeStamp
+          "intrate="   << fIntRate              <<  // interaction rate
+          "cutBit="    << fTrackCutBits         <<  //  Systematic Cuts
+          "dEdx="      << fTPCSignal            <<  //  dEdx of the track
+          "sign="      << fSign                 <<  //  charge
+          "ptot="      << fPtot                 <<  //  TPC momentum
+          "p="         << fPVertex              <<  //  momentum at vertex
+          "pT="        << fPt                   <<  // transverse momentum
+          "eta="       << fEta                  <<  //  eta
+          "cent="      << fCentrality           <<  //  centrality
+          //
+          "phi="       << fPhi                  <<  //  phi
+          "dcaxy="     << fTrackDCAxy           <<  // dca cut on xy plane
+          "dcaz="      << fTrackDCAz            <<  // dca cut along z
+          "ncltpc="    << fNcl                  <<  // number of clusters
+          "cRows="     << fTrackTPCCrossedRows  <<  // crossed Rows in TPC
+          "chi2tpc="   << fTrackChi2TPC         <<  // TPC chi2
+          "missCl="    << fMissingCl            <<  // fraction of missing clusters
+
+          "eltpcpid="  << fNSigmasElTPC         <<  // nsigma TPC for electrons
+          "pitpcpid="  << fNSigmasPiTPC         <<
+          "katpcpid="  << fNSigmasKaTPC         <<
+          "prtpcpid="  << fNSigmasPrTPC         <<
+          "detpcpid="  << fNSigmasDeTPC         <<
+
+          "eltofpid="  << fNSigmasElTOF         <<  // nsigma TPC for electrons
+          "pitofpid="  << fNSigmasPiTOF         <<
+          "katofpid="  << fNSigmasKaTOF         <<
+          "prtofpid="  << fNSigmasPrTOF         <<
+          "detofpid="  << fNSigmasDeTOF         <<
+
+          "dEdxMeanEl=" << fDEdxEl              << //mean dEdx for electrons
+          "dEdxSigmaEl=" << fSigmaEl            << //sigma dEdx for electrons
+          "dEdxMeanPi=" << fDEdxPi              <<
+          "dEdxSigmaPi=" << fSigmaPi            <<
+          "dEdxMeanKa=" << fDEdxKa              <<
+          "dEdxSigmaKa=" << fSigmaKa            <<
+          "dEdxMeanPr=" << fDEdxPr              <<
+          "dEdxSigmaPr=" << fSigmaPr            <<
+          "dEdxMeanDe=" << fDEdxDe              <<
+          "dEdxSigmaDe=" << fSigmaDe            <<
+
+          "closestTPCPIDtype=" << closestPar[1]         << //particle type
+          "closestTPCPIDmass=" << closestPar[2]         << //particle mass
+          "\n";
+        }
+
+      } // end of jet loop
+
     }
-  }
-
-  fastjet::contrib::ConstituentSubtractor subtractorConstituent(&bgE); //add the background estimator to the correct subtractor
-  subtractorConstituent.set_common_bge_for_rho_and_rhom(true); //CHECK : should not be the case since particles have mass
-  subtractorConstituent.set_max_standardDeltaR(0.25); // set the max event wise subtraction distance
-  particlesEmbeddedSubtracted = subtractorConstituent.subtract_event(particlesEmbedded, particleEtaCut); //perform subtraction and fill the subtracted event container
-
-  fFastJetWrapper->Run();
-  std::vector<fastjet::PseudoJet> jets = fFastJetWrapper->GetInclusiveJets();
-
-  for (Int_t ijet=0; ijet<Int_t(jets.size()); ijet++){
-    fastjet::PseudoJet jet = jets[ijet];
-    if (jet.pt() < 0.15 || jet.perp() > 1000.0 || TMath::Abs(jet.eta()) >= jetAbsEtaCut) continue;
-    fhasAcceptedFJjet = 1;
-    Float_t jetpt = jet.pt();
-    Float_t jetphi = jet.phi();
-    Float_t jeteta = jet.eta();
-    Float_t jetArea = jet.area();
-    Float_t jetptsub = jetpt - frhoFJ*jetArea;
-    Int_t jetNum = jets.size();
-
-    if (jetptsub > pT_sub_min)
-    {
-      fhasRealFJjet = 1;
-    }
-
-    //
-    std::vector<fastjet::PseudoJet> constituents(fFastJetWrapper->GetJetConstituents(ijet));
-    Int_t nConstituents = constituents.size();
-
-    (*fTreeSRedirector)<<"jetsFJ"<<
-    "gid="       << fEventGID << //  global event ID
-    "jetRadius=" << jetRadius << // jet Radius
-    "jetAbsEtaCut=" << jetAbsEtaCut << //abs eta cut for jet
-    "jetNum="    << jetNum <<    //  number of jets
-    "jetpt="     << jetpt <<     //  global event ID
-    "jetphi="    << jetphi <<    //  global event ID
-    "jeteta="    << jeteta <<    //  global event ID
-    "nConst="    << nConstituents <<    //  global event ID
-    "cent="      << fCentrality           <<  //  centrality
-
-    "jetptsub="  << jetptsub << //bg sub jet pt (pt - rho*Area)
-    "rhoFJ="       << frhoFJ << //event rho
-    "jetArea="   << jetArea << //jet area
-    "\n";
-
-    for(Int_t i = 0; i < nConstituents; i++)
-    {
-      fastjet::PseudoJet &constituent = constituents[i];
-      Int_t trackIndex = constituent.user_index();
-      AliESDtrack* trackConst = fESD->GetTrack(trackIndex);
-
-      //Track cuts start
-      fDEdxEl=-100;  fDEdxPi=-100;  fDEdxKa=-100;  fDEdxPr=-100;  fDEdxDe=-100;
-      fSigmaEl=-100; fSigmaPi=-100; fSigmaKa=-100; fSigmaPr=-100; fSigmaDe=-100;
-
-      fTrackCutBits=0;  // reset the bits for the next track
-
-      //
-      // --------------------------------------------------------------
-      //      Get relevant track info and set cut bits
-      // --------------------------------------------------------------
-      //
-      Bool_t ifDefaultCuts = fESDtrackCuts->AcceptTrack(trackConst);
-      Bool_t fBit96_base   = fESDtrackCuts_Bit96->AcceptTrack(trackConst);
-      Bool_t fBit128       = fESDtrackCuts_Bit128->AcceptTrack(trackConst);
-      Bool_t fBit768       = fESDtrackCuts_Bit768->AcceptTrack(trackConst);
-      Bool_t ifDCAcutIfNoITSPixel = ApplyDCAcutIfNoITSPixel(trackConst);
-      if (!trackConst->GetInnerParam()) continue;               // Ask if track is in the TPC
-      if (!fESDtrackCutsLoose->AcceptTrack(trackConst))  continue;    // Loose cuts
-      if (!(trackConst->GetTPCsignalN()>0)) continue;
-      //
-      // Get the track variables
-      Double_t closestPar[3];
-      GetExpecteds(trackConst,closestPar);
-      SetCutBitsAndSomeTrackVariables(trackConst,0);
-      Int_t tpcNcls = trackConst->GetTPCncls();
-      Int_t nTPCClusters = fESD->GetNumberOfTPCClusters();
-      Int_t nITSClusters = 0;
-      AliVMultiplicity *multiObj = fESD->GetMultiplicity();
-      for(Int_t j=2;j<6;j++) nITSClusters += multiObj->GetNumberOfITSClusters(j);
-      //
-      // different dca cuts
-      // TMath::Abs(fTrackDCAxy)< 0.3
-      Bool_t dca11h     = TMath::Abs(fTrackDCAxy)<0.0105+0.0350/TMath::Power(fPt,1.1);    // 10h tuned loose cut
-      Bool_t dca10h     = TMath::Abs(fTrackDCAxy)<0.0182+0.0350/TMath::Power(fPt,1.01);   // 10h tuned loose cut
-      Bool_t dcaBaseCut = TMath::Abs(fTrackDCAxy)<0.0208+0.04/TMath::Power(fPt,1.01);     // 10h tuned loose cut
-
-
-      (*fTreeSRedirector)<<"jetsFJconst"<<
-      "gid="       << fEventGID << //  global event ID
-      "jetRadius=" << jetRadius << // jet Radius
-      "jetAbsEtaCut=" << jetAbsEtaCut << //abs eta cut for jet
-      "jetNum="    << jetNum <<    //  number of jets
-      "jetpt="     << jetpt <<     //  global event ID
-      "jetphi="    << jetphi <<    //  global event ID
-      "jeteta="    << jeteta <<    //  global event ID
-      "nConst="    << nConstituents <<    //  global event ID
-
-      "jetptsub="  << jetptsub << //bg sub jet pt (pt - rho*Area)
-      "rhoFJ="       << frhoFJ << //event rho
-      "jetArea="   << jetArea << //jet area
-
-      "defCut="    << ifDefaultCuts <<  // default cuts tuned by hand
-      "bit96="     << fBit96_base <<    // tight cuts of 2011 tuned data
-      "bit128="    << fBit128 <<        // TPC only tracks cuts
-      "bit768="    << fBit768 <<        // Hybrid track cuts
-      "pixCut="    << ifDCAcutIfNoITSPixel <<    // cut: apply a DCAcut If No ITS Pixel
-      "run="       << fRunNo <<                  // run Number
-      "bField="    << fBField <<                 // magnetic filed
-      "pileupbit=" << fPileUpBit <<              // flag for pileup selection
-      "primMult="  << fNContributors <<          //  #prim tracks
-      //
-      "dcabase="  << dcaBaseCut <<  //  TPC multiplicity
-      "dca10h="   << dca10h <<  //  TPC multiplicity
-      "dca11h="   << dca11h <<  //  TPC multiplicity
-      //
-      "tpcmult="   << fTPCMult <<                //  TPC track multiplicity
-      "itsclmult=" << nITSClusters <<    // ITS multiplicity
-      "tpcclmult=" << nTPCClusters <<    // ITS multiplicity
-      //
-      "eventtime=" << fTimeStamp            <<  // event timeStamp
-      "intrate="   << fIntRate              <<  // interaction rate
-      "cutBit="    << fTrackCutBits         <<  //  Systematic Cuts
-      "dEdx="      << fTPCSignal            <<  //  dEdx of the track
-      "sign="      << fSign                 <<  //  charge
-      "ptot="      << fPtot                 <<  //  TPC momentum
-      "p="         << fPVertex              <<  //  momentum at vertex
-      "pT="        << fPt                   <<  // transverse momentum
-      "eta="       << fEta                  <<  //  eta
-      "cent="      << fCentrality           <<  //  centrality
-      //
-      "phi="       << fPhi                  <<  //  phi
-      "dcaxy="     << fTrackDCAxy           <<  // dca cut on xy plane
-      "dcaz="      << fTrackDCAz            <<  // dca cut along z
-      "ncltpc="    << fNcl                  <<  // number of clusters
-      "cRows="     << fTrackTPCCrossedRows  <<  // crossed Rows in TPC
-      "chi2tpc="   << fTrackChi2TPC         <<  // TPC chi2
-      "missCl="    << fMissingCl            <<  // fraction of missing clusters
-
-      "eltpcpid="  << fNSigmasElTPC         <<  // nsigma TPC for electrons
-      "pitpcpid="  << fNSigmasPiTPC         <<
-      "katpcpid="  << fNSigmasKaTPC         <<
-      "prtpcpid="  << fNSigmasPrTPC         <<
-      "detpcpid="  << fNSigmasDeTPC         <<
-
-      "eltofpid="  << fNSigmasElTOF         <<  // nsigma TPC for electrons
-      "pitofpid="  << fNSigmasPiTOF         <<
-      "katofpid="  << fNSigmasKaTOF         <<
-      "prtofpid="  << fNSigmasPrTOF         <<
-      "detofpid="  << fNSigmasDeTOF         <<
-
-      "dEdxMeanEl=" << fDEdxEl              << //mean dEdx for electrons
-      "dEdxSigmaEl=" << fSigmaEl            << //sigma dEdx for electrons
-      "dEdxMeanPi=" << fDEdxPi              <<
-      "dEdxSigmaPi=" << fSigmaPi            <<
-      "dEdxMeanKa=" << fDEdxKa              <<
-      "dEdxSigmaKa=" << fSigmaKa            <<
-      "dEdxMeanPr=" << fDEdxPr              <<
-      "dEdxSigmaPr=" << fSigmaPr            <<
-      "dEdxMeanDe=" << fDEdxDe              <<
-      "dEdxSigmaDe=" << fSigmaDe            <<
-
-      "closestTPCPIDtype=" << closestPar[1]         << //particle type
-      "closestTPCPIDmass=" << closestPar[2]         << //particle mass
-      "\n";
-    }
-
   }
 
 }
@@ -2021,7 +2050,7 @@ Bool_t AliAnalysisJetHadro::ApplyDCAcutIfNoITSPixel(AliESDtrack *track)
 
 }
 //________________________________________________________________________
-UInt_t AliAnalysisJetHadro::SetCutBitsAndSomeTrackVariables(AliESDtrack *track, Int_t particleType)
+UInt_t AliAnalysisJetHadro::SetCutBitsAndSomeTrackVariables(AliESDtrack *track)
 {
   //
   // Set some track variables

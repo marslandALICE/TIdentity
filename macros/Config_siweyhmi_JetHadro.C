@@ -52,9 +52,13 @@ AliAnalysisJetHadro* Config_siweyhmi_JetHadro(Bool_t getFromAlien, Int_t setting
 
   //Rho task
   TString sRhoName = "Rho";
+  float emcjetradius = 0.4;
+  float emcbgjetradius = 0.2;
+  float emcGhostArea = 0.005;
+  float fTrackPt = 0.15;
 
   //Background jet task
-  AliEmcalJetTask *pKtChJetTask = AliEmcalJetTask::AddTaskEmcalJet("usedefault", "usedefault", AliJetContainer::kt_algorithm, 0.4, AliJetContainer::kChargedJet, 0.15, 0, 0.005, AliJetContainer::E_scheme, "Jet", 0., kFALSE, kFALSE);
+  AliEmcalJetTask *pKtChJetTask = AliEmcalJetTask::AddTaskEmcalJet("usedefault", "usedefault", AliJetContainer::kt_algorithm, emcbgjetradius, AliJetContainer::kChargedJet, fTrackPt, 0, emcGhostArea, AliJetContainer::E_scheme, "Jet", 0., kFALSE, kFALSE);
   pKtChJetTask->SelectCollisionCandidates(kPhysSel);
   pKtChJetTask->SetUseNewCentralityEstimation(kTRUE);
   if (year == 2017) {pKtChJetTask->SetForceBeamType(AliAnalysisTaskEmcal::kpp);}
@@ -62,7 +66,7 @@ AliAnalysisJetHadro* Config_siweyhmi_JetHadro(Bool_t getFromAlien, Int_t setting
   pKtChJetTask->SetNCentBins(5);
 
   //Rho task
-  AliAnalysisTaskRho *RhoTask = AliAnalysisTaskRho::AddTaskRhoNew("usedefault", "", sRhoName, 0.4, AliEmcalJet::kTPCfid, AliJetContainer::kChargedJet, kTRUE, AliJetContainer::E_scheme);
+  AliAnalysisTaskRho *RhoTask = AliAnalysisTaskRho::AddTaskRhoNew("usedefault", "", sRhoName, emcbgjetradius, AliEmcalJet::kTPCfid, AliJetContainer::kChargedJet, kTRUE, AliJetContainer::E_scheme);
   RhoTask->SelectCollisionCandidates(kPhysSel);
   RhoTask->SetExcludeLeadJets(2);
   RhoTask->SetUseNewCentralityEstimation(kTRUE);
@@ -74,7 +78,7 @@ AliAnalysisJetHadro* Config_siweyhmi_JetHadro(Bool_t getFromAlien, Int_t setting
   RhoTask->AddJetContainer("Jet_KTChargedR040_Tracks_pT0150_E_scheme");
 
   // Signal jet task
-  AliEmcalJetTask *pChJet02Task = AliEmcalJetTask::AddTaskEmcalJet("Tracks", "", AliJetContainer::antikt_algorithm, 0.4, AliJetContainer::kChargedJet, 0.15, 0, 0.005, AliJetContainer::E_scheme, "SigJet", 0.15, kFALSE, kFALSE);
+  AliEmcalJetTask *pChJet02Task = AliEmcalJetTask::AddTaskEmcalJet("Tracks", "", AliJetContainer::antikt_algorithm, emcjetradius, AliJetContainer::kChargedJet, fTrackPt, 0, emcGhostArea, AliJetContainer::E_scheme, "SigJet", fTrackPt, kFALSE, kFALSE);
   pChJet02Task->SelectCollisionCandidates(kPhysSel);
 
   // Create the track container and apply track cuts
@@ -90,7 +94,7 @@ AliAnalysisJetHadro* Config_siweyhmi_JetHadro(Bool_t getFromAlien, Int_t setting
   task->SelectCollisionCandidates(kPhysSel);
   AliJetContainer* jetCont02 = task->AddJetContainer("SigJet_AKTChargedR040_Tracks_pT0150_E_scheme"); // has to modified accordingly with AliEmcalJetTask
 
-  jetCont02->SetJetRadius(0.4);
+  jetCont02->SetJetRadius(emcjetradius);
   jetCont02->SetName("detJets");
   if (year != 2017) {
     jetCont02->SetRhoName(sRhoName);
@@ -109,27 +113,27 @@ AliAnalysisJetHadro* Config_siweyhmi_JetHadro(Bool_t getFromAlien, Int_t setting
     // ====================================================================================
     //
     case 0:{
-      std::cout << " SETTING TYPE = " << settingType << " Info::marsland: (Default event & track cuts) + allCuts + ArmPodTree filled " << std::endl;
+      std::cout << " SETTING TYPE = " << settingType << " Info::siweyhmi: run over real data " << std::endl;
+      task->SetUseCouts(kTRUE);
       task->SetDefaultTrackCuts(kTRUE);
       task->SetDefaultEventCuts(kTRUE);
       task->SetRunOnGrid(kTRUE);
       task->fEventCuts.fUseVariablesCorrelationCuts = true;
       //
       task->SetRunNumberForExpecteds(0);
-      task->SetFilljetsFJBGTree(kFALSE);
+      task->SetFilljetsFJBGTree(kTRUE);
       task->SetFilldscaledTree(kTRUE);
-      task->SetFillFastJet(kFALSE);
+      task->SetFillFastJet(kTRUE);
       //Set these in the wagon configuration CHANGE
       task->SetFillJetEMCConst(kTRUE);
-      task->SetJetMinPtSub(40.0);
-      task->SetPercentageOfEvents(0); //sets so it saves 1 out of every n events inclusive = 400. Jets = 40 w/ 40 GeV min jet requirement
+      task->SetJetMinPtSub(10.0);
+      task->SetPercentageOfEvents(0); // sets so it saves 1 out of every n events inclusive = 400. Jets = 40 w/ 40 GeV min jet requirement
       //
     }
     break;
     case 1:{
-      std::cout << " SETTING TYPE = " << settingType << " Info::marsland: fTreeMC + mcFull + EffMatrix + + dist + full cout  --> At GSI or with RunGrid.C " << std::endl;
+      std::cout << " SETTING TYPE = " << settingType << " Info::siweyhmi: run over MC data " << std::endl;
       task->SetIsMCtrue(kTRUE);
-      //
       task->SetUseCouts(kTRUE);
       task->SetMCTrackOriginType(0);   // 0:full scan, 1: prim
       task->SetUsePtCut(1); // 0: tpc momcut, 1: vertex momcut, 2: pT cut
@@ -153,7 +157,7 @@ AliAnalysisJetHadro* Config_siweyhmi_JetHadro(Bool_t getFromAlien, Int_t setting
 
       //Set these in the wagon configuration CHANGE
       task->SetFillJetEMCConst(kTRUE);
-      task->SetJetMinPtSub(40.0);
+      task->SetJetMinPtSub(10.0);
       task->SetPercentageOfEvents(0); //sets so it saves 1 out of every n events inclusive = 400. Jets = 40 w/ 40 GeV min jet requirement
       //
     }
