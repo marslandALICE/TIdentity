@@ -54,15 +54,15 @@ using namespace std;
 void InitInitials();
 void WriteHistsToFile();
 void ProcessDataHists();
-void PrepareEffMatrix(TString matrixFile, Int_t detectorCom, Int_t systSetting, Float_t pDownAcc, Float_t pUpAcc);
+void PrepareEffMatrix(TString matrixFile, Int_t detectorCom, Int_t origin, Int_t systSetting, Float_t pDownAcc, Float_t pUpAcc);
 Bool_t ApplyTreeSelection(Int_t syst, UInt_t cutBit);
 TGraphErrors * ProfileToGraphErrors(TH2F * h2);
 void SetBranchAddresses();
-void effMatrix1D(Int_t effType,Int_t pid, Int_t cent);
+void effMatrix1D(Int_t effType,Int_t pid, Int_t cent, Int_t origin);
 void effMatrix2D(Int_t pid, Int_t cent);
 void MeanEffInAcceptance(Int_t pid);
 void ModifyEffMatrix(THnF *hnF);
-void FillQAHistograms(Bool_t beforeCuts = kTRUE);
+void FillQAHistograms(Bool_t beforeCuts);
 
 // ======= Modification part =======
 const Int_t colors[] = {kBlack, kRed+1 , kBlue+1, kGreen+3, kMagenta+1, kOrange-1,kCyan+2,kYellow+2, kRed, kGreen};
@@ -92,16 +92,16 @@ Float_t etaBinning[nEtaDim]   = {-0.8,-0.7,-0.6,-0.5,-0.4,-0.3,-0.2,-0.1, 0., 0.
 Float_t centBinning[nCentDim] = { 0., 5., 10., 20., 30., 40., 50., 60., 70., 80.};
 //
 // Acceptance arrays
-const Int_t nCentAcc = 9;
+const Int_t nCentAcc = 13;
 const Int_t nEtaAcc = 8;
 Float_t etaAccDown[nEtaAcc] = {-0.8,-0.7,-0.6,-0.5,-0.4,-0.3,-0.2,-0.1};
 Float_t etaAccUp[nEtaAcc]   = { 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1};
-Float_t centAccDown[nCentAcc] = {0.,5.0,10.,20.,30.,40.,50.,60.,70.};
-Float_t centAccUp[nCentAcc]   = {5.,10.,20.,30.,40.,50.,60.,70.,80.};
+Float_t centAccDown[nCentAcc] = { 0., 5., 10., 20., 30., 40., 50., 60., 70., 80., 85., 90., 95.};
+Float_t centAccUp[nCentAcc]   = { 5., 10., 20., 30., 40., 50., 60., 70., 80., 85., 90., 95., 105.};
 //
 // Efficiency  matrix
 const Int_t nSigns = 2;
-const Int_t nCentBins = 9;
+const Int_t nCentBins = nCentAcc + 1;
 const Int_t nParticlesEffMatrix = 3;
 THnF *posRec, *posGen, *negRec, *negGen;
 TH2F *h2EtaMom[nSigns][nParticlesEffMatrix][nCentBins];
@@ -334,11 +334,12 @@ enum parType
 enum binType
 {
   kDet=0,
-  kSyst=1,
-  kPart=2,
-  kCent=3,
-  kMom=4,
-  kEta=5
+  kOrigin=1,
+  kSyst=2,
+  kPart=3,
+  kCent=4,
+  kMom=5,
+  kEta=6
 };
 
 
@@ -1010,7 +1011,7 @@ void SetBranchAddresses()
 
 }
 //____________________________________________________________________________________________________________
-void PrepareEffMatrix(TString matrixFile, Int_t detectorCom, Int_t systSetting, Float_t pDownAcc, Float_t pUpAcc)
+void PrepareEffMatrix(TString matrixFile, Int_t detectorCom, Int_t origin, Int_t systSetting, Float_t pDownAcc, Float_t pUpAcc)
 {
 
   /*
@@ -1038,7 +1039,11 @@ void PrepareEffMatrix(TString matrixFile, Int_t detectorCom, Int_t systSetting, 
   // TString matrixFile = "/media/marsland/Samsung_T5/lustre/nyx/alice/users/marsland/pFluct/files/analysis/Data/PbPb/MC/RUN2/LHC16g1/LHC16g1_pass1_EffCheckForPaper_12112020/mergedRuns/AnalysisResults_hists.root";
   TString matrixFile = "/media/marsland/Samsung_T5/lustre/nyx/alice/users/marsland/pFluct/files/analysis/Data/PbPb/MC/RUN2/LHC16g1/LHC16g1_pass1_NoSelection_06082019/mergedRuns/mergedHists/AnalysisResults_hists.root";
   PrepareEffMatrix(matrixFile,0,    0    ,0.6, 1.5); // TPC eff.
-  
+
+  aliroot -l
+  .L MCData_FilterTreesMakeHists_Run2.C+
+  TString matrixFile = "AnalysisResults.root"
+  PrepareEffMatrix(matrixFile, 0, 0, 0, 0.2, 5.2)
 
   */
   fSystSet = systSetting;
@@ -1058,22 +1063,28 @@ void PrepareEffMatrix(TString matrixFile, Int_t detectorCom, Int_t systSetting, 
   negGen = (THnF*)list -> FindObject("fHistNegEffMatrixScanGen");
   //
   // axis = 0 -->   detector
-  // axis = 1 -->   setting
-  // axis = 2 -->   particle type
-  // axis = 3 -->   Centrality (%)
-  // axis = 4 -->   #it{p}_{T} (GeV/#it{c})
-  // axis = 5 -->   #eta
+  // axis = 1 -->   isprimary
+  // axis = 2 -->   setting
+  // axis = 3 -->   particle type
+  // axis = 4 -->   Centrality (%)
+  // axis = 5 -->   #it{p}_{T} (GeV/#it{c})
+  // axis = 6 -->   #eta
   //
-  // 0:detector, 1:syst, 2: particle, 3:cent, 4:momentum, 5:eta
+  // 0:detector, 1:origin, 2:syst, 3:particle, 4:cent, 5:momentum, 6:eta
   posRec -> GetAxis(kEta)-> SetRangeUser(etaDown,etaUp);
   posGen -> GetAxis(kEta)-> SetRangeUser(etaDown,etaUp);
   negRec -> GetAxis(kEta)-> SetRangeUser(etaDown,etaUp);
   negGen -> GetAxis(kEta)-> SetRangeUser(etaDown,etaUp);
   //
-  posRec -> GetAxis(kMom)-> SetRangeUser(pDownAcc,pUpAcc);
-  posGen -> GetAxis(kMom)-> SetRangeUser(pDownAcc,pUpAcc);
-  negRec -> GetAxis(kMom)-> SetRangeUser(pDownAcc,pUpAcc);
-  negGen -> GetAxis(kMom)-> SetRangeUser(pDownAcc,pUpAcc);
+  posRec -> GetAxis(kOrigin)-> SetRangeUser(origin, origin + 1);
+  posGen -> GetAxis(kOrigin)-> SetRangeUser(origin, origin + 1);
+  negRec -> GetAxis(kOrigin)-> SetRangeUser(origin, origin + 1);
+  negGen -> GetAxis(kOrigin)-> SetRangeUser(origin, origin + 1);
+  //
+  posRec -> GetAxis(kMom)-> SetRangeUser(pDownAcc, pUpAcc);
+  posGen -> GetAxis(kMom)-> SetRangeUser(pDownAcc, pUpAcc);
+  negRec -> GetAxis(kMom)-> SetRangeUser(pDownAcc, pUpAcc);
+  negGen -> GetAxis(kMom)-> SetRangeUser(pDownAcc, pUpAcc);
   //
   posRec -> GetAxis(kDet)-> SetRangeUser(detectorCom, detectorCom+1);
   negRec -> GetAxis(kDet)-> SetRangeUser(detectorCom, detectorCom+1);
@@ -1082,23 +1093,24 @@ void PrepareEffMatrix(TString matrixFile, Int_t detectorCom, Int_t systSetting, 
   //
   posRec -> GetAxis(kSyst)-> SetRangeUser(fSystSet, fSystSet+1);
   negRec -> GetAxis(kSyst)-> SetRangeUser(fSystSet, fSystSet+1);
-  posGen -> GetAxis(kSyst)-> SetRangeUser(fSystSet, fSystSet+1);
-  negGen -> GetAxis(kSyst)-> SetRangeUser(fSystSet, fSystSet+1);
+  // generated level does not know about systematic settings
+  posGen -> GetAxis(kSyst)-> SetRangeUser(0, 1);
+  negGen -> GetAxis(kSyst)-> SetRangeUser(0, 1);
   //
-  effMatrixStream = new TTreeSRedirector(Form("EffMatrix_Syst_%d_Det_%d_Acc_%3.2f_%3.2f.root",systSetting,detectorCom,pDownAcc,pUpAcc),"recreate");
+  effMatrixStream = new TTreeSRedirector(Form("EffMatrix_Orig_%d_Syst_%d_Det_%d_Acc_%3.2f_%3.2f.root",origin,systSetting,detectorCom,pDownAcc,pUpAcc),"recreate");
 
   MeanEffInAcceptance(0);
   MeanEffInAcceptance(1);
   MeanEffInAcceptance(2);
 
   for (Int_t icent=0; icent<nCentAcc; icent++){
-    effMatrix1D(4,0,icent);
-    effMatrix1D(4,1,icent);
-    effMatrix1D(4,2,icent);
+    effMatrix1D(kCent,0,icent, origin);
+    effMatrix1D(kCent,1,icent, origin);
+    effMatrix1D(kCent,2,icent, origin);
     //
-    effMatrix1D(5,0,icent);
-    effMatrix1D(5,1,icent);
-    effMatrix1D(5,2,icent);
+    effMatrix1D(kMom,0,icent, origin);
+    effMatrix1D(kMom,1,icent, origin);
+    effMatrix1D(kMom,2,icent, origin);
     //
     effMatrix2D(0,icent);
     effMatrix2D(1,icent);
@@ -1122,6 +1134,7 @@ void ModifyEffMatrix(THnF *hnF)
   cout << " axis = 3 -->   " << hnF->GetAxis(3)->GetTitle() << "  Nbins = " << hnF->GetAxis(3)->GetNbins() << endl;
   cout << " axis = 4 -->   " << hnF->GetAxis(4)->GetTitle() << "  Nbins = " << hnF->GetAxis(4)->GetNbins() << endl;
   cout << " axis = 5 -->   " << hnF->GetAxis(5)->GetTitle() << "  Nbins = " << hnF->GetAxis(5)->GetNbins() << endl;
+  cout << " axis = 6 -->   " << hnF->GetAxis(6)->GetTitle() << "  Nbins = " << hnF->GetAxis(6)->GetNbins() << endl;
   //
   for (Int_t idet = 1; idet <=nDetBins; idet++) {
     for (Int_t iset = 1; iset <=nSetBins; iset++) {
@@ -1146,7 +1159,7 @@ void ModifyEffMatrix(THnF *hnF)
 
 }
 
-void effMatrix1D(Int_t effType,Int_t pid, Int_t cent)
+void effMatrix1D(Int_t effType, Int_t pid, Int_t cent, Int_t origin=0)
 {
 
   //
@@ -1154,25 +1167,30 @@ void effMatrix1D(Int_t effType,Int_t pid, Int_t cent)
   // kaon    pid  ==  1;
   // proton  pid  ==  2;
   //
-  // mom dependence effType=4
-  // eta dependence effType=5
+  // mom dependence effType=kMom
+  // eta dependence effType=kEta
   //
   Double_t etaDown = -0.8;
   Double_t etaUp   =  0.8;
-  posRec -> GetAxis(kEta)-> SetRangeUser(etaDown,etaUp);
-  posGen -> GetAxis(kEta)-> SetRangeUser(etaDown,etaUp);
-  negRec -> GetAxis(kEta)-> SetRangeUser(etaDown,etaUp);
-  negGen -> GetAxis(kEta)-> SetRangeUser(etaDown,etaUp);
+  posRec -> GetAxis(kEta)-> SetRangeUser(etaDown, etaUp);
+  posGen -> GetAxis(kEta)-> SetRangeUser(etaDown, etaUp);
+  negRec -> GetAxis(kEta)-> SetRangeUser(etaDown, etaUp);
+  negGen -> GetAxis(kEta)-> SetRangeUser(etaDown, etaUp);
 
-  posRec -> GetAxis(kPart)-> SetRangeUser(pid,pid+1);
-  posGen -> GetAxis(kPart)-> SetRangeUser(pid,pid+1);
-  negRec -> GetAxis(kPart)-> SetRangeUser(pid,pid+1);
-  negGen -> GetAxis(kPart)-> SetRangeUser(pid,pid+1);
+  posRec -> GetAxis(kOrigin)-> SetRangeUser(origin, origin);
+  posGen -> GetAxis(kOrigin)-> SetRangeUser(origin, origin);
+  negRec -> GetAxis(kOrigin)-> SetRangeUser(origin, origin);
+  negGen -> GetAxis(kOrigin)-> SetRangeUser(origin, origin);
 
-  posGen -> GetAxis(kCent)-> SetRangeUser(centAccDown[cent],centAccUp[cent]);
-  posRec -> GetAxis(kCent)-> SetRangeUser(centAccDown[cent],centAccUp[cent]);
-  negGen -> GetAxis(kCent)-> SetRangeUser(centAccDown[cent],centAccUp[cent]);
-  negRec -> GetAxis(kCent)-> SetRangeUser(centAccDown[cent],centAccUp[cent]);
+  posRec -> GetAxis(kPart)-> SetRangeUser(pid, pid+1);
+  posGen -> GetAxis(kPart)-> SetRangeUser(pid, pid+1);
+  negRec -> GetAxis(kPart)-> SetRangeUser(pid, pid+1);
+  negGen -> GetAxis(kPart)-> SetRangeUser(pid, pid+1);
+
+  posGen -> GetAxis(kCent)-> SetRangeUser(centAccDown[cent], centAccUp[cent]);
+  posRec -> GetAxis(kCent)-> SetRangeUser(centAccDown[cent], centAccUp[cent]);
+  negGen -> GetAxis(kCent)-> SetRangeUser(centAccDown[cent], centAccUp[cent]);
+  negRec -> GetAxis(kCent)-> SetRangeUser(centAccDown[cent], centAccUp[cent]);
 
   TH1F *histoRecPos = (TH1F*)posRec -> Projection(effType);  histoRecPos -> Sumw2();
   TH1F *histoGenPos = (TH1F*)posGen -> Projection(effType);  histoGenPos -> Sumw2();
@@ -1194,23 +1212,23 @@ void effMatrix1D(Int_t effType,Int_t pid, Int_t cent)
   histoRecNeg -> SetLineWidth(3);
   histoRecNeg -> SetMarkerSize(1.8);
 
-  TString xAxisNAme;
-  if (effType==4) xAxisNAme = "#it{p} (GeV/#it{c})";
-  if (effType==5) xAxisNAme = "#eta";
+  TString xAxisName;
+  if (effType == kMom) xAxisName = "#it{p} (GeV/#it{c})";
+  if (effType == kEta) xAxisName = "#eta";
 
-  histoRecPos -> GetYaxis() -> SetRangeUser(0,1);
-  histoRecPos -> GetXaxis() -> SetTitle(xAxisNAme);
+  histoRecPos -> GetYaxis() -> SetRangeUser(0 ,1);
+  histoRecPos -> GetXaxis() -> SetTitle(xAxisName);
   if(pid == 0) histoRecPos -> GetYaxis() -> SetTitle("pion detection efficiency");
   if(pid == 1) histoRecPos -> GetYaxis() -> SetTitle("kaon detection efficiency");
   if(pid == 2) histoRecPos -> GetYaxis() -> SetTitle("proton detection efficiency");
 
-  histoRecNeg -> GetYaxis() -> SetRangeUser(0,1);
-  histoRecNeg -> GetXaxis() -> SetTitle(xAxisNAme);
+  histoRecNeg -> GetYaxis() -> SetRangeUser(0, 1);
+  histoRecNeg -> GetXaxis() -> SetTitle(xAxisName);
   if(pid == 0) histoRecNeg -> GetYaxis() -> SetTitle("pion detection efficiency");
   if(pid == 1) histoRecNeg -> GetYaxis() -> SetTitle("kaon detection efficiency");
   if(pid == 2) histoRecNeg -> GetYaxis() -> SetTitle("proton detection efficiency");
 
-  if (effType==4){
+  if (effType == kMom){
     h1Mom[0][pid][cent]=(TH1F*)histoRecPos->Clone();
     h1Mom[1][pid][cent]=(TH1F*)histoRecNeg->Clone();
 
@@ -1222,7 +1240,7 @@ void effMatrix1D(Int_t effType,Int_t pid, Int_t cent)
     h1Mom[1][pid][cent]->Write();
   }
 
-  if (effType==5){
+  if (effType == kEta){
     h1Eta[0][pid][cent]=(TH1F*)histoRecPos->Clone();
     h1Eta[1][pid][cent]=(TH1F*)histoRecNeg->Clone();
 
@@ -1261,10 +1279,10 @@ void effMatrix2D(Int_t pid, Int_t cent)
   negGen -> GetAxis(kCent)-> SetRangeUser(centAccDown[cent],centAccUp[cent]);
   negRec -> GetAxis(kCent)-> SetRangeUser(centAccDown[cent],centAccUp[cent]);
 
-  TH2F *histoRecPos = (TH2F*)posRec -> Projection(4,5);  histoRecPos -> Sumw2();
-  TH2F *histoGenPos = (TH2F*)posGen -> Projection(4,5);  histoGenPos -> Sumw2();
-  TH2F *histoRecNeg = (TH2F*)negRec -> Projection(4,5);  histoRecNeg -> Sumw2();
-  TH2F *histoGenNeg = (TH2F*)negGen -> Projection(4,5);  histoGenNeg -> Sumw2();
+  TH2F *histoRecPos = (TH2F*)posRec -> Projection(kMom, kEta);  histoRecPos -> Sumw2();
+  TH2F *histoGenPos = (TH2F*)posGen -> Projection(kMom, kEta);  histoGenPos -> Sumw2();
+  TH2F *histoRecNeg = (TH2F*)negRec -> Projection(kMom, kEta);  histoRecNeg -> Sumw2();
+  TH2F *histoGenNeg = (TH2F*)negGen -> Projection(kMom, kEta);  histoGenNeg -> Sumw2();
 
   histoRecPos -> Divide(histoGenPos);
   histoRecNeg -> Divide(histoGenNeg);
@@ -1294,15 +1312,15 @@ void MeanEffInAcceptance(Int_t pid)
   //proton  pid  ==  2;
   //
 
-  posGen -> GetAxis(kCent)-> SetRangeUser(centAccDown[0],centAccUp[8]);
-  posRec -> GetAxis(kCent)-> SetRangeUser(centAccDown[0],centAccUp[8]);
-  negGen -> GetAxis(kCent)-> SetRangeUser(centAccDown[0],centAccUp[8]);
-  negRec -> GetAxis(kCent)-> SetRangeUser(centAccDown[0],centAccUp[8]);
+  posGen -> GetAxis(kCent)-> SetRangeUser(centAccDown[0], centAccUp[nCentAcc - 1]);
+  posRec -> GetAxis(kCent)-> SetRangeUser(centAccDown[0], centAccUp[nCentAcc - 1]);
+  negGen -> GetAxis(kCent)-> SetRangeUser(centAccDown[0], centAccUp[nCentAcc - 1]);
+  negRec -> GetAxis(kCent)-> SetRangeUser(centAccDown[0], centAccUp[nCentAcc - 1]);
 
-  posRec -> GetAxis(kPart)-> SetRangeUser(pid,pid+1);
-  posGen -> GetAxis(kPart)-> SetRangeUser(pid,pid+1);
-  negRec -> GetAxis(kPart)-> SetRangeUser(pid,pid+1);
-  negGen -> GetAxis(kPart)-> SetRangeUser(pid,pid+1);
+  posRec -> GetAxis(kPart)-> SetRangeUser(pid, pid+1);
+  posGen -> GetAxis(kPart)-> SetRangeUser(pid, pid+1);
+  negRec -> GetAxis(kPart)-> SetRangeUser(pid, pid+1);
+  negGen -> GetAxis(kPart)-> SetRangeUser(pid, pid+1);
 
   TString centEtaStr_Pos = Form("h2D_CentEta_Pos_%s",parName[pid+1].Data());
   TString centEtaStr_Neg = Form("h2D_CentEta_Neg_%s",parName[pid+1].Data());
@@ -1312,16 +1330,16 @@ void MeanEffInAcceptance(Int_t pid)
 
   for (Int_t ieta=0; ieta<nEtaAcc; ieta++){
 
-    // 0:detector, 1:syst, 2: particle, 3:cent, 4:momentum, 5:eta
+  // 0:detector, 1:origin, 2:syst, 3:particle, 4:cent, 5:momentum, 6:eta
     posRec -> GetAxis(kEta)-> SetRangeUser(etaAccDown[ieta],etaAccUp[ieta]);
     posGen -> GetAxis(kEta)-> SetRangeUser(etaAccDown[ieta],etaAccUp[ieta]);
     negRec -> GetAxis(kEta)-> SetRangeUser(etaAccDown[ieta],etaAccUp[ieta]);
     negGen -> GetAxis(kEta)-> SetRangeUser(etaAccDown[ieta],etaAccUp[ieta]);
     //
-    TH1F *histoRecPos = (TH1F*)posRec -> Projection(3);  histoRecPos -> Sumw2();
-    TH1F *histoGenPos = (TH1F*)posGen -> Projection(3);  histoGenPos -> Sumw2();
-    TH1F *histoRecNeg = (TH1F*)negRec -> Projection(3);  histoRecNeg -> Sumw2();
-    TH1F *histoGenNeg = (TH1F*)negGen -> Projection(3);  histoGenNeg -> Sumw2();
+    TH1F *histoRecPos = (TH1F*)posRec -> Projection(kCent);  histoRecPos -> Sumw2();
+    TH1F *histoGenPos = (TH1F*)posGen -> Projection(kCent);  histoGenPos -> Sumw2();
+    TH1F *histoRecNeg = (TH1F*)negRec -> Projection(kCent);  histoRecNeg -> Sumw2();
+    TH1F *histoGenNeg = (TH1F*)negGen -> Projection(kCent);  histoGenNeg -> Sumw2();
 
     histoRecPos -> Divide(histoGenPos);
     histoRecNeg -> Divide(histoGenNeg);
@@ -1331,6 +1349,9 @@ void MeanEffInAcceptance(Int_t pid)
 
     h1CentEta[0][pid][ieta]->SetName(Form("h1D_CentEta_Pos_%s_EtaAcc_%d",parName[pid+1].Data(),ieta));
     h1CentEta[1][pid][ieta]->SetName(Form("h1D_CentEta_Neg_%s_EtaAcc_%d",parName[pid+1].Data(),ieta));
+
+    h1CentEta[0][pid][ieta]->GetYaxis()->SetTitle(Form("%s %s efficiency", "pos", parName[pid + 1].Data()));
+    h1CentEta[1][pid][ieta]->GetYaxis()->SetTitle(Form("%s %s efficiency", "neg", parName[pid + 1].Data()));
 
     for (Int_t icent=0; icent<nCentAcc; icent++){
 
@@ -1388,5 +1409,15 @@ void FillQAHistograms(Bool_t beforeCuts = kTRUE) {
     hfTreeMC_tpcSignalN_After->Fill(ffTreeMC_tpcSignalN);
 
     hfTreeMC_ncltpc2D_After->Fill(ffTreeMC_pT, ffTreeMC_ncltpc);
+  }
+}
+
+void PlotAllEfficiencies(TString matrixFile) {
+  for (Int_t iDet = 0; iDet < 2; iDet++) {
+    for (Int_t iOrig = 0; iOrig < 2; iOrig++) {
+      for (Int_t iSet = 0; iSet < 17; iSet++) {
+        PrepareEffMatrix(matrixFile, iDet, iOrig, iSet, 0.2, 6.);
+      }
+    }
   }
 }
