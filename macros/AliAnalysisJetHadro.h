@@ -169,7 +169,6 @@ public:
   // Some boolian settings
   void   SetRunOnGrid(const Bool_t ifRunOnGrid = kTRUE)               {fRunOnGrid           = ifRunOnGrid;}
   void   SetIncludeITScuts(const Bool_t ifITSCuts = kTRUE)            {fIncludeITS          = ifITSCuts;}
-  void   SetFilldscaledTree(const Bool_t ifdscaledTree = kTRUE)       {fFilldscaledTree     = ifdscaledTree;}
   void   SetFillFastJet(const Bool_t ifFastJet = kTRUE)               {fFillFastJet         = ifFastJet;}
   void   SetFillJetsBG(const Bool_t ifFillJetsBG = kTRUE)             {fFillJetsBG          = ifFillJetsBG;}
   void   SetJetMinPtSub(const Double_t jetminptsub = -1000.0)         {fjetMinPtSub         = jetminptsub;}
@@ -364,9 +363,6 @@ private:
   Bool_t            fFillOnlyHists;          //
   Bool_t            fFillEffLookUpTable;     //
   Bool_t            fFillHigherMomentsMCclosure;
-  Bool_t            fFillArmPodTree;         // switch whether to fill clean sample tree
-  Bool_t            fFilljetsFJBGTree;         // switch whether to fill BG Jets FJ tree
-  Bool_t            fFilldscaledTree;         // switch whether to fill dscaled tree
   Bool_t            fFillFastJet;         // switch whether to fill FJ tree
   Bool_t            fFillJetsBG;          // switch whether to fill jetsEMC constituent tree
   Double_t          fjetMinPtSub;            // minimium jet pt after subtraction to keep jet

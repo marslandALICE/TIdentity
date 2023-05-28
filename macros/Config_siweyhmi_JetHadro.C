@@ -144,9 +144,8 @@ AliAnalysisJetHadro* Config_siweyhmi_JetHadro(Bool_t getFromAlien, Int_t setting
       task->SetRunNumberForExpecteds(0);
       task->fEventCuts.fUseVariablesCorrelationCuts = true;
       //
-      task->SetLeadingJetCut(3);
+      task->SetLeadingJetCut(5);
       task->SetFillJetsBG(kFALSE);
-      task->SetFilldscaledTree(kTRUE);
       task->SetFillFastJet(kTRUE);
       //Set these in the wagon configuration CHANGE
       task->SetJetMinPtSub(pT_sub_min);
@@ -175,8 +174,9 @@ AliAnalysisJetHadro* Config_siweyhmi_JetHadro(Bool_t getFromAlien, Int_t setting
       task->SetMCResonanceArray(tmpNresonances,tmpResArr);
 
       //
+      task->SetLeadingJetCut(5);
       task->SetFillJetsBG(kFALSE);
-      task->SetFillFastJet(kFALSE);
+      task->SetFillFastJet(kTRUE);
 
       //Set these in the wagon configuration CHANGE
       task->SetJetMinPtSub(pT_sub_min);

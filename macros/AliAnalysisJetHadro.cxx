@@ -167,7 +167,6 @@ fIncludeITS(kTRUE),
 fFillOnlyHists(kFALSE),
 fFillEffLookUpTable(kFALSE),
 fFillHigherMomentsMCclosure(kFALSE),
-fFilldscaledTree(kTRUE),
 fFillFastJet(kTRUE),
 fFillJetsBG(kTRUE),
 fjetMinPtSub(-1000.0),
@@ -425,7 +424,6 @@ fIncludeITS(kTRUE),
 fFillOnlyHists(kFALSE),
 fFillEffLookUpTable(kFALSE),
 fFillHigherMomentsMCclosure(kFALSE),
-fFilldscaledTree(kTRUE),
 fFillFastJet(kTRUE),
 fFillJetsBG(kTRUE),
 fjetMinPtSub(-1000.0),
@@ -1219,7 +1217,7 @@ Bool_t AliAnalysisJetHadro::Run()
   if (fPercentageOfEvents>0 && (fEventCountInFile%fPercentageOfEvents)!=0) return kFALSE;
 
   // if centrality estimation failed
-  if (fCentrality > 100.) return kFALSE;
+  // if (fCentrality > 100.) return kFALSE;
   //
   // ======================================================================
   //   Filling part
@@ -1256,7 +1254,7 @@ Bool_t AliAnalysisJetHadro::Run()
     fRhoFJCorrEMC=0.,
     fjetRhoVal = 0.0;
 
-    FindJetsFJGen();
+    if (fFillJetsBG) FindJetsFJGen();
     FindJetsEMC();
     if (fFillFastJet){
       FindJetsFJ();
@@ -1307,6 +1305,7 @@ void AliAnalysisJetHadro::FindJetsEMC()
       //
       (*fTreeSRedirector)<<"jetsEMCBG"<<
       "gid="            << fEventGID << //  global event ID
+      "ptsubmin="       << fjetMinPtSub <<
       "ijet="           << ijetindex << // jet Radius
       "nJets="          << Njets <<    //  global event ID
       "jetpt="          << jetpt <<     //  global event ID
@@ -1339,7 +1338,9 @@ void AliAnalysisJetHadro::FindJetsEMC()
     Double_t leadingPt = jet->MaxChargedPt(); //max pT of charged particle in jet
     Double_t jetMCPt = jet->MCPt();
     Double_t jetptsub = jet->PtSub(fjetRhoVal, kFALSE); //bg sub pt
-
+    Bool_t jetTrigger = ( (leadingPt > fLeadingJetCut) || (jetptsub>30 && leadingPt>3) );
+    if (!jetTrigger) continue;
+    //
     if (jetptsub > pT_sub_min)
     {
       fhasRealEMCjet = 1;
@@ -1347,6 +1348,7 @@ void AliAnalysisJetHadro::FindJetsEMC()
 
     if(!fTreeSRedirector) return;
     (*fTreeSRedirector)<<"jetsEMC"<<
+    "ptsubmin="  << fjetMinPtSub <<
     "nJetsAcc="  << NAcceptedjets << // Number of accepted jets in event
     "gid="       << fEventGID << //  global event ID
     "jetRadius=" << jetRadius << // jet Radius
@@ -1364,7 +1366,6 @@ void AliAnalysisJetHadro::FindJetsEMC()
     "\n";
     //
     // if (jetptsub <= pT_sub_min) continue;
-    if (leadingPt <= fLeadingJetCut) continue;
     for(Int_t i = 0; i < jet->GetNumberOfParticleConstituents(); i++)
     {
       const AliVParticle* particle = jet->Track(i);
@@ -1409,6 +1410,7 @@ void AliAnalysisJetHadro::FindJetsEMC()
       "nConst="    << JetNumberOfConstituents  <<
       "maxpt="     << leadingPt <<
       "jetptsub="  << jetptsub <<
+      // 
       "cutBit="    << fTrackCutBits         <<  //  Systematic Cuts
       "dEdx="      << fTPCSignal            <<  //  dEdx of the track
       "sign="      << fSign                 <<  //  charge
@@ -1417,10 +1419,10 @@ void AliAnalysisJetHadro::FindJetsEMC()
       "pT="        << fPt                   <<  // transverse momentum
       "eta="       << fEta                  <<  //  eta
       "phi="       << fPhi                  <<  //  phi
-      "cent="      << fCentrality           <<
-      "pileupbit=" << fPileUpBit            ;
+      "cent="      << fCentrality           ;
       if (!fRunOnGrid){
         (*fTreeSRedirector)<<"jetsEMCconst"<<
+        "pileupbit=" << fPileUpBit          << 
         "tpcFindableCls=" << tpcFindableCls << // number of findable clusters
         "tpcSharedCls="   << tpcSharedCls << // number of shared clusters
         "tpcSignalN="     << fTrackTPCSignalN <<  //  number of cl used in dEdx
@@ -1473,19 +1475,20 @@ void AliAnalysisJetHadro::FindJetsFJ()
   // Create jetwrapper with the same settings used in FindJetsEMC
   int nJetRadiusBins = 3;
   int nJetPtsubMinBins = 1;
-  int nSettings = 8;
+  int nSettings = 6;
   float fTrackPt = 0.15;
   float fGhostArea = 0.005;
   float bgJetAbsEtaCut = 0.7;           // fixed
   float bgJetRadius = 0.2;              // fixed
   //
   float jetRadius  = 0.4;     // can be 0.2, 0.4, 0.6
-  float pT_sub_min = 10.0;    // can be 40, 60, 80
+  float pT_sub_min = 40.0;    // can be 40, 60, 80
   std::vector<float>  fJetRadius{0.2,0.4,0.6};
   std::vector<float>  fPtSubMin{40.,60.,80.}; // jet pt cut 
+  std::vector<int>  fSettings{-1,0,1,4,6,12}; // jet pt cut 
   //
   // loop over settings and jets radius
-  for (int iset=-1; iset<nSettings; iset++){
+  for (int iset=0; iset<nSettings; iset++){
     for (int iJetRadius=0; iJetRadius<nJetRadiusBins; iJetRadius++){
       for (int iJetPt=0; iJetPt<nJetPtsubMinBins; iJetPt++){
 
@@ -1521,13 +1524,13 @@ void AliAnalysisJetHadro::FindJetsFJ()
           if (!fESDtrackCutsLoose->AcceptTrack(track)) continue;
           if (!track->GetInnerParam()) continue;
           if (!(track->GetTPCsignalN()>0)) continue;
-          if (iset==-1) {
+          if (fSettings[iset]==-1) {
             if (!fESDtrackCuts->AcceptTrack(track)) continue; // default cuts which should match EMC jets
           } else {
             Double_t closestPar[3];
             GetExpecteds(track,closestPar);
             SetCutBitsAndSomeTrackVariables(track);
-            if (!GetSystematicClassIndex(fTrackCutBits,iset)) continue;
+            if (!GetSystematicClassIndex(fTrackCutBits,fSettings[iset])) continue;
           }
           //
           if (track->Pt() < fTrackPt || TMath::Abs(track->Eta()) >= 0.9) continue;
@@ -1612,6 +1615,8 @@ void AliAnalysisJetHadro::FindJetsFJ()
           Float_t jeteta = jet.eta();
           Float_t jetArea = jet.area();
           Float_t jetptsub = jetpt - fRhoFJ*jetArea;
+          Bool_t jetTrigger = ( (leadingPt > fLeadingJetCut) || (jetptsub>30 && leadingPt>3) );
+          if (!jetTrigger) continue;
 
           if (jetptsub > pT_sub_min)
           {
@@ -1638,7 +1643,6 @@ void AliAnalysisJetHadro::FindJetsFJ()
           "\n";
 
           // if (jetptsub <= pT_sub_min) continue;
-          if (leadingPt <= fLeadingJetCut) continue;
           for(Int_t i = 0; i < nConstituents; i++)
           {
             fastjet::PseudoJet &constituent = constituents[i];
@@ -1668,7 +1672,7 @@ void AliAnalysisJetHadro::FindJetsFJ()
             //
             (*fTreeSRedirector)<<"jetsFJconst"<<
             "syst="      << iset << //  syst setting
-            "ptsubmin="  << fPtSubMin[iJetPt] <<
+            // "ptsubmin="  << fPtSubMin[iJetPt] <<
             "jetRadius=" << fJetRadius[iJetRadius] << // jet Radius
             "jetEtaCut=" << jetAbsEtaCut << //abs eta cut for jet
             "jetpt="     << jetpt <<     //  global event ID
@@ -1690,10 +1694,10 @@ void AliAnalysisJetHadro::FindJetsFJ()
             "pT="        << fPt                   <<  // transverse momentum
             "eta="       << fEta                  <<  //  eta
             "phi="       << fPhi                  <<  //  phi
-            "cent="      << fCentrality           <<  //  centrality
-            "pileupbit=" << fPileUpBit            ;
+            "cent="      << fCentrality           ;  //  centrality
             if (!fRunOnGrid){
               (*fTreeSRedirector)<<"jetsFJconst"<<
+              "pileupbit=" << fPileUpBit            <<
               "tpcFindableCls="      << tpcFindableCls << // number of findable clusters
               "tpcSharedCls="        << tpcSharedCls << // number of shared clusters
               "tpcSignalN="          << fTrackTPCSignalN <<  //  number of cl used in dEdx
@@ -2295,19 +2299,19 @@ Bool_t AliAnalysisJetHadro::GetSystematicClassIndex(UInt_t cut,Int_t syst)
 {
   /*
   syst:
-  0 -->  Reference
-  1 -->  CRows70
+  0 -->  Reference --> 
+  1 -->  CRows70   --> 
   2 -->  CRows90
-  3 -->  ActiveZone
-  4 -->  Chi2TPCSmall
+  3 -->  ActiveZone 
+  4 -->  Chi2TPCSmall --> 
   5 -->  Chi2TPCLarge
-  6 -->  kMaxDCAToVertexXYPtDepLarge
+  6 -->  kMaxDCAToVertexXYPtDepLarge  --> 
   7 -->  kVertexZSmall
   8 -->  kEventVertexZLarge
   9 -->  kSharedCls
   10 -->  kFindableClsTight
   11 -->  kFindableClsLoose
-  12 -->  kPileupLoose
+  12 -->  kPileupLoose                 --> 
   13 -->  kBFieldPos
   14 -->  kBFieldNeg
   15 -->  kTPCSignalNSmall

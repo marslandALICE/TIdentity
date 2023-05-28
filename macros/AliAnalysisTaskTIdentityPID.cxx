@@ -984,11 +984,9 @@ void AliAnalysisTaskTIdentityPID::Initialize()
   //
   // very loose cuts --> cuts will be tightened using the bipmap
   fESDtrackCutsLoose = new AliESDtrackCuts("esdTrackCutsLoose","");
-  fESDtrackCutsLoose->SetEtaRange(-100.,100.);
+  fESDtrackCutsLoose->SetEtaRange(-0.9,0.9);
   fESDtrackCutsLoose->SetPtRange(0.1,100000.);
-  // fESDtrackCutsLoose->SetMinRatioCrossedRowsOverFindableClustersTPC(0.8);
   fESDtrackCutsLoose->SetAcceptKinkDaughters(kFALSE);
-  // fESDtrackCutsLoose->SetMaxFractionSharedTPCClusters(0.4);
   fESDtrackCutsLoose->SetMinNClustersTPC(50);
   fESDtrackCutsLoose->SetMinNCrossedRowsTPC(50);
   fESDtrackCutsLoose->SetMaxDCAToVertexXY(10);   // hybrid cuts  TODO
@@ -1549,7 +1547,7 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
         // if (fMCtrue && TMath::Abs(fVz) > 15) return;   // For MC put fixed cut
         // if (fDefaultTrackCuts && (TMath::Abs(fVz)>7 || TMath::Abs(fVz)<0.15) ) return;
         // else if (TMath::Abs(fVz)>15) return;
-        if (TMath::Abs(fVz)>15) return;
+        if (TMath::Abs(fVz)>12) return;
         //
         if (fVertex && isVertexOk) fHistVertex->Fill(fVz);
         else return;
@@ -5686,8 +5684,9 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
       "eventMultESD="         << eventMultESD           <<  //  event multiplicity ESD
       "primMult="             << fNContributors         <<  //  #prim tracks
       "tpcClusterMult="       << tpcClusterMultiplicity <<  // tpc cluster multiplicity
-      "tpcTrackBeforeClean="  << tpcTrackBeforeClean <<   // tpc track before cleaning
+      "tpcTrackBeforeClean="  << tpcTrackBeforeClean    <<   // tpc track before cleaning
       "itsTracklets="         << itsNumberOfTracklets   <<  // number of ITS tracklets
+      "pileupbit="            << fPileUpBit             <<
       //
       // "fmdMult.="             << &fmdMult               <<  // T0 multiplicity
       "tZeroMult.="           << &tzeroMult             <<  // T0 multiplicity
@@ -6161,7 +6160,7 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
         if (nclTPC<kNclTPCcut) continue;
         if (TMath::Abs(tgl)>kTglCut) continue;
         if (track->Pt()<kPtCut) continue;
-        if ( (fRandom.Rndm()*(qP*qP) < 0.05) || itsHighDeDx )
+        if ( (fRandom.Rndm()*(qP*qP) < 0.005) || itsHighDeDx )
         {
           if(!fTreeSRedirector) return;
           (*fTreeSRedirector)<<"dscaled"<<
