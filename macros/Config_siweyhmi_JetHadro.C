@@ -30,10 +30,23 @@ AliAnalysisJetHadro* Config_siweyhmi_JetHadro(Bool_t getFromAlien, Int_t setting
   //
   // Create specific track selection
   UInt_t kPhysSel = AliVEvent::kCentral;
+  if (year==2010) kPhysSel = AliVEvent::kMB;   // select minimum bias events for LHC10h
+  if (year==2015) kPhysSel = AliVEvent::kINT7; // select minimum bias events for LHC15o
+  // if (year==2018) task->SelectCollisionCandidates(AliVEvent::kMB | AliVEvent::kCentral | AliVEvent::kSemiCentral) ;
 
+  //Rho task
+  TString sRhoName = "Rho";
+  float emcjetradius = 0.4;
+  float emcbgjetradius = 0.2;
+  float emcGhostArea = 0.005;
+  float fTrackPt = 0.15;
+  float pT_sub_min = 40.0;    // can be 40, 60, 80
+  double particleEtaCut = 0.9;
+  //
+  // track cuts for the container 
   AliESDtrackCuts *fESDtrackCuts = new AliESDtrackCuts;
-  fESDtrackCuts->SetEtaRange(-100.,100.);
-  fESDtrackCuts->SetPtRange(0.,100000.);
+  fESDtrackCuts->SetEtaRange(-1*particleEtaCut,particleEtaCut);
+  fESDtrackCuts->SetPtRange(fTrackPt,100000.);
   fESDtrackCuts->SetMinRatioCrossedRowsOverFindableClustersTPC(0.8);
   fESDtrackCuts->SetAcceptKinkDaughters(kFALSE);
   fESDtrackCuts->SetMaxChi2TPCConstrainedGlobal(36);
@@ -47,39 +60,47 @@ AliAnalysisJetHadro* Config_siweyhmi_JetHadro(Bool_t getFromAlien, Int_t setting
   fESDtrackCuts->SetMaxDCAToVertexZ(3.2);    // hybrid cuts  TODO
   fESDtrackCuts->SetRequireSigmaToVertex(kFALSE);
   fESDtrackCuts->SetDCAToVertex2D(kTRUE);  // fESDtrackCuts->SetDCAToVertex2D(kFALSE);    TODO
-  fESDtrackCuts->SetMaxChi2PerClusterTPC(2.5);
   fESDtrackCuts->SetClusterRequirementITS(AliESDtrackCuts::kSPD, AliESDtrackCuts::kAny);
-
-  //Rho task
-  TString sRhoName = "Rho";
-  float emcjetradius = 0.4;
-  float emcbgjetradius = 0.2;
-  float emcGhostArea = 0.005;
-  float fTrackPt = 0.15;
+  if ( (year==2015 && passIndex==2) || (year==2018 && passIndex==3) ){
+    fESDtrackCuts->SetMaxChi2PerClusterTPC(2.5);
+  } else {
+    fESDtrackCuts->SetMaxChi2PerClusterTPC(4);
+  }
 
   //Background jet task
   AliEmcalJetTask *pKtChJetTask = AliEmcalJetTask::AddTaskEmcalJet("usedefault", "usedefault", AliJetContainer::kt_algorithm, emcbgjetradius, AliJetContainer::kChargedJet, fTrackPt, 0, emcGhostArea, AliJetContainer::E_scheme, "Jet", 0., kFALSE, kFALSE);
-  pKtChJetTask->SelectCollisionCandidates(kPhysSel);
+  if (year<2018) pKtChJetTask->SelectCollisionCandidates(kPhysSel);
+  pKtChJetTask->SetMinJetPt(fTrackPt);
   pKtChJetTask->SetUseNewCentralityEstimation(kTRUE);
   if (year == 2017) {pKtChJetTask->SetForceBeamType(AliAnalysisTaskEmcal::kpp);}
   if (year == 2018) {pKtChJetTask->SetForceBeamType(AliAnalysisTaskEmcal::kAA);}
-  pKtChJetTask->SetNCentBins(5);
+  // pKtChJetTask->SetNCentBins(5);
 
   //Rho task
   AliAnalysisTaskRho *RhoTask = AliAnalysisTaskRho::AddTaskRhoNew("usedefault", "", sRhoName, emcbgjetradius, AliEmcalJet::kTPCfid, AliJetContainer::kChargedJet, kTRUE, AliJetContainer::E_scheme);
-  RhoTask->SelectCollisionCandidates(kPhysSel);
+  if (year<2018) RhoTask->SelectCollisionCandidates(kPhysSel);
   RhoTask->SetExcludeLeadJets(2);
   RhoTask->SetUseNewCentralityEstimation(kTRUE);
   if (year == 2017) {RhoTask->SetForceBeamType(AliAnalysisTaskEmcal::kpp);}
   if (year == 2018) {RhoTask->SetForceBeamType(AliAnalysisTaskEmcal::kAA);}
-  RhoTask->SetNCentBins(5);
+  // RhoTask->SetNCentBins(5);
+
+  AliTrackContainer * trackContbg = pKtChJetTask->GetTrackContainer("Tracks");
+  auto trackcontbg = pKtChJetTask->AddTrackContainer("Tracks");
+  trackcontbg->SetTrackFilterType(AliEmcalTrackSelection::ETrackFilterType_t::kCustomTrackFilter);
+  trackcontbg->AddTrackCuts(new PWG::EMCAL::AliEmcalESDtrackCutsWrapper("ESDcuts", fESDtrackCuts));
+  trackcontbg->SetName("bgdetTracks");
 
   RhoTask->RemoveJetContainer(0);
-  RhoTask->AddJetContainer("Jet_KTChargedR040_Tracks_pT0150_E_scheme");
+  RhoTask->AddJetContainer("Jet_KTChargedR020_Tracks_pT0150_E_scheme");
+  AliJetContainer* bgjetCont = RhoTask->GetJetContainer("Jet_KTChargedR020_Tracks_pT0150_E_scheme");
+  bgjetCont->SetJetPtCut(fTrackPt);
+  bgjetCont->SetJetEtaLimits(-0.9+emcbgjetradius, 0.9-emcbgjetradius);
+  bgjetCont->PrintCuts();
 
   // Signal jet task
   AliEmcalJetTask *pChJet02Task = AliEmcalJetTask::AddTaskEmcalJet("Tracks", "", AliJetContainer::antikt_algorithm, emcjetradius, AliJetContainer::kChargedJet, fTrackPt, 0, emcGhostArea, AliJetContainer::E_scheme, "SigJet", fTrackPt, kFALSE, kFALSE);
-  pChJet02Task->SelectCollisionCandidates(kPhysSel);
+  if (year<2018) pChJet02Task->SelectCollisionCandidates(kPhysSel);
 
   // Create the track container and apply track cuts
   AliTrackContainer * trackCont = pChJet02Task->GetTrackContainer("Tracks");
@@ -91,8 +112,10 @@ AliAnalysisJetHadro* Config_siweyhmi_JetHadro(Bool_t getFromAlien, Int_t setting
   // Configuration for the main analysis task
   AliAnalysisJetHadro *task = new AliAnalysisJetHadro(combinedName);
   SetDefaultsJets(task,year,periodName,passIndex);
-  task->SelectCollisionCandidates(kPhysSel);
+  if (year<2018) task->SelectCollisionCandidates(kPhysSel);
   AliJetContainer* jetCont02 = task->AddJetContainer("SigJet_AKTChargedR040_Tracks_pT0150_E_scheme"); // has to modified accordingly with AliEmcalJetTask
+  jetCont02->SetJetPtCut(fTrackPt);
+  jetCont02->SetJetEtaLimits(-0.9+emcjetradius, 0.9-emcjetradius);
 
   jetCont02->SetJetRadius(emcjetradius);
   jetCont02->SetName("detJets");
@@ -114,19 +137,19 @@ AliAnalysisJetHadro* Config_siweyhmi_JetHadro(Bool_t getFromAlien, Int_t setting
     //
     case 0:{
       std::cout << " SETTING TYPE = " << settingType << " Info::siweyhmi: run over real data " << std::endl;
-      task->SetUseCouts(kTRUE);
+      task->SetUseCouts(kFALSE);
       task->SetDefaultTrackCuts(kTRUE);
       task->SetDefaultEventCuts(kTRUE);
       task->SetRunOnGrid(kTRUE);
+      task->SetRunNumberForExpecteds(0);
       task->fEventCuts.fUseVariablesCorrelationCuts = true;
       //
-      task->SetRunNumberForExpecteds(0);
-      task->SetFilljetsFJBGTree(kTRUE);
+      task->SetLeadingJetCut(3);
+      task->SetFillJetsBG(kFALSE);
       task->SetFilldscaledTree(kTRUE);
       task->SetFillFastJet(kTRUE);
       //Set these in the wagon configuration CHANGE
-      task->SetFillJetEMCConst(kTRUE);
-      task->SetJetMinPtSub(10.0);
+      task->SetJetMinPtSub(pT_sub_min);
       task->SetPercentageOfEvents(0); // sets so it saves 1 out of every n events inclusive = 400. Jets = 40 w/ 40 GeV min jet requirement
       //
     }
@@ -152,12 +175,11 @@ AliAnalysisJetHadro* Config_siweyhmi_JetHadro(Bool_t getFromAlien, Int_t setting
       task->SetMCResonanceArray(tmpNresonances,tmpResArr);
 
       //
-      task->SetFilljetsFJBGTree(kFALSE);
+      task->SetFillJetsBG(kFALSE);
       task->SetFillFastJet(kFALSE);
 
       //Set these in the wagon configuration CHANGE
-      task->SetFillJetEMCConst(kTRUE);
-      task->SetJetMinPtSub(10.0);
+      task->SetJetMinPtSub(pT_sub_min);
       task->SetPercentageOfEvents(0); //sets so it saves 1 out of every n events inclusive = 400. Jets = 40 w/ 40 GeV min jet requirement
       //
     }
@@ -197,6 +219,7 @@ void SetDefaultsJets(AliAnalysisJetHadro *defaultTask, Int_t year, TString perio
   defaultTask->SetMomUpperEdge(5.2);
   defaultTask->SetNGenprotonBins(100);
   defaultTask->SetPercentageOfEvents(0);
+  defaultTask->SetLeadingJetCut(2);
 
   // DEFAULT SETTINGS
   const Int_t tmpCentbins  = 14;
@@ -216,8 +239,8 @@ void SetDefaultsJets(AliAnalysisJetHadro *defaultTask, Int_t year, TString perio
   // Boolians which are by default === ON ===
   defaultTask->SetRunOnGrid(kFALSE);
   defaultTask->SetIsMCtrue(kFALSE);
-  defaultTask->SetIncludeITScuts(kFALSE);
-  defaultTask->SetFilljetsFJBGTree(kFALSE);
+  defaultTask->SetIncludeITScuts(kTRUE);
+  defaultTask->SetFillJetsBG(kFALSE);
   defaultTask->SetFillFastJet(kFALSE);
   defaultTask->SetUsePtCut(1);
   defaultTask->SetMCTrackOriginType(1);   // 0:full scan, 1: prim

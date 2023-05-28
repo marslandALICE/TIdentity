@@ -30,15 +30,21 @@ class  AliAnalysisTaskRho;
 Example usage: 
 
 cd /home/marsland/Desktop/ubuntu_desktop/workdir/RUN_ON_GRID/Ebye/test/root6_based/4thMoment_29092021
-aliroot -b -q 'runGrid.C(0,0,"test",0,"3","$RUN_ON_GRID_DIR/Ebye/lists/runsONERUN-2020-LHC20e3a-pass3.list","PWGPP695_MC_remapping",1,65,2018,"18q",3,"vAN-20210925_ROOT6-1")'
-aliroot -b -q 'runGrid.C(0,0,"test",0,"3","$RUN_ON_GRID_DIR/Ebye/lists/runs-2020-LHC20e3a-pass3.list"      ,"PWGPP695_MC_remapping",1,65,2018,"18q",3,"vAN-20210925_ROOT6-1")'
-aliroot -b -q 'runGrid.C(0,0,"test",0,"3","$RUN_ON_GRID_DIR/Ebye/lists/runsIlya1run-2018-LHC18q-pass3.list","PWGPP695_MC_remapping",0,4 ,2018,"18q",3,"vAN-20221118_O2-1")'
-aliroot -b -q 'runGrid.C(1,0,"test",0,"3","$RUN_ON_GRID_DIR/Ebye/lists/runsIlya1run-2018-LHC18q-pass3.list","PWGPP695_MC_remapping",0,4 ,2018,"18q",3,"vAN-20221118_O2-1")'
+aliroot -b -q 'runGrid.C(0,0,"test",0,"3","$RUN_ON_GRID_DIR/Ebye/lists/runsONERUN-2020-LHC20e3a-pass3.list","PWGPP695_MC_remapping",1,65,2018,"18q",3,"vAN-20230519_O2-1")'
+aliroot -b -q 'runGrid.C(0,0,"test",0,"3","$RUN_ON_GRID_DIR/Ebye/lists/runs-2020-LHC20e3a-pass3.list"      ,"PWGPP695_MC_remapping",1,65,2018,"18q",3,"vAN-20230519_O2-1")'
+aliroot -b -q 'runGrid.C(0,0,"test",0,"3","$RUN_ON_GRID_DIR/Ebye/lists/runsIlya1run-2018-LHC18q-pass3.list","PWGPP695_MC_remapping",0,4 ,2018,"18q",3,"vAN-20230519_O2-1")'
+aliroot -b -q 'runGrid.C(1,0,"test",0,"3","$RUN_ON_GRID_DIR/Ebye/lists/runsIlya1run-2018-LHC18q-pass3.list","PWGPP695_MC_remapping",0,4 ,2018,"18q",3,"vAN-20230519_O2-1")'
 
-//
-ilya and sierra version 
-aliroot -b -q 'runGrid.C         (0,0,"test",0,"3","$RUN_ON_GRID_DIR/Ebye/lists/runsIlya1run-2018-LHC18q-pass3.list","PWGPP695_MC_remapping",0,4,0 ,2018,"18q",3,"vAN-20210925_ROOT6-1")'
-aliroot -b -q 'runGrid_JetHadro.C(0,0,"test",0,"3","$RUN_ON_GRID_DIR/Ebye/lists/runsIlya1run-2018-LHC18q-pass3.list","PWGPP695_MC_remapping",0,0   ,2018,"18q",3,"vAN-20210925_ROOT6-1")'
+// ilya and sierra version 
+aliroot -b -q 'runGrid.C(0,0,"test",0,"3","$RUN_ON_GRID_DIR/Ebye/lists/runsIlya1run-2018-LHC18q-pass3.list","PWGPP695_MC_remapping",0,4,0 ,2018,"18q",3,"vAN-20230519_O2-1")'
+aliroot -b -q 'runGrid.C(1,0,"test",0,"3","$RUN_ON_GRID_DIR/Ebye/lists/runsIlya1run-2018-LHC18q-pass3.list","PWGPP695_MC_remapping",0,4,0 ,2018,"18q",3,"vAN-20230519_O2-1")'
+
+// all runs on grid
+aliroot -b -q 'runGrid.C(0,0,"full",1,"3","$RUN_ON_GRID_DIR/Ebye/lists/runs-2018-LHC18q-pass3.list","PWGPP695_MC_remapping",0,4,0 ,2018,"18q",3,"vAN-20230519_O2-1")'
+
+TFile f("AnalysisResults.root");
+jetsFJ->Draw("jetptsub","syst==-1 && abs(jetRadius-0.4)<0.001")
+jetsEMC->Draw("jetptsub","","same")
 
 fRunLocalFiles --> 0; run over local code but remote data, 1; run over local code and data
 valgrindOption --> 0 --> Normal, 1--> valgrind, 2--> callgrind, 3-->Massif
@@ -59,7 +65,7 @@ Bool_t fAddJetHadroTask  = kTRUE;
 Bool_t fAddTIdentityTask = kTRUE;
 // 
 const Int_t nTestFiles = 1;
-const Int_t nChunksPerJob = 15;
+const Int_t nChunksPerJob = 10;
 Bool_t fUseMultSelection = kTRUE;
 // TString dataBaseDir = "/eos/user/m/marsland/data";
 // TString dataBaseDir = "";

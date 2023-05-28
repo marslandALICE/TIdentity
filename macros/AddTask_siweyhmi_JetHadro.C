@@ -119,7 +119,7 @@ AliAnalysisTask *AddTask_siweyhmi_JetHadro(Bool_t getFromAlien=kTRUE, TString co
   // ****** Do not forget to "DefineOutput(5, TTree::Class());" In the contructor of the task ******
   //define output containers, please use 'username'_'somename'
   AliAnalysisDataContainer *cinput, *coutput1, *coutput2, *coutput3, *coutput4;
-  AliAnalysisDataContainer *coutput5, *coutput6, *coutput7, *coutput8, *coutput9;
+  AliAnalysisDataContainer *coutput5, *coutput6, *coutput7, *coutput8, *coutput9, *coutput10;
   //
   //  find and connect input container // Output files --> File opening order is important
   cinput  = mgr->GetCommonInputContainer();
@@ -145,23 +145,26 @@ AliAnalysisTask *AddTask_siweyhmi_JetHadro(Bool_t getFromAlien=kTRUE, TString co
   //
   // Output containers
   coutput1  = mgr->CreateContainer(listName,                      TList::Class(), AliAnalysisManager::kOutputContainer, fileDirStructure);
-  coutput2  = mgr->CreateContainer(combinedName+"_jetsEMCconst",  TTree::Class(), AliAnalysisManager::kOutputContainer, fileDirStructure);
-  coutput3  = mgr->CreateContainer(combinedName+"_jetsFJ",        TTree::Class(), AliAnalysisManager::kOutputContainer, fileDirStructure);
-  coutput4  = mgr->CreateContainer(combinedName+"_jetsFJBG",      TTree::Class(), AliAnalysisManager::kOutputContainer, fileDirStructure);
-  coutput5 = mgr->CreateContainer(combinedName+"_jetsFJconst",    TTree::Class(), AliAnalysisManager::kOutputContainer, fileDirStructure);
-  coutput6 = mgr->CreateContainer(combinedName+"_jetResonance",   TTree::Class(), AliAnalysisManager::kOutputContainer, fileDirStructure);
-  coutput7 = mgr->CreateContainer(combinedName+"_jeteventInfo",   TTree::Class(), AliAnalysisManager::kOutputContainer, fileDirStructure);
-  coutput8 = mgr->CreateContainer(combinedName+"_jetsFJGen",      TTree::Class(), AliAnalysisManager::kOutputContainer, fileDirStructure);
-  coutput9 = mgr->CreateContainer(combinedName+"_jetEMC",         TTree::Class(), AliAnalysisManager::kOutputContainer, fileDirStructure);
-  mgr->ConnectOutput (task,  1, coutput1);
-  mgr->ConnectOutput (task,  2, coutput2);
-  mgr->ConnectOutput (task,  3, coutput3);
-  mgr->ConnectOutput (task,  4, coutput4);
-  mgr->ConnectOutput (task,  5, coutput5);
-  mgr->ConnectOutput (task,  6, coutput6);
-  mgr->ConnectOutput (task,  7, coutput7);
-  mgr->ConnectOutput (task,  8, coutput8);
-  mgr->ConnectOutput (task,  9, coutput9);
+  coutput2  = mgr->CreateContainer(combinedName+"_jetsFJ",        TTree::Class(), AliAnalysisManager::kOutputContainer, fileDirStructure);
+  coutput3  = mgr->CreateContainer(combinedName+"_jetsFJBG",      TTree::Class(), AliAnalysisManager::kOutputContainer, fileDirStructure);
+  coutput4  = mgr->CreateContainer(combinedName+"_jetsFJconst",   TTree::Class(), AliAnalysisManager::kOutputContainer, fileDirStructure);
+  coutput5  = mgr->CreateContainer(combinedName+"_jetsEMC",       TTree::Class(), AliAnalysisManager::kOutputContainer, fileDirStructure);
+  coutput6  = mgr->CreateContainer(combinedName+"_jetsEMCBG",     TTree::Class(), AliAnalysisManager::kOutputContainer, fileDirStructure);
+  coutput7  = mgr->CreateContainer(combinedName+"_jetsEMCconst",  TTree::Class(), AliAnalysisManager::kOutputContainer, fileDirStructure);
+  coutput8  = mgr->CreateContainer(combinedName+"_jetsEventInfo", TTree::Class(), AliAnalysisManager::kOutputContainer, fileDirStructure);
+  coutput9  = mgr->CreateContainer(combinedName+"_jetsResonance", TTree::Class(), AliAnalysisManager::kOutputContainer, fileDirStructure);
+  coutput10 = mgr->CreateContainer(combinedName+"_jetsFJGen",     TTree::Class(), AliAnalysisManager::kOutputContainer, fileDirStructure);
+  // 
+  mgr->ConnectOutput (task,  1,  coutput1);
+  mgr->ConnectOutput (task,  2,  coutput2);
+  mgr->ConnectOutput (task,  3,  coutput3);
+  mgr->ConnectOutput (task,  4,  coutput4);
+  mgr->ConnectOutput (task,  5,  coutput5);
+  mgr->ConnectOutput (task,  6,  coutput6);
+  mgr->ConnectOutput (task,  7,  coutput7);
+  mgr->ConnectOutput (task,  8,  coutput8);
+  mgr->ConnectOutput (task,  9,  coutput9);
+  mgr->ConnectOutput (task,  10, coutput10);
 
   std::cout << " Info::siweyhmi: === Containers are ready === " << std::endl;
   return task;

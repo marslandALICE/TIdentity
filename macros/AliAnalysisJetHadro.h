@@ -169,11 +169,10 @@ public:
   // Some boolian settings
   void   SetRunOnGrid(const Bool_t ifRunOnGrid = kTRUE)               {fRunOnGrid           = ifRunOnGrid;}
   void   SetIncludeITScuts(const Bool_t ifITSCuts = kTRUE)            {fIncludeITS          = ifITSCuts;}
-  void   SetFilljetsFJBGTree(const Bool_t ifjetsFJBGTree = kTRUE)     {fFilljetsFJBGTree    = ifjetsFJBGTree;}
   void   SetFilldscaledTree(const Bool_t ifdscaledTree = kTRUE)       {fFilldscaledTree     = ifdscaledTree;}
   void   SetFillFastJet(const Bool_t ifFastJet = kTRUE)               {fFillFastJet         = ifFastJet;}
-  void   SetFillJetEMCConst(const Bool_t ifJetEMCConst = kTRUE)       {fFillJetEMCConst     = ifJetEMCConst;}
-  void   SetJetMinPtSub(const Double_t jetminptsub = -1000.0)            {fjetMinPtSub         = jetminptsub;}
+  void   SetFillJetsBG(const Bool_t ifFillJetsBG = kTRUE)             {fFillJetsBG          = ifFillJetsBG;}
+  void   SetJetMinPtSub(const Double_t jetminptsub = -1000.0)         {fjetMinPtSub         = jetminptsub;}
 
   void   SetDeDxCheck(const Bool_t ifDeDxCheck = kFALSE)              {fDEdxCheck           = ifDeDxCheck;}
   void   SetFillOnlyHists(const Bool_t ifFillOnlyHists = kFALSE)      {fFillOnlyHists       = ifFillOnlyHists;}
@@ -193,7 +192,8 @@ public:
   void   SetFillEventInfo(const Bool_t ifEventInfo = kFALSE)          {fEventInfo           = ifEventInfo;}
   void   SetPercentageOfEvents(const Int_t nPercentageOfEvents = 0)   {fPercentageOfEvents = nPercentageOfEvents;}
   void   SetNSettings(const Int_t nSettings = 22)                     {fNSettings = nSettings;}
-  void   SetRunNumberForExpecteds(const Int_t ifRunNumberForExpecteds = 0)    {fRunNumberForExpecteds = ifRunNumberForExpecteds;}
+  void   SetRunNumberForExpecteds(const Int_t ifRunNumberForExpecteds = 0) {fRunNumberForExpecteds = ifRunNumberForExpecteds;}
+  void   SetLeadingJetCut(const Int_t ifLeadingJetCut = 0)                 {fLeadingJetCut = ifLeadingJetCut;}
 
   //
   Bool_t GetRunOnGrid() const { return fRunOnGrid; }
@@ -333,10 +333,11 @@ private:
   TTree            * fTreejetsFJ;             // tree for fastjet signal jets
   TTree            * fTreejetsFJBG;           // tree for fastjet background jets
   TTree            * fTreejetsFJconst;          // tree for fastjet signal jet constituents
-  TTree            * fTreejetResonance;          // tree with full acceptance filled with MC
-  TTree            * fTreejetEvents;
+  TTree            * fTreejetsResonance;          // tree with full acceptance filled with MC
+  TTree            * fTreejetsEvents;
   TTree            * fTreejetsFJGen;
-  TTree            * fTreejetEMC;            // tree for EMCal signal jets
+  TTree            * fTreejetsEMC;            // tree for EMCal signal jets
+  TTree            * fTreejetsEMCBG;            // tree for EMCal signal jets
   TRandom3         fRandom;
 
 
@@ -367,7 +368,7 @@ private:
   Bool_t            fFilljetsFJBGTree;         // switch whether to fill BG Jets FJ tree
   Bool_t            fFilldscaledTree;         // switch whether to fill dscaled tree
   Bool_t            fFillFastJet;         // switch whether to fill FJ tree
-  Bool_t            fFillJetEMCConst;        // switch whether to fill jetEMC constituent tree
+  Bool_t            fFillJetsBG;          // switch whether to fill jetsEMC constituent tree
   Double_t          fjetMinPtSub;            // minimium jet pt after subtraction to keep jet
 
   Bool_t            fRunFastSimulation;      // when running over galice.root do not fill other objects
@@ -515,11 +516,13 @@ private:
   Bool_t             fIsMCPileup;
 
   AliJetContainer*   fJetContainer;
+  Float_t            fLeadingJetCut; 
   Double_t           fJetPt;
   Double_t           fJetEta;
   Double_t           fJetPhi;
   Float_t            fjetRhoVal;
-  Float_t            frhoFJ;
+  Float_t            fRhoFJ;
+  Float_t            fRhoFJCorrEMC;      // rho value calculated using FJ with the same settings used in EMC framework
   Bool_t             fhasAcceptedFJjet;
   Bool_t             fhasAcceptedEMCjet;
   Bool_t             fhasRealFJjet;

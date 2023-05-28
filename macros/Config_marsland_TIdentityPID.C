@@ -79,8 +79,8 @@ AliAnalysisTaskTIdentityPID* Config_marsland_TIdentityPID(Bool_t getFromAlien, I
       if( (passIndex==3 && periodName.Contains("18")) || (passIndex==2 && periodName.Contains("15")) ) {
         task->SetDefaultEventCuts(kTRUE);
       }
-      task->SetRunOnGrid(kFALSE);
-      task->SetUseCouts(kTRUE);
+      task->SetRunOnGrid(kTRUE);
+      task->SetUseCouts(kFALSE);
       //
       task->SetFillEventInfo(kTRUE);
       task->SetFillAllCutVariables(kTRUE);
@@ -1070,7 +1070,7 @@ void SetDefaults(AliAnalysisTaskTIdentityPID *defaultTask, Int_t year, TString p
   // Boolians which are by default === ON ===
   defaultTask->SetRunOnGrid(kFALSE);
   defaultTask->SetIsMCtrue(kFALSE);
-  defaultTask->SetIncludeITScuts(kFALSE);
+  defaultTask->SetIncludeITScuts(kTRUE);
   defaultTask->SetFillArmPodTree(kFALSE);
   defaultTask->SetUsePtCut(1);
   defaultTask->SetMCTrackOriginType(1);   // 0:full scan, 1: prim
