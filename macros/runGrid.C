@@ -47,7 +47,7 @@ jetsFJ->Draw("jetptsub","syst==0 && abs(jetRadius-0.4)<0.001")
 jetsEMC->Draw("jetptsub","","same")
 
 // to kill jobs in alien 
-for i in $(cat jobs.txt); do alien.py kill $i; done
+for i in $(cat jobskill.list); do alien.py kill $i; done
 
 fRunLocalFiles --> 0; run over local code but remote data, 1; run over local code and data
 valgrindOption --> 0 --> Normal, 1--> valgrind, 2--> callgrind, 3-->Massif
@@ -67,8 +67,9 @@ Bool_t fAddFilteredTrees = kTRUE;
 Bool_t fAddJetHadroTask  = kTRUE;
 Bool_t fAddTIdentityTask = kTRUE;
 // 
-const Int_t nTestFiles = 10;
-const Int_t nChunksPerJob = 15;
+const Int_t timelimitTTL=8000; // in terms of hours 8000/60/60 = 2.22 hours
+const Int_t nTestFiles = 2;
+const Int_t nChunksPerJob = 6;
 Bool_t fUseMultSelection = kTRUE;
 // TString dataBaseDir = "/eos/user/m/marsland/data";
 // TString dataBaseDir = "";
@@ -383,7 +384,7 @@ AliAnalysisGrid* CreateAlienHandler(Int_t valgrindOption = 0,TString mode="test"
   //plugin->SetMaxMergeFiles(40);
   plugin->SetMaxMergeStages(4);
 
-  plugin->SetTTL(86399);
+  plugin->SetTTL(timelimitTTL); 
   // Optionally set input format (default xml-single)
   plugin->SetInputFormat("xml-single");
   // Optionally modify job price (default 1)

@@ -205,6 +205,7 @@ fUseCouts(kFALSE),
 fV0InvMassHists(kFALSE),
 fRunNumberForExpecteds(0),
 fFillExpecteds(kFALSE),
+fDefaultCuts(kFALSE),
 fNSettings(17),
 fNMomBins(0),
 fMomDown(0),
@@ -505,6 +506,7 @@ fUseCouts(kFALSE),
 fV0InvMassHists(kFALSE),
 fRunNumberForExpecteds(0),
 fFillExpecteds(kFALSE),
+fDefaultCuts(kFALSE),
 fNSettings(17),
 fNMomBins(0),
 fMomDown(0),
@@ -957,8 +959,8 @@ void AliAnalysisTaskTIdentityPID::Initialize()
   // for the systematic check fill all tracks and tag them with cutbit but for MC do not
   //
   fESDtrackCuts = new AliESDtrackCuts("esdTrackCuts","");
-  fESDtrackCuts->SetEtaRange(-100.,100.);
-  fESDtrackCuts->SetPtRange(0.,100000.);
+  fESDtrackCuts->SetEtaRange(-0.9,0.9);
+  fESDtrackCuts->SetPtRange(0.15,1000.);
   fESDtrackCuts->SetMinRatioCrossedRowsOverFindableClustersTPC(0.8);
   fESDtrackCuts->SetAcceptKinkDaughters(kFALSE);
   fESDtrackCuts->SetMaxChi2TPCConstrainedGlobal(36);
@@ -966,7 +968,7 @@ void AliAnalysisTaskTIdentityPID::Initialize()
   fESDtrackCuts->SetMaxFractionSharedTPCClusters(0.4);    // ?? FROM MARIAN
   fESDtrackCuts->SetRequireTPCRefit(kTRUE);
   fESDtrackCuts->SetRequireITSRefit(kTRUE);
-  fESDtrackCuts->SetMinNCrossedRowsTPC(80);
+  fESDtrackCuts->SetMinNCrossedRowsTPC(70);
   fESDtrackCuts->SetMaxDCAToVertexXYPtDep("0.0208+0.04/pt^1.01");
   fESDtrackCuts->SetMaxDCAToVertexXY(2.4);   // hybrid cuts  TODO
   fESDtrackCuts->SetMaxDCAToVertexZ(3.2);    // hybrid cuts  TODO
@@ -1668,7 +1670,6 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
         //      Get relevant track info and set cut bits
         // --------------------------------------------------------------
         //
-        Bool_t ifDefaultCuts = fESDtrackCuts->AcceptTrack(track);
         Bool_t fBit96_base   = fESDtrackCuts_Bit96->AcceptTrack(track);
         Bool_t fBit128       = fESDtrackCuts_Bit128->AcceptTrack(track);
         Bool_t fBit768       = fESDtrackCuts_Bit768->AcceptTrack(track);
@@ -1738,7 +1739,7 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
             (*fTreeSRedirector)<<"tracks"<<
             "intrate="   << fIntRate              <<  // interaction rate
             "eventtime=" << fTimeStamp            <<  // event timeStamp
-            "defCut="    << ifDefaultCuts <<  // default cuts tuned by hand
+            "defCut="    << fDefaultCuts <<  // default cuts tuned by hand
             "bit96="     << fBit96_base <<    // tight cuts of 2011 tuned data
             "bit128="    << fBit128 <<        // TPC only tracks cuts
             "bit768="    << fBit768 <<        // Hybrid track cuts
@@ -2067,10 +2068,9 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
             if (ptotMCrec<fpDownArr[imom]  || ptotMCrec>fpUpArr[imom]) continue;
             //
             // Track cuts from detector
-            Bool_t ifDefaultCuts = fESDtrackCuts->AcceptTrack(trackReal);
             Bool_t ifDCAcutIfNoITSPixel = ApplyDCAcutIfNoITSPixel(trackReal);
             if (!trackReal -> GetInnerParam()) continue;
-            if (!ifDefaultCuts) continue;
+            if (!fESDtrackCuts->AcceptTrack(trackReal)) continue;
             if (!ifDCAcutIfNoITSPixel) continue;
             //
             // Identify particle wrt pdg code
@@ -2575,7 +2575,6 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
                   if (iPart == -10) continue; // perfect PID cut
                   //
                   // apply detector cuts
-                  Bool_t ifDefaultCuts = fESDtrackCuts->AcceptTrack(trackReal);
                   Bool_t ifDCAcutIfNoITSPixel = ApplyDCAcutIfNoITSPixel(trackReal);
                   if (!trackReal-> GetInnerParam()) continue;
                   if (!fESDtrackCutsLoose->AcceptTrack(trackReal))  continue;    // Loose Cuts
@@ -3044,7 +3043,6 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
         if (trackOrigin<-1) continue; // TODO
         //
         // Track cuts from dtector
-        Bool_t ifDefaultCuts = fESDtrackCuts->AcceptTrack(trackReal);
         Bool_t fBit96_base   = fESDtrackCuts_Bit96->AcceptTrack(trackReal);
         Bool_t fBit128       = fESDtrackCuts_Bit128->AcceptTrack(trackReal);
         Bool_t fBit768       = fESDtrackCuts_Bit768->AcceptTrack(trackReal);
@@ -3140,7 +3138,7 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
         "dcaz="      << fTrackDCAz <<
         "cRows="     << fTrackTPCCrossedRows  <<
         "chi2tpc="   << fTrackChi2TPC         <<
-        "defCut="    << ifDefaultCuts <<  // default cut
+        "defCut="    << fDefaultCuts <<  // default cut
         "bit96="     << fBit96_base <<  // run Number
         "bit128="    << fBit128 <<  // run Number
         "bit768="    << fBit768 <<  // run Number
@@ -3889,10 +3887,9 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
               if (ptotMCrec<fpDownArr[imom]  || ptotMCrec>fpUpArr[imom]) continue;
               //
               // detector cuts
-              Bool_t ifDefaultCuts = fESDtrackCuts->AcceptTrack(trackReal);
               Bool_t ifDCAcutIfNoITSPixel = ApplyDCAcutIfNoITSPixel(trackReal);
               if (!trackReal -> GetInnerParam()) continue;
-              if (!ifDefaultCuts) continue;  // real track cuts
+              if (!fESDtrackCuts->AcceptTrack(trackReal)) continue;  // real track cuts
               if (!ifDCAcutIfNoITSPixel) continue;  // TODO
               //
               Int_t iPart = -10;
@@ -4107,10 +4104,9 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
           if ((etaMCrec<fEtaDown) || (etaMCrec>fEtaUp)) continue;   // eta [-0.8,0.8]
           if (!fMCStack->IsPhysicalPrimary(lab)) continue;   // MC primary track check
           //
-          Bool_t ifDefaultCuts = fESDtrackCuts->AcceptTrack(trackReal);
           Bool_t ifDCAcutIfNoITSPixel = ApplyDCAcutIfNoITSPixel(trackReal);
           if (!trackReal->GetInnerParam()) continue;   // If track in TPC
-          if (!ifDefaultCuts) continue;   // apply esdtrack cuts
+          if (!fESDtrackCutsLoose->AcceptTrack(trackReal)) continue;   // apply esdtrack cuts
           if (!ifDCAcutIfNoITSPixel) continue;   // apply esdtrack cuts
           //
           // access generated track info
@@ -5080,6 +5076,7 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
       //  some extra getters
       // --------------------------------------------------------------
       //
+      fDefaultCuts = fESDtrackCuts->AcceptTrack(track);
       Double_t goldenChi2 = 0.;
       fPVertex = track->P();
       fTheta=track->Theta();

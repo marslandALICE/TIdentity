@@ -640,6 +640,7 @@ private:
   Bool_t            fV0InvMassHists;         // V0 invariant mass for QA
   Int_t             fRunNumberForExpecteds;  // Run number in which to fill the expecteds tree
   Bool_t            fFillExpecteds;
+  Bool_t            fDefaultCuts;
 
   Int_t             fNSettings;
   Int_t             fNMomBins;               // number of mombins --> for 20MeV slice 150 and 10MeV 300

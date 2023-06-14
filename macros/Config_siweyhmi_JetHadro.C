@@ -46,7 +46,7 @@ AliAnalysisJetHadro* Config_siweyhmi_JetHadro(Bool_t getFromAlien, Int_t setting
   // track cuts for the container 
   AliESDtrackCuts *fESDtrackCuts = new AliESDtrackCuts;
   fESDtrackCuts->SetEtaRange(-1*particleEtaCut,particleEtaCut);
-  fESDtrackCuts->SetPtRange(fTrackPt,100000.);
+  fESDtrackCuts->SetPtRange(fTrackPt,1000.);
   fESDtrackCuts->SetMinRatioCrossedRowsOverFindableClustersTPC(0.8);
   fESDtrackCuts->SetAcceptKinkDaughters(kFALSE);
   fESDtrackCuts->SetMaxChi2TPCConstrainedGlobal(36);
@@ -54,7 +54,7 @@ AliAnalysisJetHadro* Config_siweyhmi_JetHadro(Bool_t getFromAlien, Int_t setting
   fESDtrackCuts->SetMaxFractionSharedTPCClusters(0.4);    // ?? FROM MARIAN
   fESDtrackCuts->SetRequireTPCRefit(kTRUE);
   fESDtrackCuts->SetRequireITSRefit(kTRUE);
-  fESDtrackCuts->SetMinNCrossedRowsTPC(80);
+  fESDtrackCuts->SetMinNCrossedRowsTPC(70);
   fESDtrackCuts->SetMaxDCAToVertexXYPtDep("0.0208+0.04/pt^1.01");
   fESDtrackCuts->SetMaxDCAToVertexXY(2.4);   // hybrid cuts  TODO
   fESDtrackCuts->SetMaxDCAToVertexZ(3.2);    // hybrid cuts  TODO

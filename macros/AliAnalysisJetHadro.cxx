@@ -762,7 +762,8 @@ void AliAnalysisJetHadro::Initialize()
   //
   fESDtrackCuts = new AliESDtrackCuts("esdTrackCuts","");
   fESDtrackCuts->SetEtaRange(-1*particleEtaCut,particleEtaCut);
-  fESDtrackCuts->SetPtRange(fTrackPtMin,100000.);
+  fESDtrackCuts->SetPtRange(fTrackPtMin,1000.);
+  fESDtrackCuts->SetMinNCrossedRowsTPC(70);
   fESDtrackCuts->SetMinRatioCrossedRowsOverFindableClustersTPC(0.8);
   fESDtrackCuts->SetAcceptKinkDaughters(kFALSE);
   fESDtrackCuts->SetMaxChi2TPCConstrainedGlobal(36);
@@ -770,7 +771,7 @@ void AliAnalysisJetHadro::Initialize()
   fESDtrackCuts->SetMaxFractionSharedTPCClusters(0.4);    // ?? FROM MARIAN
   fESDtrackCuts->SetRequireTPCRefit(kTRUE);
   fESDtrackCuts->SetRequireITSRefit(kTRUE);
-  fESDtrackCuts->SetMinNCrossedRowsTPC(80);
+  fESDtrackCuts->SetMinNCrossedRowsTPC(70);
   fESDtrackCuts->SetMaxDCAToVertexXYPtDep("0.0208+0.04/pt^1.01");
   fESDtrackCuts->SetMaxDCAToVertexXY(2.4);   // hybrid cuts  TODO
   fESDtrackCuts->SetMaxDCAToVertexZ(3.2);    // hybrid cuts  TODO
@@ -1475,7 +1476,7 @@ void AliAnalysisJetHadro::FindJetsFJ()
   // Create jetwrapper with the same settings used in FindJetsEMC
   int nJetRadiusBins = 3;
   int nJetPtsubMinBins = 1;
-  int nSettings = 6;
+  int nSettings = 4;
   float fTrackPt = 0.15;
   float fGhostArea = 0.005;
   float bgJetAbsEtaCut = 0.7;           // fixed
@@ -1485,13 +1486,14 @@ void AliAnalysisJetHadro::FindJetsFJ()
   float pT_sub_min = 40.0;    // can be 40, 60, 80
   std::vector<float>  fJetRadius{0.2,0.4,0.6};
   std::vector<float>  fPtSubMin{40.,60.,80.}; // jet pt cut 
-  std::vector<int>  fSettings{-1,0,1,4,6,12}; // jet pt cut 
+  std::vector<int>  fSettings{-1,0,4,6}; // jet pt cut 
   //
   // loop over settings and jets radius
   for (int iset=0; iset<nSettings; iset++){
     for (int iJetRadius=0; iJetRadius<nJetRadiusBins; iJetRadius++){
       for (int iJetPt=0; iJetPt<nJetPtsubMinBins; iJetPt++){
-
+        
+        if (fMCtrue && fSettings[iset]!=0) continue;
         //
         Float_t jetAbsEtaCut = 0.9-fJetRadius[iJetRadius];   // fixed
         double particleEtaCut = 0.9;
@@ -1570,7 +1572,7 @@ void AliAnalysisJetHadro::FindJetsFJ()
             (*fTreeSRedirector)<<"jetsFJBG"<<
             "ptsubmin="       << fPtSubMin[iJetPt] <<
             "gid="            << fEventGID << //  global event ID
-            "syst="           << iset << //  syst setting
+            "syst="           << fSettings[iset] << //  syst setting
             "jetRadiusBG="    << bgJetRadius << // jet Radius
             "jetEtaCutBG="    << bgJetAbsEtaCut << //abs eta cut for jet
             "nJets="          << nJets <<    //  global event ID
@@ -1624,7 +1626,7 @@ void AliAnalysisJetHadro::FindJetsFJ()
           }
           //
           (*fTreeSRedirector)<<"jetsFJ"<<
-          "syst="         << iset << //  syst setting
+          "syst="         << fSettings[iset] << //  syst setting
           "ptsubmin="     << fPtSubMin[iJetPt] <<
           "jetEtaCut="    << jetAbsEtaCut << //abs eta cut for jet
           "gid="          << fEventGID << //  global event ID
@@ -1671,8 +1673,8 @@ void AliAnalysisJetHadro::FindJetsFJ()
             if((length > 0) && (tofSignal > 0)) beta = length / 2.99792458e-2 / tofSignal;
             //
             (*fTreeSRedirector)<<"jetsFJconst"<<
-            "syst="      << iset << //  syst setting
             // "ptsubmin="  << fPtSubMin[iJetPt] <<
+            "syst="      << fSettings[iset] << //  syst setting
             "jetRadius=" << fJetRadius[iJetRadius] << // jet Radius
             "jetEtaCut=" << jetAbsEtaCut << //abs eta cut for jet
             "jetpt="     << jetpt <<     //  global event ID
@@ -1694,7 +1696,8 @@ void AliAnalysisJetHadro::FindJetsFJ()
             "pT="        << fPt                   <<  // transverse momentum
             "eta="       << fEta                  <<  //  eta
             "phi="       << fPhi                  <<  //  phi
-            "cent="      << fCentrality           ;  //  centrality
+            "cent="      << fCentrality           <<  //  centrality
+            "pileupbit=" << fPileUpBit            ;
             if (!fRunOnGrid){
               (*fTreeSRedirector)<<"jetsFJconst"<<
               "pileupbit=" << fPileUpBit            <<
