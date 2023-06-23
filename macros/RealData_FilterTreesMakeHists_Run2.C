@@ -1162,7 +1162,12 @@ void ProcessJetConstHists()
     Bool_t momAcc = (fjetConst_p >= 0.2    && fjetConst_p <= 3.2);
     //
     // dump tidentree
-    if (systCut && etaAcc && momAcc && fillTIdenTree){
+    //Check jet cuts, add to if
+    Bool_t jet_ptsub_acc = ( (fjetConst_ptsub >= 40.0 && fjetConst_radius >= 0.15 && fjetConst_radius <= 0.25) ||
+    (fjetConst_ptsub >= 60.0 && fjetConst_radius >= 0.35 && fjetConst_radius <= 0.45) ||
+    (fjetConst_ptsub >= 80.0 && fjetConst_radius >= 0.55 && fjetConst_radius <= 0.65) );
+    Bool_t jet_area_acc = (fjetConst_area >= 0.6*3.14159265359*fjetConst_radius*fjetConst_radius);
+    if (systCut && etaAcc && momAcc && jet_ptsub_acc && jet_area_acc && fillTIdenTree){
       //
       //
       // Fill final histograms
@@ -1207,7 +1212,7 @@ void ProcessJetConstHists()
         }
       }
     }
-    if (systCut && testIntegratedHist){
+    if (systCut && jet_ptsub_acc && jet_area_acc && testIntegratedHist){
       treeStream->GetFile()->cd();
       (*treeStream)<<"jetConst"<<
       "gid="                  << fjetConst_gid          <<  //  global event ID
@@ -1250,6 +1255,7 @@ void ProcessJetConstHists()
         for (Int_t ijetRad=0; ijetRad<njetRad; ijetRad++){
         //
         if (testIntegratedHist && ieta>0) continue;
+        if (!jet_ptsub_acc || !jet_area_acc) continue;
         //
         Bool_t jet_etaCentString = (fjetConst_eta>=jet_etaBinning[ieta] && fjetConst_eta<jet_etaBinning[ieta+1] && fjetConst_cent>=centBinning[icent] && fjetConst_cent<centBinning[icent+1] && fjetConst_radius>(jetRadSizes[ijetRad]-0.05) && fjetConst_radius<(jetRadSizes[ijetRad]+0.05));
         if (testIntegratedHist && ieta==0) {
@@ -1468,7 +1474,7 @@ void ProcessJetEventTree()
     "cent="            << fjetEvents_cent         <<  //  cent
     "rhoFJ="            << fjetEvents_rhoFJ         <<  //  rhoFJ
     "hasAcceptedFJjet="  << fjetEvents_accjet         <<  //  hasAcceptedFJjet
-    "hasRealFJjet="       << fjetEvents_realjet         <<  //  hasRealFJjet
+    "hasRealFJjet="       << fjetEvents_realjet         <<  //  hasRealFJjet - only events with jet pt sub > 40GeV. No other jet cuts
     //"timeStamp="      << fjetEvents_timestamp   <<  //  global event ID
     "bField="         << fjetEvents_bField      <<  //  global jetEvent ID
     "gid="            << fjetEvents_gid         <<  //  global jetEvent ID

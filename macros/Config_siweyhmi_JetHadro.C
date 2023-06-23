@@ -149,8 +149,7 @@ AliAnalysisJetHadro* Config_siweyhmi_JetHadro(Bool_t getFromAlien, Int_t setting
       task->SetFillFastJet(kTRUE);
       //Set these in the wagon configuration CHANGE
       task->SetJetMinPtSub(pT_sub_min);
-      task->SetJetMinPtSub(pT_sub_min);
-      task->SetJetAreaCut(0.6); // sets so it saves 1 out of every n events inclusive = 400. Jets = 40 w/ 40 GeV min jet requirement
+      task->SetJetAreaCut(0.0); // sets so it saves 1 out of every n events inclusive = 400. Jets = 40 w/ 40 GeV min jet requirement
       //
     }
     break;
