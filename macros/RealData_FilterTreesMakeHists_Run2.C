@@ -99,10 +99,12 @@ using namespace std;
 void InitInitials();
 void WriteHistsToFile();
 void ProcessDataHists();
+void ProcessJetConstHists();
 void ProcessCleanSamples();
 void ProcessDScaledTree();
 void ProcessHighPtTree();
 void ProcessEventTree();
+void ProcessJetEventTree();
 void PlotTimeSeriesPerSector(TString performanceEventList);
 void CreateSplinesFromTHnSparse(Int_t icent, Int_t ieta);
 Bool_t ApplyTreeSelection(Int_t syst, UInt_t cutBit);
@@ -149,14 +151,20 @@ Double_t ptotMax = 5.2;
 // Double_t etaMin = -0.8;
 // Double_t etaMax = 0.8;
 const Int_t nEtaBins = 8;  // ???
+const Int_t njetRad = 3;
 Double_t etaMin = -0.8;
 Double_t etaMax = 0.8;
+Double_t jet_etaMin = -0.9;
+Double_t jet_etaMax = 0.9;
 //
 const Int_t nCentDim = 14;
 // const Int_t nEtaDim = 17;
 // Float_t etaBinning[nEtaDim]   = {-0.8,-0.7,-0.6,-0.5,-0.4,-0.3,-0.2,-0.1, 0., 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8};
 const Int_t nEtaDim = 9;
+const Int_t njetRadDim = 3;
+Float_t jetRadSizes[njetRadDim]   = {0.2,0.4,0.6};
 Float_t etaBinning[nEtaDim]   = {-0.8,-0.6,-0.4,-0.2, 0., 0.2, 0.4, 0.6, 0.8};
+Float_t jet_etaBinning[nEtaDim]   = {-0.9,-0.6,-0.4,-0.2, 0., 0.2, 0.4, 0.6, 0.9};
 Float_t centBinning[nCentDim] = { 0., 5., 10., 20., 30., 40., 50., 60., 70., 80., 85., 90., 95., 100.};
 //
 TTreeSRedirector *tidenTreeStream[nCentBins];
@@ -191,6 +199,34 @@ TH2F *h2DClean[nParticles][nCentBins][nEtaBins];
 TString hName2DClean[nParticles][nCentBins][nEtaBins];
 // ----------------------------------------------------------------------------------------------------------------------
 //
+// Jet const hists
+TH2F *jet_h2Dall[nCentBins][nEtaBins][njetRad];                 TString jet_hName2Dall[nCentBins][nEtaBins][njetRad];
+TH2F *jet_h2Dpos[nCentBins][nEtaBins][njetRad];                 TString jet_hName2Dpos[nCentBins][nEtaBins][njetRad];
+TH2F *jet_h2Dneg[nCentBins][nEtaBins][njetRad];                 TString jet_hName2Dneg[nCentBins][nEtaBins][njetRad];
+//
+TH2F *jet_h2DallPiTOF[nCentBins][nEtaBins][njetRad];            TString jet_hName2DallPiTOF[nCentBins][nEtaBins][njetRad];
+TH2F *jet_h2DallPiTOFPos[nCentBins][nEtaBins][njetRad];         TString jet_hName2DallPiTOFPos[nCentBins][nEtaBins][njetRad];
+TH2F *jet_h2DallPiTOFNeg[nCentBins][nEtaBins][njetRad];         TString jet_hName2DallPiTOFNeg[nCentBins][nEtaBins][njetRad];
+//
+TH2F *jet_h2DallPrTOF[nCentBins][nEtaBins][njetRad];            TString jet_hName2DallPrTOF[nCentBins][nEtaBins][njetRad];
+TH2F *jet_h2DallPrTOFPos[nCentBins][nEtaBins][njetRad];         TString jet_hName2DallPrTOFPos[nCentBins][nEtaBins][njetRad];
+TH2F *jet_h2DallPrTOFNeg[nCentBins][nEtaBins][njetRad];         TString jet_hName2DallPrTOFNeg[nCentBins][nEtaBins][njetRad];
+//
+TH2F *jet_h2DallBkgTOF[nCentBins][nEtaBins][njetRad];            TString jet_hName2DallBkgTOF[nCentBins][nEtaBins][njetRad];
+TH2F *jet_h2DallBkgTOFPos[nCentBins][nEtaBins][njetRad];         TString jet_hName2DallBkgTOFPos[nCentBins][nEtaBins][njetRad];
+TH2F *jet_h2DallBkgTOFNeg[nCentBins][nEtaBins][njetRad];         TString jet_hName2DallBkgTOFNeg[nCentBins][nEtaBins][njetRad];
+//
+TH2F *jet_h2DallKaTOF[nCentBins][nEtaBins][njetRad];            TString jet_hName2DallKaTOF[nCentBins][nEtaBins][njetRad];
+TH2F *jet_h2DallKaTOFPos[nCentBins][nEtaBins][njetRad];         TString jet_hName2DallKaTOFPos[nCentBins][nEtaBins][njetRad];
+TH2F *jet_h2DallKaTOFNeg[nCentBins][nEtaBins][njetRad];         TString jet_hName2DallKaTOFNeg[nCentBins][nEtaBins][njetRad];
+//
+TH2F *jet_h2DCleanKaTOFTRD[nCentBins][nEtaBins][njetRad];       TString jet_hName2DCleanKaTOFTRD[nCentBins][nEtaBins][njetRad];
+TH2F *jet_h2DCleanKaBayes[nCentBins][nEtaBins][njetRad];        TString jet_hName2DCleanKaBayes[nCentBins][nEtaBins][njetRad];
+//
+TH2F *jet_h2DClean[nParticles][nCentBins][nEtaBins][njetRad];
+TString jet_hName2DClean[nParticles][nCentBins][nEtaBins][njetRad];
+// ----------------------------------------------------------------------------------------------------------------------
+//
 // Expecteds
 TH2F *h2Expected[nParticles][nCentBins][nEtaBins];                TString hName2Expected[nParticles][nCentBins][nEtaBins];
 TH2F *h2ExpectedSigma[nParticles][nCentBins][nEtaBins];           TString hName2ExpectedSigma[nParticles][nCentBins][nEtaBins];
@@ -216,6 +252,29 @@ Float_t   ftracks_dcaxy=0;
 Float_t   ftracks_dcaz=0;
 Float_t   ftracks_cRows=0;
 Float_t   ftracks_chi2tpc=0;
+//
+// Jet constituent tree branches
+UInt_t    fjetConst_cutBit=0;
+ULong64_t fjetConst_gid=0;
+Float_t fjetConst_radius=0;
+Float_t fjetConst_area=0;
+Double_t fjetConst_maxpt=0;
+Float_t fjetConst_ptsub=0;
+//Double_t  fjetConst_eventtime=0;
+//Float_t   fjetConst_intrate=0;
+Float_t   fjetConst_dEdx=0;
+Int_t     fjetConst_sign=0;
+Float_t   fjetConst_ptot=0;
+Float_t   fjetConst_p=0;
+Float_t   fjetConst_pT=0;
+Float_t   fjetConst_eta=0;
+Float_t   fjetConst_phi=0;
+Float_t   fjetConst_cent=0;
+//Int_t     fjetConst_ncltpc=0;
+//Float_t   fjetConst_dcaxy=0;
+//Float_t   fjetConst_dcaz=0;
+//Float_t   fjetConst_cRows=0;
+//Float_t   fjetConst_chi2tpc=0;
 //
 // Clean Tree Branches
 UInt_t    ffArmPodTree_purity = 0;
@@ -316,6 +375,48 @@ TVectorF *fevents_phiCountCITSOnly=0x0;
 TVectorF *fevents_tpcVertexInfo=0x0;
 TVectorF *fevents_itsVertexInfo=0x0;
 //
+// jet events tree variables
+Int_t     fjetEvents_run=0;
+Float_t     fjetEvents_cent=0;
+Float_t     fjetEvents_rhoFJ=0;
+Char_t     fjetEvents_accjet=0;
+Char_t     fjetEvents_realjet=0;
+Float_t   fjetEvents_intrate=0;
+Float_t  fjetEvents_bField=0;
+ULong64_t fjetEvents_gid=0;
+//Double_t  fjetEvents_timestamp=0;
+ULong64_t fjetEvents_triggerMask=0;
+Double_t  fjetEvents_vz=0;
+Float_t  fjetEvents_tpcvz=0;
+Float_t  fjetEvents_spdvz=0;
+Int_t     fjetEvents_tpcMult=0;
+Int_t   fjetEvents_eventMult=0;
+Int_t     fjetEvents_eventMultESD=0;
+//nt_t     fjetEvents_nTracksStored=0;
+Float_t     fjetEvents_primMult=0;
+Int_t     fjetEvents_tpcTrackBeforeClean=0;
+Int_t     fjetEvents_itsTracklets=0;
+/*
+TVectorF *fjetEvents_centrality=0x0;
+TVectorF *fjetEvents_tZeroMult=0x0;
+TVectorF *fjetEvents_vZeroMult=0x0;
+TVectorF *fjetEvents_itsClustersPerLayer=0x0;
+TVectorF *fjetEvents_trackCounters=0x0;
+TVectorF *fjetEvents_trackdEdxRatio=0x0;
+TVectorF *fjetEvents_trackNcl=0x0;
+TVectorF *fjetEvents_trackChi2=0x0;
+TVectorF *fjetEvents_trackMatchEff=0x0;
+TVectorF *fjetEvents_trackTPCCountersZ=0x0;
+TVectorF *fjetEvents_phiCountA=0x0;
+TVectorF *fjetEvents_phiCountC=0x0;
+TVectorF *fjetEvents_phiCountAITS=0x0;
+TVectorF *fjetEvents_phiCountCITS=0x0;
+TVectorF *fjetEvents_phiCountAITSOnly=0x0;
+TVectorF *fjetEvents_phiCountCITSOnly=0x0;
+TVectorF *fjetEvents_tpcVertexInfo=0x0;
+TVectorF *fjetEvents_itsVertexInfo=0x0;
+*/
+//
 // highPt tree varianles
 ULong64_t     fhighPt_gid=0;
 Int_t         fhighPt_selectionPtMask=0;
@@ -339,8 +440,10 @@ Int_t fSystSet=0;
 TString fPlotVS="";
 TString fCutON="";
 TString inputDataTree    = "tracks";
+TString inputJetConstTree    = "jetsFJconst";
 TString inputCleanTree   = "fArmPodTree";
 TString inputEventTree   = "events";
+TString inputJetEventTree   = "jetsEventInfo";
 TString inputDscaledTree = "dscaled";
 TString inputHighPtTree  = "highPt";
 TString inputHists     = "cleanHists";
@@ -348,9 +451,9 @@ TString inputHistsFile = "";
 TFile *fdata=NULL;
 TFile *fhist=NULL;
 TFile *fdEdxMap=NULL;
-TTree *dataTree=NULL, *armtree=NULL, *eventtree=NULL, *dscaltree=NULL, *highPttree=NULL;
+TTree *dataTree=NULL, *jetConstTree=NULL, *armtree=NULL, *eventtree=NULL, *jetEventtree=NULL, *dscaltree=NULL, *highPttree=NULL;
 THnSparse *fhnExpected=NULL;
-TTreeSRedirector *treeStream=0, *histStream=0, *debugStream=0, *splinesStream=0;
+TTreeSRedirector *treeStream=0, *histStream=0, *jetHistStream=0, *debugStream=0, *splinesStream=0;
 TH1D  *hEta=0x0, *hCent=0x0, *hMom=0x0;
 TCutG *pionCutG=0, *antiProtonCutG=0, *protonCutG=0;
 TStopwatch timer;
@@ -362,6 +465,13 @@ TH2F *htracks_dcaz2D=NULL;
 TH2F *htracks_ncltpc2D=NULL;
 TH2F *htracks_dcaxy2D_After=NULL;
 TH2F *htracks_dcaz2D_After=NULL;
+/*
+TH2F *hjetConst_dcaxy2D=NULL;
+TH2F *hjetConst_dcaz2D=NULL;
+TH2F *hjetConst_ncltpc2D=NULL;
+TH2F *hjetConst_dcaxy2D_After=NULL;
+TH2F *hjetConst_dcaz2D_After=NULL;
+*/
 //
 TH2F *hevents_pileUpV02D=NULL;
 TH2F *hevents_pileUpV02D_inbunchCut=NULL;
@@ -375,6 +485,19 @@ TH2F *hevents_secMultITS0_primMultITS=NULL;
 TH1F *hevents_pileUpV01D=NULL;
 TH1F *hevents_pileUpITS1D=NULL;
 TH1F *hevents_ITSTPCeff=NULL;
+// Jet events
+TH2F *jet_hevents_pileUpV02D=NULL;
+TH2F *jet_hevents_pileUpV02D_inbunchCut=NULL;
+TH2F *jet_hevents_V0M_CL0=NULL;
+TH2F *jet_hevents_V0M_CL0_After=NULL;
+TH2F *jet_hevents_itsLayer0V02D_inbunchCut=NULL;
+TH2F *jet_hevents_itsLayer0V02D=NULL;
+TH2F *jet_hevents_pileUpITS2D_inbunchCut=NULL;
+TH2F *jet_hevents_pileUpITS2D=NULL;
+TH2F *jet_hevents_secMultITS0_primMultITS=NULL;
+TH1F *jet_hevents_pileUpV01D=NULL;
+TH1F *jet_hevents_pileUpITS1D=NULL;
+TH1F *jet_hevents_ITSTPCeff=NULL;
 //
 TH1F *hdscaled_sharedTPCClusters1D=NULL;
 TH1F *hdscaled_tpcSignalN1D=NULL;
@@ -395,6 +518,17 @@ TH1F *htracks_cent1D=NULL;
 TH1F *htracks_phi1D=NULL;
 TH1F *htracks_chi2tpc1D=NULL;
 TH1F *htracks_vz1D=NULL;
+/*
+TH1F *hjetConst_dcaxy1D=NULL;
+TH1F *hjetConst_dcaz1D=NULL;
+TH1F *hjetConst_ncltpc1D=NULL;
+*/
+TH1F *hjetConst_eta1D=NULL;
+//TH1F *hjetConst_cRows1D=NULL;
+TH1F *hjetConst_cent1D=NULL;
+TH1F *hjetConst_phi1D=NULL;
+//TH1F *hjetConst_chi2tpc1D=NULL;
+TH1F *hjetConst_vz1D=NULL;
 //
 TH2F *hhighPt_dEdxPtot=NULL;
 //
@@ -513,7 +647,9 @@ void RealData_FilterTreesMakeHists_Run2(TString plotVS, TString cutON, Int_t sys
   fdata      = TFile::Open(dFile);
   armtree    = (TTree*)fdata->Get(inputCleanTree);
   dataTree   = (TTree*)fdata->Get(inputDataTree);
+  jetConstTree   = (TTree*)fdata->Get(inputJetConstTree);
   eventtree  = (TTree*)fdata->Get(inputEventTree);
+  jetEventtree  = (TTree*)fdata->Get(inputJetEventTree);
   dscaltree  = (TTree*)fdata->Get(inputDscaledTree);
   highPttree = (TTree*)fdata->Get(inputHighPtTree);
   //
@@ -523,9 +659,20 @@ void RealData_FilterTreesMakeHists_Run2(TString plotVS, TString cutON, Int_t sys
   InitInitials();
   //
   if (dataTree) dataTree->BuildIndex("gid");
+  if (jetConstTree) {
+    jetConstTree->BuildIndex("gid");
+    dataTree->AddFriend(jetConstTree,"jetConsts");
+    jetConstTree->AddFriend(dataTree,"jetConsts");
+  }
   if (eventtree) {
     eventtree->BuildIndex("gid");
     dataTree->AddFriend(eventtree,"event");
+    jetConstTree->AddFriend(eventtree,"event");
+  }
+  if (jetEventtree) {
+    jetEventtree->BuildIndex("gid");
+    dataTree->AddFriend(jetEventtree,"jetEvent");
+    jetConstTree->AddFriend(jetEventtree,"jetEvent");
   }
   if (dscaltree) {
     dscaltree->BuildIndex("gid");
@@ -538,7 +685,9 @@ void RealData_FilterTreesMakeHists_Run2(TString plotVS, TString cutON, Int_t sys
   std::cout << "Indexing is finished " << dFile << std::endl;
   std::cout << "get trees from root file  ---------> " << dFile << std::endl;
   ProcessDataHists();
+  ProcessJetConstHists();
   ProcessEventTree();
+  ProcessJetEventTree();
   ProcessCleanSamples();
   ProcessDScaledTree();
   ProcessHighPtTree();
@@ -546,6 +695,7 @@ void RealData_FilterTreesMakeHists_Run2(TString plotVS, TString cutON, Int_t sys
   if (treeStream)  delete treeStream;
   if (debugStream) delete debugStream;
   if (histStream)  delete histStream;
+  if (jetHistStream)  delete jetHistStream;
   //
   for (Int_t icent=0; icent<nCentBins; icent++) delete tidenTreeStream[icent];
 
@@ -840,6 +990,322 @@ void ProcessDataHists()
 
 }
 //____________________________________________________________________________________________________________
+void ProcessJetConstHists()
+{
+
+  timer.Reset(); timer.Start();
+  std::cout << " ========= ProcessJetConstHists ========= " << std::endl;
+  Double_t nTreeEntriesAll = jetConstTree -> GetEntries();
+  Double_t nTreeEntries    = (testEntries>0) ? testEntries : nTreeEntriesAll;
+  cout << " Data Tree entries = " << nTreeEntriesAll << endl;
+  if (nTreeEntriesAll<10) { std::cout << " === upss data tree is empty === " << std::endl; return; }
+  //
+  // Loop over tree entries
+  Int_t eventCount=0;
+  TGraph *fgrTimeSeriesEventWeighted=NULL;
+  TGraph *fgrTimeSeriesNTracksWeighted=NULL;
+  for(Int_t i = 0; i < nTreeEntries; ++i)
+  {
+    //
+    // Get Track and event information
+    jetConstTree -> GetEntry(i);
+    if(i%Int_t(nTreeEntriesAll/10) == 0) {
+      cout << i << "   fjetConst_dEdx = " << fjetConst_dEdx      << "         fjetConst_eta        = " << fjetConst_eta << endl; //"  fjetConst_dcaxy = " << fjetConst_dcaxy << endl;
+      cout << "   fjetConst_gid       = " << fjetConst_gid       << "    -->  fevents_gid        = " <<  fevents_gid              << endl;
+      cout << "   fjetConst_gid       = " << fjetConst_gid       << "    -->  fjetEvents_gid        = " <<  fjetEvents_gid              << endl;
+      cout << "    -->  fevents_timestamp  = " <<  fevents_timestamp       << endl; //"   fjetConst_eventtime = " << fjetConst_eventtime
+      cout << "   fjetConst_cent      = " << fjetConst_cent      << "    -->  fevents_centrality = " <<  (*fevents_centrality)[0] << endl;
+    }
+
+    //
+    // --------------------------------------------------------------------------------
+    // Get the time series map for a given run and check if the run is in good run list
+    // --------------------------------------------------------------------------------
+    //
+    static Int_t runCache = -1;
+    static Int_t acceptRun = -1;
+    if (runCache!=Int_t(fevents_run)) {
+      runCache=Int_t(fevents_run);
+      if (fPeriod==0) timeSeriesMap = Form("%s/lustre/nyx/alice/users/miranov/NOTESData/alice-tpc-notes/JIRA/PWGPP-538/alice/data/2015/LHC15o/pass1/000%d/QAtimeSeries.root",MapDirName.Data(),runCache);
+      if (fPeriod==1) timeSeriesMap = Form("%s/lustre/nyx/alice/users/miranov/NOTESData/alice-tpc-notes/JIRA/PWGPP-538/alice/data/2018/LHC18q/pass1/000%d/QAtimeSeries.root",MapDirName.Data(),runCache);
+      if (fPeriod==2) timeSeriesMap = Form("%s/lustre/nyx/alice/users/miranov/NOTESData/alice-tpc-notes/JIRA/PWGPP-538/alice/data/2018/LHC18r/pass1/000%d/QAtimeSeries.root",MapDirName.Data(),runCache);
+      cout << "run number = " << runCache << "  ------------ > timeSeries Map = " <<  timeSeriesMap << endl;
+      //
+      // select run number
+      // if (fPeriod==0){
+      //   for (Int_t irun = 0; irun<Int_t(sizeof(runList)/sizeof(runList[0])); irun++){
+      //     if (runList[i]==runCache) {
+      //       acceptRun=1;
+      //       cout << " --- run is in the good run list from RCT --- GO AHEAD " << endl;
+      //       break;
+      //     }
+      //   }
+      // }
+      //
+      // get the time series
+      TFile *fQAtimeSeries = TFile::Open(timeSeriesMap);
+      if (!fQAtimeSeries) {
+        std::cout << " yolun acik ola --> file does not exist  " << std::endl;
+        fQAtimeSeriesExist = kFALSE;
+      } else {
+        if (fPeriod==0){
+          fgrTimeSeriesEventWeighted   = (TGraph*)fQAtimeSeries -> Get("hisTimeEvEffITSDist.binMedian");   // weighting wrt event
+          fgrTimeSeriesNTracksWeighted = (TGraph*)fQAtimeSeries -> Get("hisTimeEffITSDist.binMedian");     // weighting wrt track
+        } else {
+          fgrTimeSeriesEventWeighted   = (TGraph*)fQAtimeSeries -> Get("hisTimeEvEffITSDist.mean");   // weighting wrt event
+          fgrTimeSeriesNTracksWeighted = (TGraph*)fQAtimeSeries -> Get("hisTimeEffITSDist.mean");     // weighting wrt track
+        }
+      }
+    }
+    //
+    // Run selection
+    // if (fPeriod==0 && acceptRun<0) { cout << " !!! run is not in the good run list from RCT !!! " << endl; break;}
+    //
+    // --------------------------------------------------------------------------------
+    // Apply event selection --> tpcPileUpCut && timeSeriesCut && inbunchPileUpCut && spdVzCut
+    // --------------------------------------------------------------------------------
+    //
+    static ULong64_t gidCache = -1;
+    static Int_t acceptEvent = -1;
+    if (gidCache!=ULong64_t(fjetConst_gid)) {
+      eventCount++;
+      gidCache=ULong64_t(fjetConst_gid);
+      //
+      //  TPC ITS matching eff from time series
+      Double_t fITSTPCeffEvent = (fQAtimeSeriesExist && fgrTimeSeriesEventWeighted)   ? fgrTimeSeriesEventWeighted  ->Eval(fevents_timestamp) : 1;
+      Double_t fITSTPCeffTrack = (fQAtimeSeriesExist && fgrTimeSeriesNTracksWeighted) ? fgrTimeSeriesNTracksWeighted->Eval(fevents_timestamp) : 1;
+      //
+      // PileUp selection:  chain->SetAlias("multTPCITS","((multSSD+multSDD)/2.38)");   // chain->SetAlias("cut1000","tpcMult-multTPCITS<1000");
+      Double_t multSSD = (*fevents_itsClustersPerLayer)[4]+(*fevents_itsClustersPerLayer)[5];
+      Double_t multSDD = (*fevents_itsClustersPerLayer)[2]+(*fevents_itsClustersPerLayer)[3];
+      Double_t multTPC = TMath::Max(fevents_tpcMult,fevents_tpcTrackBeforeClean);
+      Double_t pileUp1DITS = (multSSD+multSDD)/2.38;
+      Double_t multV0 = fevents_vZeroMult->Sum();
+      Double_t multT0 = fevents_tZeroMult->Sum();
+      Double_t primMult    = fevents_primMult;
+      Double_t trackTgl    = TMath::Abs(TMath::SinH(fjetConst_eta));
+      //
+      // in bunch pileup cut
+      Double_t primMultITS = (*fevents_itsVertexInfo)[2];
+      Double_t secMultITS0 = (*fevents_itsVertexInfo)[3];
+      Double_t secMultITS  = secMultITS0 - inbunchCutSlope*primMultITS;
+      //
+      // Define the cuts
+      Bool_t tpcPileUpCut     = ( fjetConst_cutBit & (1 << fInPileupTPCCut) );
+      Bool_t timeSeriesCut    = (fITSTPCeffTrack > fInTimeSeriesEff);
+      Bool_t inbunchPileUpCut = (secMultITS < (inbunchCutRMS*primMultITS+inbunchCutOffSet));
+      Bool_t spdVzCut         = (fevents_spdvz!=0 && TMath::Abs(fevents_spdvz)<10);
+      Bool_t inbunchPileUpTailCut = (pileUp1DITS<14500);
+      //
+      // trigger selections
+      Bool_t bMB          = ((fevents_triggerMask&0x1)>0);
+      Bool_t bCentral     = ((fevents_triggerMask&0x80000)>0);
+      Bool_t bSemiCentral = ((fevents_triggerMask&0x100000)>0);
+      Bool_t bMB10        = ((fevents_triggerMask&0x10)>0);
+      Bool_t bAlltiggers = (bMB || bCentral || bSemiCentral || bMB10 );
+      //
+      // inbunch pile hists
+      jet_hevents_secMultITS0_primMultITS->Fill(primMultITS,secMultITS0);
+      if (!inbunchPileUpCut && spdVzCut) jet_hevents_pileUpV02D_inbunchCut   ->Fill(multTPC,multV0);
+      if (!inbunchPileUpCut && spdVzCut) jet_hevents_pileUpITS2D_inbunchCut  ->Fill(multTPC,pileUp1DITS);
+      if (!inbunchPileUpCut && spdVzCut) jet_hevents_itsLayer0V02D_inbunchCut->Fill((*fevents_itsClustersPerLayer)[0],multV0);
+      jet_hevents_pileUpITS2D_inbunchCut->SetMarkerStyle(20);
+      jet_hevents_pileUpITS2D_inbunchCut->SetMarkerSize(0.5);
+      jet_hevents_pileUpITS2D_inbunchCut->SetMarkerColor(kRed+1);
+      jet_hevents_itsLayer0V02D_inbunchCut->SetMarkerStyle(20);
+      jet_hevents_itsLayer0V02D_inbunchCut->SetMarkerSize(0.5);
+      jet_hevents_itsLayer0V02D_inbunchCut->SetMarkerColor(kRed+1);
+      //
+      // centrality vs centrality
+      jet_hevents_V0M_CL0->Fill((*fevents_centrality)[0],(*fevents_centrality)[1]);
+      //
+      // CL0 vs V0M cuts
+      Bool_t dioganalCut = ( (*fevents_centrality)[1] < (82./75.)*(*fevents_centrality)[0]+8. && (*fevents_centrality)[1] > (70./82.)* ((*fevents_centrality)[0]-8.) );
+      //
+      // pile up and time series cut
+      // if ( tpcPileUpCut && timeSeriesCut && inbunchPileUpCut && spdVzCut && bAlltiggers)  acceptEvent=1;
+      if ( tpcPileUpCut && timeSeriesCut && inbunchPileUpCut && spdVzCut && inbunchPileUpTailCut && dioganalCut && bAlltiggers)  acceptEvent=1;
+      else acceptEvent=-1;
+      //
+      // Dump debug histograms
+      if (multTPC>0 && acceptEvent>0){
+        if (pileUp1DITS/multTPC>0.005) jet_hevents_pileUpV01D->Fill(multV0/multTPC/2.55);
+        if (pileUp1DITS/multTPC>0.005) jet_hevents_pileUpITS1D->Fill(pileUp1DITS/multTPC);
+        jet_hevents_pileUpV02D   ->Fill(multTPC,multV0);
+        jet_hevents_pileUpITS2D  ->Fill(multTPC,pileUp1DITS);
+        jet_hevents_itsLayer0V02D->Fill((*fevents_itsClustersPerLayer)[0],multV0);
+        jet_hevents_ITSTPCeff    ->Fill(fITSTPCeffTrack);
+        jet_hevents_V0M_CL0_After->Fill((*fevents_centrality)[0],(*fevents_centrality)[1]);
+        //
+        hjetConst_cent1D->Fill(fjetConst_cent);
+        hjetConst_vz1D->Fill(fevents_vz);
+
+      }
+    }
+    //
+    // Event Cuts --> pile up and time series cut
+    if (acceptEvent<0) continue;
+    Double_t primMult = fevents_primMult;
+    Double_t trackTgl = TMath::Abs(TMath::SinH(fjetConst_eta));
+    //
+    // dump some debug histogram
+    /*
+    if (fjetConst_dcaxy>-10 && fjetConst_dcaxy<10)   hjetConst_dcaxy2D ->Fill(fjetConst_pT,fjetConst_dcaxy);
+    if (fjetConst_dcaz>-10  && fjetConst_dcaz<10)    hjetConst_dcaz2D  ->Fill(fjetConst_pT,fjetConst_dcaz);
+    if (fjetConst_ncltpc>30 && fjetConst_ncltpc<170) hjetConst_ncltpc2D->Fill(fjetConst_pT,Float_t(fjetConst_ncltpc));
+    */
+    //
+
+    // Retrieve cut setting
+    Bool_t systCut = ApplyTreeSelection(fSystSet, fjetConst_cutBit);
+    Bool_t etaAcc = (fjetConst_eta >= -0.8 && fjetConst_eta <= 0.8);
+    Bool_t momAcc = (fjetConst_p >= 0.2    && fjetConst_p <= 3.2);
+    //
+    // dump tidentree
+    if (systCut && etaAcc && momAcc && fillTIdenTree){
+      //
+      //
+      // Fill final histograms
+      /*
+      if ( fSystSet==21 && TMath::Abs(fjetConst_dcaxy) > 3.2 ) continue;
+      if ( fSystSet==21 && TMath::Abs(fjetConst_dcaz)  > 2.4 ) continue;
+      hjetConst_dcaxy1D  ->Fill(fjetConst_dcaxy);
+      hjetConst_dcaz1D   ->Fill(fjetConst_dcaz);
+      hjetConst_ncltpc1D ->Fill(fjetConst_ncltpc);
+      */
+      hjetConst_eta1D    ->Fill(fjetConst_eta);
+      //hjetConst_cRows1D  ->Fill(fjetConst_cRows);
+      hjetConst_phi1D    ->Fill(fjetConst_phi);
+      //hjetConst_chi2tpc1D->Fill(fjetConst_chi2tpc);
+      //hjetConst_dcaxy2D_After ->Fill(fjetConst_pT,fjetConst_dcaxy);
+      //hjetConst_dcaz2D_After  ->Fill(fjetConst_pT,fjetConst_dcaz);
+
+      //
+      // fill trees for a given cent
+      for (Int_t icent=0; icent<nCentBins; icent++){
+        Bool_t centAcc = (fjetConst_cent>=centBinning[icent] && fjetConst_cent<centBinning[icent+1]);
+        if ( centAcc ){
+          //
+          tidenTreeStream[icent]->GetFile()->cd();
+          //
+          // jetConst tree
+          (*tidenTreeStream[icent])<<"jetConst"<<
+          "gid="                  << fjetConst_gid          <<  //  global event ID
+          "dEdx="                 << fjetConst_dEdx         <<  //  dEdx of the track
+          "sign="                 << fjetConst_sign         <<  //  charge
+          "ptot="                 << fjetConst_ptot         <<  //  TPC momentum
+          "p="                    << fjetConst_p            <<  //  vertex momentum
+          "pT="                   << fjetConst_pT           <<  //  vertex pT
+          "eta="                  << fjetConst_eta          <<  //  eta
+          "cent="                 << fjetConst_cent         <<  //  centrality
+          "jetRadius="            << fjetConst_radius       <<  //  jet radius
+          "jetArea="              << fjetConst_area         <<  //  jetArea
+          "maxpt="                << fjetConst_maxpt        <<  //  jet max const pt
+          "jetptsub="             << fjetConst_ptsub        <<  //  jetpt after subtraction
+          "\n";
+          continue;
+        }
+      }
+    }
+    if (systCut && testIntegratedHist){
+      treeStream->GetFile()->cd();
+      (*treeStream)<<"jetConst"<<
+      "gid="                  << fjetConst_gid          <<  //  global event ID
+      "p="                    << fjetConst_p            <<  //  vertex momentum
+      //"intrate="              << fjetConst_intrate      <<  //  interaction rate
+      "cutBit="               << fjetConst_cutBit       <<  //  Systematic Cuts
+      "dEdx="                 << fjetConst_dEdx         <<  //  dEdx of the track
+      "sign="                 << fjetConst_sign         <<  //  charge
+      "ptot="                 << fjetConst_ptot         <<  //  TPC momentum
+      "p="                    << fjetConst_p            <<  //  vertex momentum
+      "pT="                   << fjetConst_pT           <<  //  transverse momentum
+      "eta="                  << fjetConst_eta          <<  //  eta
+      "phi="                  << fjetConst_phi          <<  //  eta
+      "cent="                 << fjetConst_cent         <<  //  centrality
+      "jetRadius="            << fjetConst_radius       <<  //  jet radius
+      "jetArea="              << fjetConst_area         <<  //  jetArea
+      "maxpt="                << fjetConst_maxpt        <<  //  jet max const pt
+      "jetptsub="             << fjetConst_ptsub        <<  //  jetpt after subtraction
+      //
+      "fevents_tpcVertexInfo.=" << fevents_tpcVertexInfo <<
+      "fevents_itsClustersPerLayer.=" << fevents_itsClustersPerLayer <<
+      "primMult="             << primMult             <<  // interaction rate
+      "tgl="                  << trackTgl             <<  // interaction rate
+      /*
+      "cRows="                << fjetConst_cRows        <<  // interaction rate
+      "chi2tpc="              << fjetConst_chi2tpc      <<  // interaction rate
+      "dcaz="                 << fjetConst_dcaz         <<  // interaction rate
+      "dcaxy="                << fjetConst_dcaxy        <<  // interaction rate
+      */
+      "\n";
+    }
+    //
+    // apply dca and nclusters cut
+    //if (TMath::Abs(fjetConst_dcaz)>3) continue;
+    //if (TMath::Abs(fjetConst_dcaxy)>3) continue;
+    //
+    // Prepare dEdx histograms
+    for (Int_t icent=0; icent<nCentBins; icent++){
+      for (Int_t ieta=0; ieta<nEtaBins; ieta++){
+        for (Int_t ijetRad=0; ijetRad<njetRad; ijetRad++){
+        //
+        if (testIntegratedHist && ieta>0) continue;
+        //
+        Bool_t jet_etaCentString = (fjetConst_eta>=jet_etaBinning[ieta] && fjetConst_eta<jet_etaBinning[ieta+1] && fjetConst_cent>=centBinning[icent] && fjetConst_cent<centBinning[icent+1] && fjetConst_radius>(jetRadSizes[ijetRad]-0.05) && fjetConst_radius<(jetRadSizes[ijetRad]+0.05));
+        if (testIntegratedHist && ieta==0) {
+          jet_etaCentString = (fjetConst_cent>=centBinning[icent] && fjetConst_cent<centBinning[icent+1] && fjetConst_radius>(jetRadSizes[ijetRad]-0.05) && fjetConst_radius<(jetRadSizes[ijetRad]+0.05));
+        }
+        //
+        Bool_t cleanKaCutTOFTRD = ((fjetConst_cutBit >> kCleanKaTOFTRD) & 1);
+        Bool_t cleanKaCutBayes = ((fjetConst_cutBit >> kTrackProbKaTOF) & 1);
+        Bool_t cleanDeCutTOF = ((fjetConst_cutBit >> kCleanDeTOF) & 1);
+        Bool_t parPos = fjetConst_sign>0.;
+        Bool_t parNeg = fjetConst_sign<0.;
+        //
+        Bool_t prTOF = ((fjetConst_cutBit >> kCleanPrTOF) & 1);
+        Bool_t kaTOF = ((fjetConst_cutBit >> kCleanKaTOF) & 1);
+        //
+        Bool_t vertexPcut=kFALSE;
+        if(fCutON=="pT")   vertexPcut = (fjetConst_pT>=ptotMin      && fjetConst_pT<=ptotMax);
+        if(fCutON=="ptot") vertexPcut = (fjetConst_ptot>=ptotMin    && fjetConst_ptot<=ptotMax);
+        if(fCutON=="p")    vertexPcut = (fjetConst_p>=ptotMin && fjetConst_p<=ptotMax);
+
+        if (jet_etaCentString && vertexPcut && systCut          ) jet_h2Dall[icent][ieta][ijetRad]->Fill(fjetConst_ptot,fjetConst_dEdx);
+        if (jet_etaCentString && vertexPcut && systCut && parPos) jet_h2Dpos[icent][ieta][ijetRad]->Fill(fjetConst_ptot,fjetConst_dEdx);
+        if (jet_etaCentString && vertexPcut && systCut && parNeg) jet_h2Dneg[icent][ieta][ijetRad]->Fill(fjetConst_ptot,fjetConst_dEdx);
+        //
+        if (jet_etaCentString && vertexPcut && systCut && kaTOF)           jet_h2DallKaTOF[icent][ieta][ijetRad]   ->Fill(fjetConst_ptot,fjetConst_dEdx);
+        if (jet_etaCentString && vertexPcut && systCut && kaTOF && parPos) jet_h2DallKaTOFPos[icent][ieta][ijetRad]->Fill(fjetConst_ptot,fjetConst_dEdx);
+        if (jet_etaCentString && vertexPcut && systCut && kaTOF && parNeg) jet_h2DallKaTOFNeg[icent][ieta][ijetRad]->Fill(fjetConst_ptot,fjetConst_dEdx);
+        //
+        if (jet_etaCentString && vertexPcut && systCut && prTOF)           jet_h2DallPrTOF[icent][ieta][ijetRad]   ->Fill(fjetConst_ptot,fjetConst_dEdx);
+        if (jet_etaCentString && vertexPcut && systCut && prTOF && parPos) jet_h2DallPrTOFPos[icent][ieta][ijetRad]->Fill(fjetConst_ptot,fjetConst_dEdx);
+        if (jet_etaCentString && vertexPcut && systCut && prTOF && parNeg) jet_h2DallPrTOFNeg[icent][ieta][ijetRad]->Fill(fjetConst_ptot,fjetConst_dEdx);
+        //
+        if (jet_etaCentString && vertexPcut && systCut && prTOF)           jet_h2DallPiTOF[icent][ieta][ijetRad]   ->Fill(fjetConst_ptot,fjetConst_dEdx);
+        if (jet_etaCentString && vertexPcut && systCut && prTOF && parPos) jet_h2DallPiTOFPos[icent][ieta][ijetRad]->Fill(fjetConst_ptot,fjetConst_dEdx);
+        if (jet_etaCentString && vertexPcut && systCut && prTOF && parNeg) jet_h2DallPiTOFNeg[icent][ieta][ijetRad]->Fill(fjetConst_ptot,fjetConst_dEdx);
+        //
+        if (jet_etaCentString && vertexPcut && systCut && !prTOF)           jet_h2DallBkgTOF[icent][ieta][ijetRad]   ->Fill(fjetConst_ptot,fjetConst_dEdx);
+        if (jet_etaCentString && vertexPcut && systCut && !prTOF && parPos) jet_h2DallBkgTOFPos[icent][ieta][ijetRad]->Fill(fjetConst_ptot,fjetConst_dEdx);
+        if (jet_etaCentString && vertexPcut && systCut && !prTOF && parNeg) jet_h2DallBkgTOFNeg[icent][ieta][ijetRad]->Fill(fjetConst_ptot,fjetConst_dEdx);
+        //
+        if (jet_etaCentString && vertexPcut && systCut && cleanKaCutBayes)  jet_h2DCleanKaBayes[icent][ieta][ijetRad]->Fill(fjetConst_ptot,fjetConst_dEdx);
+        if (jet_etaCentString && vertexPcut && systCut && cleanKaCutTOFTRD) jet_h2DCleanKaTOFTRD[icent][ieta][ijetRad]->Fill(fjetConst_ptot,fjetConst_dEdx);
+
+        if (jet_etaCentString && vertexPcut && systCut && cleanDeCutTOF)    jet_h2DClean[4][icent][ieta][ijetRad]->Fill(fjetConst_ptot,fjetConst_dEdx);
+        if (jet_etaCentString && vertexPcut && systCut && cleanKaCutTOFTRD) jet_h2DClean[2][icent][ieta][ijetRad]->Fill(fjetConst_ptot,fjetConst_dEdx);
+
+      }
+      }
+    }
+
+  }  // tree loop
+  timer.Stop(); timer.Print();
+  std::cout << " ========= ProcessJetConstHists DONE ========= #events = " << eventCount << std::endl;
+
+}
+//____________________________________________________________________________________________________________
 void ProcessEventTree()
 {
 
@@ -932,6 +1398,109 @@ void ProcessEventTree()
   }  // tree loop
   timer.Stop(); timer.Print();
   std::cout << " ========= ProcessDScaledTree DONE ========= #events = " << eventCount << std::endl;
+
+}
+//____________________________________________________________________________________________________________
+void ProcessJetEventTree()
+{
+
+  timer.Reset(); timer.Start();
+  std::cout << " ========= ProcessJetEventTree ========= " << std::endl;
+  Double_t nTreeEntriesAll = jetEventtree -> GetEntries();
+  cout << " Jet Event Tree entries = " << nTreeEntriesAll << endl;
+  //
+  // Loop over tree entries
+  Int_t eventCount=0;
+  TGraph *fgrTimeSeriesEventWeighted=NULL;
+  TGraph *fgrTimeSeriesNTracksWeighted=NULL;
+  for(Int_t i = 0; i < nTreeEntriesAll; ++i)
+  {
+    //
+    // Get Track and event information
+    jetEventtree -> GetEntry(i);
+    if(i%Int_t(nTreeEntriesAll/10) == 0) {
+      cout << i << "   fjetEvents_run = " << fjetEvents_run << "    fjetEvents_primMult = " << fjetEvents_primMult << "    fjetEvents_intrate = " << fjetEvents_intrate << endl;
+    }
+    //
+    // Get the time series map for a given run
+    static Int_t runCache = -1;
+    if (runCache!=Int_t(fjetEvents_run)) {
+      runCache=Int_t(fjetEvents_run);
+      TString timeSeriesMap = "";
+      if (fPeriod==0) timeSeriesMap = Form("%s/lustre/nyx/alice/users/miranov/NOTESData/alice-tpc-notes/JIRA/PWGPP-538/alice/data/2015/LHC15o/pass1/000%d/QAtimeSeries.root",MapDirName.Data(),runCache);
+      if (fPeriod==1) timeSeriesMap = Form("%s/lustre/nyx/alice/users/miranov/NOTESData/alice-tpc-notes/JIRA/PWGPP-538/alice/data/2018/LHC18q/pass1/000%d/QAtimeSeries.root",MapDirName.Data(),runCache);
+      if (fPeriod==2) timeSeriesMap = Form("%s/lustre/nyx/alice/users/miranov/NOTESData/alice-tpc-notes/JIRA/PWGPP-538/alice/data/2018/LHC18r/pass1/000%d/QAtimeSeries.root",MapDirName.Data(),runCache);
+      cout << "timeSeries Map = " <<  timeSeriesMap << endl;
+      TFile *fQAtimeSeries = TFile::Open(timeSeriesMap);
+      if (!fQAtimeSeries) {
+        std::cout << " yolun acik ola --> file does not exist  " << std::endl;
+        fQAtimeSeriesExist = kFALSE;
+      } else {
+        if (fPeriod==0){
+          fgrTimeSeriesEventWeighted   = (TGraph*)fQAtimeSeries -> Get("hisTimeEvEffITSDist.binMedian");   // weighting wrt event
+          fgrTimeSeriesNTracksWeighted = (TGraph*)fQAtimeSeries -> Get("hisTimeEffITSDist.binMedian");     // weighting wrt track
+        } else {
+          fgrTimeSeriesEventWeighted   = (TGraph*)fQAtimeSeries -> Get("hisTimeEvEffITSDist.mean");   // weighting wrt event
+          fgrTimeSeriesNTracksWeighted = (TGraph*)fQAtimeSeries -> Get("hisTimeEffITSDist.mean");     // weighting wrt track
+        }
+      }
+    }
+    //
+    //  TPC ITS matching eff from time series
+    //Double_t fITSTPCeffEvent = (fQAtimeSeriesExist && fgrTimeSeriesEventWeighted)   ? fgrTimeSeriesEventWeighted  ->Eval(fjetEvents_timestamp) : 1;
+    //Double_t fITSTPCeffTrack = (fQAtimeSeriesExist && fgrTimeSeriesNTracksWeighted) ? fgrTimeSeriesNTracksWeighted->Eval(fjetEvents_timestamp) : 1;
+    //
+    // PileUp selection:  chain->SetAlias("multTPCITS","((multSSD+multSDD)/2.38)");   // chain->SetAlias("cut1000","tpcMult-multTPCITS<1000");
+    /*
+    Double_t multSSD = (*fevents_itsClustersPerLayer)[4]+(*fevents_itsClustersPerLayer)[5];
+    Double_t multSDD = (*fevents_itsClustersPerLayer)[2]+(*fevents_itsClustersPerLayer)[3];
+    Double_t multSPD = (*fevents_itsClustersPerLayer)[0]+(*fevents_itsClustersPerLayer)[1];
+    Double_t multV0 = fjetEvent_vZeroMult->Sum();
+    Double_t multT0 = fjetEvent_tZeroMult->Sum();
+    */
+    Double_t multTPC = TMath::Max(fjetEvents_tpcMult,fjetEvents_tpcTrackBeforeClean);
+    //Double_t pileUp1DITS = (multSSD+multSDD)/2.38;
+    //
+    // dump tidentree
+    treeStream->GetFile()->cd();
+    (*treeStream)<<"jetEvents"<<
+    "run="            << fjetEvents_run         <<  //  global event ID
+    "cent="            << fjetEvents_cent         <<  //  cent
+    "rhoFJ="            << fjetEvents_rhoFJ         <<  //  rhoFJ
+    "hasAcceptedFJjet="  << fjetEvents_accjet         <<  //  hasAcceptedFJjet
+    "hasRealFJjet="       << fjetEvents_realjet         <<  //  hasRealFJjet
+    //"timeStamp="      << fjetEvents_timestamp   <<  //  global event ID
+    "bField="         << fjetEvents_bField      <<  //  global jetEvent ID
+    "gid="            << fjetEvents_gid         <<  //  global jetEvent ID
+    "vz="             << fjetEvents_vz          <<  //  global jetEvent ID
+    "tpcvz="          << fjetEvents_tpcvz          <<  //  global jetEvent ID
+    "spdvz="          << fjetEvents_spdvz          <<  //  global jetEvent ID
+    "eventMultESD="   << fjetEvents_eventMultESD     <<  //  global event ID
+    //"cent="           << (*fjetEvents_centrality)[0] <<
+    "intrate="        << fjetEvents_intrate     <<  // interaction rate
+    /*
+    "multSSD="        << multSSD             <<  //  global event ID
+    "multSDD="        << multSDD             <<  // interaction rate
+    "multSPD="        << multSPD             <<  //  Systematic Cuts
+    "multV0="         << multV0              <<  //  dEdx of the track
+    "multT0="         << multT0              <<  //  charge
+    */
+    "multTPC="        << multTPC             <<  //  TPC momentum
+    //"pileUp1DITS="    << pileUp1DITS         <<  //  TPC momentum
+    //"ITSTPCeffEvent=" << fITSTPCeffEvent     <<  //  TPC momentum
+    //"ITSTPCeffTrack=" << fITSTPCeffTrack     <<  //  TPC momentum
+    "tpcTrackBeforeClean=" << fjetEvents_tpcTrackBeforeClean     <<  //  TPC momentum
+    //"nTracksStored=" << fjetEvents_nTracksStored     <<  //  TPC momentum
+    //
+    "pileupTPCCut="         << fInPileupTPCCut          <<  // interaction rate
+    "tSeriesCut="           << fInTimeSeriesEff          <<  // interaction rate
+    "\n";
+    eventCount++;
+
+
+  }  // tree loop
+  timer.Stop(); timer.Print();
+  std::cout << " ========= ProcessJetEventTree DONE ========= #events = " << eventCount << std::endl;
 
 }
 //____________________________________________________________________________________________________________
@@ -1225,12 +1794,12 @@ void ProcessCleanSamples()
 
         //
         // clean sample histograms
-        if (etaCentString && vertexPcut && cleanCutEl){ 
-          h2DClean[0][icent][ieta]->Fill(ffArmPodTree_ptot0,ffArmPodTree_dEdx0);     
+        if (etaCentString && vertexPcut && cleanCutEl){
+          h2DClean[0][icent][ieta]->Fill(ffArmPodTree_ptot0,ffArmPodTree_dEdx0);
           h2DClean[0][icent][ieta]->Fill(ffArmPodTree_ptot1,ffArmPodTree_dEdx1);
         }
-        if (etaCentString && vertexPcut && cleanCutPi && piK0cut && piPixelcut){ 
-          h2DCleanPiTight[icent][ieta]->Fill(ffArmPodTree_ptot0,ffArmPodTree_dEdx0); 
+        if (etaCentString && vertexPcut && cleanCutPi && piK0cut && piPixelcut){
+          h2DCleanPiTight[icent][ieta]->Fill(ffArmPodTree_ptot0,ffArmPodTree_dEdx0);
           h2DCleanPiTight[icent][ieta]->Fill(ffArmPodTree_ptot1,ffArmPodTree_dEdx1);
         }
         if (etaCentString && vertexPcut && cleanCutPi && piK0cut && cleanCutPiTOF0) h2DClean[1][icent][ieta]  ->Fill(ffArmPodTree_ptot1,ffArmPodTree_dEdx1);
@@ -1286,9 +1855,11 @@ void InitInitials()
 
   TString outputFileNameTree     = Form("Trees_Syst%d_PlotVS_%s_CutON_%s_%d_%3.2f.root"    ,fSystSet,fPlotVS.Data(),fCutON.Data(),fInPileupTPCCut,fInTimeSeriesEff);
   TString outputFileNameHist     = Form("Hists_Syst%d_PlotVS_%s_CutON_%s_%d_%3.2f.root"    ,fSystSet,fPlotVS.Data(),fCutON.Data(),fInPileupTPCCut,fInTimeSeriesEff);
+  TString jetOutputFileNameHist     = Form("Jet_Hists_Syst%d_PlotVS_%s_CutON_%s_%d_%3.2f.root"    ,fSystSet,fPlotVS.Data(),fCutON.Data(),fInPileupTPCCut,fInTimeSeriesEff);
   TString debugFile              = Form("Debug_Syst%d_PlotVS_%s_CutON_%s_%d_%3.2f.root"    ,fSystSet,fPlotVS.Data(),fCutON.Data(),fInPileupTPCCut,fInTimeSeriesEff);
   treeStream      = new TTreeSRedirector(outputFileNameTree,"recreate");
   histStream      = new TTreeSRedirector(outputFileNameHist,"recreate");
+  jetHistStream      = new TTreeSRedirector(jetOutputFileNameHist,"recreate");
   debugStream     = new TTreeSRedirector(debugFile,"recreate");
   //
   //
@@ -1315,6 +1886,20 @@ void InitInitials()
   hevents_pileUpITS1D              = new TH1F("hevents_pileUpITS1D"               ,"hevents_pileUpITS1D"                ,1000,0.05,1.4);
   hevents_ITSTPCeff                = new TH1F("hevents_ITSTPCeff"                 ,"hevents_ITSTPCeff"                  ,1000,0.,1.2);
   //
+  // Jet event histos
+  jet_hevents_pileUpV02D               = new TH2F("jet_hevents_pileUpV02D"                ,"jet_hevents_pileUpV02D"              ,1000,0.,45000., 1000 ,0., 45000. );
+  jet_hevents_pileUpV02D_inbunchCut    = new TH2F("jet_hevents_pileUpV02D_inbunchCut"     ,"jet_hevents_pileUpV02D_inbunchCut"   ,1000,0.,45000., 1000 ,0., 45000. );
+  jet_hevents_pileUpITS2D              = new TH2F("jet_hevents_pileUpITS2D"               ,"jet_hevents_pileUpITS2D"                ,1500,0.,45000., 1500 ,0., 45000. );
+  jet_hevents_pileUpITS2D_inbunchCut   = new TH2F("jet_hevents_pileUpITS2D_inbunchCut"    ,"jet_hevents_pileUpITS2D_inbunchCut"     ,1000,0.,45000., 1000 ,0., 45000. );
+  jet_hevents_itsLayer0V02D            = new TH2F("jet_hevents_itsLayer0V02D"             ,"jet_hevents_itsLayer0V02D"              ,1000,0.,45000., 1000 ,0., 45000. );
+  jet_hevents_itsLayer0V02D_inbunchCut = new TH2F("jet_hevents_itsLayer0V02D_inbunchCut"  ,"jet_hevents_itsLayer0V02D_inbunchCut"   ,1000,0.,45000., 1000 ,0., 45000. );
+  //
+  jet_hevents_secMultITS0_primMultITS  = new TH2F("jet_hevents_secMultITS0_primMultITS"   ,"jet_hevents_secMultITS0_primMultITS"    ,250,0.,5000., 200 ,0., 200. );
+  jet_hevents_V0M_CL0                  = new TH2F("jet_hevents_V0M_CL0"                   ,"jet_hevents_V0M_CL0"                    ,100,0.,100., 100 ,0., 100. );
+  jet_hevents_V0M_CL0_After            = new TH2F("jet_hevents_V0M_CL0_After"             ,"jet_hevents_V0M_CL0_After"              ,100,0.,100., 100 ,0., 100. );
+  jet_hevents_pileUpV01D               = new TH1F("jet_hevents_pileUpV01D"                ,"jet_hevents_pileUpV01D"                 ,1000,0.05,1.4);
+  jet_hevents_pileUpITS1D              = new TH1F("jet_hevents_pileUpITS1D"               ,"jet_hevents_pileUpITS1D"                ,1000,0.05,1.4);
+  jet_hevents_ITSTPCeff                = new TH1F("jet_hevents_ITSTPCeff"                 ,"jet_hevents_ITSTPCeff"                  ,1000,0.,1.2);
   //
   htracks_dcaxy2D             = new TH2F("htracks_dcaxy2D"                     ,"htracks_dcaxy2D"  ,ptNbins,ptotMin,ptotMax, 400 ,-10., 10. );
   htracks_dcaz2D              = new TH2F("htracks_dcaz2D"                      ,"htracks_dcaz2D"   ,ptNbins,ptotMin,ptotMax, 400 ,-10., 10. );
@@ -1330,6 +1915,23 @@ void InitInitials()
   htracks_phi1D               = new TH1F("htracks_phi1D"                       ,"htracks_phi1D"     ,200 , 4., 4.);
   htracks_chi2tpc1D           = new TH1F("htracks_chi2tpc1D"                   ,"htracks_chi2tpc1D" ,200 , -1., 10.);
   htracks_vz1D                = new TH1F("htracks_vz1D"                        ,"htracks_vz1D"      ,200 ,-20., 20. );
+  //
+  /*
+  hjetConst_dcaxy2D             = new TH2F("hjetConst_dcaxy2D"                     ,"hjetConst_dcaxy2D"  ,ptNbins,ptotMin,ptotMax, 400 ,-10., 10. );
+  hjetConst_dcaz2D              = new TH2F("hjetConst_dcaz2D"                      ,"hjetConst_dcaz2D"   ,ptNbins,ptotMin,ptotMax, 400 ,-10., 10. );
+  hjetConst_ncltpc2D            = new TH2F("hjetConst_ncltpc2D"                    ,"hjetConst_ncltpc2D" ,ptNbins,ptotMin,ptotMax, 140 , 30., 170.);
+  hjetConst_dcaxy2D_After       = new TH2F("hjetConst_dcaxy2D_After"               ,"hjetConst_dcaxy2D_After"  ,ptNbins,ptotMin,ptotMax, 1600 ,-4., 4. );
+  hjetConst_dcaz2D_After        = new TH2F("hjetConst_dcaz2D_After"                ,"hjetConst_dcaz2D_After"   ,ptNbins,ptotMin,ptotMax, 1600 ,-4., 4. );
+  hjetConst_dcaxy1D             = new TH1F("hjetConst_dcaxy1D"                     ,"hjetConst_dcaxy1D"   ,1600 ,-4., 4. );
+  hjetConst_dcaz1D              = new TH1F("hjetConst_dcaz1D"                      ,"hjetConst_dcaz1D"    ,1600 ,-4., 4. );
+  hjetConst_ncltpc1D            = new TH1F("hjetConst_ncltpc1D"                    ,"hjetConst_ncltpc1D " ,140 , 30., 170.);
+  */
+  hjetConst_eta1D               = new TH1F("hjetConst_eta1D"                       ,"hjetConst_eta1D"     ,100 , -1., 1.);
+  //hjetConst_cRows1D             = new TH1F("hjetConst_cRows1D"                     ,"hjetConst_cRows1D"   ,170 , 0., 170.);
+  hjetConst_cent1D              = new TH1F("hjetConst_cent1D"                      ,"hjetConst_cent1D"    ,200 , 0., 100.);
+  hjetConst_phi1D               = new TH1F("hjetConst_phi1D"                       ,"hjetConst_phi1D"     ,200 , 4., 4.);
+  //hjetConst_chi2tpc1D           = new TH1F("hjetConst_chi2tpc1D"                   ,"hjetConst_chi2tpc1D" ,200 , -1., 10.);
+  hjetConst_vz1D                = new TH1F("hjetConst_vz1D"                        ,"hjetConst_vz1D"      ,200 ,-20., 20. );
   //
   hdscaled_sharedTPCClusters1D  = new TH1F("hdscaled_sharedTPCClusters1D" ,"hdscaled_sharedTPCClusters1D Bins" ,200   ,  0., 0.5 );
   hdscaled_tpcSignalN1D         = new TH1F("hdscaled_tpcSignalN1D"        ,"hdscaled_tpcSignalN1D Bins"        ,170   ,  0., 170. );
@@ -1400,6 +2002,64 @@ void InitInitials()
       h2DCleanPiTight[icent][ieta]     = new TH2F(hName2DCleanPiTight[icent][ieta],hName2DCleanPiTight[icent][ieta]  ,ptNbins,ptotMin,ptotMax,dEdxNbins,dEdxMin,dEdxMax);
       h2DCleanPiTOF[icent][ieta]     = new TH2F(hName2DCleanPiTOF[icent][ieta],hName2DCleanPiTOF[icent][ieta]  ,ptNbins,ptotMin,ptotMax,dEdxNbins,dEdxMin,dEdxMax);
       //
+
+      //Jet consts
+      for (Int_t ijetRad=0; ijetRad<njetRad; ijetRad++){
+            TString jet_centEtaStr = Form("cent_%3.2f_%3.2f_Eta_%3.2f_%3.2f_jetRad_%3.2f",centBinning[icent],centBinning[icent+1],jet_etaBinning[ieta],jet_etaBinning[ieta+1],jetRadSizes[ijetRad]);
+
+            jet_h2Dall[icent][ieta][ijetRad]=NULL;   jet_h2Dpos[icent][ieta][ijetRad]=NULL;   jet_h2Dneg[icent][ieta][ijetRad]=NULL;
+            jet_hName2Dall[icent][ieta][ijetRad]=Form("jet_h2Dall_%s",jet_centEtaStr.Data());
+            jet_hName2Dpos[icent][ieta][ijetRad]=Form("jet_h2Dpos_%s",jet_centEtaStr.Data());
+            jet_hName2Dneg[icent][ieta][ijetRad]=Form("jet_h2Dneg_%s",jet_centEtaStr.Data());
+            jet_h2Dall[icent][ieta][ijetRad] = new TH2F(jet_hName2Dall[icent][ieta][ijetRad], jet_hName2Dall[icent][ieta][ijetRad] ,ptNbins,ptotMin,ptotMax,dEdxNbins,dEdxMin,dEdxMax);
+            jet_h2Dpos[icent][ieta][ijetRad] = new TH2F(jet_hName2Dpos[icent][ieta][ijetRad], jet_hName2Dpos[icent][ieta][ijetRad] ,ptNbins,ptotMin,ptotMax,dEdxNbins,dEdxMin,dEdxMax);
+            jet_h2Dneg[icent][ieta][ijetRad] = new TH2F(jet_hName2Dneg[icent][ieta][ijetRad], jet_hName2Dneg[icent][ieta][ijetRad] ,ptNbins,ptotMin,ptotMax,dEdxNbins,dEdxMin,dEdxMax);
+            //
+            jet_h2DallPrTOF[icent][ieta][ijetRad]=NULL;      jet_h2DallPrTOFPos[icent][ieta][ijetRad]=NULL;      jet_h2DallPrTOFNeg[icent][ieta][ijetRad]=NULL;
+            jet_hName2DallPrTOF[icent][ieta][ijetRad]   =Form("jet_h2DallPrTOF_%s"   ,jet_centEtaStr.Data());
+            jet_hName2DallPrTOFPos[icent][ieta][ijetRad]=Form("jet_h2DallPrTOFPos_%s",jet_centEtaStr.Data());
+            jet_hName2DallPrTOFNeg[icent][ieta][ijetRad]=Form("jet_h2DallPrTOFNeg_%s",jet_centEtaStr.Data());
+            jet_h2DallPrTOF[icent][ieta][ijetRad]     = new TH2F(jet_hName2DallPrTOF[icent][ieta][ijetRad]    ,jet_hName2DallPrTOF[icent][ieta][ijetRad]     ,ptNbins,ptotMin,ptotMax,dEdxNbins,dEdxMin,dEdxMax);
+            jet_h2DallPrTOFPos[icent][ieta][ijetRad]  = new TH2F(jet_hName2DallPrTOFPos[icent][ieta][ijetRad] ,jet_hName2DallPrTOFPos[icent][ieta][ijetRad]  ,ptNbins,ptotMin,ptotMax,dEdxNbins,dEdxMin,dEdxMax);
+            jet_h2DallPrTOFNeg[icent][ieta][ijetRad]  = new TH2F(jet_hName2DallPrTOFNeg[icent][ieta][ijetRad] ,jet_hName2DallPrTOFNeg[icent][ieta][ijetRad]  ,ptNbins,ptotMin,ptotMax,dEdxNbins,dEdxMin,dEdxMax);
+            //
+            jet_h2DallBkgTOF[icent][ieta][ijetRad]=NULL;      jet_h2DallBkgTOFPos[icent][ieta][ijetRad]=NULL;      jet_h2DallBkgTOFNeg[icent][ieta][ijetRad]=NULL;
+            jet_hName2DallBkgTOF[icent][ieta][ijetRad]   =Form("jet_h2DallBkgTOF_%s"   ,jet_centEtaStr.Data());
+            jet_hName2DallBkgTOFPos[icent][ieta][ijetRad]=Form("jet_h2DallBkgTOFPos_%s",jet_centEtaStr.Data());
+            jet_hName2DallBkgTOFNeg[icent][ieta][ijetRad]=Form("jet_h2DallBkgTOFNeg_%s",jet_centEtaStr.Data());
+            jet_h2DallBkgTOF[icent][ieta][ijetRad]     = new TH2F(jet_hName2DallBkgTOF[icent][ieta][ijetRad]    ,jet_hName2DallBkgTOF[icent][ieta][ijetRad]     ,ptNbins,ptotMin,ptotMax,dEdxNbins,dEdxMin,dEdxMax);
+            jet_h2DallBkgTOFPos[icent][ieta][ijetRad]  = new TH2F(jet_hName2DallBkgTOFPos[icent][ieta][ijetRad] ,jet_hName2DallBkgTOFPos[icent][ieta][ijetRad]  ,ptNbins,ptotMin,ptotMax,dEdxNbins,dEdxMin,dEdxMax);
+            jet_h2DallBkgTOFNeg[icent][ieta][ijetRad]  = new TH2F(jet_hName2DallBkgTOFNeg[icent][ieta][ijetRad] ,jet_hName2DallBkgTOFNeg[icent][ieta][ijetRad]  ,ptNbins,ptotMin,ptotMax,dEdxNbins,dEdxMin,dEdxMax);
+            //
+            jet_h2DallKaTOF[icent][ieta][ijetRad]=NULL;      jet_h2DallKaTOFPos[icent][ieta][ijetRad]=NULL;      jet_h2DallKaTOFNeg[icent][ieta][ijetRad]=NULL;
+            jet_hName2DallKaTOF[icent][ieta][ijetRad]   =Form("jet_h2DallKaTOF_%s"   ,jet_centEtaStr.Data());
+            jet_hName2DallKaTOFPos[icent][ieta][ijetRad]=Form("jet_h2DallKaTOFPos_%s",jet_centEtaStr.Data());
+            jet_hName2DallKaTOFNeg[icent][ieta][ijetRad]=Form("jet_h2DallKaTOFNeg_%s",jet_centEtaStr.Data());
+            jet_h2DallKaTOF[icent][ieta][ijetRad]     = new TH2F(jet_hName2DallKaTOF[icent][ieta][ijetRad]    ,jet_hName2DallKaTOF[icent][ieta][ijetRad]     ,ptNbins,ptotMin,ptotMax,dEdxNbins,dEdxMin,dEdxMax);
+            jet_h2DallKaTOFPos[icent][ieta][ijetRad]  = new TH2F(jet_hName2DallKaTOFPos[icent][ieta][ijetRad] ,jet_hName2DallKaTOFPos[icent][ieta][ijetRad]  ,ptNbins,ptotMin,ptotMax,dEdxNbins,dEdxMin,dEdxMax);
+            jet_h2DallKaTOFNeg[icent][ieta][ijetRad]  = new TH2F(jet_hName2DallKaTOFNeg[icent][ieta][ijetRad] ,jet_hName2DallKaTOFNeg[icent][ieta][ijetRad]  ,ptNbins,ptotMin,ptotMax,dEdxNbins,dEdxMin,dEdxMax);
+            //
+            jet_h2DallPiTOF[icent][ieta][ijetRad]=NULL;      jet_h2DallPiTOFPos[icent][ieta][ijetRad]=NULL;      jet_h2DallPiTOFNeg[icent][ieta][ijetRad]=NULL;
+            jet_hName2DallPiTOF[icent][ieta][ijetRad]   =Form("jet_h2DallPiTOF_%s"   ,jet_centEtaStr.Data());
+            jet_hName2DallPiTOFPos[icent][ieta][ijetRad]=Form("jet_h2DallPiTOFPos_%s",jet_centEtaStr.Data());
+            jet_hName2DallPiTOFNeg[icent][ieta][ijetRad]=Form("jet_h2DallPiTOFNeg_%s",jet_centEtaStr.Data());
+            jet_h2DallPiTOF[icent][ieta][ijetRad]     = new TH2F(jet_hName2DallPiTOF[icent][ieta][ijetRad]    ,jet_hName2DallPiTOF[icent][ieta][ijetRad]     ,ptNbins,ptotMin,ptotMax,dEdxNbins,dEdxMin,dEdxMax);
+            jet_h2DallPiTOFPos[icent][ieta][ijetRad]  = new TH2F(jet_hName2DallPiTOFPos[icent][ieta][ijetRad] ,jet_hName2DallPiTOFPos[icent][ieta][ijetRad]  ,ptNbins,ptotMin,ptotMax,dEdxNbins,dEdxMin,dEdxMax);
+            jet_h2DallPiTOFNeg[icent][ieta][ijetRad]  = new TH2F(jet_hName2DallPiTOFNeg[icent][ieta][ijetRad] ,jet_hName2DallPiTOFNeg[icent][ieta][ijetRad]  ,ptNbins,ptotMin,ptotMax,dEdxNbins,dEdxMin,dEdxMax);
+            //
+            jet_h2DCleanKaTOFTRD[icent][ieta][ijetRad]=NULL;  jet_h2DCleanKaBayes[icent][ieta][ijetRad]=NULL;
+            jet_hName2DCleanKaTOFTRD[icent][ieta][ijetRad] = Form("jet_h2DCleanKa_TOFTRD_%s"   ,jet_centEtaStr.Data());
+            jet_hName2DCleanKaBayes[icent][ieta][ijetRad] = Form("jet_h2DCleanKa_Bayes_%s"   ,jet_centEtaStr.Data());
+            jet_h2DCleanKaTOFTRD[icent][ieta][ijetRad]     = new TH2F(jet_hName2DCleanKaTOFTRD[icent][ieta][ijetRad],jet_hName2DCleanKaTOFTRD[icent][ieta][ijetRad]  ,ptNbins,ptotMin,ptotMax,dEdxNbins,dEdxMin,dEdxMax);
+            jet_h2DCleanKaBayes[icent][ieta][ijetRad]     = new TH2F(jet_hName2DCleanKaBayes[icent][ieta][ijetRad],jet_hName2DCleanKaBayes[icent][ieta][ijetRad]  ,ptNbins,ptotMin,ptotMax,dEdxNbins,dEdxMin,dEdxMax);
+            //
+            for (Int_t ipart=0; ipart<nParticles; ipart++)
+            {
+              jet_h2DClean[ipart][icent][ieta][ijetRad]=NULL;
+              jet_hName2DClean[ipart][icent][ieta][ijetRad] = Form("jet_h2DClean%s_%s", parName[ipart].Data(), jet_centEtaStr.Data());
+              jet_h2DClean[ipart][icent][ieta][ijetRad]     = new TH2F(jet_hName2DClean[ipart][icent][ieta][ijetRad],jet_hName2DClean[ipart][icent][ieta][ijetRad]  ,ptNbins,ptotMin,ptotMax,dEdxNbins,dEdxMin,dEdxMax);
+            }
+      }
       for (Int_t ipart=0; ipart<nParticles; ipart++)
       {
         h2DClean[ipart][icent][ieta]=NULL;
@@ -1659,6 +2319,49 @@ void WriteHistsToFile()
     }
   }
   //
+  jetHistStream->GetFile()->cd();
+  for (Int_t icent=0; icent<nCentBins; icent++){
+    for (Int_t ieta=0; ieta<nEtaBins; ieta++){
+      for (Int_t ijetRad=0; ijetRad<njetRad; ijetRad++){
+      //
+      if (testIntegratedHist && ieta>0) continue;
+      //
+      if(jet_h2Dall[icent][ieta][ijetRad])  jet_h2Dall[icent][ieta][ijetRad]->Write();
+      if(jet_h2Dpos[icent][ieta][ijetRad])  jet_h2Dpos[icent][ieta][ijetRad]->Write();
+      if(jet_h2Dneg[icent][ieta][ijetRad])  jet_h2Dneg[icent][ieta][ijetRad]->Write();
+      //
+      if(jet_h2DallPrTOF[icent][ieta][ijetRad])     jet_h2DallPrTOF[icent][ieta][ijetRad]->Write();
+      if(jet_h2DallPrTOFPos[icent][ieta][ijetRad])  jet_h2DallPrTOFPos[icent][ieta][ijetRad]->Write();
+      if(jet_h2DallPrTOFNeg[icent][ieta][ijetRad])  jet_h2DallPrTOFNeg[icent][ieta][ijetRad]->Write();
+      //
+      if(jet_h2DallBkgTOF[icent][ieta][ijetRad])     jet_h2DallBkgTOF[icent][ieta][ijetRad]->Write();
+      if(jet_h2DallBkgTOFPos[icent][ieta][ijetRad])  jet_h2DallBkgTOFPos[icent][ieta][ijetRad]->Write();
+      if(jet_h2DallBkgTOFNeg[icent][ieta][ijetRad])  jet_h2DallBkgTOFNeg[icent][ieta][ijetRad]->Write();
+      //
+      if(jet_h2DallKaTOF[icent][ieta][ijetRad])     jet_h2DallKaTOF[icent][ieta][ijetRad]->Write();
+      if(jet_h2DallKaTOFPos[icent][ieta][ijetRad])  jet_h2DallKaTOFPos[icent][ieta][ijetRad]->Write();
+      if(jet_h2DallKaTOFNeg[icent][ieta][ijetRad])  jet_h2DallKaTOFNeg[icent][ieta][ijetRad]->Write();
+      //
+      if(jet_h2DallPiTOF[icent][ieta][ijetRad])     jet_h2DallPiTOF[icent][ieta][ijetRad]->Write();
+      if(jet_h2DallPiTOFPos[icent][ieta][ijetRad])  jet_h2DallPiTOFPos[icent][ieta][ijetRad]->Write();
+      if(jet_h2DallPiTOFNeg[icent][ieta][ijetRad])  jet_h2DallPiTOFNeg[icent][ieta][ijetRad]->Write();
+      //
+      if(jet_h2DCleanKaTOFTRD[icent][ieta][ijetRad]) jet_h2DCleanKaTOFTRD[icent][ieta][ijetRad]->Write();
+      if(jet_h2DCleanKaBayes[icent][ieta][ijetRad])  jet_h2DCleanKaBayes[icent][ieta][ijetRad]->Write();
+      //
+      /* //EMPTY Becuase we never run ProcessExpectedHists in inclusive case or here.
+      for (Int_t ipart=0; ipart<nParticles; ipart++){
+        if(jet_h2Expected[ipart][icent][ieta][ijetRad])       jet_h2Expected[ipart][icent][ieta][ijetRad]->Write();
+        if(jet_h2ExpectedSigma[ipart][icent][ieta][ijetRad])  jet_h2ExpectedSigma[ipart][icent][ieta][ijetRad]->Write();
+        if(jet_grExpected[ipart][icent][ieta][ijetRad])       jet_grExpected[ipart][icent][ieta][ijetRad]->Write();
+        if(jet_grExpectedSigma[ipart][icent][ieta][ijetRad])  jet_grExpectedSigma[ipart][icent][ieta][ijetRad]->Write();
+        if(jet_h2DClean[ipart][icent][ieta][ijetRad])         jet_h2DClean[ipart][icent][ieta][ijetRad]->Write(); //EMPTY BECAUSE WE DON'T HAVE CLEAN SAMPLES
+      }
+      */
+    }
+    }
+  }
+  //
   debugStream->GetFile()->cd();
   if(hevents_secMultITS0_primMultITS)  hevents_secMultITS0_primMultITS  ->Write();
   //
@@ -1674,6 +2377,22 @@ void WriteHistsToFile()
   if(hevents_pileUpV01D)            hevents_pileUpV01D  ->Write();
   if(hevents_pileUpITS1D)           hevents_pileUpITS1D  ->Write();
   if(hevents_ITSTPCeff)             hevents_ITSTPCeff  ->Write();
+  //Jet events
+  if(jet_hevents_secMultITS0_primMultITS)  jet_hevents_secMultITS0_primMultITS  ->Write();
+  //
+  if(jet_hevents_itsLayer0V02D)         jet_hevents_itsLayer0V02D  ->Write();
+  if(jet_hevents_itsLayer0V02D_inbunchCut) jet_hevents_itsLayer0V02D_inbunchCut  ->Write();
+  if(jet_hevents_pileUpITS2D)           jet_hevents_pileUpITS2D  ->Write();
+  if(jet_hevents_pileUpITS2D_inbunchCut)   jet_hevents_pileUpITS2D_inbunchCut  ->Write();
+  if(jet_hevents_pileUpV02D)            jet_hevents_pileUpV02D  ->Write();
+  if(jet_hevents_pileUpV02D_inbunchCut) jet_hevents_pileUpV02D_inbunchCut  ->Write();
+  //
+  if(jet_hevents_V0M_CL0)               jet_hevents_V0M_CL0  ->Write();
+  if(jet_hevents_V0M_CL0_After)         jet_hevents_V0M_CL0_After  ->Write();
+  if(jet_hevents_pileUpV01D)            jet_hevents_pileUpV01D  ->Write();
+  if(jet_hevents_pileUpITS1D)           jet_hevents_pileUpITS1D  ->Write();
+  if(jet_hevents_ITSTPCeff)             jet_hevents_ITSTPCeff  ->Write();
+
   if(hdscaled_sharedTPCClusters1D)  hdscaled_sharedTPCClusters1D ->Write();
   if(hdscaled_tpcSignalN1D)         hdscaled_tpcSignalN1D ->Write();
   if(hdscaled_lengthInActiveZone1D) hdscaled_lengthInActiveZone1D ->Write();
@@ -1700,6 +2419,18 @@ void WriteHistsToFile()
   if(htracks_phi1D)                 htracks_phi1D ->Write();
   if(htracks_chi2tpc1D)             htracks_chi2tpc1D ->Write();
   if(htracks_vz1D)                  htracks_vz1D ->Write();
+  // jets
+  /*
+  if(hjetConst_dcaxy1D)               hjetConst_dcaxy1D  ->Write();
+  if(hjetConst_dcaz1D)                hjetConst_dcaz1D   ->Write();
+  if(hjetConst_ncltpc1D)              hjetConst_ncltpc1D ->Write();
+  */
+  if(hjetConst_eta1D)                 hjetConst_eta1D ->Write();
+  //if(hjetConst_cRows1D)               hjetConst_cRows1D ->Write();
+  if(hjetConst_cent1D)                hjetConst_cent1D ->Write();
+  if(hjetConst_phi1D)                 hjetConst_phi1D ->Write();
+  //if(hjetConst_chi2tpc1D)             hjetConst_chi2tpc1D ->Write();
+  if(hjetConst_vz1D)                  hjetConst_vz1D ->Write();
 
 }
 //____________________________________________________________________________________________________________
@@ -1761,6 +2492,30 @@ void SetBranchAddresses()
     dataTree->SetBranchAddress("ncltpc"   ,&ftracks_ncltpc);
     dataTree->SetBranchAddress("cRows"    ,&ftracks_cRows);
     dataTree->SetBranchAddress("chi2tpc"  ,&ftracks_chi2tpc);
+  }
+  // Jet constituents Tree
+  if (jetConstTree){
+    jetConstTree->SetBranchAddress("jetRadius"      ,&fjetConst_radius);
+    jetConstTree->SetBranchAddress("jetArea"      ,&fjetConst_area);
+    jetConstTree->SetBranchAddress("maxpt"      ,&fjetConst_maxpt);
+    jetConstTree->SetBranchAddress("jetptsub"      ,&fjetConst_ptsub);
+    jetConstTree->SetBranchAddress("gid"      ,&fjetConst_gid);
+    //jetConstTree->SetBranchAddress("eventtime",&fjetConst_eventtime);
+    //jetConstTree->SetBranchAddress("intrate"  ,&fjetConst_intrate);
+    jetConstTree->SetBranchAddress("cutBit"   ,&fjetConst_cutBit);
+    jetConstTree->SetBranchAddress("dEdx"     ,&fjetConst_dEdx);
+    jetConstTree->SetBranchAddress("sign"     ,&fjetConst_sign);
+    jetConstTree->SetBranchAddress("ptot"     ,&fjetConst_ptot);
+    jetConstTree->SetBranchAddress("p"        ,&fjetConst_p);
+    jetConstTree->SetBranchAddress("pT"       ,&fjetConst_pT);
+    jetConstTree->SetBranchAddress("eta"      ,&fjetConst_eta);
+    jetConstTree->SetBranchAddress("phi"      ,&fjetConst_phi);
+    jetConstTree->SetBranchAddress("cent"     ,&fjetConst_cent);
+    //jetConstTree->SetBranchAddress("dcaxy"    ,&fjetConst_dcaxy);
+    //jetConstTree->SetBranchAddress("dcaz"     ,&fjetConst_dcaz);
+    //jetConstTree->SetBranchAddress("ncltpc"   ,&fjetConst_ncltpc);
+    //jetConstTree->SetBranchAddress("cRows"    ,&fjetConst_cRows);
+    //jetConstTree->SetBranchAddress("chi2tpc"  ,&fjetConst_chi2tpc);
   }
   //
   // dscaled tree
@@ -1833,6 +2588,51 @@ void SetBranchAddresses()
     eventtree->SetBranchAddress("itsVertexInfo."      ,&fevents_itsVertexInfo);
 
     eventtree->SetAlias("nPileUpPrim"  ,"(tpcVertexInfo.fElements[3]+tpcVertexInfo.fElements[4])");
+  }
+  // jet event tree
+  if (jetEventtree){
+    jetEventtree->SetBranchAddress("run"                 ,&fjetEvents_run);
+    jetEventtree->SetBranchAddress("cent"                 ,&fjetEvents_cent);
+    jetEventtree->SetBranchAddress("rhoFJ"                 ,&fjetEvents_rhoFJ);
+    jetEventtree->SetBranchAddress("hasAcceptedFJjet"       ,&fjetEvents_accjet);
+    jetEventtree->SetBranchAddress("hasRealFJjet"            ,&fjetEvents_realjet);
+    jetEventtree->SetBranchAddress("intrate"             ,&fjetEvents_intrate);
+    jetEventtree->SetBranchAddress("bField"              ,&fjetEvents_bField);
+    jetEventtree->SetBranchAddress("gid"                 ,&fjetEvents_gid);
+    //jetEventtree->SetBranchAddress("timestamp"           ,&fjetEvents_timestamp);
+    jetEventtree->SetBranchAddress("triggerMask"         ,&fjetEvents_triggerMask);
+    jetEventtree->SetBranchAddress("vz"                  ,&fjetEvents_vz);
+    jetEventtree->SetBranchAddress("tpcvz"               ,&fjetEvents_tpcvz);
+    jetEventtree->SetBranchAddress("spdvz"               ,&fjetEvents_spdvz);
+    jetEventtree->SetBranchAddress("tpcMult"             ,&fjetEvents_tpcMult);
+    jetEventtree->SetBranchAddress("eventMult"           ,&fjetEvents_eventMult);
+    jetEventtree->SetBranchAddress("eventMultESD"        ,&fjetEvents_eventMultESD);
+    //jetEventtree->SetBranchAddress("nTracksStored"       ,&fjetEvents_nTracksStored);
+    jetEventtree->SetBranchAddress("primMult"            ,&fjetEvents_primMult);
+    jetEventtree->SetBranchAddress("tpcTrackBeforeClean" ,&fjetEvents_tpcTrackBeforeClean);
+    jetEventtree->SetBranchAddress("itsTracklets"        ,&fjetEvents_itsTracklets);
+    /*
+    jetEventtree->SetBranchAddress("centrality."         ,&fjetEvents_centrality);
+    jetEventtree->SetBranchAddress("tZeroMult."          ,&fjetEvents_tZeroMult);
+    jetEventtree->SetBranchAddress("vZeroMult."          ,&fjetEvents_vZeroMult);
+    jetEventtree->SetBranchAddress("itsClustersPerLayer.",&fjetEvents_itsClustersPerLayer);
+    jetEventtree->SetBranchAddress("trackCounters."      ,&fjetEvents_trackCounters);
+    jetEventtree->SetBranchAddress("trackdEdxRatio."     ,&fjetEvents_trackdEdxRatio);
+    jetEventtree->SetBranchAddress("trackNcl."           ,&fjetEvents_trackNcl);
+    jetEventtree->SetBranchAddress("trackChi2."          ,&fjetEvents_trackChi2);
+    jetEventtree->SetBranchAddress("trackMatchEff."      ,&fjetEvents_trackMatchEff);
+    jetEventtree->SetBranchAddress("trackTPCCountersZ."  ,&fjetEvents_trackTPCCountersZ);
+    jetEventtree->SetBranchAddress("phiCountA."          ,&fjetEvents_phiCountA);
+    jetEventtree->SetBranchAddress("phiCountC."          ,&fjetEvents_phiCountC);
+    jetEventtree->SetBranchAddress("phiCountAITS."       ,&fjetEvents_phiCountAITS);
+    jetEventtree->SetBranchAddress("phiCountCITS."       ,&fjetEvents_phiCountCITS);
+    jetEventtree->SetBranchAddress("phiCountAITSOnly."   ,&fjetEvents_phiCountAITSOnly);
+    jetEventtree->SetBranchAddress("phiCountCITSOnly."   ,&fjetEvents_phiCountCITSOnly);
+    jetEventtree->SetBranchAddress("tpcVertexInfo."      ,&fjetEvents_tpcVertexInfo);
+    jetEventtree->SetBranchAddress("itsVertexInfo."      ,&fjetEvents_itsVertexInfo);
+
+    jetEventtree->SetAlias("nPileUpPrim"  ,"(tpcVertexInfo.fElements[3]+tpcVertexInfo.fElements[4])");
+    */
   }
 
   //

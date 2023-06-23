@@ -170,6 +170,7 @@ fFillHigherMomentsMCclosure(kFALSE),
 fFillFastJet(kTRUE),
 fFillJetsBG(kTRUE),
 fjetMinPtSub(-1000.0),
+fjetAreaCut(0.0),
 fRunFastSimulation(kFALSE),
 fFillDistributions(kFALSE),
 fDefaultTrackCuts(kFALSE),
@@ -427,6 +428,7 @@ fFillHigherMomentsMCclosure(kFALSE),
 fFillFastJet(kTRUE),
 fFillJetsBG(kTRUE),
 fjetMinPtSub(-1000.0),
+fjetAreaCut(0.0),
 fRunFastSimulation(kFALSE),
 fFillDistributions(kFALSE),
 fDefaultTrackCuts(kFALSE),
@@ -1339,7 +1341,7 @@ void AliAnalysisJetHadro::FindJetsEMC()
     Double_t leadingPt = jet->MaxChargedPt(); //max pT of charged particle in jet
     Double_t jetMCPt = jet->MCPt();
     Double_t jetptsub = jet->PtSub(fjetRhoVal, kFALSE); //bg sub pt
-    Bool_t jetTrigger = ( (leadingPt > fLeadingJetCut) || (jetptsub>30 && leadingPt>3) );
+    Bool_t jetTrigger = ( (leadingPt > fLeadingJetCut) || jetptsub>30 );
     if (!jetTrigger) continue;
     //
     if (jetptsub > pT_sub_min)
@@ -1411,7 +1413,7 @@ void AliAnalysisJetHadro::FindJetsEMC()
       "nConst="    << JetNumberOfConstituents  <<
       "maxpt="     << leadingPt <<
       "jetptsub="  << jetptsub <<
-      // 
+      //
       "cutBit="    << fTrackCutBits         <<  //  Systematic Cuts
       "dEdx="      << fTPCSignal            <<  //  dEdx of the track
       "sign="      << fSign                 <<  //  charge
@@ -1423,14 +1425,14 @@ void AliAnalysisJetHadro::FindJetsEMC()
       "cent="      << fCentrality           ;
       if (!fRunOnGrid){
         (*fTreeSRedirector)<<"jetsEMCconst"<<
-        "pileupbit=" << fPileUpBit          << 
+        "pileupbit=" << fPileUpBit          <<
         "tpcFindableCls=" << tpcFindableCls << // number of findable clusters
         "tpcSharedCls="   << tpcSharedCls << // number of shared clusters
         "tpcSignalN="     << fTrackTPCSignalN <<  //  number of cl used in dEdx
         "lengthInActiveZone="  << fTrackLengthInActiveZone <<  //  track length in active zone
         "tofSignalTOD=" << tofSignalTunedOnData <<
         "beta="      << beta                  <<
-        "tofSignal=" << tofSignal             << 
+        "tofSignal=" << tofSignal             <<
         //
         "dcaxy="     << fTrackDCAxy           <<  // dca cut on xy plane
         "dcaz="      << fTrackDCAz            <<  // dca cut along z
@@ -1458,7 +1460,7 @@ void AliAnalysisJetHadro::FindJetsEMC()
         "dEdxSigmaPr=" << fSigmaPr            <<
         "dEdxMeanDe="  << fDEdxDe             <<
         "dEdxSigmaDe=" << fSigmaDe            ;
-       
+
       }
       (*fTreeSRedirector)<<"jetsEMCconst"<<"\n";
 
@@ -1485,14 +1487,14 @@ void AliAnalysisJetHadro::FindJetsFJ()
   float jetRadius  = 0.4;     // can be 0.2, 0.4, 0.6
   float pT_sub_min = 40.0;    // can be 40, 60, 80
   std::vector<float>  fJetRadius{0.2,0.4,0.6};
-  std::vector<float>  fPtSubMin{40.,60.,80.}; // jet pt cut 
-  std::vector<int>  fSettings{-1,0,4,6}; // jet pt cut 
+  std::vector<float>  fPtSubMin{40.,60.,80.}; // jet pt cut
+  std::vector<int>  fSettings{-1,0,4,6}; // jet pt cut
   //
   // loop over settings and jets radius
   for (int iset=0; iset<nSettings; iset++){
     for (int iJetRadius=0; iJetRadius<nJetRadiusBins; iJetRadius++){
       for (int iJetPt=0; iJetPt<nJetPtsubMinBins; iJetPt++){
-        
+
         if (fMCtrue && fSettings[iset]!=0) continue;
         //
         Float_t jetAbsEtaCut = 0.9-fJetRadius[iJetRadius];   // fixed
@@ -1617,7 +1619,7 @@ void AliAnalysisJetHadro::FindJetsFJ()
           Float_t jeteta = jet.eta();
           Float_t jetArea = jet.area();
           Float_t jetptsub = jetpt - fRhoFJ*jetArea;
-          Bool_t jetTrigger = ( (leadingPt > fLeadingJetCut) || (jetptsub>30 && leadingPt>3) );
+          Bool_t jetTrigger = ( (leadingPt > fLeadingJetCut) || (jetptsub>30 && jetArea > fjetAreaCut*3.14159265359*fJetRadius[iJetRadius]*fJetRadius[iJetRadius]));
           if (!jetTrigger) continue;
 
           if (jetptsub > pT_sub_min)
@@ -1707,7 +1709,7 @@ void AliAnalysisJetHadro::FindJetsFJ()
               "lengthInActiveZone="  << fTrackLengthInActiveZone <<  //  track length in active zone
               "tofSignalTOD="        << tofSignalTunedOnData <<
               "beta="      << beta                  <<
-              "tofSignal=" << tofSignal             << 
+              "tofSignal=" << tofSignal             <<
               //
               "dcaxy="     << fTrackDCAxy           <<  // dca cut on xy plane
               "dcaz="      << fTrackDCAz            <<  // dca cut along z
@@ -2177,9 +2179,11 @@ UInt_t AliAnalysisJetHadro::SetCutBitsAndSomeTrackVariables(AliESDtrack *track)
   Double_t TOFSignalDz = track->GetTOFsignalDz();
   //
   //
+  Float_t nSigmasPiTOF = fPIDResponse->NumberOfSigmasTOF(track, AliPID::kPion,    fPIDResponse->GetTOFResponse().GetTimeZero());
   Float_t nSigmasKaTOF = fPIDResponse->NumberOfSigmasTOF(track, AliPID::kKaon,    fPIDResponse->GetTOFResponse().GetTimeZero());
   Float_t nSigmasPrTOF = fPIDResponse->NumberOfSigmasTOF(track, AliPID::kProton,  fPIDResponse->GetTOFResponse().GetTimeZero());
   Float_t nSigmasDeTOF = fPIDResponse->NumberOfSigmasTOF(track, AliPID::kDeuteron,fPIDResponse->GetTOFResponse().GetTimeZero());
+  Bool_t cleanPiTOF = ((TMath::Abs(nSigmasPiTOF)<=fEffMatrixNSigmasTOF));
   Bool_t cleanPrTOF = ((TMath::Abs(nSigmasPrTOF)<=fEffMatrixNSigmasTOF));
   Bool_t cleanDeTOF = ((TMath::Abs(nSigmasDeTOF)<=fEffMatrixNSigmasTOF));
   Bool_t cleanKaTOF = ((TMath::Abs(nSigmasKaTOF)<=fEffMatrixNSigmasTOF));
@@ -2285,13 +2289,14 @@ UInt_t AliAnalysisJetHadro::SetCutBitsAndSomeTrackVariables(AliESDtrack *track)
   // --------------------------------------------------------------------
   //
   // variable nsigma TOF protons and kaons for amplitude estimation
+  if (cleanPiTOF) (fTrackCutBits |= 1 << kCleanPiTOF);
   if (cleanPrTOF) (fTrackCutBits |= 1 << kCleanPrTOF);
   if (cleanKaTOF) (fTrackCutBits |= 1 << kCleanKaTOF);
   //
   // Clean Kaons protons and deuterons
   if (cleanKaTOFTRD)        (fTrackCutBits |= 1 << kCleanKaTOFTRD);
   if (fTrackProbKaTOF>=0.8) (fTrackCutBits |= 1 << kTrackProbKaTOF);
-  if (fTrackProbPrTOF>=0.8) (fTrackCutBits |= 1 << kTrackProbPrTOF);
+  //if (fTrackProbPrTOF>=0.8) (fTrackCutBits |= 1 << kTrackProbPrTOF);
   if (cleanDeTOF && cleanDeTPC) (fTrackCutBits |= 1 << kCleanDeTOF);
   //
   return fTrackCutBits;
@@ -2302,19 +2307,19 @@ Bool_t AliAnalysisJetHadro::GetSystematicClassIndex(UInt_t cut,Int_t syst)
 {
   /*
   syst:
-  0 -->  Reference --> 
-  1 -->  CRows70   --> 
+  0 -->  Reference -->
+  1 -->  CRows70   -->
   2 -->  CRows90
-  3 -->  ActiveZone 
-  4 -->  Chi2TPCSmall --> 
+  3 -->  ActiveZone
+  4 -->  Chi2TPCSmall -->
   5 -->  Chi2TPCLarge
-  6 -->  kMaxDCAToVertexXYPtDepLarge  --> 
+  6 -->  kMaxDCAToVertexXYPtDepLarge  -->
   7 -->  kVertexZSmall
   8 -->  kEventVertexZLarge
   9 -->  kSharedCls
   10 -->  kFindableClsTight
   11 -->  kFindableClsLoose
-  12 -->  kPileupLoose                 --> 
+  12 -->  kPileupLoose                 -->
   13 -->  kBFieldPos
   14 -->  kBFieldNeg
   15 -->  kTPCSignalNSmall
