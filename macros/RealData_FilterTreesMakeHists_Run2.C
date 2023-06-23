@@ -160,11 +160,11 @@ Double_t jet_etaMax = 0.9;
 const Int_t nCentDim = 14;
 // const Int_t nEtaDim = 17;
 // Float_t etaBinning[nEtaDim]   = {-0.8,-0.7,-0.6,-0.5,-0.4,-0.3,-0.2,-0.1, 0., 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8};
-const Int_t nEtaDim = 9;
+const Int_t nEtaDim = 19;
 const Int_t njetRadDim = 3;
 Float_t jetRadSizes[njetRadDim]   = {0.2,0.4,0.6};
-Float_t etaBinning[nEtaDim]   = {-0.8,-0.6,-0.4,-0.2, 0., 0.2, 0.4, 0.6, 0.8};
-Float_t jet_etaBinning[nEtaDim]   = {-0.9,-0.6,-0.4,-0.2, 0., 0.2, 0.4, 0.6, 0.9};
+Float_t etaBinning[nEtaDim]   = {-0.9,-0.8,-0.7,-0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9};
+Float_t jet_etaBinning[nEtaDim]   = {-0.9,-0.8,-0.7,-0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9};
 Float_t centBinning[nCentDim] = { 0., 5., 10., 20., 30., 40., 50., 60., 70., 80., 85., 90., 95., 100.};
 //
 TTreeSRedirector *tidenTreeStream[nCentBins];
