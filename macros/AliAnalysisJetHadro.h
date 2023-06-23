@@ -98,7 +98,7 @@ public:
     kCleanKaTOF=18,
     kCleanKaTOFTRD=19,
     kTrackProbKaTOF=20,
-    kTrackProbPrTOF=21,
+    kCleanPiTOF=21,
     kCleanDeTOF=22,
     kPileup=23,
     kPileupLoose=24,
@@ -172,6 +172,7 @@ public:
   void   SetFillFastJet(const Bool_t ifFastJet = kTRUE)               {fFillFastJet         = ifFastJet;}
   void   SetFillJetsBG(const Bool_t ifFillJetsBG = kTRUE)             {fFillJetsBG          = ifFillJetsBG;}
   void   SetJetMinPtSub(const Double_t jetminptsub = -1000.0)         {fjetMinPtSub         = jetminptsub;}
+  void   SetJetAreaCut(const Double_t jetareacut = 0.0)               {fjetAreaCut          = jetareacut;}
 
   void   SetDeDxCheck(const Bool_t ifDeDxCheck = kFALSE)              {fDEdxCheck           = ifDeDxCheck;}
   void   SetFillOnlyHists(const Bool_t ifFillOnlyHists = kFALSE)      {fFillOnlyHists       = ifFillOnlyHists;}
@@ -193,6 +194,7 @@ public:
   void   SetNSettings(const Int_t nSettings = 22)                     {fNSettings = nSettings;}
   void   SetRunNumberForExpecteds(const Int_t ifRunNumberForExpecteds = 0) {fRunNumberForExpecteds = ifRunNumberForExpecteds;}
   void   SetLeadingJetCut(const Int_t ifLeadingJetCut = 0)                 {fLeadingJetCut = ifLeadingJetCut;}
+  void   SetEffMatrixNSigmasTOF(const Double_t nEffMatrixNSigmasTOF) {fEffMatrixNSigmasTOF = nEffMatrixNSigmasTOF;}
 
   //
   Bool_t GetRunOnGrid() const { return fRunOnGrid; }
@@ -366,6 +368,7 @@ private:
   Bool_t            fFillFastJet;         // switch whether to fill FJ tree
   Bool_t            fFillJetsBG;          // switch whether to fill jetsEMC constituent tree
   Double_t          fjetMinPtSub;            // minimium jet pt after subtraction to keep jet
+  Double_t          fjetAreaCut;            // minimium jet area to keep jet
 
   Bool_t            fRunFastSimulation;      // when running over galice.root do not fill other objects
   Bool_t            fFillDistributions;   // when running over galice.root do not fill other objects
@@ -512,7 +515,7 @@ private:
   Bool_t             fIsMCPileup;
 
   AliJetContainer*   fJetContainer;
-  Float_t            fLeadingJetCut; 
+  Float_t            fLeadingJetCut;
   Double_t           fJetPt;
   Double_t           fJetEta;
   Double_t           fJetPhi;
@@ -572,7 +575,7 @@ private:
   //  Field (--)  --> run interval is [138364, 139510]
   //  ------------------------------------------------
   Int_t              fSystCentEstimatetor;   // 0 --> "V0M"   ||| -1 -->  "TRK" ||| +1 --> "CL1"
-  
+
   std::vector<float>  fetaDownArr;
   std::vector<float>  fetaUpArr;
   std::vector<float>  fcentDownArr;

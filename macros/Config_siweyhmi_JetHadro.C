@@ -43,7 +43,7 @@ AliAnalysisJetHadro* Config_siweyhmi_JetHadro(Bool_t getFromAlien, Int_t setting
   float pT_sub_min = 40.0;    // can be 40, 60, 80
   double particleEtaCut = 0.9;
   //
-  // track cuts for the container 
+  // track cuts for the container
   AliESDtrackCuts *fESDtrackCuts = new AliESDtrackCuts;
   fESDtrackCuts->SetEtaRange(-1*particleEtaCut,particleEtaCut);
   fESDtrackCuts->SetPtRange(fTrackPt,1000.);
@@ -149,7 +149,8 @@ AliAnalysisJetHadro* Config_siweyhmi_JetHadro(Bool_t getFromAlien, Int_t setting
       task->SetFillFastJet(kTRUE);
       //Set these in the wagon configuration CHANGE
       task->SetJetMinPtSub(pT_sub_min);
-      task->SetPercentageOfEvents(0); // sets so it saves 1 out of every n events inclusive = 400. Jets = 40 w/ 40 GeV min jet requirement
+      task->SetJetMinPtSub(pT_sub_min);
+      task->SetJetAreaCut(0.6); // sets so it saves 1 out of every n events inclusive = 400. Jets = 40 w/ 40 GeV min jet requirement
       //
     }
     break;
@@ -245,6 +246,7 @@ void SetDefaultsJets(AliAnalysisJetHadro *defaultTask, Int_t year, TString perio
   defaultTask->SetUsePtCut(1);
   defaultTask->SetMCTrackOriginType(1);   // 0:full scan, 1: prim
   defaultTask->SetRapidityType(0);      // 0:pseudorapidity, 1: rapidity
+  defaultTask->SetEffMatrixNSigmasTOF(2.5);
 
   // Extra Boolians which are by default === OFF ===
   defaultTask->SetDeDxCheck(kFALSE);
