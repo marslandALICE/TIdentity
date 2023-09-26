@@ -119,7 +119,7 @@ AliAnalysisTask *AddTask_siweyhmi_JetHadro(Bool_t getFromAlien=kTRUE, TString co
   // ****** Do not forget to "DefineOutput(5, TTree::Class());" In the contructor of the task ******
   //define output containers, please use 'username'_'somename'
   AliAnalysisDataContainer *cinput, *coutput1, *coutput2, *coutput3, *coutput4;
-  AliAnalysisDataContainer *coutput5, *coutput6, *coutput7, *coutput8, *coutput9, *coutput10;
+  AliAnalysisDataContainer *coutput5, *coutput6, *coutput7, *coutput8, *coutput9, *coutput10, *coutput11, *coutput12;
   //
   //  find and connect input container // Output files --> File opening order is important
   cinput  = mgr->GetCommonInputContainer();
@@ -154,6 +154,8 @@ AliAnalysisTask *AddTask_siweyhmi_JetHadro(Bool_t getFromAlien=kTRUE, TString co
   coutput8  = mgr->CreateContainer(combinedName+"_jetsEventInfo", TTree::Class(), AliAnalysisManager::kOutputContainer, fileDirStructure);
   coutput9  = mgr->CreateContainer(combinedName+"_jetsResonance", TTree::Class(), AliAnalysisManager::kOutputContainer, fileDirStructure);
   coutput10 = mgr->CreateContainer(combinedName+"_jetsFJGen",     TTree::Class(), AliAnalysisManager::kOutputContainer, fileDirStructure);
+  coutput11 = mgr->CreateContainer(combinedName+"_jetsFJBGGen",   TTree::Class(), AliAnalysisManager::kOutputContainer, fileDirStructure);
+  coutput12 = mgr->CreateContainer(combinedName+"_jetsFJconstGen",TTree::Class(), AliAnalysisManager::kOutputContainer, fileDirStructure);
   // 
   mgr->ConnectOutput (task,  1,  coutput1);
   mgr->ConnectOutput (task,  2,  coutput2);
@@ -165,6 +167,8 @@ AliAnalysisTask *AddTask_siweyhmi_JetHadro(Bool_t getFromAlien=kTRUE, TString co
   mgr->ConnectOutput (task,  8,  coutput8);
   mgr->ConnectOutput (task,  9,  coutput9);
   mgr->ConnectOutput (task,  10, coutput10);
+  mgr->ConnectOutput (task,  11, coutput11);
+  mgr->ConnectOutput (task,  12, coutput12);
 
   std::cout << " Info::siweyhmi: === Containers are ready === " << std::endl;
   return task;

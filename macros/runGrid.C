@@ -257,7 +257,7 @@ AliAnalysisGrid* CreateAlienHandler(Int_t valgrindOption = 0,TString mode="test"
   plugin->SetAliPhysicsVersion(aliPhysicsTag); // change to something up-to-date vAN-20170717-1 vAN-20180403-1
   plugin->SetNrunsPerMaster(1);
   plugin->SetSplitMaxInputFileNumber(nChunksPerJob); // 3 in the LEGO trains
-  if (!isMC) plugin->SetRunPrefix("000");  // fort the data
+  if (!isMC) plugin->SetRunPrefix("000");  // for the data
   //
   // -----------------------------------------------------------------------------------------
   // ------------------------- Read runs from the list----------------------------------------
@@ -301,6 +301,7 @@ AliAnalysisGrid* CreateAlienHandler(Int_t valgrindOption = 0,TString mode="test"
   // Set filenames, input and output directories on alien
   TDatime date;
   plugin->SetGridWorkingDir(Form("%s/%s_%s_%d_%d%d/",fname.Data(),period.Data(),pass.Data(),date.GetDate(),date.GetHour(),date.GetMinute()));
+  // plugin->SetGridWorkingDir(Form("%s/%s_%s_%d_%d/",fname.Data(),period.Data(),pass.Data(),date.GetDate(),date.GetHour()));
   if (isMC==0) {       // data
     std::cout << " Data SOURCE = REAL DATA " << std::endl;
     plugin->SetGridDataDir(Form("/alice/data/%d/%s/",year,period.Data())); // /alice/data/2015/LHC15o/000246858/pass1/15000246858039.402/AliESDs.root

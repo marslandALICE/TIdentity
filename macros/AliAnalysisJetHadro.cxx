@@ -143,6 +143,8 @@ fTreejetsFJconst(0x0),
 fTreejetsResonance(0x0),
 fTreejetsEvents(0x0),
 fTreejetsFJGen(0x0),
+fTreejetsFJBGGen(0x0),
+fTreejetsFJconstGen(0x0),
 fTreejetsEMC(0x0),
 fTreejetsEMCBG(0x0),
 fRandom(0),
@@ -342,7 +344,7 @@ fCleanProton0FromLambda(0),
 fCleanProton1FromLambda(0),
 fHasTrack0FirstITSlayer(0),
 fHasTrack1FirstITSlayer(0),
-fSystCentEstimatetor(0),
+fSystCentEstimator(0),
 fetaDownArr(),
 fetaUpArr(),
 fcentDownArr(),
@@ -352,11 +354,12 @@ fpUpArr(),
 fxCentBins(),
 fResonances(),
 fBaryons(),
-fHistEmptyEvent(0),
-fHistCentrality(0),
-fHistCentralityImpPar(0),
-fHistImpParam(0),
-fHistVertex(0),
+fJetHistEmptyEvent(0),
+fJetHistCentrality(0),
+fJetHistCentralityImpPar(0),
+fJetHistImpParam(0),
+fJetHistVertex(0),
+fJetHistptSub(0),
 fEventInfo_CentralityEstimates(0),
 fEventInfo_LumiGraph(0),
 fPileUpTightnessCut1(0),
@@ -401,6 +404,8 @@ fTreejetsFJconst(0x0),
 fTreejetsResonance(0x0),
 fTreejetsEvents(0x0),
 fTreejetsFJGen(0x0),
+fTreejetsFJBGGen(0x0),
+fTreejetsFJconstGen(0x0),
 fTreejetsEMC(0x0),
 fTreejetsEMCBG(0x0),
 fRandom(0),
@@ -600,7 +605,7 @@ fCleanProton0FromLambda(0),
 fCleanProton1FromLambda(0),
 fHasTrack0FirstITSlayer(0),
 fHasTrack1FirstITSlayer(0),
-fSystCentEstimatetor(0),
+fSystCentEstimator(0),
 fetaDownArr(),
 fetaUpArr(),
 fcentDownArr(),
@@ -610,11 +615,12 @@ fpUpArr(),
 fxCentBins(),
 fResonances(),
 fBaryons(),
-fHistEmptyEvent(0),
-fHistCentrality(0),
-fHistCentralityImpPar(0),
-fHistImpParam(0),
-fHistVertex(0),
+fJetHistEmptyEvent(0),
+fJetHistCentrality(0),
+fJetHistCentralityImpPar(0),
+fJetHistImpParam(0),
+fJetHistVertex(0),
+fJetHistptSub(0),
 fEventInfo_CentralityEstimates(0),
 fEventInfo_LumiGraph(0),
 fPileUpTightnessCut1(0),
@@ -653,6 +659,8 @@ fEffMatrixNSigmasTOF(0)
   DefineOutput(8, TTree::Class());
   DefineOutput(9, TTree::Class());
   DefineOutput(10, TTree::Class());
+  DefineOutput(11, TTree::Class());
+  DefineOutput(12, TTree::Class());
   // ==========================================
 
 }
@@ -664,11 +672,11 @@ AliAnalysisJetHadro::~AliAnalysisJetHadro()
   // Destructor
   //
   std::cout << " Info::siweyhmi: ===== In the Destructor ===== " << std::endl;
-  if (fHistEmptyEvent)      delete fHistEmptyEvent;
-  if (fHistCentrality)      delete fHistCentrality;
-  if (fHistCentralityImpPar)delete fHistCentralityImpPar;
-  if (fHistImpParam)        delete fHistImpParam;
-  if (fHistVertex)          delete fHistVertex;
+  if (fJetHistEmptyEvent)      delete fJetHistEmptyEvent;
+  if (fJetHistCentrality)      delete fJetHistCentrality;
+  if (fJetHistCentralityImpPar)delete fJetHistCentralityImpPar;
+  if (fJetHistImpParam)        delete fJetHistImpParam;
+  if (fJetHistVertex)          delete fJetHistVertex;
   if (fHistCent)            delete fHistCent;
   if (fHistPhi)             delete fHistPhi;
   //
@@ -862,18 +870,21 @@ void AliAnalysisJetHadro::UserCreateOutputObjects()
   //   Event histograms
   // ************************************************************************
   //
-  fHistEmptyEvent        = new TH1F("hEmptyEvent",           "control histogram to count empty events"    , 10,  0., 10.);
-  fHistCentrality        = new TH1F("hCentrality",           "control histogram for centrality"           , 10,  0., 100.);
-  fHistCentralityImpPar  = new TH1F("hCentralityImpPar",     "control histogram for centrality imppar"    , 10,  0., 100.);
-  fHistImpParam          = new TH1F("hImpParam",             "control histogram for impact parameter"     , 200, 0., 20.);
-  fHistVertex            = new TH1F("hVertex",               "control histogram for vertex Z position"    , 200, -20., 20.);
-  fListHist->Add(fHistEmptyEvent);
-  fListHist->Add(fHistCentrality);
+  fJetHistEmptyEvent        = new TH1F("hJetEmptyEvent",           "control histogram to count empty events"    , 10,  0., 10.);
+  fJetHistCentrality        = new TH1F("hJetCentrality",           "control histogram for centrality"           , 10,  0., 100.);
+  fJetHistCentralityImpPar  = new TH1F("hCentralityImpPar",     "control histogram for centrality imppar"    , 10,  0., 100.);
+  fJetHistImpParam          = new TH1F("hJetImpParam",             "control histogram for impact parameter"     , 200, 0., 20.);
+  fJetHistVertex            = new TH1F("hJetVertex",               "control histogram for vertex Z position"    , 200, -20., 20.);
+  fJetHistptSub          = new TH1F("hjetptsub",              "control histogram for rho subtracted jetpt" , 1200, -200., 400.);
+
+  fListHist->Add(fJetHistEmptyEvent);
+  fListHist->Add(fJetHistCentrality);
+  fListHist->Add(fJetHistptSub);
   if (fMCtrue) {
-    fListHist->Add(fHistCentralityImpPar);
-    fListHist->Add(fHistImpParam);
+    fListHist->Add(fJetHistCentralityImpPar);
+    fListHist->Add(fJetHistImpParam);
   }
-  fListHist->Add(fHistVertex);
+  fListHist->Add(fJetHistVertex);
   fEventInfo_CentralityEstimates  = new TVectorF(3);
   for (Int_t i=0;i<3;i++) (*fEventInfo_CentralityEstimates)[i]=-10.;
   //
@@ -881,15 +892,17 @@ void AliAnalysisJetHadro::UserCreateOutputObjects()
   //   Trees
   // ************************************************************************
   //
-  fTreejetsFJ        = ((*fTreeSRedirector)<<"jetsFJ").GetTree();
-  fTreejetsFJBG      = ((*fTreeSRedirector)<<"jetsFJBG").GetTree();
-  fTreejetsFJconst   = ((*fTreeSRedirector)<<"jetsFJconst").GetTree();
-  fTreejetsEMC       = ((*fTreeSRedirector)<<"jetsEMC").GetTree();
-  fTreejetsEMCBG     = ((*fTreeSRedirector)<<"jetsEMCBG").GetTree();
-  fTreejetsEMCconst  = ((*fTreeSRedirector)<<"jetsEMCconst").GetTree();
-  fTreejetsEvents    = ((*fTreeSRedirector)<<"jetsEventInfo").GetTree();
-  fTreejetsResonance = ((*fTreeSRedirector)<<"jetsResonance").GetTree();
-  fTreejetsFJGen     = ((*fTreeSRedirector)<<"jetsFJGen").GetTree();
+  fTreejetsFJ         = ((*fTreeSRedirector)<<"jetsFJ").GetTree();
+  fTreejetsFJBG       = ((*fTreeSRedirector)<<"jetsFJBG").GetTree();
+  fTreejetsFJconst    = ((*fTreeSRedirector)<<"jetsFJconst").GetTree();
+  fTreejetsEMC        = ((*fTreeSRedirector)<<"jetsEMC").GetTree();
+  fTreejetsEMCBG      = ((*fTreeSRedirector)<<"jetsEMCBG").GetTree();
+  fTreejetsEMCconst   = ((*fTreeSRedirector)<<"jetsEMCconst").GetTree();
+  fTreejetsEvents     = ((*fTreeSRedirector)<<"jetsEventInfo").GetTree();
+  fTreejetsResonance  = ((*fTreeSRedirector)<<"jetsResonance").GetTree();
+  fTreejetsFJGen      = ((*fTreeSRedirector)<<"jetsFJGen").GetTree();
+  fTreejetsFJBGGen    = ((*fTreeSRedirector)<<"jetsFJBGGen").GetTree();
+  fTreejetsFJconstGen = ((*fTreeSRedirector)<<"jetsFJconstGen").GetTree();
   //
   // ************************************************************************
   //   Send output objects to container
@@ -905,6 +918,8 @@ void AliAnalysisJetHadro::UserCreateOutputObjects()
   PostData(8, fTreejetsEvents);
   PostData(9, fTreejetsResonance);
   PostData(10,fTreejetsFJGen);
+  PostData(11,fTreejetsFJBGGen);
+  PostData(12,fTreejetsFJconstGen);
 
 
   fEventCuts.SetManualMode();
@@ -1049,10 +1064,10 @@ Bool_t AliAnalysisJetHadro::Run()
     //
     if (MultSelection) {
       fCentrality = MultSelection->GetMultiplicityPercentile("V0M");
-      if (fUseCouts)  std::cout << " Info::siweyhmi: Centralitity is taken from MultSelection " << fCentrality << std::endl;
+      if (fUseCouts)  std::cout << " Info::siweyhmi: Centrality is taken from MultSelection " << fCentrality << std::endl;
     } else if (esdCentrality) {
       fCentrality = esdCentrality->GetCentralityPercentile("V0M");
-      if (fUseCouts)  std::cout << " Info::siweyhmi: Centralitity is taken from esdCentrality " << fCentrality << std::endl;
+      if (fUseCouts)  std::cout << " Info::siweyhmi: Centrality is taken from esdCentrality " << fCentrality << std::endl;
     }
     //
     // AliCollisionGeometry* colGeometry = dynamic_cast<AliCollisionGeometry*>(genHeader);
@@ -1079,8 +1094,8 @@ Bool_t AliAnalysisJetHadro::Run()
         fNwNColl  = lHepMCHeader->Nwounded_N_collisions(); // Number of Nwounded-N collisons
         fNwNwColl = lHepMCHeader->Nwounded_Nwounded_collisions();// Number of Nwounded-Nwounded collisions
         fMCImpactParameter = lHepMCHeader->impact_parameter();
-        if (fUseCouts)  std::cout << " Info::siweyhmi: EPOS: Centralitity is taken from ImpactParameter = " << fMCImpactParameter << "  "  << ((AliGenEposEventHeader*) genHeader)->GetName() << std::endl;
-        fHistImpParam->Fill(fMCImpactParameter);
+        if (fUseCouts)  std::cout << " Info::siweyhmi: EPOS: Centrality is taken from ImpactParameter = " << fMCImpactParameter << "  "  << ((AliGenEposEventHeader*) genHeader)->GetName() << std::endl;
+        fJetHistImpParam->Fill(fMCImpactParameter);
         if (fMCImpactParameter>=impParArr[0] && fMCImpactParameter<impParArr[1]) fCentImpBin=2.5;
         if (fMCImpactParameter>=impParArr[1] && fMCImpactParameter<impParArr[2]) fCentImpBin=7.5;
         if (fMCImpactParameter>=impParArr[2] && fMCImpactParameter<impParArr[3]) fCentImpBin=15.;
@@ -1091,7 +1106,7 @@ Bool_t AliAnalysisJetHadro::Run()
         if (fMCImpactParameter>=impParArr[7] && fMCImpactParameter<impParArr[8]) fCentImpBin=65.;
         if (fMCImpactParameter>=impParArr[8] && fMCImpactParameter<impParArr[9]) fCentImpBin=75.;
         if (fMCImpactParameter<impParArr[0]  || fMCImpactParameter>impParArr[9]) fCentImpBin=-10.;
-        fHistCentralityImpPar->Fill(fCentImpBin);
+        fJetHistCentralityImpPar->Fill(fCentImpBin);
       }
     } else if (!TMath::IsNaN(((AliGenHijingEventHeader*) genHeader)->ImpactParameter()) && fMCEvent){
       //
@@ -1105,8 +1120,8 @@ Bool_t AliAnalysisJetHadro::Run()
       fNwNColl  = lHIJINGHeader->NwN();
       fNwNwColl = lHIJINGHeader->NwNw();
       fMCImpactParameter = lHIJINGHeader->ImpactParameter();
-      fHistImpParam->Fill(fMCImpactParameter);
-      if (fUseCouts)  std::cout << " Info::siweyhmi: HIJING: Centralitity is taken from ImpactParameter = " << fMCImpactParameter << "  "  << ((AliGenHijingEventHeader*) genHeader)->GetName() << std::endl;
+      fJetHistImpParam->Fill(fMCImpactParameter);
+      if (fUseCouts)  std::cout << " Info::siweyhmi: HIJING: Centrality is taken from ImpactParameter = " << fMCImpactParameter << "  "  << ((AliGenHijingEventHeader*) genHeader)->GetName() << std::endl;
       if (fMCImpactParameter>=impParArr[0] && fMCImpactParameter<impParArr[1]) fCentImpBin=2.5;
       if (fMCImpactParameter>=impParArr[1] && fMCImpactParameter<impParArr[2]) fCentImpBin=7.5;
       if (fMCImpactParameter>=impParArr[2] && fMCImpactParameter<impParArr[3]) fCentImpBin=15.;
@@ -1117,7 +1132,7 @@ Bool_t AliAnalysisJetHadro::Run()
       if (fMCImpactParameter>=impParArr[7] && fMCImpactParameter<impParArr[8]) fCentImpBin=65.;
       if (fMCImpactParameter>=impParArr[8] && fMCImpactParameter<impParArr[9]) fCentImpBin=75.;
       if (fMCImpactParameter<impParArr[0]  || fMCImpactParameter>impParArr[9]) fCentImpBin=-10.;
-      fHistCentralityImpPar->Fill(fCentImpBin);
+      fJetHistCentralityImpPar->Fill(fCentImpBin);
     }
     if (fCentrality<0) fCentrality=fCentImpBin;
     //
@@ -1171,7 +1186,7 @@ Bool_t AliAnalysisJetHadro::Run()
     // if (fMCtrue && TMath::Abs(fVz) > 15) return;   // For MC put fixed cut
     if (TMath::Abs(fVz)>12) return kFALSE;
     //
-    if (fVertex && isVertexOk) fHistVertex->Fill(fVz);
+    if (fVertex && isVertexOk) fJetHistVertex->Fill(fVz);
     else return kFALSE;
     //
     // ------------------------------------------------
@@ -1182,14 +1197,14 @@ Bool_t AliAnalysisJetHadro::Run()
     fEventInfo_CentralityEstimates->Zero();  // matchEff counter
     if (fBeamType.CompareTo("A-A") == 0) { // PbPb
       if (MultSelection) {
-        if(fSystCentEstimatetor == -1) fCentrality = MultSelection->GetMultiplicityPercentile("TRK");
-        if(fSystCentEstimatetor ==  0) fCentrality = MultSelection->GetMultiplicityPercentile("V0M");
-        if(fSystCentEstimatetor ==  1) fCentrality = MultSelection->GetMultiplicityPercentile("CL1");
+        if(fSystCentEstimator == -1) fCentrality = MultSelection->GetMultiplicityPercentile("TRK");
+        if(fSystCentEstimator ==  0) fCentrality = MultSelection->GetMultiplicityPercentile("V0M");
+        if(fSystCentEstimator ==  1) fCentrality = MultSelection->GetMultiplicityPercentile("CL1");
         for (Int_t i=0;i<nEst;i++) (*fEventInfo_CentralityEstimates)[i]=MultSelection->GetMultiplicityPercentile(fEventInfo_centEstStr[i]);
       } else if (esdCentrality) {
-        if(fSystCentEstimatetor == -1) fCentrality = esdCentrality->GetCentralityPercentile("TRK");
-        if(fSystCentEstimatetor ==  0) fCentrality = esdCentrality->GetCentralityPercentile("V0M");
-        if(fSystCentEstimatetor ==  1) fCentrality = esdCentrality->GetCentralityPercentile("CL1");
+        if(fSystCentEstimator == -1) fCentrality = esdCentrality->GetCentralityPercentile("TRK");
+        if(fSystCentEstimator ==  0) fCentrality = esdCentrality->GetCentralityPercentile("V0M");
+        if(fSystCentEstimator ==  1) fCentrality = esdCentrality->GetCentralityPercentile("CL1");
         for (Int_t i=0;i<nEst;i++) (*fEventInfo_CentralityEstimates)[i]=esdCentrality->GetCentralityPercentile(fEventInfo_centEstStr[i]);
       } else {
         std::cout << " Info::siweyhmi: Error: There is no cent info " << std::endl;
@@ -1214,10 +1229,10 @@ Bool_t AliAnalysisJetHadro::Run()
       std::cout << " Info::siweyhmi: =============================================================================================== " << std::endl;
     }
   }
-  fHistCentrality->Fill(fCentrality);  // count events after physics and vertex selection
+  fJetHistCentrality->Fill(fCentrality);  // count events after physics and vertex selection
   //
   // in case small stat is enough
-  if (fPercentageOfEvents>0 && (fEventCountInFile%fPercentageOfEvents)!=0) return kFALSE;
+  // if (fPercentageOfEvents>0 && (fEventCountInFile%fPercentageOfEvents)!=0) return kFALSE;
 
   // if centrality estimation failed
   // if (fCentrality > 100.) return kFALSE;
@@ -1307,9 +1322,9 @@ void AliAnalysisJetHadro::FindJetsEMC()
       Float_t jetptsub = jetpt - fjetRhoVal*jetArea;
       //
       (*fTreeSRedirector)<<"jetsEMCBG"<<
+      "ijet="           << ijetindex << // jet Radius
       "gid="            << fEventGID << //  global event ID
       "ptsubmin="       << fjetMinPtSub <<
-      "ijet="           << ijetindex << // jet Radius
       "nJets="          << Njets <<    //  global event ID
       "jetpt="          << jetpt <<     //  global event ID
       "jetphi="         << jetphi <<    //  global event ID
@@ -1326,6 +1341,7 @@ void AliAnalysisJetHadro::FindJetsEMC()
   }
   //
   // loop over accepted jets
+  Int_t ijetindexAcc = 0;
   for(auto jet : fJetContainer->accepted())
   {
     //if (TMath::Abs(jet->Eta()) >= 0.9-jetRadius) continue;
@@ -1351,6 +1367,7 @@ void AliAnalysisJetHadro::FindJetsEMC()
 
     if(!fTreeSRedirector) return;
     (*fTreeSRedirector)<<"jetsEMC"<<
+    "ijet="      << ijetindexAcc << // jet Radius
     "ptsubmin="  << fjetMinPtSub <<
     "nJetsAcc="  << NAcceptedjets << // Number of accepted jets in event
     "gid="       << fEventGID << //  global event ID
@@ -1401,6 +1418,7 @@ void AliAnalysisJetHadro::FindJetsEMC()
 
       (*fTreeSRedirector)<<"jetsEMCconst"<<
       //
+      "ijet="      << ijetindexAcc << // jet Radius
       "gid="       << fEventGID << //  global event ID
       "jetRadius=" << jetRadius << // jet Radius
       "nJets="     << Njets << // Number of jets in event
@@ -1465,7 +1483,7 @@ void AliAnalysisJetHadro::FindJetsEMC()
       (*fTreeSRedirector)<<"jetsEMCconst"<<"\n";
 
     }
-
+    ijetindexAcc++;
   }
 
 }
@@ -1486,16 +1504,17 @@ void AliAnalysisJetHadro::FindJetsFJ()
   //
   float jetRadius  = 0.4;     // can be 0.2, 0.4, 0.6
   float pT_sub_min = 40.0;    // can be 40, 60, 80
-  std::vector<float>  fJetRadius{0.2,0.4,0.6};
-  std::vector<float>  fPtSubMin{40.,60.,80.}; // jet pt cut
-  std::vector<int>  fSettings{-1,0,4,6}; // jet pt cut
+  std::vector<float> fJetRadius{0.2,0.4,0.6};
+  std::vector<float> fPtSubMin{40.,60.,80.}; // jet pt cut
+  std::vector<int>   fSettings{-1,0,4,6}; // jet pt cut
   //
   // loop over settings and jets radius
   for (int iset=0; iset<nSettings; iset++){
     for (int iJetRadius=0; iJetRadius<nJetRadiusBins; iJetRadius++){
       for (int iJetPt=0; iJetPt<nJetPtsubMinBins; iJetPt++){
-
-        if (fMCtrue && fSettings[iset]!=0) continue;
+        //
+        // run jet finder only for set==-1,0 and 4 in case of MC
+        if (fMCtrue && (iset > 2) ) continue; //
         //
         Float_t jetAbsEtaCut = 0.9-fJetRadius[iJetRadius];   // fixed
         double particleEtaCut = 0.9;
@@ -1511,7 +1530,8 @@ void AliAnalysisJetHadro::FindJetsFJ()
         fFastJetWrapper->SetStrategy(fastjet::Strategy::Best);
         fFastJetWrapper->SetGhostArea(fGhostArea);
         fFastJetWrapper->SetAreaType(fastjet::AreaType::active_area);
-        fFastJetWrapper->SetMaxRap(1);
+        fFastJetWrapper->SetMaxRap(0.9);
+        fFastJetWrapper->SetMinJetPt(0.15);
         std::vector<int> trackTTIndex;
         trackTTIndex.clear();
         //
@@ -1535,6 +1555,17 @@ void AliAnalysisJetHadro::FindJetsFJ()
             GetExpecteds(track,closestPar);
             SetCutBitsAndSomeTrackVariables(track);
             if (!GetSystematicClassIndex(fTrackCutBits,fSettings[iset])) continue;
+          }
+          if (fMCEvent){
+            Int_t lab = TMath::Abs(track->GetLabel());
+            Bool_t bPrim = fMCStack->IsPhysicalPrimary(lab);
+            Bool_t isTPCPileup = AliAnalysisUtils::IsParticleFromOutOfBunchPileupCollision(lab,fMCEvent);
+            Bool_t isITSPileup = AliAnalysisUtils::IsSameBunchPileupInGeneratedEvent(fMCEvent, "Hijing");
+            fIsMCPileup = (isTPCPileup || isITSPileup);
+            if (fIsMCPileup) continue;
+            //
+            // only primary particle condition for set=4 for set==-1 and set==0 jet finder runs over all selected partciles
+            if (iset>1 && !bPrim) continue;
           }
           //
           if (track->Pt() < fTrackPt || TMath::Abs(track->Eta()) >= 0.9) continue;
@@ -1572,6 +1603,7 @@ void AliAnalysisJetHadro::FindJetsFJ()
             Float_t jetptsub = jetpt - fRhoFJ*jetArea;
             Int_t nJets = jetsBG.size();
             (*fTreeSRedirector)<<"jetsFJBG"<<
+            "ijet="           << ijet <<
             "ptsubmin="       << fPtSubMin[iJetPt] <<
             "gid="            << fEventGID << //  global event ID
             "syst="           << fSettings[iset] << //  syst setting
@@ -1614,12 +1646,19 @@ void AliAnalysisJetHadro::FindJetsFJ()
           Int_t nConstituents = constituents.size();
           std::vector<fastjet::PseudoJet> sorted_constituents = sorted_by_pt(constituents);
           auto leadingPt = sorted_constituents[0].perp();
+          Float_t jetpx = jet.px();
+          Float_t jetpy = jet.py();
+          Float_t jetpz = jet.pz();
+          Float_t jetE = jet.E();
           Float_t jetpt = jet.pt();
           Float_t jetphi = jet.phi();
           Float_t jeteta = jet.eta();
           Float_t jetArea = jet.area();
           Float_t jetptsub = jetpt - fRhoFJ*jetArea;
-          Bool_t jetTrigger = ( (leadingPt > fLeadingJetCut) || (jetptsub>30 && jetArea > fjetAreaCut*3.14159265359*fJetRadius[iJetRadius]*fJetRadius[iJetRadius]));
+          // Bool_t jetTrigger = ( (leadingPt > fLeadingJetCut) || (jetptsub>30 && leadingPt>3) );
+          Bool_t jetTrigger = ( (leadingPt > fLeadingJetCut) || jetptsub>30 );
+          fJetHistptSub->Fill(jetptsub);
+          // Bool_t jetTrigger = ( (leadingPt > fLeadingJetCut) || (jetptsub>30 && jetArea > fjetAreaCut*3.14159265359*fJetRadius[iJetRadius]*fJetRadius[iJetRadius]));
           if (!jetTrigger) continue;
 
           if (jetptsub > pT_sub_min)
@@ -1627,13 +1666,61 @@ void AliAnalysisJetHadro::FindJetsFJ()
             fhasRealFJjet = 1;
           }
           //
+          //
+          //
+          // Nsubjettiness
+          // AliEmcalJetFinder::Nsubjettiness( *pJet, *pContJets,  Double_t dVtx[3], Int_t N, Int_t Algorithm, Double_t Radius, Double_t Beta, Int_t Option, Int_t Measure, Double_t Beta_SD, Double_t ZCut, Int_t SoftDropOn){
+          // void AliAnalysisTaskJetPlanarFlow::SetTree(AliEmcalJet *jet, AliJetContainer *jetContainer, AliTrackContainer *trackContainer, Float_t jetPt, Int_t level)
+          // Algorithm = 0
+          // beta = 0.
+          // option = 0
+          // measure = 0
+          // betasd = 0
+          // zcut = 0.1
+          // sotdro = 1
+          Float_t Result_NSub1=10.0;
+          Float_t Result_NSub2=-100.0;
+          Float_t deltaR = -10.0;
+          AliFJWrapper *fFastJetWrapperNsubjettines;
+          fFastJetWrapperNsubjettines = new AliFJWrapper("fFastJetWrapperNsubjettines","fFastJetWrapperNsubjettines");
+          fFastJetWrapperNsubjettines->Clear();
+          fFastJetWrapperNsubjettines->SetR(fJetRadius[iJetRadius]);
+          fFastJetWrapperNsubjettines->SetAlgorithm(fastjet::JetAlgorithm::antikt_algorithm);
+          fFastJetWrapperNsubjettines->SetRecombScheme(fastjet::RecombinationScheme::E_scheme); // fFastJetWrapper->SetRecombScheme(fastjet::RecombinationScheme::pt_scheme);
+          fFastJetWrapperNsubjettines->SetStrategy(fastjet::Strategy::Best);
+          fFastJetWrapperNsubjettines->SetGhostArea(fGhostArea);
+          fFastJetWrapperNsubjettines->SetAreaType(fastjet::AreaType::active_area);
+          fFastJetWrapperNsubjettines->SetMaxRap(0.9);
+          fFastJetWrapperNsubjettines->SetMinJetPt(0.15);
+          //
+          // Add jet constituents to wrapper for the nsubjettiness calculation
+          for(Int_t i = 0; i < nConstituents; i++)
+          {
+            fastjet::PseudoJet &constituentSubjettiness = constituents[i];
+            Int_t trackIndex = constituentSubjettiness.user_index();
+            AliESDtrack* trackNsubjettines = fESD->GetTrack(trackIndex);
+            fFastJetWrapperNsubjettines->AddInputVector(trackNsubjettines->Px(), trackNsubjettines->Py(), trackNsubjettines->Pz(), trackNsubjettines->E(), i);
+          }
+          Result_NSub1 = fFastJetWrapperNsubjettines->AliFJWrapper::NSubjettiness(1,0,fJetRadius[iJetRadius], 0., 0, 0, 0., 0.1, 1);
+          Result_NSub2 = fFastJetWrapperNsubjettines->AliFJWrapper::NSubjettiness(2,0,fJetRadius[iJetRadius], 0., 0, 0, 0., 0.1, 1);
+          deltaR       = fFastJetWrapperNsubjettines->AliFJWrapper::NSubjettiness(2,0,fJetRadius[iJetRadius], 0., 2, 0, 0., 0.1, 1);
+          delete fFastJetWrapperNsubjettines;
+          //
           (*fTreeSRedirector)<<"jetsFJ"<<
+          "nsub1="        << Result_NSub1 <<
+          "nsub2="        << Result_NSub2 <<
+          "deltar="       << deltaR <<
+          "ijet="         << ijet <<
           "syst="         << fSettings[iset] << //  syst setting
           "ptsubmin="     << fPtSubMin[iJetPt] <<
           "jetEtaCut="    << jetAbsEtaCut << //abs eta cut for jet
           "gid="          << fEventGID << //  global event ID
           "jetRadius="    << fJetRadius[iJetRadius] << // jet Radius
           "rhoFJ="        << fRhoFJ << //event rho
+          "jetpx="        << jetpx <<     //  global event ID
+          "jetpy="        << jetpy <<     //  global event ID
+          "jetpz="        << jetpz <<     //  global event ID
+          "jetE="         << jetE <<     //  global event ID
           "jetpt="        << jetpt <<     //  global event ID
           "jetphi="       << jetphi <<    //  global event ID
           "jeteta="       << jeteta <<    //  global event ID
@@ -1652,6 +1739,23 @@ void AliAnalysisJetHadro::FindJetsFJ()
             fastjet::PseudoJet &constituent = constituents[i];
             Int_t trackIndex = constituent.user_index();
             AliESDtrack* trackConst = fESD->GetTrack(trackIndex);
+            Bool_t bPrim = kFALSE;
+            Int_t iPart = -10;
+            if (fMCEvent){
+              Int_t lab = TMath::Abs(trackConst->GetLabel());
+              bPrim = fMCStack->IsPhysicalPrimary(lab);
+              //
+              // Identify particle wrt pdg code
+              AliMCParticle *trackMCgen = (AliMCParticle *)fMCEvent->GetTrack(lab); // TParticle *trackMC  = fMCStack->Particle(lab);
+              Int_t pdg = trackMCgen->Particle()->GetPdgCode();                     // Int_t pdg = trackMC->GetPdgCode();
+              //
+              if (TMath::Abs(pdg) == kPDGel) { iPart = 0; } // select el
+              if (TMath::Abs(pdg) == kPDGpi) { iPart = 1; } // select pi
+              if (TMath::Abs(pdg) == kPDGka) { iPart = 2; } // select ka
+              if (TMath::Abs(pdg) == kPDGpr) { iPart = 3; } // select pr
+              if (TMath::Abs(pdg) == kPDGde) { iPart = 4; } // select de
+              if (iPart == -10) continue;
+            }
             //
             //Track cuts start
             fDEdxEl=-100;  fDEdxPi=-100;  fDEdxKa=-100;  fDEdxPr=-100;  fDEdxDe=-100;
@@ -1676,9 +1780,17 @@ void AliAnalysisJetHadro::FindJetsFJ()
             //
             (*fTreeSRedirector)<<"jetsFJconst"<<
             // "ptsubmin="  << fPtSubMin[iJetPt] <<
+            "nsub1="     << Result_NSub1 <<
+            "nsub2="     << Result_NSub2 <<
+            "deltar="    << deltaR <<
+            "ijet="      << ijet <<
             "syst="      << fSettings[iset] << //  syst setting
             "jetRadius=" << fJetRadius[iJetRadius] << // jet Radius
             "jetEtaCut=" << jetAbsEtaCut << //abs eta cut for jet
+            "jetpx="     << jetpx <<     //  global event ID
+            "jetpy="     << jetpy <<     //  global event ID
+            "jetpz="     << jetpz <<     //  global event ID
+            "jetE="      << jetE <<     //  global event ID
             "jetpt="     << jetpt <<     //  global event ID
             "jetphi="    << jetphi <<    //  global event ID
             "jeteta="    << jeteta <<    //  global event ID
@@ -1687,8 +1799,13 @@ void AliAnalysisJetHadro::FindJetsFJ()
             "nConst="    << nConstituents <<    //  global event ID
             "nJets="     << nJets <<    //  global event ID
             "jetptsub="  << jetptsub << //bg sub jet pt (pt - rho*Area)
-            "rhoFJ="     << fRhoFJ << //event rho
-            //
+            "rhoFJ="     << fRhoFJ; //event rho
+            if (fMCEvent){
+              (*fTreeSRedirector)<<"jetsFJconst"<<
+              "prim="    << bPrim            <<
+              "part="    << iPart            ;
+            }
+            (*fTreeSRedirector)<<"jetsFJconst"<<
             "gid="       << fEventGID << //  global event ID
             "cutBit="    << fTrackCutBits         <<  //  Systematic Cuts
             "dEdx="      << fTPCSignal            <<  //  dEdx of the track
@@ -1798,63 +1915,244 @@ void AliAnalysisJetHadro::FindJetsFJGen()
   //
   if (fUseCouts) std::cout << " Info::siweyhmi: ===== In the FindJetsFJGen ===== " << std::endl;
   //
-  for (Int_t iTrack = 0; iTrack < fMCEvent->GetNumberOfTracks(); iTrack++)
-  { // track loop
+  //
+  // -----------------------------------------------------------------------------------------
+  // ----------------------------   MC generated pure MC particles  --------------------------
+  // -----------------------------------------------------------------------------------------
+  //
+  //
+  // Find jets
+  //
+  // Create jetwrapper with the same settings used in FindJetsEMC
+  int nJetRadiusBins = 3;
+  float fTrackPt = 0.15;
+  float fGhostArea = 0.005;
+  float bgJetAbsEtaCut = 0.7;           // fixed
+  float bgJetRadius = 0.2;              // fixed
+  std::vector<float> fJetRadius{0.2,0.4,0.6};
+  //
+  for (int iJetRadius=0; iJetRadius<nJetRadiusBins; iJetRadius++){
+    Float_t jetAbsEtaCut = 0.9-fJetRadius[iJetRadius];   // fixed
+    double particleEtaCut = 0.9;
     //
-    Bool_t isTPCPileup = AliAnalysisUtils::IsParticleFromOutOfBunchPileupCollision(iTrack,fMCEvent);
-    Bool_t isITSPileup = AliAnalysisUtils::IsSameBunchPileupInGeneratedEvent(fMCEvent, "Hijing");
-    if (isTPCPileup || isITSPileup) continue;
+    //SOME CODE FROM NIMA
+    AliFJWrapper *fFastJetWrapperGen;
+    fFastJetWrapperGen = new AliFJWrapper("fFastJetWrapperGen","fFastJetWrapperGen");
+    fFastJetWrapperGen->Clear();
+    fFastJetWrapperGen->SetR(fJetRadius[iJetRadius]);
+    fFastJetWrapperGen->SetAlgorithm(fastjet::JetAlgorithm::antikt_algorithm);
+    fFastJetWrapperGen->SetRecombScheme(fastjet::RecombinationScheme::E_scheme);
+    fFastJetWrapperGen->SetStrategy(fastjet::Strategy::Best);
+    fFastJetWrapperGen->SetGhostArea(fGhostArea);
+    fFastJetWrapperGen->SetAreaType(fastjet::AreaType::active_area);
+    fFastJetWrapperGen->SetMaxRap(0.9);
+    fFastJetWrapperGen->SetMinJetPt(0.15);
+    std::vector<int> trackTTIndex;
+    trackTTIndex.clear();
     //
-    // initialize the dummy particle id
-    fPiMCgen =-100.; fKaMCgen =-100.; fPrMCgen =-100.;
-    AliMCParticle *trackMCgen = (AliMCParticle *)fMCEvent->GetTrack(iTrack);
-    //
-    // check the origin of the track
-    Int_t trackOrigin = -10;
-    if (fMCStack->IsPhysicalPrimary(iTrack))        trackOrigin = 0;
-    if (fMCStack->IsSecondaryFromMaterial(iTrack))  trackOrigin = 1;
-    if (fMCStack->IsSecondaryFromWeakDecay(iTrack)) trackOrigin = 2;
-    if (trackOrigin<-1) continue;
-    //
-    Float_t ptotMCgen = trackMCgen->P();
-    Float_t pTMCgen   = trackMCgen->Pt();
-    Float_t phiMCGen  = trackMCgen->Phi();
-    Float_t etaMCgen  = trackMCgen->Eta();
-    Float_t rapMCgen  = trackMCgen->Y();
-    //
-    // select particle of interest
-    Int_t iPart = -10;
-    Int_t pdg  = trackMCgen->Particle()->GetPdgCode();
-    Int_t sign = (pdg>0) ? 1 : -1;
-    if (TMath::Abs(pdg) == kPDGpi) {iPart = 1; fPiMCgen = iPart;} // select pi+
-    if (TMath::Abs(pdg) == kPDGka) {iPart = 2; fKaMCgen = iPart;} // select ka+
-    if (TMath::Abs(pdg) == kPDGpr) {iPart = 3; fPrMCgen = iPart;} // select pr+
-    if (iPart == -10) continue;
-    //
-    // Resonance control
-    Bool_t parInterest = (fPiMCgen>-1||fKaMCgen>-1||fPrMCgen>-1) ? kTRUE : kFALSE;
-    Bool_t acceptRes = CheckIfFromResonance(1,trackMCgen,iTrack,parInterest,ptotMCgen,etaMCgen,fCentrality,kTRUE);
-    //
-    // Fill MC closure tree
-    if(!fTreeSRedirector) return;
+    std::vector<fastjet::PseudoJet> particlesEmbeddedSubtracted; //will be filled with your subtracted event
+    std::vector<fastjet::PseudoJet> particlesEmbedded; //fill this with your event
 
-    (*fTreeSRedirector)<<"jetsFJGen"<<
-    "gid="       << fEventGID <<
-    "acceptRes=" << acceptRes <<                // sample id for subsample method
-    "part="      << iPart <<                // sample id for subsample method
-    "origin="    << trackOrigin <<
-    "sign="      << sign <<         // sign
-    "p="         << ptotMCgen <<             // vertex momentum
-    "pT="        << pTMCgen <<           // transverse momentum
-    "eta="       << etaMCgen <<          // mc eta
-    "rap="       << rapMCgen <<          // mc eta
-    "phi="       << phiMCGen <<          // mc eta
-    "cent="      << fCentrality <<     // Centrality
-    "vZ="        << fVz <<
-    "\n";
+    for (Int_t iTrack = 0; iTrack < fMCEvent->GetNumberOfTracks(); iTrack++)
+    {
+      // track loop
+      //
+      // Select real trigger event and reject other pile up vertices
+      Bool_t isTPCPileup = AliAnalysisUtils::IsParticleFromOutOfBunchPileupCollision(iTrack,fMCEvent);
+      Bool_t isITSPileup = AliAnalysisUtils::IsSameBunchPileupInGeneratedEvent(fMCEvent, "Hijing");
+      fIsMCPileup = (isTPCPileup || isITSPileup);
+      if (fIsMCPileup) {
+        continue;
+      }
+      //
+      // initialize the dummy particle id
+      AliMCParticle *trackMCgen = (AliMCParticle *)fMCEvent->GetTrack(iTrack);
+      if (!trackMCgen) continue;
+      //
+      // check the origin of the track
+      Bool_t bPrim = fMCStack->IsPhysicalPrimary(iTrack);
+      if (!bPrim) continue;
+      //
+      // Acceptance cut
+      Double_t ptotMCgen = trackMCgen->Pt();
+      Double_t etaMCgen  = trackMCgen->Eta();
+      Bool_t etaAccMaxWindow = (etaMCgen>=-0.9  && etaMCgen<=0.9);
+      Bool_t momAccMaxWindow = (ptotMCgen>=0.15 && ptotMCgen<=1000);
+      if (!(etaAccMaxWindow && momAccMaxWindow) ) continue;
+
+      fFastJetWrapperGen->AddInputVector(trackMCgen->Px(), trackMCgen->Py(), trackMCgen->Pz(), trackMCgen->E(), iTrack);
+      particlesEmbedded.push_back(fastjet::PseudoJet(trackMCgen->Px(), trackMCgen->Py(), trackMCgen->Pz(), trackMCgen->E()));
+
+    }
+    //
+    // background jet definitions
+    fastjet::JetMedianBackgroundEstimator bgE;
+    fastjet::Selector selectorBG = !fastjet::SelectorNHardest(2) * fastjet::SelectorAbsEtaMax(bgJetAbsEtaCut) * fastjet::SelectorPtRange(fTrackPt, 1000.0); //set the max eta cut on the estimator, then get rid of 2 highest pt jets
+    bgE.set_selector(selectorBG);
+    fastjet::JetDefinition jetDefBG(fastjet::kt_algorithm, bgJetRadius, fastjet::E_scheme, fastjet::Best); //define the kT jet finding which will do the average background estimation
+    fastjet::GhostedAreaSpec ghostSpecBG(particleEtaCut, 1, fGhostArea); //this ghost area might be too small and increase processing time too much
+    fastjet::AreaDefinition areaDefBG(fastjet::active_area_explicit_ghosts, ghostSpecBG);
+    fastjet::ClusterSequenceArea cluster_seq_BG(particlesEmbedded, jetDefBG, areaDefBG);
+    std::vector<fastjet::PseudoJet> jetsBG = sorted_by_pt(selectorBG(cluster_seq_BG.inclusive_jets())); //find the kT jets
+    if (jetsBG.size() > 0) {
+      bgE.set_jets(jetsBG);  // give the kT jets to the background estimator
+      fRhoFJ = bgE.rho();
+    }
+
+    //
+    // start of background jet loop
+    if (fFillJetsBG){
+      for (Int_t ijet=0; ijet<Int_t(jetsBG.size()); ijet++) {
+        fastjet::PseudoJet jet = jetsBG[ijet];
+        Float_t jetpt = jet.pt();
+        Float_t jetphi = jet.phi();
+        Float_t jeteta = jet.eta();
+        Float_t jetArea = jet.area();
+        Float_t jetptsub = jetpt - fRhoFJ*jetArea;
+        Int_t nJets = jetsBG.size();
+        (*fTreeSRedirector)<<"jetsFJBGGen"<<
+        "ijet="           << ijet <<
+        "gid="            << fEventGID << //  global event ID
+        "jetRadiusBG="    << bgJetRadius << // jet Radius
+        "jetEtaCutBG="    << bgJetAbsEtaCut << //abs eta cut for jet
+        "nJets="          << nJets <<    //  global event ID
+        "jetpt="          << jetpt <<     //  global event ID
+        "jetphi="         << jetphi <<    //  global event ID
+        "jeteta="         << jeteta <<    //  global event ID
+        "jetptsub="       << jetptsub << //bg sub jet pt (pt - rho*Area)
+        "rhoFJ="          << fRhoFJ << //event rho
+        "jetArea="        << jetArea << //jet area
+        "cent="           << fCentrality  <<  //  centrality
+        "pileupbit="      << fPileUpBit <<
+        "\n";
+      } // end of background jet loop
+    }
 
 
-  } // ======= end of track loop for generated particles to see distributions =======
+    fFastJetWrapperGen->Run();
+    std::vector<fastjet::PseudoJet> jets = fFastJetWrapperGen->GetInclusiveJets();
+    auto nJets = jets.size();
+    //
+    Float_t Result_NSub1=10.0;
+    Float_t Result_NSub2=-100.0;
+    Float_t deltaR = -10.0;
+    // Result_NSub1 = fFastJetWrapperGen->AliFJWrapper::NSubjettiness(1,0.,fJetRadius[iJetRadius], 0., 0, 0, 0., 0.1, 1);
+    // Result_NSub2 = fFastJetWrapperGen->AliFJWrapper::NSubjettiness(2,0.,fJetRadius[iJetRadius], 0., 0, 0, 0., 0.1, 1);
+    // deltaR       = fFastJetWrapperGen->AliFJWrapper::NSubjettiness(2,0.,fJetRadius[iJetRadius], 0., 2, 0, 0., 0.1, 1);
+
+    for (Int_t ijet=0; ijet<Int_t(nJets); ijet++){
+      //
+      // get the jet object
+      fastjet::PseudoJet jet = jets[ijet];
+      if (jet.pt() < fTrackPt || jet.perp() > 1000.0 || TMath::Abs(jet.eta()) >= jetAbsEtaCut) continue;
+      fhasAcceptedFJjet = 1;
+      //
+      // get the jet constituents
+      std::vector<fastjet::PseudoJet> constituents(fFastJetWrapperGen->GetJetConstituents(ijet));
+      Int_t nConstituents = constituents.size();
+      std::vector<fastjet::PseudoJet> sorted_constituents = sorted_by_pt(constituents);
+      auto leadingPt = sorted_constituents[0].perp();
+      Float_t jetpx = jet.px();
+      Float_t jetpy = jet.py();
+      Float_t jetpz = jet.pz();
+      Float_t jetE  = jet.E();
+      Float_t jetpt = jet.pt();
+      Float_t jetphi = jet.phi();
+      Float_t jeteta = jet.eta();
+      Float_t jetArea = jet.area();
+      Float_t jetptsub = jetpt - fRhoFJ*jetArea;
+      // Bool_t jetTrigger = ( (leadingPt > fLeadingJetCut) || (jetptsub>30 && leadingPt>3) );
+      Bool_t jetTrigger = ( (leadingPt > fLeadingJetCut) || jetptsub>30 );
+      // Bool_t jetTrigger = ( (leadingPt > fLeadingJetCut) || (jetptsub>30 && jetArea > fjetAreaCut*3.14159265359*fJetRadius[iJetRadius]*fJetRadius[iJetRadius]));
+      if (!jetTrigger) continue;
+      //
+      (*fTreeSRedirector)<<"jetsFJGen"<<
+      // "nsub1="        << Result_NSub1 <<
+      // "nsub2="        << Result_NSub2 <<
+      // "deltar="       << deltaR <<
+      "ijet="         << ijet <<
+      "jetEtaCut="    << jetAbsEtaCut << //abs eta cut for jet
+      "gid="          << fEventGID << //  global event ID
+      "jetRadius="    << fJetRadius[iJetRadius] << // jet Radius
+      "rhoFJ="        << fRhoFJ << //event rho
+      "jetpx="        << jetpx <<     //  global event ID
+      "jetpy="        << jetpy <<     //  global event ID
+      "jetpz="        << jetpz <<     //  global event ID
+      "jetE="         << jetE <<     //  global event ID
+      "jetpt="        << jetpt <<     //  global event ID
+      "jetphi="       << jetphi <<    //  global event ID
+      "jeteta="       << jeteta <<    //  global event ID
+      "jetArea="      << jetArea << //jet area
+      "maxpt="        << leadingPt <<
+      "nConst="       << nConstituents <<    //  global event ID
+      "nJets="        << nJets <<    //  global event ID
+      "jetptsub="     << jetptsub << //bg sub jet pt (pt - rho*Area)
+      "cent="         << fCentrality <<  //  centrality
+      "\n";
+
+      for(Int_t i = 0; i < nConstituents; i++)
+      {
+        fastjet::PseudoJet &constituent = constituents[i];
+        Int_t trackIndex = constituent.user_index();
+        AliMCParticle *trackMCgen = (AliMCParticle *)fMCEvent->GetTrack(trackIndex);
+        Int_t pdg  = trackMCgen->Particle()->GetPdgCode();
+        //
+        // select particle of interest
+        Int_t iPart = -10;
+        if (TMath::Abs(pdg) == kPDGel) iPart = 0;
+        if (TMath::Abs(pdg) == kPDGpi) iPart = 1;
+        if (TMath::Abs(pdg) == kPDGka) iPart = 2;
+        if (TMath::Abs(pdg) == kPDGpr) iPart = 3;
+        if (TMath::Abs(pdg) == kPDGde) iPart = 4;
+        if (iPart == -10) continue;
+        //
+        // apply primary track and acceptance cuts
+        Double_t ptotMCgen = trackMCgen->P();
+        Double_t etaMCgen  = trackMCgen->Eta();
+        Double_t ptMCgen   = trackMCgen->Pt();
+        Float_t phiMCGen  = trackMCgen->Phi();
+        //
+        (*fTreeSRedirector)<<"jetsFJconstGen"<<
+        // "nsub1="     << Result_NSub1 <<
+        // "nsub2="     << Result_NSub2 <<
+        // "deltar="    << deltaR <<
+        "ijet="      << ijet <<
+        "jetRadius=" << fJetRadius[iJetRadius] << // jet Radius
+        "jetEtaCut=" << jetAbsEtaCut << //abs eta cut for jet
+        "jetpx="     << jetpx <<     //  global event ID
+        "jetpy="     << jetpy <<     //  global event ID
+        "jetpz="     << jetpz <<     //  global event ID
+        "jetE="      << jetE <<     //  global event ID
+        "jetpt="     << jetpt <<     //  global event ID
+        "jetphi="    << jetphi <<    //  global event ID
+        "jeteta="    << jeteta <<    //  global event ID
+        "jetArea="   << jetArea << //jet area
+        "maxpt="     << leadingPt <<
+        "nConst="    << nConstituents <<    //  global event ID
+        "nJets="     << nJets <<    //  global event ID
+        "jetptsub="  << jetptsub << //bg sub jet pt (pt - rho*Area)
+        "rhoFJ="     << fRhoFJ << //event rho
+        //
+        "gid="       << fEventGID << //  global event ID
+        "part="      << iPart                 <<  //  particle type
+        "sign="      << fSign                 <<  //  charge
+        "p="         << ptotMCgen              <<  //  momentum at vertex
+        "pT="        << ptMCgen                   <<  // transverse momentum
+        "eta="       << etaMCgen                  <<  //  eta
+        "phi="       << phiMCGen                  <<  //  phi
+        "cent="      << fCentrality           <<  //  centrality
+        "\n";
+
+
+      }
+    } // end of jet loop
+    delete fFastJetWrapperGen;
+
+
+
+
+  } // ======= end of track loop for generated particles =======
+
 
 }
 //________________________________________________________________________
@@ -2470,7 +2768,7 @@ Int_t AliAnalysisJetHadro::CountEmptyEvents(Int_t counterBin)
   //
   // check if the event is empty
   if (emptyCount<1) {
-    fHistEmptyEvent->Fill(counterBin);
+    fJetHistEmptyEvent->Fill(counterBin);
     std::cout << " Info::siweyhmi: Empty event in " << fChunkName << std::endl;
   }
   if (fUseCouts) std::cout << " Info::siweyhmi: ====== EVENT IS COOL GO AHEAD ======= " << std::endl;

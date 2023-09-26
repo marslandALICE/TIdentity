@@ -1427,10 +1427,10 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
         //
         if (MultSelection) {
           fCentrality = MultSelection->GetMultiplicityPercentile("V0M");
-          if (fUseCouts)  std::cout << " Info::marsland: Centralitity is taken from MultSelection " << fCentrality << std::endl;
+          if (fUseCouts)  std::cout << " Info::marsland: Centrality is taken from MultSelection " << fCentrality << std::endl;
         } else if (esdCentrality) {
           fCentrality = esdCentrality->GetCentralityPercentile("V0M");
-          if (fUseCouts)  std::cout << " Info::marsland: Centralitity is taken from esdCentrality " << fCentrality << std::endl;
+          if (fUseCouts)  std::cout << " Info::marsland: Centrality is taken from esdCentrality " << fCentrality << std::endl;
         }
         //
         // AliCollisionGeometry* colGeometry = dynamic_cast<AliCollisionGeometry*>(genHeader);
@@ -1457,7 +1457,7 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
             fNwNColl  = lHepMCHeader->Nwounded_N_collisions(); // Number of Nwounded-N collisons
             fNwNwColl = lHepMCHeader->Nwounded_Nwounded_collisions();// Number of Nwounded-Nwounded collisions
             fMCImpactParameter = lHepMCHeader->impact_parameter();
-            if (fUseCouts)  std::cout << " Info::marsland: EPOS: Centralitity is taken from ImpactParameter = " << fMCImpactParameter << "  "  << ((AliGenEposEventHeader*) genHeader)->GetName() << std::endl;
+            if (fUseCouts)  std::cout << " Info::marsland: EPOS: Centrality is taken from ImpactParameter = " << fMCImpactParameter << "  "  << ((AliGenEposEventHeader*) genHeader)->GetName() << std::endl;
             fHistImpParam->Fill(fMCImpactParameter);
             if (fMCImpactParameter>=impParArr[0] && fMCImpactParameter<impParArr[1]) fCentImpBin=2.5;
             if (fMCImpactParameter>=impParArr[1] && fMCImpactParameter<impParArr[2]) fCentImpBin=7.5;
@@ -1484,7 +1484,7 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
           fNwNwColl = lHIJINGHeader->NwNw();
           fMCImpactParameter = lHIJINGHeader->ImpactParameter();
           fHistImpParam->Fill(fMCImpactParameter);
-          if (fUseCouts)  std::cout << " Info::marsland: HIJING: Centralitity is taken from ImpactParameter = " << fMCImpactParameter << "  "  << ((AliGenHijingEventHeader*) genHeader)->GetName() << std::endl;
+          if (fUseCouts)  std::cout << " Info::marsland: HIJING: Centrality is taken from ImpactParameter = " << fMCImpactParameter << "  "  << ((AliGenHijingEventHeader*) genHeader)->GetName() << std::endl;
           if (fMCImpactParameter>=impParArr[0] && fMCImpactParameter<impParArr[1]) fCentImpBin=2.5;
           if (fMCImpactParameter>=impParArr[1] && fMCImpactParameter<impParArr[2]) fCentImpBin=7.5;
           if (fMCImpactParameter>=impParArr[2] && fMCImpactParameter<impParArr[3]) fCentImpBin=15.;
@@ -5189,9 +5189,11 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
       Double_t TOFSignalDz = track->GetTOFsignalDz();
       //
       //
+      Float_t nSigmasPiTOF = fPIDResponse->NumberOfSigmasTOF(track, AliPID::kPion,    fPIDResponse->GetTOFResponse().GetTimeZero());
       Float_t nSigmasKaTOF = fPIDResponse->NumberOfSigmasTOF(track, AliPID::kKaon,    fPIDResponse->GetTOFResponse().GetTimeZero());
       Float_t nSigmasPrTOF = fPIDResponse->NumberOfSigmasTOF(track, AliPID::kProton,  fPIDResponse->GetTOFResponse().GetTimeZero());
       Float_t nSigmasDeTOF = fPIDResponse->NumberOfSigmasTOF(track, AliPID::kDeuteron,fPIDResponse->GetTOFResponse().GetTimeZero());
+      Bool_t cleanPiTOF = ((TMath::Abs(nSigmasPiTOF)<=fEffMatrixNSigmasTOF));
       Bool_t cleanPrTOF = ((TMath::Abs(nSigmasPrTOF)<=fEffMatrixNSigmasTOF));
       Bool_t cleanDeTOF = ((TMath::Abs(nSigmasDeTOF)<=fEffMatrixNSigmasTOF));
       Bool_t cleanKaTOF = ((TMath::Abs(nSigmasKaTOF)<=fEffMatrixNSigmasTOF));
@@ -5297,13 +5299,14 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
       // --------------------------------------------------------------------
       //
       // variable nsigma TOF protons and kaons for amplitude estimation
+      if (cleanPiTOF) (fTrackCutBits |= 1 << kCleanPiTOF);
       if (cleanPrTOF) (fTrackCutBits |= 1 << kCleanPrTOF);
       if (cleanKaTOF) (fTrackCutBits |= 1 << kCleanKaTOF);
       //
       // Clean Kaons protons and deuterons
       if (cleanKaTOFTRD)        (fTrackCutBits |= 1 << kCleanKaTOFTRD);
       if (fTrackProbKaTOF>=0.8) (fTrackCutBits |= 1 << kTrackProbKaTOF);
-      if (fTrackProbPrTOF>=0.8) (fTrackCutBits |= 1 << kTrackProbPrTOF);
+      // if (fTrackProbPrTOF>=0.8) (fTrackCutBits |= 1 << kTrackProbPrTOF);
       if (cleanDeTOF && cleanDeTPC) (fTrackCutBits |= 1 << kCleanDeTOF);
       //
       return fTrackCutBits;

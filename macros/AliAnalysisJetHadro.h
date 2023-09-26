@@ -200,7 +200,7 @@ public:
   Bool_t GetRunOnGrid() const { return fRunOnGrid; }
 
   // Setters for the systematic uncertainty checks
-  void   SetSystCentEstimator(const Int_t systCentEstimator = 0)  {fSystCentEstimatetor = systCentEstimator;}
+  void   SetSystCentEstimator(const Int_t systCentEstimator = 0)  {fSystCentEstimator = systCentEstimator;}
 
   // Setters for the eta momentum dEdx and centrality bins
   void   SetSampleDeDxUpperEdge(const Float_t dEdxCleanUp = 200.) {fDEdxCleanUp         = dEdxCleanUp;}
@@ -337,6 +337,8 @@ private:
   TTree            * fTreejetsResonance;          // tree with full acceptance filled with MC
   TTree            * fTreejetsEvents;
   TTree            * fTreejetsFJGen;
+  TTree            * fTreejetsFJBGGen;
+  TTree            * fTreejetsFJconstGen;
   TTree            * fTreejetsEMC;            // tree for EMCal signal jets
   TTree            * fTreejetsEMCBG;            // tree for EMCal signal jets
   TRandom3         fRandom;
@@ -574,7 +576,7 @@ private:
   //  Field (++)  --> run interval is [137161, 138275]
   //  Field (--)  --> run interval is [138364, 139510]
   //  ------------------------------------------------
-  Int_t              fSystCentEstimatetor;   // 0 --> "V0M"   ||| -1 -->  "TRK" ||| +1 --> "CL1"
+  Int_t              fSystCentEstimator;   // 0 --> "V0M"   ||| -1 -->  "TRK" ||| +1 --> "CL1"
 
   std::vector<float>  fetaDownArr;
   std::vector<float>  fetaUpArr;
@@ -589,11 +591,12 @@ private:
   // control and QA histograms
   //
   //
-  TH1F             * fHistEmptyEvent;            // control histogram for empty event
-  TH1F             * fHistCentrality;            // control histogram for centrality
-  TH1F             * fHistCentralityImpPar;      // control histogram for centrality
-  TH1F             * fHistImpParam;              // control histogram for impact parameter
-  TH1F             * fHistVertex;                // control histogram for vertexZ
+  TH1F             * fJetHistEmptyEvent;            // control histogram for empty event
+  TH1F             * fJetHistCentrality;            // control histogram for centrality
+  TH1F             * fJetHistCentralityImpPar;      // control histogram for centrality
+  TH1F             * fJetHistImpParam;              // control histogram for impact parameter
+  TH1F             * fJetHistVertex;                // control histogram for vertexZ
+  TH1F             * fJetHistptSub;              // control histogram for rho subtrated jet pt
   //
   // Counters for Marian
   //

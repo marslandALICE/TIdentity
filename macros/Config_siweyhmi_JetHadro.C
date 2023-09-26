@@ -157,8 +157,16 @@ AliAnalysisJetHadro* Config_siweyhmi_JetHadro(Bool_t getFromAlien, Int_t setting
       std::cout << " SETTING TYPE = " << settingType << " Info::siweyhmi: run over MC data " << std::endl;
       task->SetIsMCtrue(kTRUE);
       task->SetUseCouts(kTRUE);
+      task->SetDefaultTrackCuts(kTRUE);
+      task->SetDefaultEventCuts(kTRUE);
       task->SetMCTrackOriginType(0);   // 0:full scan, 1: prim
       task->SetUsePtCut(1); // 0: tpc momcut, 1: vertex momcut, 2: pT cut
+      //
+      task->SetLeadingJetCut(5);
+      task->SetFillJetsBG(kFALSE);
+      task->SetFillFastJet(kTRUE);
+      task->SetRunOnGrid(kTRUE);
+      //
       // acceptance
       const Int_t tmpEtaBinsMC = 8;
       const Int_t tmpMomBinsMC = 2;
@@ -172,12 +180,7 @@ AliAnalysisJetHadro* Config_siweyhmi_JetHadro(Bool_t getFromAlien, Int_t setting
       const Int_t tmpNresonances = 1;
       TString tmpResArr[tmpNresonances] = {"xxx"};
       task->SetMCResonanceArray(tmpNresonances,tmpResArr);
-
-      //
-      task->SetLeadingJetCut(5);
-      task->SetFillJetsBG(kFALSE);
-      task->SetFillFastJet(kTRUE);
-
+      // 
       //Set these in the wagon configuration CHANGE
       task->SetJetMinPtSub(pT_sub_min);
       task->SetPercentageOfEvents(0); //sets so it saves 1 out of every n events inclusive = 400. Jets = 40 w/ 40 GeV min jet requirement

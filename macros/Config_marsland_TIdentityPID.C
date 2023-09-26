@@ -79,7 +79,7 @@ AliAnalysisTaskTIdentityPID* Config_marsland_TIdentityPID(Bool_t getFromAlien, I
       if( (passIndex==3 && periodName.Contains("18")) || (passIndex==2 && periodName.Contains("15")) ) {
         task->SetDefaultEventCuts(kTRUE);
       }
-      task->SetRunOnGrid(kTRUE);
+      task->SetRunOnGrid(kFALSE);
       task->SetUseCouts(kFALSE);
       //
       task->SetFillEventInfo(kTRUE);
@@ -404,6 +404,7 @@ AliAnalysisTaskTIdentityPID* Config_marsland_TIdentityPID(Bool_t getFromAlien, I
       std::cout << " SETTING TYPE = " << settingType << " Info::marsland: Flow Analysis MC checks " << std::endl;
       task->SetEffMatrix(kTRUE);
       task->SetIsMCtrue(kTRUE);
+      task->SetUseCouts(kFALSE);
       task->SetFillAllCutVariables(kTRUE);  // conditions to enter FillMCFull_NetParticles()
       //
       std::cout << "period and pass = " << periodName << "    " << passIndex << std::endl;
@@ -414,7 +415,6 @@ AliAnalysisTaskTIdentityPID* Config_marsland_TIdentityPID(Bool_t getFromAlien, I
       task->SetNSettings(7);
       task->SetMCTrackOriginType(0);   // 0:full scan, 1: prim
       task->SetCorrectForMissCl(0);
-      task->SetUseCouts(kTRUE);
       task->SetDefaultTrackCuts(kTRUE);
       task->SetRapidityType(0);      // 0:pseudorapidity, 1: rapidity
       task->SetUsePtCut(0);          // 0: tpc momcut, 1: vertex momcut, 2: pT cut

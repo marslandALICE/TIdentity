@@ -93,7 +93,7 @@ public:
     kCleanKaTOF=18,
     kCleanKaTOFTRD=19,
     kTrackProbKaTOF=20,
-    kTrackProbPrTOF=21,
+    kCleanPiTOF=21,
     kCleanDeTOF=22,
     kPileup=23,
     kPileupLoose=24,
