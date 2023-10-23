@@ -776,21 +776,21 @@ AliAnalysisTaskTIdentityPID* Config_marsland_TIdentityPID(Bool_t getFromAlien, I
       task->SetRunFastSimulation(kTRUE);
       task->SetRunOnGrid(kTRUE);
       task->SetPercentageOfEvents(0);
-      task->SetUseCouts(kFALSE);
+      task->SetUseCouts(kTRUE);
       task->SetIsMCtrue(kTRUE);
       // eta bin scan
-      const Int_t tmpEtaBinsMC = 20;
-      Float_t tmpetaDownArr[tmpEtaBinsMC] = {-0.1,-0.2,-0.3,-0.4,-0.5,-0.6,-0.7,-0.8,-0.9,-1.,-1.1,-1.2,-1.3,-1.4,-1.5,-1.6,-1.7,-1.8,-1.9,-2};
-      Float_t tmpetaUpArr[tmpEtaBinsMC]   = { 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1., 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2};
+      const Int_t tmpEtaBinsMC = 22;
+      Float_t tmpetaDownArr[tmpEtaBinsMC] = {-0.1,-0.2,-0.3,-0.4,-0.5,-0.6,-0.7,-0.8,-0.9,-1.,-1.5,-2.0,-2.5,-3.0,-3.5,-4.0,-5.0,-6.0,-7.0,-8.0,-9.0,-10.0};
+      Float_t tmpetaUpArr[tmpEtaBinsMC]   = { 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1., 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0};
       task->SetMCEtaScanArray(tmpEtaBinsMC, tmpetaDownArr, tmpetaUpArr);
       // mom bin scan
-      const Int_t tmpMomBinsMC = 2;
-      Float_t tmppDownArr[tmpMomBinsMC] = { 0.2,0.6};
-      Float_t tmppUpArr[tmpMomBinsMC]   = { 1.5,1.5};
+      const Int_t tmpMomBinsMC = 3;
+      Float_t tmppDownArr[tmpMomBinsMC] = {0.6,1.5,0.2};
+      Float_t tmppUpArr[tmpMomBinsMC]   = {1.5,2.8,3.0};
       task->SetMCMomScanArray(tmpMomBinsMC, tmppDownArr,   tmppUpArr);
       // cent bins
-      const Int_t tmpCentbins  = 10;
-      Float_t tmpfxCentBins[tmpCentbins] = {0,5,10,20,30,40,50,60,70,80};
+      const Int_t tmpCentbins  = 12;
+      Float_t tmpfxCentBins[tmpCentbins] = {0,5,10,20,30,40,50,60,70,80,90,100};
       task->SetCentralityBinning(tmpCentbins,tmpfxCentBins);
       // resonances to exclude
       const Int_t tmpNresonances = 1;

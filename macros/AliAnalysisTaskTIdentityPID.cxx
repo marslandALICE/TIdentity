@@ -265,6 +265,8 @@ fNNwColl(0),
 fNwNColl(0),
 fNwNwColl(0),
 fElMCgen(0),
+fXiMCgen(0),
+fD0MCgen(0),
 fPiMCgen(0),
 fKaMCgen(0),
 fPrMCgen(0),
@@ -566,6 +568,8 @@ fNNwColl(0),
 fNwNColl(0),
 fNwNwColl(0),
 fElMCgen(0),
+fXiMCgen(0),
+fD0MCgen(0),
 fPiMCgen(0),
 fKaMCgen(0),
 fPrMCgen(0),
@@ -1406,8 +1410,8 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
         ULong64_t periodID     = (ULong64_t)fESD->GetPeriodNumber();
         gid = ((periodID << 36) | (orbitID << 12) | bunchCrossID);
         fEventGID = gid;    // uniqe event id for real data
-        // fTimeStamp             = fESD->GetTimeStamp();
-        // fEventGID              = TMath::Abs(Int_t(TString::Hash(&gid,sizeof(Int_t))));    // uniqe event id for real data
+        // fTimeStamp = fESD->GetTimeStamp();
+        // fEventGID  = TMath::Abs(Int_t(TString::Hash(&gid,sizeof(Int_t))));    // uniqe event id for real data
       }
       //
       // Get rid of "E-AliESDpid::GetTPCsignalTunedOnData: Tune On Data requested, but MC event not set. Call SetCurrentMCEvent before!" errors
@@ -1437,65 +1441,59 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
         // std::cout << " aaaa  " <<  ((AliGenEposEventHeader*) genHeader)->ImpactParameter() << std::endl;
         // std::cout << " bbbb  " <<  colGeometry->ImpactParameter() << std::endl;
         //
+        // OLD --> impact parameters to use: 0.0, 3.72, 5.23, 7.31, 8.88, 10.20, 11.38, 12.47, 13.50, 14.5
+        // OLD --> corresponding Centrality:  0     5    10    20    30     40     50    60      70    80
+        // Double_t impParArr[10] = {0.0, 3.72, 5.23, 7.31, 8.88, 10.20, 11.38, 12.47, 13.50, 14.5};
         //
-        // impact parameters to use: 0.0, 3.72, 5.23, 7.31, 8.88, 10.20, 11.38, 12.47, 13.50, 14.5
-        // corresponding Centrality:  0     5    10    20    30     40     50    60      70    80
-        Double_t impParArr[10] = {0.0, 3.72, 5.23, 7.31, 8.88, 10.20, 11.38, 12.47, 13.50, 14.5};
+        // source for the impact parameters --> https://arxiv.org/pdf/1710.07098.pdf
+        Double_t impParArr[12] = {0.0, 3.49, 4.93, 6.98, 8.55, 9.87, 11.0, 12.1, 13.1, 14.0, 14.9, 20.0};
         AliGenHijingEventHeader *lHIJINGHeader = 0x0;  // event header for HIJING
         AliGenHepMCEventHeader *lHepMCHeader = 0x0;    // event header for EPOS
-        //
-        // If EPOS based MC
-        if ( genheaderName.Contains("EPOSLHC") && fMCEvent ){
-          if (genHeader->InheritsFrom(AliGenHepMCEventHeader::Class()))
-          lHepMCHeader = (AliGenHepMCEventHeader*)genHeader;
-          if (lHepMCHeader ){
-            fNHardScatters = lHepMCHeader->Ncoll_hard(); // Number of hard scatterings
-            fNProjectileParticipants = lHepMCHeader->Npart_proj(); // Number of projectile participants
-            fNTargetParticipants     = lHepMCHeader->Npart_targ(); // Number of target participants
-            fNNColl   = lHepMCHeader->Ncoll(); // Number of NN (nucleon-nucleon) collisions
-            fNNwColl  = lHepMCHeader->N_Nwounded_collisions(); // Number of N-Nwounded collisions
-            fNwNColl  = lHepMCHeader->Nwounded_N_collisions(); // Number of Nwounded-N collisons
-            fNwNwColl = lHepMCHeader->Nwounded_Nwounded_collisions();// Number of Nwounded-Nwounded collisions
-            fMCImpactParameter = lHepMCHeader->impact_parameter();
-            if (fUseCouts)  std::cout << " Info::marsland: EPOS: Centrality is taken from ImpactParameter = " << fMCImpactParameter << "  "  << ((AliGenEposEventHeader*) genHeader)->GetName() << std::endl;
-            fHistImpParam->Fill(fMCImpactParameter);
-            if (fMCImpactParameter>=impParArr[0] && fMCImpactParameter<impParArr[1]) fCentImpBin=2.5;
-            if (fMCImpactParameter>=impParArr[1] && fMCImpactParameter<impParArr[2]) fCentImpBin=7.5;
-            if (fMCImpactParameter>=impParArr[2] && fMCImpactParameter<impParArr[3]) fCentImpBin=15.;
-            if (fMCImpactParameter>=impParArr[3] && fMCImpactParameter<impParArr[4]) fCentImpBin=25.;
-            if (fMCImpactParameter>=impParArr[4] && fMCImpactParameter<impParArr[5]) fCentImpBin=35.;
-            if (fMCImpactParameter>=impParArr[5] && fMCImpactParameter<impParArr[6]) fCentImpBin=45.;
-            if (fMCImpactParameter>=impParArr[6] && fMCImpactParameter<impParArr[7]) fCentImpBin=55.;
-            if (fMCImpactParameter>=impParArr[7] && fMCImpactParameter<impParArr[8]) fCentImpBin=65.;
-            if (fMCImpactParameter>=impParArr[8] && fMCImpactParameter<impParArr[9]) fCentImpBin=75.;
-            if (fMCImpactParameter<impParArr[0]  || fMCImpactParameter>impParArr[9]) fCentImpBin=-10.;
-            fHistCentralityImpPar->Fill(fCentImpBin);
-          }
-        } else if (!TMath::IsNaN(((AliGenHijingEventHeader*) genHeader)->ImpactParameter()) && fMCEvent){
+        if ( fMCEvent ){
+          //
+          // If EPOS based MC
+          if ( genheaderName.Contains("EPOSLHC") ){
+            if (genHeader->InheritsFrom(AliGenHepMCEventHeader::Class())) lHepMCHeader = (AliGenHepMCEventHeader*)genHeader;
+            if (lHepMCHeader ){
+              fNHardScatters = lHepMCHeader->Ncoll_hard(); // Number of hard scatterings
+              fNProjectileParticipants = lHepMCHeader->Npart_proj(); // Number of projectile participants
+              fNTargetParticipants     = lHepMCHeader->Npart_targ(); // Number of target participants
+              fNNColl   = lHepMCHeader->Ncoll(); // Number of NN (nucleon-nucleon) collisions
+              fNNwColl  = lHepMCHeader->N_Nwounded_collisions(); // Number of N-Nwounded collisions
+              fNwNColl  = lHepMCHeader->Nwounded_N_collisions(); // Number of Nwounded-N collisons
+              fNwNwColl = lHepMCHeader->Nwounded_Nwounded_collisions();// Number of Nwounded-Nwounded collisions
+              fMCImpactParameter = lHepMCHeader->impact_parameter();
+              if (fUseCouts)  std::cout << " Info::marsland: EPOS: Centrality is taken from ImpactParameter = " << fMCImpactParameter << "  "  << ((AliGenEposEventHeader*) genHeader)->GetName() << std::endl;
+            }
           //
           // If HIJING based MC
-          lHIJINGHeader = (AliGenHijingEventHeader*) genHeader;
-          fNHardScatters = lHIJINGHeader->HardScatters();
-          fNProjectileParticipants = lHIJINGHeader->ProjectileParticipants();
-          fNTargetParticipants     = lHIJINGHeader->TargetParticipants();
-          fNNColl   = lHIJINGHeader->NN();
-          fNNwColl  = lHIJINGHeader->NNw();
-          fNwNColl  = lHIJINGHeader->NwN();
-          fNwNwColl = lHIJINGHeader->NwNw();
-          fMCImpactParameter = lHIJINGHeader->ImpactParameter();
+          } else if (!TMath::IsNaN(((AliGenHijingEventHeader*) genHeader)->ImpactParameter()) ){
+            lHIJINGHeader = (AliGenHijingEventHeader*) genHeader;
+            if (lHIJINGHeader ){
+              fNHardScatters = lHIJINGHeader->HardScatters();
+              fNProjectileParticipants = lHIJINGHeader->ProjectileParticipants();
+              fNTargetParticipants     = lHIJINGHeader->TargetParticipants();
+              fNNColl   = lHIJINGHeader->NN();
+              fNNwColl  = lHIJINGHeader->NNw();
+              fNwNColl  = lHIJINGHeader->NwN();
+              fNwNwColl = lHIJINGHeader->NwNw();
+              fMCImpactParameter = lHIJINGHeader->ImpactParameter();
+              if (fUseCouts)  std::cout << " Info::marsland: HIJING: Centrality is taken from ImpactParameter = " << fMCImpactParameter << "  "  << ((AliGenHijingEventHeader*) genHeader)->GetName() << std::endl;
+            }
+          }
           fHistImpParam->Fill(fMCImpactParameter);
-          if (fUseCouts)  std::cout << " Info::marsland: HIJING: Centrality is taken from ImpactParameter = " << fMCImpactParameter << "  "  << ((AliGenHijingEventHeader*) genHeader)->GetName() << std::endl;
-          if (fMCImpactParameter>=impParArr[0] && fMCImpactParameter<impParArr[1]) fCentImpBin=2.5;
-          if (fMCImpactParameter>=impParArr[1] && fMCImpactParameter<impParArr[2]) fCentImpBin=7.5;
-          if (fMCImpactParameter>=impParArr[2] && fMCImpactParameter<impParArr[3]) fCentImpBin=15.;
-          if (fMCImpactParameter>=impParArr[3] && fMCImpactParameter<impParArr[4]) fCentImpBin=25.;
-          if (fMCImpactParameter>=impParArr[4] && fMCImpactParameter<impParArr[5]) fCentImpBin=35.;
-          if (fMCImpactParameter>=impParArr[5] && fMCImpactParameter<impParArr[6]) fCentImpBin=45.;
-          if (fMCImpactParameter>=impParArr[6] && fMCImpactParameter<impParArr[7]) fCentImpBin=55.;
-          if (fMCImpactParameter>=impParArr[7] && fMCImpactParameter<impParArr[8]) fCentImpBin=65.;
-          if (fMCImpactParameter>=impParArr[8] && fMCImpactParameter<impParArr[9]) fCentImpBin=75.;
-          if (fMCImpactParameter<impParArr[0]  || fMCImpactParameter>impParArr[9]) fCentImpBin=-10.;
-          fHistCentralityImpPar->Fill(fCentImpBin);
+          if (fMCImpactParameter>=impParArr[0]  && fMCImpactParameter<impParArr[1])  fCentImpBin=2.5;
+          if (fMCImpactParameter>=impParArr[1]  && fMCImpactParameter<impParArr[2])  fCentImpBin=7.5;
+          if (fMCImpactParameter>=impParArr[2]  && fMCImpactParameter<impParArr[3])  fCentImpBin=15.;
+          if (fMCImpactParameter>=impParArr[3]  && fMCImpactParameter<impParArr[4])  fCentImpBin=25.;
+          if (fMCImpactParameter>=impParArr[4]  && fMCImpactParameter<impParArr[5])  fCentImpBin=35.;
+          if (fMCImpactParameter>=impParArr[5]  && fMCImpactParameter<impParArr[6])  fCentImpBin=45.;
+          if (fMCImpactParameter>=impParArr[6]  && fMCImpactParameter<impParArr[7])  fCentImpBin=55.;
+          if (fMCImpactParameter>=impParArr[7]  && fMCImpactParameter<impParArr[8])  fCentImpBin=65.;
+          if (fMCImpactParameter>=impParArr[8]  && fMCImpactParameter<impParArr[9])  fCentImpBin=75.;
+          if (fMCImpactParameter>=impParArr[9]  && fMCImpactParameter<impParArr[10]) fCentImpBin=85.;
+          if (fMCImpactParameter>=impParArr[10] && fMCImpactParameter<impParArr[11]) fCentImpBin=95.;
+          if (fMCImpactParameter<=impParArr[0]  && fMCImpactParameter>impParArr[11]) fCentImpBin=-10.;
         }
         if (fCentrality<0) fCentrality=fCentImpBin;
         //
@@ -1606,7 +1604,10 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
       if (fDEdxCheck)                          { FillTPCdEdxCheck(); return;}
       if (fRunFastSimulation && fFillDnchDeta) { FillDnchDeta(); return;}
       if (fRunFastHighMomentCal)               { FastGenHigherMoments(); return;}
-      if (fRunFastSimulation)                  { FastGen_NetParticles(); return;}
+      if (fRunFastSimulation) {
+        // if (fEventCountInFile>100) return; // TODO ???
+        FastGen_NetParticles(); return;
+      }
       //
       // Real Data Analysis
       //
@@ -2353,6 +2354,11 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
       // Int_t runNumber = (Int_t)fESD->GetRunNumber();
       if (fUseCouts) std::cout << " Info::marsland: ===== In the FillMCFull_NetParticles ===== " << std::endl;
       //
+      // check if the MC event is full
+      Int_t nStackTracks = fMCEvent->GetNumberOfTracks();
+      if (nStackTracks>1) fHistCentralityImpPar->Fill(fCentImpBin);
+      else return;
+      //
       // Count charged primary particles in gen level
       Int_t nChGen = 0;
       for (Int_t iTrack = 0; iTrack < fMCEvent->GetNumberOfTracks(); iTrack++)
@@ -2842,19 +2848,41 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
       Int_t sampleNo = 0;
       Int_t nSubSample = 20;
       sampleNo = Int_t(fEventGID)%nSubSample;
-      if (fUseCouts) std::cout << " Info::marsland: ===== In the FastGen_NetParticles ===== " << std::endl;
+      if (fUseCouts) std::cout << "event = " << fEventCountInFile << " -- Info::marsland: ===== In the FastGen_NetParticles ===== " << std::endl;
       //
       // ======================================================================
       // --------------   MC information with ideal PID   ---------------------
       // ======================================================================
       //
-      const Int_t nParticles = 3;
+      Int_t nStackTracks = fMCEvent->GetNumberOfTracks();
+      if (nStackTracks>1) fHistCentralityImpPar->Fill(fCentImpBin);
+      else return;
+      //
+      // count primaries 
+      Int_t primCounter = 0;
+      for (Int_t iTrack = 0; iTrack < nStackTracks; iTrack++)
+      {
+        AliMCParticle *trackMCprimCount = (AliMCParticle *)fMCEvent->GetTrack(iTrack);
+        if (!trackMCprimCount) continue;
+        if (!fMCStack->IsPhysicalPrimary(iTrack)) continue;
+        primCounter++;
+      }
+      //
+      // x% event sapling
+      Bool_t eventToDebug = kFALSE;
+      Float_t precentageToAccept = 20.; // ????
+      if ( fRandom.Rndm() < precentageToAccept/100. ) eventToDebug = kTRUE;
+
+      //
+      const Int_t nParticles = 5;
       const Int_t nMoments   = 14;
       TVectorF genPos(nParticles);
       TVectorF genNeg(nParticles);
       TVectorF fMomNetPiGen(nMoments);
       TVectorF fMomNetKaGen(nMoments);
       TVectorF fMomNetPrGen(nMoments);
+      TVectorF fMomNetXiGen(nMoments);
+      TVectorF fMomNetD0Gen(nMoments);
       //
       // Acceptance scan
       for (Int_t ieta=0; ieta<fNEtaWinBinsMC; ieta++){
@@ -2867,12 +2895,15 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
           //
           // ----------------------------   MC generated pure MC particles  --------------------------
           AliMCParticle *trackMCgen;
-          for (Int_t iTrack = 0; iTrack < fMCEvent->GetNumberOfTracks(); iTrack++)
+          AliMCParticle *trackMCmother;
+          AliMCParticle *trackMCGmother;
+          for (Int_t iTrack = 0; iTrack < nStackTracks; iTrack++)
           {
             //
             // initialize the dummy particle id
-            fElMCgen =-100.; fPiMCgen =-100.; fKaMCgen =-100.; fPrMCgen =-100.;
+            fXiMCgen =-100.; fPiMCgen =-100.; fKaMCgen =-100.; fPrMCgen =-100.; fD0MCgen = -100.;
             trackMCgen = (AliMCParticle *)fMCEvent->GetTrack(iTrack);
+
             if (!trackMCgen) continue;
             //
             // Accepty only primary particles
@@ -2886,7 +2917,107 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
             if (absPDG == kPDGpi) {iPart = 0; fPiMCgen = iPart;} // select pi+
             if (absPDG == kPDGka) {iPart = 1; fKaMCgen = iPart;} // select ka+
             if (absPDG == kPDGpr) {iPart = 2; fPrMCgen = iPart;} // select pr+
-            if (iPart == -10) continue; // perfect PID cut
+            if (absPDG == kPDGxi) {iPart = 3; fXiMCgen = iPart;} // select ksi
+            if (absPDG == kPDGd0) {iPart = 4; fD0MCgen = iPart;} // select D0
+            if (iPart == -10) continue; 
+            Bool_t parInterest = (fPiMCgen>-1 || fKaMCgen>-1 || fPrMCgen>-1 || fXiMCgen>-1 || fD0MCgen>-1) ? kTRUE : kFALSE;
+            //
+            // dump resonance and gen distributions
+            if(ieta==(fNEtaWinBinsMC-1) && imom==0) {
+              //
+              // gen kinematics
+              Int_t labMom = 0, labGMom = 0, pdgMom = 0, pdgGMom = 0;
+              TObjString momName="xxx";
+              TObjString momGName="ggg";
+              Float_t ptotMCgen = trackMCgen->P();
+              Float_t pTMCgen   = trackMCgen->Pt();
+              Float_t phiMCGen  = trackMCgen->Phi();
+              Float_t etaMCgen  = trackMCgen->Eta();
+              Float_t rapMCgen  = trackMCgen->Y();
+              Float_t energyMCgen  = trackMCgen->E();
+              UInt_t pcode = trackMCgen->MCStatusCode();
+              TObjString parName(trackMCgen->Particle()->GetName());
+              //
+              // Fil fastgen histograms for protons
+              if (fPrMCgen>0)
+              {
+                if (pdg>0) fHistRapDistFullAccPr->Fill(etaMCgen, fCentrality, 1.);
+                if (pdg<0) fHistRapDistFullAccAPr->Fill(etaMCgen, fCentrality, 1.);
+              }
+              //
+              // get the pdg info for mother and daugh ter
+              labMom = trackMCgen->Particle()->GetFirstMother();
+              if ((labMom>=0) && (labMom < nStackTracks)){
+                pdgMom  = fMCStack->Particle(labMom)->GetPdgCode();
+                momName = fMCStack->Particle(labMom)->GetName();
+                trackMCmother = (AliMCParticle *)fMCEvent->GetTrack(labMom);
+                //
+                labGMom = trackMCmother->GetMother();
+                if ((labGMom>=0) && (labGMom < nStackTracks)){
+                  pdgGMom = fMCStack->Particle(labGMom)->GetPdgCode();
+                  momGName = fMCStack->Particle(labGMom)->GetName();
+                }
+              }
+              //
+              // Check if the particle is in the black list of resonances
+              Bool_t acceptRes = kTRUE;
+              for (Int_t ires=0;ires<fNResBins;ires++){
+
+                if (fResonances[ires].find("xxx")){
+                  // reject all resonances
+                  if (!(momName.GetString().Contains(fResonances[ires]))) {acceptRes=kFALSE; break;}
+                } else {
+                  // reject resonances in the array
+                  if (momName.GetString().Contains(fResonances[ires])) {acceptRes=kFALSE; break;}
+                }
+
+              }
+              //
+              // Fill resonance tree for full acceptance
+              // if (rapMCgen<8 && iPart==2 && sign>0) cout << " grandmother = " << momGName.GetName() << "  mother = " << momName.GetName() << "  girl = " << parName.GetName() << endl;
+              if(!fTreeSRedirector) return;
+              if ( eventToDebug )  {
+                (*fTreeSRedirector)<<"resonance"<<
+                "gid="         << fEventGID << 
+                "nprim="       << primCounter << 
+                "ntracks="     << nStackTracks << 
+                "nhard="       << fNHardScatters <<           // Number of hard scatterings
+                "nproj="       << fNProjectileParticipants << // Number of projectiles participants
+                "ntarget="     << fNTargetParticipants <<     // Number of target participants
+                "nn="          << fNNColl <<                  // Number of N-N collisions
+                "nnw="         << fNNwColl <<                 // Number of N-Nwounded collisions
+                "nwn="         << fNwNColl <<                 // Number of Nwounded-N collisons
+                "nwnw="        << fNwNwColl <<                // Number of Nwounded-Nwounded collisions
+                "pcode="       << pcode <<
+                "part="        << iPart <<
+                "sign="        << sign <<              // sign
+                "E="           << energyMCgen <<       // energy
+                "p="           << ptotMCgen <<         // vertex momentum
+                "pT="          << pTMCgen <<           // transverse momentum
+                "eta="         << etaMCgen <<          // mc eta
+                "rap="         << rapMCgen <<          // mc eta
+                "phi="         << phiMCGen <<          // mc eta
+                "acceptRes="   << acceptRes <<
+                "parInterest=" << parInterest <<       // only pi, ka, and proton
+                "cent="        << fCentrality <<       // cent bin
+                "imp="         << fMCImpactParameter <<       // cent bin
+                "pUp="         << fpUpArr[imom] <<   // lower edge of momentum bin
+                "etaUp="       << fetaUpArr[ieta] << // lower edge of eta bin
+                "pDown="       << fpDownArr[imom] <<   // lower edge of momentum bin
+                "etaDown="     << fetaDownArr[ieta] << // lower edge of eta bin
+                "pdg="         << pdg      <<          // pdg of prim particle
+                "pdgMom="      << pdgMom   <<          // pdg of mother
+                "pdgGMom="     << pdgGMom   <<          // pdg of mother
+                "lab="         << iTrack   <<          // index of prim particle
+                "labMom="      << labMom <<          // index of mother
+                "labGMom="     << labGMom <<          // index of mother
+                "parName.="    << &parName <<          // full path - file name with ESD
+                "momName.="    << &momName <<          // full path - file name with ESD
+                "momGName.="   << &momGName <<          // full path - file name with ESD
+                "\n";
+              }
+            }
+
             //
             // Acceptance selection
             Double_t ptotMCgen = 0.;
@@ -2906,10 +3037,14 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
               if ( fPiMCgen>-1 && pdg<0) genNeg[kPi]++;
               if ( fKaMCgen>-1 && pdg<0) genNeg[kKa]++;
               if ( fPrMCgen>-1 && pdg<0) genNeg[kPr]++;
+              if ( fXiMCgen>-1 && pdg<0) genNeg[3]++;
+              if ( fD0MCgen>-1 && pdg<0) genNeg[4]++;
               //
               if ( fPiMCgen>-1 && pdg>0) genPos[kPi]++;
               if ( fKaMCgen>-1 && pdg>0) genPos[kKa]++;
               if ( fPrMCgen>-1 && pdg>0) genPos[kPr]++;
+              if ( fXiMCgen>-1 && pdg>0) genPos[3]++;
+              if ( fD0MCgen>-1 && pdg>0) genPos[4]++;
             }
 
           } // ======= end of track loop for generated particles =======
@@ -2966,10 +3101,43 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
           fMomNetPrGen[kAAAA] = genPos[kPr]*genPos[kPr]*genPos[kPr]*genPos[kPr];
           fMomNetPrGen[kBBBB] = genNeg[kPr]*genNeg[kPr]*genNeg[kPr]*genNeg[kPr];
           //
+          // Net Xi
+          fMomNetXiGen[kA]    = genPos[3];
+          fMomNetXiGen[kB]    = genNeg[3];
+          fMomNetXiGen[kAA]   = genPos[3]*genPos[3];
+          fMomNetXiGen[kBB]   = genNeg[3]*genNeg[3];
+          fMomNetXiGen[kAB]   = genPos[3]*genNeg[3];
+          fMomNetXiGen[kAAA]  = genPos[3]*genPos[3]*genPos[3];
+          fMomNetXiGen[kBBB]  = genNeg[3]*genNeg[3]*genNeg[3];
+          fMomNetXiGen[kAAB]  = genPos[3]*genPos[3]*genNeg[3];
+          fMomNetXiGen[kBBA]  = genNeg[3]*genNeg[3]*genPos[3];
+          fMomNetXiGen[kABBB] = genPos[3]*genNeg[3]*genNeg[3]*genNeg[3];
+          fMomNetXiGen[kAABB] = genPos[3]*genPos[3]*genNeg[3]*genNeg[3];
+          fMomNetXiGen[kAAAB] = genPos[3]*genPos[3]*genPos[3]*genNeg[3];
+          fMomNetXiGen[kAAAA] = genPos[3]*genPos[3]*genPos[3]*genPos[3];
+          fMomNetXiGen[kBBBB] = genNeg[3]*genNeg[3]*genNeg[3]*genNeg[3];
+          //
+          // Net D0
+          fMomNetD0Gen[kA]    = genPos[4];
+          fMomNetD0Gen[kB]    = genNeg[4];
+          fMomNetD0Gen[kAA]   = genPos[4]*genPos[4];
+          fMomNetD0Gen[kBB]   = genNeg[4]*genNeg[4];
+          fMomNetD0Gen[kAB]   = genPos[4]*genNeg[4];
+          fMomNetD0Gen[kAAA]  = genPos[4]*genPos[4]*genPos[4];
+          fMomNetD0Gen[kBBB]  = genNeg[4]*genNeg[4]*genNeg[4];
+          fMomNetD0Gen[kAAB]  = genPos[4]*genPos[4]*genNeg[4];
+          fMomNetD0Gen[kBBA]  = genNeg[4]*genNeg[4]*genPos[4];
+          fMomNetD0Gen[kABBB] = genPos[4]*genNeg[4]*genNeg[4]*genNeg[4];
+          fMomNetD0Gen[kAABB] = genPos[4]*genPos[4]*genNeg[4]*genNeg[4];
+          fMomNetD0Gen[kAAAB] = genPos[4]*genPos[4]*genPos[4]*genNeg[4];
+          fMomNetD0Gen[kAAAA] = genPos[4]*genPos[4]*genPos[4]*genPos[4];
+          fMomNetD0Gen[kBBBB] = genNeg[4]*genNeg[4]*genNeg[4]*genNeg[4];
+          //
           // fill tree which contains moments
           if(!fTreeSRedirector) return;
           if (nTracksgen>0){
             (*fTreeSRedirector)<<"mcGen"<<
+            "gid="          << fEventGID << 
             "ngenacc="      << nTracksgen <<               // number of tracks on gen level
             "isample="      << sampleNo <<                 // sample id for subsample method
             "cent="         << fCentrality <<              // centrality from V0
@@ -2989,9 +3157,11 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
             "etaDown="      << fetaDownArr[ieta] <<        // lower edge of eta bin
             "etaUp="        << fetaUpArr[ieta] <<          // upper edge of eta bin
             //
-            "netPiMomGen.="   << &fMomNetPiGen <<          // momnets up to 3rd order for (net)pions on gen level
-            "netKaMomGen.="   << &fMomNetKaGen <<          // momnets up to 3rd order for (net)kaons on gen level
-            "netPrMomGen.="   << &fMomNetPrGen <<          // momnets up to 3rd order for (net)protons on gen level
+            "netPiMomGen.="   << &fMomNetPiGen <<          // momnets up to 4th order for (net)pions on gen level
+            "netKaMomGen.="   << &fMomNetKaGen <<          // momnets up to 4th order for (net)kaons on gen level
+            "netPrMomGen.="   << &fMomNetPrGen <<          // momnets up to 4th order for (net)protons on gen level
+            "netXiMomGen.="   << &fMomNetXiGen <<          // momnets up to 4th order for (net)xi on gen level
+            "netD0MomGen.="   << &fMomNetD0Gen <<          // momnets up to 4th order for (net)D0 on gen level
             "\n";
           }
 
@@ -3572,7 +3742,7 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
                 if ( !(fMCStack->IsPhysicalPrimary(iTrack) || fMCStack->IsSecondaryFromWeakDecay(iTrack)) ) continue;
               } else if (!fMCStack->IsPhysicalPrimary(iTrack)) continue;
               //
-              // get the pdg info for maother and daughter
+              // get the pdg info for mother and daughter
               Int_t sign = trackMCgen->Particle()->GetPDG()->Charge();
               Int_t pdg  = trackMCgen->Particle()->GetPdgCode();
               Int_t labMom = trackMCgen->GetMother();

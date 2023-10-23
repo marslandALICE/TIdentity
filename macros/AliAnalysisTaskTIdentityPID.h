@@ -140,6 +140,8 @@ public:
     kPDGde=1000010020,
     kPDGmu=13,
     kPDGla=3122,
+    kPDGxi=3312,
+    kPDGd0=421,
   };
 
   enum kNetMoments{
@@ -711,6 +713,8 @@ private:
 
 
   Float_t           fElMCgen;
+  Float_t           fXiMCgen;
+  Float_t           fD0MCgen;
   Float_t           fPiMCgen;
   Float_t           fKaMCgen;
   Float_t           fPrMCgen;
