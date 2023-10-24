@@ -159,6 +159,7 @@ public:
     kAAAB=11,
     kAAAA=12,
     kBBBB=13,
+    kAmB=14
   };
 
   /*
@@ -222,6 +223,7 @@ public:
   void   SetFillHigherMomentsMCclosure(const Bool_t ifHigherMomentsMCclosure = kFALSE){fFillHigherMomentsMCclosure  = ifHigherMomentsMCclosure;}
   void   SetRunFastSimulation(const Bool_t ifFastSimul = kFALSE)      {fRunFastSimulation   = ifFastSimul;}
   void   SetRunFastHighMomentCal(const Bool_t ifFastHighMom = kFALSE) {fRunFastHighMomentCal= ifFastHighMom;}
+  void   SetRunCutBasedMethod(const Bool_t ifCutBased = kFALSE)       {fRunCutBasedMethod   = ifCutBased;}
   void   SetFillDistributions(const Bool_t ifGenDistributions = kFALSE) {fFillDistributions= ifGenDistributions;}
   void   SetFillTreeMC(const Bool_t ifTreeMC = kFALSE)                {fFillTreeMC= ifTreeMC;}
 
@@ -505,6 +507,7 @@ private:
   // ---------------------------------------------------------------------------------
 
   void FillTPCdEdxReal();                   // Main function to fill all info + TIden
+  void CalculateMoments_CutBasedMethod();
   void FillTrackVariables(AliESDtrack *track);
   void FillTPCdEdxCheck();                  // Quick check for the TPC dEdx
   void FillMCFull_piKpr();                     // Fill all info + TIdenMC from MC to do MC closure test
@@ -576,6 +579,7 @@ private:
   TTree            * fTreeDScaled;
   TTree            * fTreeMCEffCorr;
   TTree            * fTreeExpecteds;          // tree with expected dE/dx
+  TTree            * fTreeCutBased;           // tree with moments from cut based method
   TRandom3         fRandom;
 
 
@@ -625,6 +629,7 @@ private:
   Bool_t            fFillArmPodTree;         // switch whether to fill clean sample tree
   Bool_t            fRunFastSimulation;      // when running over galice.root do not fill other objects
   Bool_t            fRunFastHighMomentCal;   // when running over galice.root do not fill other objects
+  Bool_t            fRunCutBasedMethod;      // moments from cut based method as cross check
   Bool_t            fFillDistributions;   // when running over galice.root do not fill other objects
   Bool_t            fFillTreeMC;
   Bool_t            fDefaultTrackCuts;

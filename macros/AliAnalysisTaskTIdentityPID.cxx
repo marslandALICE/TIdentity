@@ -147,6 +147,7 @@ fTreeEvents(0x0),
 fTreeDScaled(0x0),
 fTreeMCEffCorr(0x0),
 fTreeExpecteds(0x0),
+fTreeCutBased(0x0),
 fRandom(0),
 fPeriodName(""),
 fYear(0),
@@ -189,6 +190,7 @@ fFillHigherMomentsMCclosure(kFALSE),
 fFillArmPodTree(kTRUE),
 fRunFastSimulation(kFALSE),
 fRunFastHighMomentCal(kFALSE),
+fRunCutBasedMethod(kFALSE),
 fFillDistributions(kFALSE),
 fFillTreeMC(kFALSE),
 fDefaultTrackCuts(kFALSE),
@@ -450,6 +452,7 @@ fTreeEvents(0x0),
 fTreeDScaled(0x0),
 fTreeMCEffCorr(0x0),
 fTreeExpecteds(0x0),
+fTreeCutBased(0x0),
 fRandom(0),
 fPeriodName(""),
 fYear(0),
@@ -492,6 +495,7 @@ fFillHigherMomentsMCclosure(kFALSE),
 fFillArmPodTree(kTRUE),
 fRunFastSimulation(kFALSE),
 fRunFastHighMomentCal(kFALSE),
+fRunCutBasedMethod(kFALSE),
 fFillDistributions(kFALSE),
 fFillTreeMC(kFALSE),
 fDefaultTrackCuts(kFALSE),
@@ -812,6 +816,7 @@ fPileUpTightnessCut4(0)
   DefineOutput(13, TTree::Class());
   DefineOutput(14, TTree::Class());
   DefineOutput(15, TTree::Class());
+  DefineOutput(16, TTree::Class());
   // ==========================================
 
 }
@@ -1270,9 +1275,12 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
       fTreeDScaled   = ((*fTreeSRedirector)<<"dscaled").GetTree();
       fTreeMCEffCorr = ((*fTreeSRedirector)<<"mcMoms").GetTree();
       fTreeExpecteds = ((*fTreeSRedirector)<<"expecteds").GetTree();
+      fTreeCutBased  = ((*fTreeSRedirector)<<"cutBased").GetTree();
       //
       // ************************************************************************
       //   Send output objects to container
+      //   (remember to also add the outputs using DefineOutput above
+      //    and in the AddTask)
       // ************************************************************************
       //
       PostData(1, fListHist);
@@ -1290,6 +1298,7 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
       PostData(13, fTreeDScaled);
       PostData(14, fTreeMCEffCorr);
       PostData(15, fTreeExpecteds);
+      PostData(16, fTreeCutBased);
 
       fEventCuts.SetManualMode();
 
@@ -1613,6 +1622,7 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
       //
       if (!fMCtrue && fFillTracks && fESD){
         FillTPCdEdxReal();
+        CalculateMoments_CutBasedMethod();
         if (fFillArmPodTree) FillCleanSamples();
         if (fEventInfo) {CalculateEventInfo(); CreateEventInfoTree();}
         if (fUseCouts)  std::cout << " Info::marsland: (Real Data Analysis) End of Filling part = " << fEventCountInFile << std::endl;
@@ -2337,6 +2347,161 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
           // tree filling
           //
         }// ======= end of momentum loop =======
+      } // ======= end of eta loop =======
+
+    }
+    //________________________________________________________________________
+    void AliAnalysisTaskTIdentityPID::CalculateMoments_CutBasedMethod()
+    {
+
+      //
+      // Calculate moments of net-protons with TPC and TOF dE/dx cuts
+      //
+      // Assign subsample index
+      Int_t sampleNo = 0;
+      Int_t nSubSample = 20;
+      sampleNo = Int_t(fEventGID)%nSubSample;
+      // Int_t runNumber = (Int_t)fESD->GetRunNumber();
+      if (fUseCouts) std::cout << " Info::marsland: ===== In the CalculateMoments_CutBasedMethod ===== " << std::endl;
+      //
+      // check if the event is full
+      Int_t nStackTracks = fESD->GetNumberOfTracks();
+      if (nStackTracks <= 1) return;
+
+      // TODO: move this to the config
+      std::vector<Double_t> arrMomDown = {0.6, 0.6, 1.5};
+      std::vector<Double_t> arrMomUp = {0.9, 1.5, 2.8};
+
+      std::vector<Double_t> arrEtaDown = {-0.8, -0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1};
+      std::vector<Double_t> arrEtaUp = {0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1};
+
+      const size_t settingsDim = fNSettings;
+      const size_t etaDim      = arrEtaDown.size();
+      const size_t momentumDim = arrMomDown.size();
+      const size_t signDim     = 2;
+
+      const size_t nMoments = 14 + 1; // moments to fourth order + p-pbar
+
+      UInt_t recProtonCounter[settingsDim][etaDim][momentumDim][signDim];
+      UInt_t corProtonCounter[settingsDim][etaDim][momentumDim][signDim];
+      for (size_t iSetting = 0; iSetting < settingsDim; iSetting++)
+        for (size_t iEta = 0; iEta < etaDim; iEta++)
+          for (size_t iMomentum = 0; iMomentum < momentumDim; iMomentum++)
+            for (size_t iSign = 0; iSign < signDim; iSign++) {
+              recProtonCounter[iSetting][iEta][iMomentum][iSign] = 0;
+              corProtonCounter[iSetting][iEta][iMomentum][iSign] = 0;
+            }
+
+      //
+      Bool_t bCutReference           = (TMath::Abs(fVz)<7 && TMath::Abs(fVz)>0.15);
+      Bool_t bEventVertexZLarge      = (TMath::Abs(fVz)<8 && TMath::Abs(fVz)>0.1);
+      //
+      // setting scan
+      UInt_t counterTracksRec = 0;
+      //
+      // -----------------------------------------------------------------------------------------
+      // ----------------------------  Real Data with PID cuts  ----------------------------------
+      // -----------------------------------------------------------------------------------------
+      //
+      for (Int_t irectrack = 0; irectrack < fESD->GetNumberOfTracks(); irectrack++) {
+        // track loop
+        //
+        fTrackCutBits=0;  // reset the bits for the next track
+        AliESDtrack *trackReal = fESD->GetTrack(irectrack);
+        if (trackReal==NULL) continue;
+        // apply detector cuts
+        Bool_t ifDCAcutIfNoITSPixel = ApplyDCAcutIfNoITSPixel(trackReal);
+        if (!trackReal-> GetInnerParam()) continue;
+        if (!fESDtrackCutsLoose->AcceptTrack(trackReal))  continue;    // Loose Cuts
+        if (!(trackReal->GetTPCsignalN()>0)) continue;
+        if (!ifDCAcutIfNoITSPixel) continue;
+        //
+        // Get the cut bit information apply track cuts
+        SetCutBitsAndSomeTrackVariables(trackReal,0);
+        //
+        // acceptance cuts
+        Double_t ptotCut = 0.;
+        if (fUsePtCut == 0) ptotCut = fPtot;
+        if (fUsePtCut == 1) ptotCut = fPVertex;
+        if (fUsePtCut == 2) ptotCut = fPt;
+
+        //
+        // Acceptance scan
+        for (size_t ieta = 0; ieta < etaDim; ieta++) {
+          Bool_t etaAcc  = (fEta >= arrEtaDown[ieta] && fEta < arrEtaUp[ieta]);
+          Bool_t etaAccMaxWindow = (fEta >= arrEtaDown[0]  && fEta <= arrEtaUp[etaDim - 1]);
+          if (!etaAcc) continue;
+
+          for (size_t imom = 0; imom < momentumDim; imom++) {
+            Bool_t momAcc  = (ptotCut >= arrMomDown[imom]  && ptotCut < arrMomUp[imom]);
+            Bool_t momAccMaxWindow = (ptotCut >= arrMomDown[0] && ptotCut <= arrMomUp[momentumDim - 1]);
+            //
+            // count first moments for given Centrality and momentum window
+            if (etaAccMaxWindow && momAccMaxWindow) counterTracksRec++;
+
+            if (!momAcc) continue;
+            for (size_t iset = 0; iset < settingsDim; iset++) {
+              // event Vz cuts
+              if (iset == kCutEventVertexZLarge && !bEventVertexZLarge) continue;
+              else if (iset != kCutEventVertexZLarge && !bCutReference) continue;
+
+              if (GetSystematicClassIndex(fTrackCutBits,iset)) {
+                const Int_t signIndex = (fSign < 0); // +1 -> 0, -1 -> 1
+
+                // check pid
+                Bool_t prTPC = (TMath::Abs(fPIDResponse->NumberOfSigmasTPC(trackReal, AliPID::kProton))  <= fEffMatrixNSigmasTOF);
+
+                if (prTPC)
+                  recProtonCounter[iset][ieta][imom][signIndex]++;
+              }
+            } // ======= end of settings loop =======
+          } // ======= end of momentum loop =======
+        } // ======= end of eta loop =======
+      } // ======= end of track loop =======
+
+      for (size_t ieta = 0; ieta < etaDim; ieta++) {
+        for (size_t imom = 0; imom < momentumDim; imom++) {
+          for (size_t iset = 0; iset < settingsDim; iset++) {
+            TVectorF fMomNetPrRec(nMoments);
+
+            Int_t recPos = recProtonCounter[iset][ieta][imom][0];
+            Int_t recNeg = recProtonCounter[iset][ieta][imom][1];
+
+            fMomNetPrRec[kA]    = recPos;
+            fMomNetPrRec[kB]    = recNeg;
+            fMomNetPrRec[kAA]   = recPos * recPos;
+            fMomNetPrRec[kBB]   = recNeg * recNeg;
+            fMomNetPrRec[kAB]   = recPos * recNeg;
+            fMomNetPrRec[kAAA]  = recPos * recPos * recPos;
+            fMomNetPrRec[kBBB]  = recNeg * recNeg * recNeg;
+            fMomNetPrRec[kAAB]  = recPos * recPos * recNeg;
+            fMomNetPrRec[kBBA]  = recNeg * recNeg * recPos;
+            fMomNetPrRec[kABBB] = recPos * recNeg * recNeg * recNeg;
+            fMomNetPrRec[kAABB] = recPos * recPos * recNeg * recNeg;
+            fMomNetPrRec[kAAAB] = recPos * recPos * recPos * recNeg;
+            fMomNetPrRec[kAAAA] = recPos * recPos * recPos * recPos;
+            fMomNetPrRec[kBBBB] = recNeg * recNeg * recNeg * recNeg;
+            fMomNetPrRec[kAmB]  = recPos - recNeg;
+
+            // fill tree which contains moments
+            if(!fTreeSRedirector) return;
+            if (counterTracksRec > 0) {
+              (*fTreeSRedirector) << "cutBased" <<
+              "syst="         << iset <<                     // systematic setting index
+              "isample="      << sampleNo <<                 // sample id for subsample method
+              "vZ="           << fVz <<                      // event vertex z
+              "cent="         << fCentrality <<              // centrality from V0
+              //
+              "pDown="        << arrMomDown[imom] <<          // lower edge of momentum bin
+              "pUp="          << arrMomUp[imom] <<            // upper edge of momentum bin
+              "etaDown="      << arrEtaDown[ieta] <<        // lower edge of eta bin
+              "etaUp="        << arrEtaUp[ieta] <<          // upper edge of eta bin
+              //
+              "netPrMomRec.="   << &fMomNetPrRec <<         // momnets up to 4th order for (net)protons on reconstruced level with resonances
+              "\n";
+            }
+          } // ======= end of settings loop =======
+        } // ======= end of momentum loop =======
       } // ======= end of eta loop =======
 
     }
