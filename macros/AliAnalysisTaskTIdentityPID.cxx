@@ -1634,6 +1634,7 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
       if (fMCtrue && fEffMatrix && fESD){
         // FillEffMatrix();
         FillMCFull_NetParticles();
+        CalculateMoments_CutBasedMethod();
         if (fFillArmPodTree) FillCleanSamples();
         if (fEventInfo) {CalculateEventInfo(); CreateEventInfoTree();}
         if (fUseCouts)  std::cout << " Info::marsland: (full MC analysis) End of Filling part = " << fEventCountInFile << std::endl;
@@ -2376,20 +2377,20 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
       std::vector<Double_t> arrEtaUp = {0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1};
 
       const size_t settingsDim = fNSettings;
-      const size_t etaDim      = arrEtaDown.size();
-      const size_t momentumDim = arrMomDown.size();
+      const size_t etaDim      = fetaDownArr.size();
+      const size_t momentumDim = fpDownArr.size();
       const size_t signDim     = 2;
 
       const size_t nMoments = 14 + 1; // moments to fourth order + p-pbar
 
       UInt_t recProtonCounter[settingsDim][etaDim][momentumDim][signDim];
-      UInt_t corProtonCounter[settingsDim][etaDim][momentumDim][signDim];
+      UInt_t recProtonCounterTOF[settingsDim][etaDim][momentumDim][signDim];
       for (size_t iSetting = 0; iSetting < settingsDim; iSetting++)
         for (size_t iEta = 0; iEta < etaDim; iEta++)
           for (size_t iMomentum = 0; iMomentum < momentumDim; iMomentum++)
             for (size_t iSign = 0; iSign < signDim; iSign++) {
               recProtonCounter[iSetting][iEta][iMomentum][iSign] = 0;
-              corProtonCounter[iSetting][iEta][iMomentum][iSign] = 0;
+              recProtonCounterTOF[iSetting][iEta][iMomentum][iSign] = 0;
             }
 
       //
@@ -2428,13 +2429,13 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
         //
         // Acceptance scan
         for (size_t ieta = 0; ieta < etaDim; ieta++) {
-          Bool_t etaAcc  = (fEta >= arrEtaDown[ieta] && fEta < arrEtaUp[ieta]);
-          Bool_t etaAccMaxWindow = (fEta >= arrEtaDown[0]  && fEta <= arrEtaUp[etaDim - 1]);
+          Bool_t etaAcc  = (fEta >= fetaDownArr[ieta] && fEta < fetaUpArr[ieta]);
+          Bool_t etaAccMaxWindow = (fEta >= fetaDownArr[0]  && fEta <= fetaUpArr[etaDim - 1]);
           if (!etaAcc) continue;
 
           for (size_t imom = 0; imom < momentumDim; imom++) {
-            Bool_t momAcc  = (ptotCut >= arrMomDown[imom]  && ptotCut < arrMomUp[imom]);
-            Bool_t momAccMaxWindow = (ptotCut >= arrMomDown[0] && ptotCut <= arrMomUp[momentumDim - 1]);
+            Bool_t momAcc  = (ptotCut >= fpDownArr[imom]  && ptotCut < fpUpArr[imom]);
+            Bool_t momAccMaxWindow = (ptotCut >= fpDownArr[0] && ptotCut <= fpUpArr[momentumDim - 1]);
             //
             // count first moments for given Centrality and momentum window
             if (etaAccMaxWindow && momAccMaxWindow) counterTracksRec++;
@@ -2450,9 +2451,12 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
 
                 // check pid
                 Bool_t prTPC = (TMath::Abs(fPIDResponse->NumberOfSigmasTPC(trackReal, AliPID::kProton))  <= fEffMatrixNSigmasTOF);
+                Bool_t prTOF = (TMath::Abs(fPIDResponse->NumberOfSigmasTOF(trackReal, AliPID::kProton))  <= fEffMatrixNSigmasTOF);
 
                 if (prTPC)
                   recProtonCounter[iset][ieta][imom][signIndex]++;
+                if (prTOF)
+                  recProtonCounterTOF[iset][ieta][imom][signIndex]++;
               }
             } // ======= end of settings loop =======
           } // ======= end of momentum loop =======
@@ -2483,21 +2487,44 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
             fMomNetPrRec[kBBBB] = recNeg * recNeg * recNeg * recNeg;
             fMomNetPrRec[kAmB]  = recPos - recNeg;
 
+            TVectorF fMomNetPrRecTOF(nMoments);
+
+            Int_t recPosTOF = recProtonCounterTOF[iset][ieta][imom][0];
+            Int_t recNegTOF = recProtonCounterTOF[iset][ieta][imom][1];
+
+            fMomNetPrRecTOF[kA]    = recPosTOF;
+            fMomNetPrRecTOF[kB]    = recNegTOF;
+            fMomNetPrRecTOF[kAA]   = recPosTOF * recPosTOF;
+            fMomNetPrRecTOF[kBB]   = recNegTOF * recNegTOF;
+            fMomNetPrRecTOF[kAB]   = recPosTOF * recNegTOF;
+            fMomNetPrRecTOF[kAAA]  = recPosTOF * recPosTOF * recPosTOF;
+            fMomNetPrRecTOF[kBBB]  = recNegTOF * recNegTOF * recNegTOF;
+            fMomNetPrRecTOF[kAAB]  = recPosTOF * recPosTOF * recNegTOF;
+            fMomNetPrRecTOF[kBBA]  = recNegTOF * recNegTOF * recPosTOF;
+            fMomNetPrRecTOF[kABBB] = recPosTOF * recNegTOF * recNegTOF * recNegTOF;
+            fMomNetPrRecTOF[kAABB] = recPosTOF * recPosTOF * recNegTOF * recNegTOF;
+            fMomNetPrRecTOF[kAAAB] = recPosTOF * recPosTOF * recPosTOF * recNegTOF;
+            fMomNetPrRecTOF[kAAAA] = recPosTOF * recPosTOF * recPosTOF * recPosTOF;
+            fMomNetPrRecTOF[kBBBB] = recNegTOF * recNegTOF * recNegTOF * recNegTOF;
+            fMomNetPrRecTOF[kAmB]  = recPosTOF - recNegTOF;
+
             // fill tree which contains moments
             if(!fTreeSRedirector) return;
             if (counterTracksRec > 0) {
               (*fTreeSRedirector) << "cutBased" <<
+              "gid="          << fEventGID <<                // global event ID
               "syst="         << iset <<                     // systematic setting index
               "isample="      << sampleNo <<                 // sample id for subsample method
               "vZ="           << fVz <<                      // event vertex z
               "cent="         << fCentrality <<              // centrality from V0
               //
-              "pDown="        << arrMomDown[imom] <<          // lower edge of momentum bin
-              "pUp="          << arrMomUp[imom] <<            // upper edge of momentum bin
-              "etaDown="      << arrEtaDown[ieta] <<        // lower edge of eta bin
-              "etaUp="        << arrEtaUp[ieta] <<          // upper edge of eta bin
+              "pDown="        << fpDownArr[imom] <<          // lower edge of momentum bin
+              "pUp="          << fpUpArr[imom] <<            // upper edge of momentum bin
+              "etaDown="      << fetaDownArr[ieta] <<        // lower edge of eta bin
+              "etaUp="        << fetaUpArr[ieta] <<          // upper edge of eta bin
               //
-              "netPrMomRec.="   << &fMomNetPrRec <<         // momnets up to 4th order for (net)protons on reconstruced level with resonances
+              "netPrMomRec.="   << &fMomNetPrRec <<         // moments up to 4th order with cut based method
+              "netPrMomRecTOF.="   << &fMomNetPrRecTOF <<         // moments up to 4th order with cut based method and TOF cut
               "\n";
             }
           } // ======= end of settings loop =======

@@ -412,7 +412,7 @@ AliAnalysisTaskTIdentityPID* Config_marsland_TIdentityPID(Bool_t getFromAlien, I
         task->SetDefaultEventCuts(kTRUE);
         std::cout << " special settings for 18q pass3 and 15o pass2 " << std::endl;
       }
-      task->SetNSettings(7);
+      task->SetNSettings(18);
       task->SetMCTrackOriginType(0);   // 0:full scan, 1: prim
       task->SetCorrectForMissCl(0);
       task->SetDefaultTrackCuts(kTRUE);
@@ -427,12 +427,12 @@ AliAnalysisTaskTIdentityPID* Config_marsland_TIdentityPID(Bool_t getFromAlien, I
       // acceptance
       const Int_t tmpCentbins  = 14;
       const Int_t tmpEtaBinsMC = 8;
-      const Int_t tmpMomBinsMC = 1;
+      const Int_t tmpMomBinsMC = 3;
       Float_t tmpfxCentBins[tmpCentbins] = {0,5,10,20,30,40,50,60,70,80,85,90,95,100};
       Float_t tmpetaDownArr[tmpEtaBinsMC] = {-0.1,-0.2,-0.3,-0.4,-0.5,-0.6,-0.7,-0.8};
       Float_t tmpetaUpArr[tmpEtaBinsMC]   = { 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8};
-      Float_t tmppDownArr[tmpMomBinsMC] = {0.6};
-      Float_t tmppUpArr[tmpMomBinsMC]   = {1.5};
+      Float_t tmppDownArr[tmpMomBinsMC] = {0.6, 1.5, 0.6};
+      Float_t tmppUpArr[tmpMomBinsMC]   = {1.5, 2.8, 1.0};
       task->SetMCEtaScanArray(tmpEtaBinsMC, tmpetaDownArr, tmpetaUpArr);
       task->SetMCMomScanArray(tmpMomBinsMC, tmppDownArr,   tmppUpArr);
       task->SetCentralityBinning(tmpCentbins,tmpfxCentBins);
