@@ -268,7 +268,13 @@ public:
   void   SetEffMatrixMomBins(const std::vector<Double_t> nEffMatrixMomBins) {fEffMatrixMomBins = nEffMatrixMomBins;}
   void   SetEffMatrixCentBins(const std::vector<Double_t> nEffMatrixCentBins) {fEffMatrixCentBins = nEffMatrixCentBins;}
   void   SetEffMatrixEtaBins(const std::vector<Double_t> nEffMatrixEtaBins) {fEffMatrixEtaBins = nEffMatrixEtaBins;}
-  void   SetEffMatrixNSigmasTOF(const Double_t nEffMatrixNSigmasTOF) {fEffMatrixNSigmasTOF = nEffMatrixNSigmasTOF;}
+
+  void   SetNSigmaTPC(const Double_t nSigmaTPC)                   { fNSigmaTPC = nSigmaTPC;}
+  void   SetNSigmaTOF(const Double_t nSigmaTOFDown, const Double_t nSigmaTOFUp) {
+    fNSigmaTOFDown = nSigmaTOFDown;
+    fNSigmaTOFUp = nSigmaTOFUp;
+  }
+
 
   // Set the binning of centrality
   void SetCentralityBinning(const Int_t tmpCentbins, Float_t tmpfxCentBins[])
@@ -770,7 +776,10 @@ private:
   std::vector<Double_t> fEffMatrixMomBins;
   std::vector<Double_t> fEffMatrixCentBins;
   std::vector<Double_t> fEffMatrixEtaBins;
-  Double_t           fEffMatrixNSigmasTOF;
+
+  Double_t           fNSigmaTPC;              // n sigma TPC for cut based method
+  Double_t           fNSigmaTOFDown;
+  Double_t           fNSigmaTOFUp;
 
   Int_t              fNResModeMC;
   Int_t              fNCentbinsData;

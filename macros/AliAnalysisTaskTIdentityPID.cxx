@@ -313,7 +313,9 @@ fGenprotonBins(-100),
 fEffMatrixMomBins(0),
 fEffMatrixCentBins(0),
 fEffMatrixEtaBins(0),
-fEffMatrixNSigmasTOF(0),
+fNSigmaTPC(0),
+fNSigmaTOFDown(0),
+fNSigmaTOFUp(0),
 fNResModeMC(2),
 fNCentbinsData(14),
 fMissingCl(0.),
@@ -618,7 +620,9 @@ fGenprotonBins(-100),
 fEffMatrixMomBins(0),
 fEffMatrixCentBins(0),
 fEffMatrixEtaBins(0),
-fEffMatrixNSigmasTOF(0),
+fNSigmaTPC(0),
+fNSigmaTOFDown(0),
+fNSigmaTOFUp(0),
 fNResModeMC(2),
 fNCentbinsData(14),
 fMissingCl(0.),
@@ -2369,13 +2373,6 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
       Int_t nStackTracks = fESD->GetNumberOfTracks();
       if (nStackTracks <= 1) return;
 
-      // TODO: move this to the config
-      std::vector<Double_t> arrMomDown = {0.6, 0.6, 1.5};
-      std::vector<Double_t> arrMomUp = {0.9, 1.5, 2.8};
-
-      std::vector<Double_t> arrEtaDown = {-0.8, -0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1};
-      std::vector<Double_t> arrEtaUp = {0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1};
-
       const size_t settingsDim = fNSettings;
       const size_t etaDim      = fetaDownArr.size();
       const size_t momentumDim = fpDownArr.size();
@@ -2450,8 +2447,11 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
                 const Int_t signIndex = (fSign < 0); // +1 -> 0, -1 -> 1
 
                 // check pid
-                Bool_t prTPC = (TMath::Abs(fPIDResponse->NumberOfSigmasTPC(trackReal, AliPID::kProton))  <= fEffMatrixNSigmasTOF);
-                Bool_t prTOF = (TMath::Abs(fPIDResponse->NumberOfSigmasTOF(trackReal, AliPID::kProton))  <= fEffMatrixNSigmasTOF);
+                Double_t nSigmaTPC = fPIDResponse->NumberOfSigmasTPC(trackReal, AliPID::kProton);
+                Double_t nSigmaTOF = fPIDResponse->NumberOfSigmasTOF(trackReal, AliPID::kProton);
+
+                Bool_t prTPC = (TMath::Abs(fPIDResponse->NumberOfSigmasTPC(trackReal, AliPID::kProton)) <= fNSigmaTPC);
+                Bool_t prTOF = (nSigmaTOF > fNSigmaTOFDown && nSigmaTOF <= fNSigmaTOFUp);
 
                 if (prTPC)
                   recProtonCounter[iset][ieta][imom][signIndex]++;
@@ -2814,9 +2814,15 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
                       if (pdg<0) fHistNegEffMatrixScanRec->Fill(xxxRecSystScan);
                       //
                       // TOF+TPC eff matrix for all settings
-                      Bool_t piTOF = (TMath::Abs(fPIDResponse->NumberOfSigmasTOF(trackReal, AliPID::kPion))  <= fEffMatrixNSigmasTOF);
-                      Bool_t kaTOF = (TMath::Abs(fPIDResponse->NumberOfSigmasTOF(trackReal, AliPID::kKaon))  <= fEffMatrixNSigmasTOF);
-                      Bool_t prTOF = (TMath::Abs(fPIDResponse->NumberOfSigmasTOF(trackReal, AliPID::kProton))<= fEffMatrixNSigmasTOF);
+
+                      Double_t nSigmaTOFPi = fPIDResponse->NumberOfSigmasTOF(trackReal, AliPID::kPion);
+                      Double_t nSigmaTOFKa = fPIDResponse->NumberOfSigmasTOF(trackReal, AliPID::kKaon);
+                      Double_t nSigmaTOFPr = fPIDResponse->NumberOfSigmasTOF(trackReal, AliPID::kProton);
+
+                      Bool_t piTOF = (nSigmaTOFPi > fNSigmaTOFDown && nSigmaTOFPi <= fNSigmaTOFUp);
+                      Bool_t kaTOF = (nSigmaTOFKa > fNSigmaTOFDown && nSigmaTOFKa <= fNSigmaTOFUp);
+                      Bool_t prTOF = (nSigmaTOFPr > fNSigmaTOFDown && nSigmaTOFPr <= fNSigmaTOFUp);
+
                       if ( (piTOF && iPart==0) ||  (kaTOF && iPart==1) || (prTOF && iPart==2) ) {
                         Double_t xxxRecTOF[7]={1.,static_cast<Double_t>(iorig > 0),Float_t(iset),Float_t(iPart),fCentrality,ptotMCrec,etaMCrec};
                         if (pdg>0) fHistPosEffMatrixScanRec->Fill(xxxRecTOF);
@@ -5555,10 +5561,12 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
       Float_t nSigmasKaTOF = fPIDResponse->NumberOfSigmasTOF(track, AliPID::kKaon,    fPIDResponse->GetTOFResponse().GetTimeZero());
       Float_t nSigmasPrTOF = fPIDResponse->NumberOfSigmasTOF(track, AliPID::kProton,  fPIDResponse->GetTOFResponse().GetTimeZero());
       Float_t nSigmasDeTOF = fPIDResponse->NumberOfSigmasTOF(track, AliPID::kDeuteron,fPIDResponse->GetTOFResponse().GetTimeZero());
-      Bool_t cleanPiTOF = ((TMath::Abs(nSigmasPiTOF)<=fEffMatrixNSigmasTOF));
-      Bool_t cleanPrTOF = ((TMath::Abs(nSigmasPrTOF)<=fEffMatrixNSigmasTOF));
-      Bool_t cleanDeTOF = ((TMath::Abs(nSigmasDeTOF)<=fEffMatrixNSigmasTOF));
-      Bool_t cleanKaTOF = ((TMath::Abs(nSigmasKaTOF)<=fEffMatrixNSigmasTOF));
+
+      Bool_t cleanPiTOF = fNSigmaTOFDown < nSigmasPiTOF && nSigmasPiTOF <= fNSigmaTOFUp;
+      Bool_t cleanPrTOF = fNSigmaTOFDown < nSigmasPrTOF && nSigmasPrTOF <= fNSigmaTOFUp;
+      Bool_t cleanDeTOF = fNSigmaTOFDown < nSigmasDeTOF && nSigmasDeTOF <= fNSigmaTOFUp;
+      Bool_t cleanKaTOF = fNSigmaTOFDown < nSigmasKaTOF && nSigmasKaTOF <= fNSigmaTOFUp;
+
       Bool_t cleanKaTOFTRD = ((TMath::Abs(nSigmasKaTOF)<=1.2) && TOFSignalDz<1. && TOFSignalDx<1. && nclsTRD>100);
       //
       // Bool_t dca11h     = TMath::Abs(fTrackDCAxy)<0.0105+0.0350/TMath::Power(fPt,1.1);

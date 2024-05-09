@@ -453,6 +453,9 @@ AliAnalysisTaskTIdentityPID* Config_marsland_TIdentityPID(Bool_t getFromAlien, I
       task->SetEffMatrixMomBins(effMatrixMomBins);
       task->SetEffMatrixCentBins(effMatrixCentBins);
 
+      task->SetNSigmaTPC(3.0);
+      task->SetNSigmaTOF(-10., 2.5);
+
       // resonances to exclude
       const Int_t tmpNresonances = 1;
       TString tmpResArr[tmpNresonances] = {"xxx"};
@@ -1065,7 +1068,7 @@ void SetDefaults(AliAnalysisTaskTIdentityPID *defaultTask, Int_t year, TString p
   defaultTask->SetEffMatrixMomBins(effMatrixMomBins);
   defaultTask->SetEffMatrixCentBins(effMatrixCentBins);
   defaultTask->SetEffMatrixEtaBins(effMatrixEtaBins);
-  defaultTask->SetEffMatrixNSigmasTOF(2.5);
+  defaultTask->SetNSigmaTOF(-2.5, 2.5);
 
   // Boolians which are by default === ON ===
   defaultTask->SetRunOnGrid(kFALSE);
