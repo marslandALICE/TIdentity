@@ -412,7 +412,8 @@ AliAnalysisTaskTIdentityPID* Config_marsland_TIdentityPID(Bool_t getFromAlien, I
         task->SetDefaultEventCuts(kTRUE);
         std::cout << " special settings for 18q pass3 and 15o pass2 " << std::endl;
       }
-      task->SetNSettings(18);
+      task->SetNSettings(4);
+      task->SetSettings({0, 1, 16, 17});
       task->SetMCTrackOriginType(0);   // 0:full scan, 1: prim
       task->SetCorrectForMissCl(0);
       task->SetDefaultTrackCuts(kTRUE);
@@ -454,7 +455,7 @@ AliAnalysisTaskTIdentityPID* Config_marsland_TIdentityPID(Bool_t getFromAlien, I
       task->SetEffMatrixCentBins(effMatrixCentBins);
 
       task->SetNSigmaTPC(3.0);
-      task->SetNSigmaTOF(-10., 2.5);
+      task->SetNSigmaTOF({-2.5, -3.0, -3.5}, {2.5, 2.5, 2.5});
 
       // resonances to exclude
       const Int_t tmpNresonances = 1;
@@ -1068,7 +1069,7 @@ void SetDefaults(AliAnalysisTaskTIdentityPID *defaultTask, Int_t year, TString p
   defaultTask->SetEffMatrixMomBins(effMatrixMomBins);
   defaultTask->SetEffMatrixCentBins(effMatrixCentBins);
   defaultTask->SetEffMatrixEtaBins(effMatrixEtaBins);
-  defaultTask->SetNSigmaTOF(-2.5, 2.5);
+  defaultTask->SetNSigmaTOF({-2.5, -3.0, -3.5}, {2.5, 2.5, 2.5});
 
   // Boolians which are by default === ON ===
   defaultTask->SetRunOnGrid(kFALSE);

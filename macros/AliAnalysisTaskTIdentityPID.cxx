@@ -209,6 +209,7 @@ fRunNumberForExpecteds(0),
 fFillExpecteds(kFALSE),
 fDefaultCuts(kFALSE),
 fNSettings(17),
+fSystSettings(0),
 fNMomBins(0),
 fMomDown(0),
 fMomUp(0),
@@ -516,6 +517,7 @@ fRunNumberForExpecteds(0),
 fFillExpecteds(kFALSE),
 fDefaultCuts(kFALSE),
 fNSettings(17),
+fSystSettings(0),
 fNMomBins(0),
 fMomDown(0),
 fMomUp(0),
@@ -1127,10 +1129,11 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
       fListHist->Add(fHistNegEffMatrixGen);
       //
       //
+      const Int_t lastSystSetting = *max_element(fSystSettings.begin(), fSystSettings.end());
       const Int_t ndimScan=7;
       Int_t nbinsScan[ndimScan] ={2,
         2,
-        fNSettings,
+        lastSystSetting + 1,
         3,
         (Int_t) fEffMatrixCentBins.size() - 1,
         (Int_t) fEffMatrixMomBins.size() - 1,
@@ -1140,7 +1143,7 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
       std::vector<Double_t> detectorBins = {0., 1., 2.};
       std::vector<Double_t> originBins = {0., 1., 2.};
       std::vector<Double_t> settingsBins = {0.};
-      for (Int_t i = 1; i <= fNSettings; i++) {
+      for (Int_t i = 1; i <= lastSystSetting + 1; i++) {
         settingsBins.push_back(i);
       }
 
@@ -2373,7 +2376,7 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
       Int_t nStackTracks = fESD->GetNumberOfTracks();
       if (nStackTracks <= 1) return;
 
-      const size_t settingsDim = fNSettings;
+      const size_t settingsDim = fSystSettings.size();
       const size_t etaDim      = fetaDownArr.size();
       const size_t momentumDim = fpDownArr.size();
       const size_t signDim     = 2;
@@ -2439,11 +2442,12 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
 
             if (!momAcc) continue;
             for (size_t iset = 0; iset < settingsDim; iset++) {
+              Int_t setting = fSystSettings[iset];
               // event Vz cuts
-              if (iset == kCutEventVertexZLarge && !bEventVertexZLarge) continue;
-              else if (iset != kCutEventVertexZLarge && !bCutReference) continue;
+              if (setting == kCutEventVertexZLarge && !bEventVertexZLarge) continue;
+              else if (setting != kCutEventVertexZLarge && !bCutReference) continue;
 
-              if (GetSystematicClassIndex(fTrackCutBits,iset)) {
+              if (GetSystematicClassIndex(fTrackCutBits,setting)) {
                 const Int_t signIndex = (fSign < 0); // +1 -> 0, -1 -> 1
 
                 // check pid
@@ -2451,7 +2455,7 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
                 Double_t nSigmaTOF = fPIDResponse->NumberOfSigmasTOF(trackReal, AliPID::kProton);
 
                 Bool_t prTPC = (TMath::Abs(fPIDResponse->NumberOfSigmasTPC(trackReal, AliPID::kProton)) <= fNSigmaTPC);
-                Bool_t prTOF = (nSigmaTOF > fNSigmaTOFDown && nSigmaTOF <= fNSigmaTOFUp);
+                Bool_t prTOF = (nSigmaTOF > fNSigmaTOFDown[0] && nSigmaTOF <= fNSigmaTOFUp[0]);
 
                 if (prTPC)
                   recProtonCounter[iset][ieta][imom][signIndex]++;
@@ -2466,6 +2470,8 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
       for (size_t ieta = 0; ieta < etaDim; ieta++) {
         for (size_t imom = 0; imom < momentumDim; imom++) {
           for (size_t iset = 0; iset < settingsDim; iset++) {
+            Int_t setting = fSystSettings[iset];
+
             TVectorF fMomNetPrRec(nMoments);
 
             Int_t recPos = recProtonCounter[iset][ieta][imom][0];
@@ -2513,7 +2519,7 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
             if (counterTracksRec > 0) {
               (*fTreeSRedirector) << "cutBased" <<
               "gid="          << fEventGID <<                // global event ID
-              "syst="         << iset <<                     // systematic setting index
+              "syst="         << setting <<                     // systematic setting index
               "isample="      << sampleNo <<                 // sample id for subsample method
               "vZ="           << fVz <<                      // event vertex z
               "cent="         << fCentrality <<              // centrality from V0
@@ -2601,14 +2607,15 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
       Bool_t bEventVertexZLarge      = (TMath::Abs(fVz)<8 && TMath::Abs(fVz)>0.1);
       //
       // setting scan
-      for (Int_t iset=0; iset<fNSettings; iset++){
+      for (size_t iset=0; iset<fSystSettings.size(); iset++){
+        Int_t setting = fSystSettings[iset];
 
         // Bool_t mainSettings = (iset==0 || iset==11 || iset==15 || iset==21);    // ????
         // if (!mainSettings) continue;
         //
         // event Vz cuts
-        if (iset == kCutEventVertexZLarge && !bEventVertexZLarge) continue;
-        else if (iset != kCutEventVertexZLarge && !bCutReference) continue;
+        if (setting == kCutEventVertexZLarge && !bEventVertexZLarge) continue;
+        else if (setting != kCutEventVertexZLarge && !bCutReference) continue;
         //
         // Acceptance scan
         for (Int_t ieta=0; ieta<fNEtaWinBinsMC; ieta++){
@@ -2685,10 +2692,10 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
                   Bool_t momAccMaxWindow = (ptotMCgen>=fMomDown && ptotMCgen<=fMomUp);
                   //
                   // Fill eff Matrix
-                  if (fEffMatrix && !fRunOnGrid && etaAccMaxWindow && momAccMaxWindow && ieta==0 && imom==0 && ipileup==1 && iset == 0){
+                  if (fEffMatrix && !fRunOnGrid && etaAccMaxWindow && momAccMaxWindow && ieta==0 && imom==0 && ipileup==1){
                     //
                     // Eff matrix phi etc.
-                    if (iset==kCutReference && bPrim && !fIsMCPileup){
+                    if (setting==kCutReference && bPrim && !fIsMCPileup){
                       Double_t xxxGen[5]={Float_t(iPart),fCentrality,ptotMCgen,etaMCgen,phiMCGen};
                       if (pdg>0) fHistPosEffMatrixGen->Fill(xxxGen);
                       if (pdg<0) fHistNegEffMatrixGen->Fill(xxxGen);
@@ -2696,11 +2703,11 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
                     //
                     // systematic scan
                     if (bPrim && !fIsMCPileup && (iorig == 0 || iorig == 3)) {
-                      Double_t xxxGenSystScan[7]={0.,static_cast<Double_t>(iorig > 0),Float_t(iset),Float_t(iPart),fCentrality,ptotMCgen,etaMCgen};
+                      Double_t xxxGenSystScan[7]={0.,static_cast<Double_t>(iorig > 0),Float_t(setting),Float_t(iPart),fCentrality,ptotMCgen,etaMCgen};
                       if (pdg>0) fHistPosEffMatrixScanGen->Fill(xxxGenSystScan);
                       if (pdg<0) fHistNegEffMatrixScanGen->Fill(xxxGenSystScan);
                       // generated does not know about TOF
-                      Double_t xxxGenSystScanTOF[7]={1.,static_cast<Double_t>(iorig > 0),Float_t(iset),Float_t(iPart),fCentrality,ptotMCgen,etaMCgen};
+                      Double_t xxxGenSystScanTOF[7]={1.,static_cast<Double_t>(iorig > 0),Float_t(setting),Float_t(iPart),fCentrality,ptotMCgen,etaMCgen};
                       if (pdg>0) fHistPosEffMatrixScanGen->Fill(xxxGenSystScanTOF);
                       if (pdg<0) fHistNegEffMatrixScanGen->Fill(xxxGenSystScanTOF);
                     }
@@ -2795,13 +2802,13 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
                   Double_t closestPar[3];
                   GetExpecteds(trackReal,closestPar);
                   SetCutBitsAndSomeTrackVariables(trackReal,iPart);
-                  if (!GetSystematicClassIndex(fTrackCutBits,iset)) continue;
+                  if (!GetSystematicClassIndex(fTrackCutBits,setting)) continue;
                   //
                   // Fill Efficiency Matrices
                   if (fEffMatrix && !fRunOnGrid && etaAccMaxWindow && momAccMaxWindow && ieta==0 && imom==0 && ipileup==1){
                     //
                     // Eff matrix with phi etc. for the default setting
-                    if (iset==kCutReference){
+                    if (setting==kCutReference){
                       Double_t xxxRec[5]={Float_t(iPart),fCentrality,ptotMCrec,etaMCrec,phiMCRec};
                       if (pdg>0) fHistPosEffMatrixRec->Fill(xxxRec);
                       if (pdg<0) fHistNegEffMatrixRec->Fill(xxxRec);
@@ -2809,7 +2816,7 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
                     //
                     if ((iorig == 0 || iorig == 3)) {
                       // TPC eff matrix for all settings
-                      Double_t xxxRecSystScan[7]={0.,static_cast<Double_t>(iorig > 0),Float_t(iset),Float_t(iPart),fCentrality,ptotMCrec,etaMCrec};
+                      Double_t xxxRecSystScan[7]={0.,static_cast<Double_t>(iorig > 0),Float_t(setting),Float_t(iPart),fCentrality,ptotMCrec,etaMCrec};
                       if (pdg>0) fHistPosEffMatrixScanRec->Fill(xxxRecSystScan);
                       if (pdg<0) fHistNegEffMatrixScanRec->Fill(xxxRecSystScan);
                       //
@@ -2819,12 +2826,15 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
                       Double_t nSigmaTOFKa = fPIDResponse->NumberOfSigmasTOF(trackReal, AliPID::kKaon);
                       Double_t nSigmaTOFPr = fPIDResponse->NumberOfSigmasTOF(trackReal, AliPID::kProton);
 
-                      Bool_t piTOF = (nSigmaTOFPi > fNSigmaTOFDown && nSigmaTOFPi <= fNSigmaTOFUp);
-                      Bool_t kaTOF = (nSigmaTOFKa > fNSigmaTOFDown && nSigmaTOFKa <= fNSigmaTOFUp);
-                      Bool_t prTOF = (nSigmaTOFPr > fNSigmaTOFDown && nSigmaTOFPr <= fNSigmaTOFUp);
+                      Double_t nSigmaTOFDown, nSigmaTOFUp;
+                      tie(nSigmaTOFDown, nSigmaTOFUp) = GetNSigmaTOF(setting);
+
+                      Bool_t piTOF = (nSigmaTOFPi > nSigmaTOFDown && nSigmaTOFPi <= nSigmaTOFUp);
+                      Bool_t kaTOF = (nSigmaTOFKa > nSigmaTOFDown && nSigmaTOFKa <= nSigmaTOFUp);
+                      Bool_t prTOF = (nSigmaTOFPr > nSigmaTOFDown && nSigmaTOFPr <= nSigmaTOFUp);
 
                       if ( (piTOF && iPart==0) ||  (kaTOF && iPart==1) || (prTOF && iPart==2) ) {
-                        Double_t xxxRecTOF[7]={1.,static_cast<Double_t>(iorig > 0),Float_t(iset),Float_t(iPart),fCentrality,ptotMCrec,etaMCrec};
+                        Double_t xxxRecTOF[7]={1.,static_cast<Double_t>(iorig > 0),Float_t(setting),Float_t(iPart),fCentrality,ptotMCrec,etaMCrec};
                         if (pdg>0) fHistPosEffMatrixScanRec->Fill(xxxRecTOF);
                         if (pdg<0) fHistNegEffMatrixScanRec->Fill(xxxRecTOF);
                       }
@@ -2978,7 +2988,7 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
                 if (nTracksrec>0){
                   (*fTreeSRedirector)<<"mcFull"<<
                   "ispileup="     << ipileup <<                  // pileup or not
-                  "syst="         << iset <<                     // systematic setting index
+                  "syst="         << setting <<                     // systematic setting index
                   "isample="      << sampleNo <<                 // sample id for subsample method
                   "orig="         << iorig <<                    // origin type primary, or several combinations
                   "nTPC="         << nTracksTPC <<               // number of tracks in the TPC
@@ -3147,13 +3157,13 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
               labMom = trackMCgen->Particle()->GetFirstMother();
               if ((labMom>=0) && (labMom < nStackTracks)){
                 pdgMom  = fMCStack->Particle(labMom)->GetPdgCode();
-                momName = fMCStack->Particle(labMom)->GetName();
+                momName.SetString(fMCStack->Particle(labMom)->GetName());
                 trackMCmother = (AliMCParticle *)fMCEvent->GetTrack(labMom);
                 //
                 labGMom = trackMCmother->GetMother();
                 if ((labGMom>=0) && (labGMom < nStackTracks)){
                   pdgGMom = fMCStack->Particle(labGMom)->GetPdgCode();
-                  momGName = fMCStack->Particle(labGMom)->GetName();
+                  momGName.SetString(fMCStack->Particle(labGMom)->GetName());
                 }
               }
               //
@@ -3949,7 +3959,7 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
               TObjString momName="xxx";
               if ((labMom>=0) && (labMom < nStackTracks)){
                 pdgMom = fMCStack->Particle(labMom)->GetPdgCode();
-                momName = fMCStack->Particle(labMom)->GetName();
+                momName.SetString(fMCStack->Particle(labMom)->GetName());
               }
               //
               // Check if the particle is in the black list of resonances
@@ -4454,9 +4464,10 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
       //
       // loop over tracks
       for (Int_t iset=0; iset<fNSettings; iset++) {
+        Int_t setting = fSystSettings[iset];
         //
         // event Vz cuts
-        if (iset==kCutEventVertexZLarge      && !bEventVertexZLarge)      continue;
+        if (setting==kCutEventVertexZLarge      && !bEventVertexZLarge)      continue;
         else if ( !bCutReference ) continue;
         //
         for(Int_t irectrack = 0; irectrack < fESD->GetNumberOfTracks(); irectrack++)
@@ -4498,10 +4509,10 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
           GetExpecteds(trackReal,closestPar);
           SetCutBitsAndSomeTrackVariables(trackReal,fPartID);
           //
-          if (GetSystematicClassIndex(fTrackCutBits,iset)){
+          if (GetSystematicClassIndex(fTrackCutBits,setting)){
             //
             // Fill TPC eff matrix
-            Double_t xxxRec[6]={0.,Float_t(iset),Float_t(fPartID),fCentrality,fPtRec,etaMCrec};
+            Double_t xxxRec[6]={0.,Float_t(setting),Float_t(fPartID),fCentrality,fPtRec,etaMCrec};
             if (pdg>0) fHistPosEffMatrixScanRec->Fill(xxxRec);
             if (pdg<0) fHistNegEffMatrixScanRec->Fill(xxxRec);
             //
@@ -4510,7 +4521,7 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
             Bool_t kaTOF = (TMath::Abs(fPIDResponse->NumberOfSigmasTOF(trackReal, AliPID::kKaon))  <=2.5);
             Bool_t prTOF = (TMath::Abs(fPIDResponse->NumberOfSigmasTOF(trackReal, AliPID::kProton))<=2.5);
             if ( (piTOF && fPartID==0) ||  (kaTOF && fPartID==1) || (prTOF && fPartID==2) ) {
-              Double_t xxxRecTOF[6]={1.,Float_t(iset),Float_t(fPartID),fCentrality,fPtRec,etaMCrec};
+              Double_t xxxRecTOF[6]={1.,Float_t(setting),Float_t(fPartID),fCentrality,fPtRec,etaMCrec};
               if (pdg>0) fHistPosEffMatrixScanRec->Fill(xxxRecTOF);
               if (pdg<0) fHistNegEffMatrixScanRec->Fill(xxxRecTOF);
             }
@@ -4523,7 +4534,7 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
         // -----------------------------------------------------------------------------------------
         //
         // only event Vz cuts can be applied on generated level
-        if ( iset==kCutReference || iset==kCutEventVertexZLarge ) {
+        if ( setting==kCutReference || setting==kCutEventVertexZLarge ) {
           //
           for (Int_t iTrack = 0; iTrack < fMCEvent->GetNumberOfTracks(); iTrack++)
           { // track loop
@@ -4557,18 +4568,18 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
             if (TMath::Abs(pdg) == kPDGpr) fPartID=2; // select pr
             if (fPartID == -10) continue;
             //
-            Double_t xxxGen[6]={0.,Float_t(iset),Float_t(fPartID),fCentrality,ptotMCgen,etaMCgen};
+            Double_t xxxGen[6]={0.,Float_t(setting),Float_t(fPartID),fCentrality,ptotMCgen,etaMCgen};
             if (pdg>0) fHistPosEffMatrixScanGen->Fill(xxxGen);
             if (pdg<0) fHistNegEffMatrixScanGen->Fill(xxxGen);
             // generated does not know about TOF
-            Double_t xxxGenTOF[6]={1.,Float_t(iset),Float_t(fPartID),fCentrality,ptotMCgen,etaMCgen};
+            Double_t xxxGenTOF[6]={1.,Float_t(setting),Float_t(fPartID),fCentrality,ptotMCgen,etaMCgen};
             if (pdg>0) fHistPosEffMatrixScanGen->Fill(xxxGenTOF);
             if (pdg<0) fHistNegEffMatrixScanGen->Fill(xxxGenTOF);
 
           } // ======= end of gen track loop =======
         }
         //
-        if (fDefaultTrackCuts && iset==kCutReference) break; // for default track cuts run only once
+        if (fDefaultTrackCuts && setting==kCutReference) break; // for default track cuts run only once
 
       }
 
@@ -4978,7 +4989,7 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
       Int_t pdgMom = 0;
       if ( (labMom>=0) && (labMom < fMCEvent->GetNumberOfTracks()) ){
         pdgMom  = fMCStack->Particle(labMom)->GetPdgCode();
-        momName = fMCStack->Particle(labMom)->GetName();
+        momName.SetString(fMCStack->Particle(labMom)->GetName());
       }
       //
       //Check if the particle is in the black list of resonances
@@ -5557,23 +5568,28 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
       Double_t TOFSignalDz = track->GetTOFsignalDz();
       //
       //
-      Float_t nSigmasPiTOF = fPIDResponse->NumberOfSigmasTOF(track, AliPID::kPion,    fPIDResponse->GetTOFResponse().GetTimeZero());
-      Float_t nSigmasKaTOF = fPIDResponse->NumberOfSigmasTOF(track, AliPID::kKaon,    fPIDResponse->GetTOFResponse().GetTimeZero());
-      Float_t nSigmasPrTOF = fPIDResponse->NumberOfSigmasTOF(track, AliPID::kProton,  fPIDResponse->GetTOFResponse().GetTimeZero());
-      Float_t nSigmasDeTOF = fPIDResponse->NumberOfSigmasTOF(track, AliPID::kDeuteron,fPIDResponse->GetTOFResponse().GetTimeZero());
-
-      Bool_t cleanPiTOF = fNSigmaTOFDown < nSigmasPiTOF && nSigmasPiTOF <= fNSigmaTOFUp;
-      Bool_t cleanPrTOF = fNSigmaTOFDown < nSigmasPrTOF && nSigmasPrTOF <= fNSigmaTOFUp;
-      Bool_t cleanDeTOF = fNSigmaTOFDown < nSigmasDeTOF && nSigmasDeTOF <= fNSigmaTOFUp;
-      Bool_t cleanKaTOF = fNSigmaTOFDown < nSigmasKaTOF && nSigmasKaTOF <= fNSigmaTOFUp;
-
-      Bool_t cleanKaTOFTRD = ((TMath::Abs(nSigmasKaTOF)<=1.2) && TOFSignalDz<1. && TOFSignalDx<1. && nclsTRD>100);
+      fNSigmasPiTOF = fPIDResponse->NumberOfSigmasTOF(track, AliPID::kPion,    fPIDResponse->GetTOFResponse().GetTimeZero());
+      fNSigmasKaTOF = fPIDResponse->NumberOfSigmasTOF(track, AliPID::kKaon,    fPIDResponse->GetTOFResponse().GetTimeZero());
+      fNSigmasPrTOF = fPIDResponse->NumberOfSigmasTOF(track, AliPID::kProton,  fPIDResponse->GetTOFResponse().GetTimeZero());
+      fNSigmasDeTOF = fPIDResponse->NumberOfSigmasTOF(track, AliPID::kDeuteron,fPIDResponse->GetTOFResponse().GetTimeZero());
       //
-      // Bool_t dca11h     = TMath::Abs(fTrackDCAxy)<0.0105+0.0350/TMath::Power(fPt,1.1);
-      // Bool_t dca10h     = TMath::Abs(fTrackDCAxy)<0.0182+0.0350/TMath::Power(fPt,1.01);
+      auto [nSigmaTOFDown, nSigmaTOFUp] = GetNSigmaTOF(kCutReference);
+      //
+      Bool_t cleanPiTOF = nSigmaTOFDown < fNSigmasPiTOF && fNSigmasPiTOF <= nSigmaTOFUp;
+      Bool_t cleanKaTOF = nSigmaTOFDown < fNSigmasKaTOF && fNSigmasKaTOF <= nSigmaTOFUp;
+      Bool_t cleanPrTOF = nSigmaTOFDown < fNSigmasPrTOF && fNSigmasPrTOF <= nSigmaTOFUp;
+      Bool_t cleanDeTOF = nSigmaTOFDown < fNSigmasDeTOF && fNSigmasDeTOF <= nSigmaTOFUp;
+      //
+      Bool_t cleanKaTOFTRD = ((TMath::Abs(fNSigmasKaTOF)<=1.2) && TOFSignalDz<1. && TOFSignalDx<1. && nclsTRD>100);
+      //
+      auto [nSigmaTOFDownLoose, nSigmaTOFUpLoose] = GetNSigmaTOF(kCutNSigmaTOFLoose);
+      Bool_t prTOFLoose = nSigmaTOFDownLoose < fNSigmasPrTOF && fNSigmasPrTOF <= nSigmaTOFUpLoose;
+      //
+      auto [nSigmaTOFDownLoose2, nSigmaTOFUpLoose2] = GetNSigmaTOF(kCutNSigmaTOFLoose2);
+      Bool_t prTOFLoose2 = nSigmaTOFDownLoose2 < fNSigmasPrTOF && fNSigmasPrTOF <= nSigmaTOFUpLoose2;
+      //
       Bool_t dcaBaseCut = TMath::Abs(fTrackDCAxy)<0.0208+0.04/TMath::Power(fPt,1.01);
       Bool_t dcaLoose   = TMath::Abs(fTrackDCAxy)<0.4;  // 10h tuned loose cut
-
       //
       // Systematic settings
       fTrackCutBits=0;
@@ -5643,9 +5659,6 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
       if (TMath::Abs(fVz)<7 && TMath::Abs(fVz)>0.15) (fTrackCutBits |= 1 << kEventVertexZ);
       if (TMath::Abs(fVz)<8 && TMath::Abs(fVz)>0.1 ) (fTrackCutBits |= 1 << kEventVertexZLarge);
       //
-      // track length cut --> dangerous cuts because it creates momentum dependent efficiency
-      if (fTrackLengthInActiveZone>=90)  (fTrackCutBits |= 1 << kActiveZone);
-      //
       // NCl in dEdx calculation
       if (fTrackTPCSignalN>=60) (fTrackCutBits |= 1 << kTPCSignalNSmall);
       if (fTrackTPCSignalN>=70) (fTrackCutBits |= 1 << kTPCSignalN);
@@ -5678,6 +5691,9 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
       if (fTrackProbKaTOF>=0.8) (fTrackCutBits |= 1 << kTrackProbKaTOF);
       // if (fTrackProbPrTOF>=0.8) (fTrackCutBits |= 1 << kTrackProbPrTOF);
       if (cleanDeTOF && cleanDeTPC) (fTrackCutBits |= 1 << kCleanDeTOF);
+      //
+      if (prTOFLoose)  (fTrackCutBits |= 1 << kNSigmaTOFLoose);
+      if (prTOFLoose2) (fTrackCutBits |= 1 << kNSigmaTOFLoose2);
       //
       return fTrackCutBits;
 
@@ -5728,87 +5744,93 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
         }
         break;
         //
-        case kCutActiveZone:  // 3 -->  kActiveZone
-        {
-          fCutArr = {kActiveZone,  kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDep, kVertexZ, kEventVertexZ, kPileup, kSharedCls, kFindableCls,kTPCSignalN};
-        }
-        break;
-        //
-        case kCutMaxChi2PerClusterTPCSmall:   // 4 -->  kMaxChi2PerClusterTPCSmall
+        case kCutMaxChi2PerClusterTPCSmall:   // 3 -->  kMaxChi2PerClusterTPCSmall
         {
           fCutArr = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPCSmall, kMaxDCAToVertexXYPtDep, kVertexZ, kEventVertexZ, kPileup, kSharedCls, kFindableCls,kTPCSignalN};
         }
         break;
         //
-        case kCutMaxChi2PerClusterTPCLarge:   // 5 -->  kMaxChi2PerClusterTPCLarge
+        case kCutMaxChi2PerClusterTPCLarge:   // 4 -->  kMaxChi2PerClusterTPCLarge
         {
           fCutArr = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPCLarge, kMaxDCAToVertexXYPtDep, kVertexZ, kEventVertexZ, kPileup, kSharedCls, kFindableCls,kTPCSignalN};
         }
         break;
         //
-        case kCutMaxDCAToVertexXYPtDepLarge:   // 6 -->  kMaxDCAToVertexXYPtDepLarge
+        case kCutMaxDCAToVertexXYPtDepLarge:   // 5 -->  kMaxDCAToVertexXYPtDepLarge
         {
           fCutArr = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDepLarge, kVertexZ, kEventVertexZ, kPileup, kSharedCls, kFindableCls,kTPCSignalN};
         }
         break;
         //
-        case kCutVertexZSmall:   // 7 -->  kVertexZSmall
+        case kCutVertexZSmall:   // 6 -->  kVertexZSmall
         {
           fCutArr = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDep, kVertexZSmall, kEventVertexZ, kPileup, kSharedCls, kFindableCls,kTPCSignalN};
         }
         break;
         //
-        case kCutEventVertexZLarge:  // 8 -->  kEventVertexZLarge
+        case kCutEventVertexZLarge:  // 7 -->  kEventVertexZLarge
         {
           fCutArr = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDep, kVertexZ, kEventVertexZLarge, kPileup, kSharedCls, kFindableCls,kTPCSignalN};
         }
         break;
         //
-        case kCutSharedCls:   // 9 -->  kSharedClsLoose
+        case kCutSharedCls:   // 8 -->  kSharedClsLoose
         {
           fCutArr = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDep, kVertexZ, kEventVertexZ, kPileup, kSharedClsLoose, kFindableCls,kTPCSignalN};
         }
         break;
         //
-        case kCutFindableClsTight:   // 10 -->  kFindableClsTight
+        case kCutFindableClsTight:   // 9 -->  kFindableClsTight
         {
           fCutArr = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDep, kVertexZ, kEventVertexZ, kPileup, kSharedCls, kFindableClsTight,kTPCSignalN};
         }
         break;
         //
-        case kCutFindableClsLoose:   // 11 -->  kFindableClsLoose
+        case kCutFindableClsLoose:   // 10 -->  kFindableClsLoose
         {
           fCutArr = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDep, kVertexZ, kEventVertexZ, kPileup, kSharedCls, kFindableClsLoose,kTPCSignalN};
         }
         break;
         //
-        case kCutPileupLoose:   // 12 -->  kPileupLoose
+        case kCutPileupLoose:   // 11 -->  kPileupLoose
         {
           fCutArr = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDep, kVertexZ, kEventVertexZ, kPileupLoose, kSharedCls, kFindableCls,kTPCSignalN};
         }
         break;
         //
-        case kCutBFieldPos:   // 13 -->  kBFieldPos
+        case kCutBFieldPos:   // 12 -->  kBFieldPos
         {
           fCutArr = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDep, kVertexZ, kEventVertexZ, kPileup, kSharedCls, kFindableCls,kTPCSignalN,kBFieldPos};
         }
         break;
         //
-        case kCutBFieldNeg:   // 14 --> kBFieldNeg
+        case kCutBFieldNeg:   // 13 --> kBFieldNeg
         {
           fCutArr = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDep, kVertexZ, kEventVertexZ, kPileup, kSharedCls, kFindableCls,kTPCSignalN,kBFieldNeg};
         }
         break;
         //
-        case kCutTPCSignalNSmall:   // 15 --> kTPCSignalNSmall
+        case kCutTPCSignalNSmall:   // 14 --> kTPCSignalNSmall
         {
           fCutArr = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDep, kVertexZ, kEventVertexZ, kPileup, kSharedCls, kFindableCls,kTPCSignalNSmall};
         }
         break;
         //
-        case kCutTPCSignalNLarge:   // 16 --> kTPCSignalNLarge
+        case kCutTPCSignalNLarge:   // 15 --> kTPCSignalNLarge
         {
           fCutArr = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDep, kVertexZ, kEventVertexZ, kPileup, kSharedCls, kFindableCls,kTPCSignalNLarge};
+        }
+        break;
+        //
+        case kCutNSigmaTOFLoose:   // 16 --> kNSigmaTOFLoose
+        {
+          fCutArr = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDep, kVertexZ, kEventVertexZ, kPileup, kSharedCls, kFindableCls,kTPCSignalN, kNSigmaTOFLoose};
+        }
+        break;
+        //
+        case kCutNSigmaTOFLoose2:   // 17 --> kNSigmaTOFLoose
+        {
+          fCutArr = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDep, kVertexZ, kEventVertexZ, kPileup, kSharedCls, kFindableCls,kTPCSignalN, kNSigmaTOFLoose2};
         }
         break;
         //

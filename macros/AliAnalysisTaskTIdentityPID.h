@@ -41,6 +41,10 @@ class AliPIDCombined;
 #include "AliEventCuts.h"
 #include "TRandom3.h"
 
+#include <vector>
+#include <utility>
+#include <algorithm>
+
 // class AliAnalysisTaskPIDetaTreeElectrons : public AliAnalysisTaskPIDV0base {
 class AliAnalysisTaskTIdentityPID : public AliAnalysisTaskSE {
 public:
@@ -85,45 +89,47 @@ public:
     kVertexZ=9,
     kEventVertexZ=10,
     kEventVertexZLarge=11,
-    kActiveZone=12,
-    kTPCSignalNSmall=13,
-    kTPCSignalN=14,
-    kTPCSignalNLarge=16,
-    kCleanPrTOF=17,
-    kCleanKaTOF=18,
-    kCleanKaTOFTRD=19,
-    kTrackProbKaTOF=20,
-    kCleanPiTOF=21,
-    kCleanDeTOF=22,
-    kPileup=23,
-    kPileupLoose=24,
-    kSharedCls=25,
-    kSharedClsLoose=26,
-    kFindableCls=27,
-    kFindableClsTight=28,
-    kFindableClsLoose=29,
-    kBFieldPos=30,
-    kBFieldNeg=31
+    kTPCSignalNSmall=12,
+    kTPCSignalN=13,
+    kTPCSignalNLarge=14,
+    kCleanPrTOF=15,
+    kCleanKaTOF=16,
+    kCleanKaTOFTRD=17,
+    kTrackProbKaTOF=18,
+    kCleanPiTOF=19,
+    kCleanDeTOF=20,
+    kPileup=21,
+    kPileupLoose=22,
+    kSharedCls=23,
+    kSharedClsLoose=24,
+    kFindableCls=25,
+    kFindableClsTight=26,
+    kFindableClsLoose=27,
+    kBFieldPos=28,
+    kBFieldNeg=29,
+    kNSigmaTOFLoose=30,
+    kNSigmaTOFLoose2=31
   };
 
   enum cutSettings {
     kCutReference=0,
     kCutCrossedRowsTPC70=1,
     kCutCrossedRowsTPC90=2,
-    kCutActiveZone=3,
-    kCutMaxChi2PerClusterTPCSmall=4,
-    kCutMaxChi2PerClusterTPCLarge=5,
-    kCutMaxDCAToVertexXYPtDepLarge=6,
-    kCutVertexZSmall=7,
-    kCutEventVertexZLarge=8,
-    kCutSharedCls=9,
-    kCutFindableClsTight=10,
-    kCutFindableClsLoose=11,
-    kCutPileupLoose=12,
-    kCutBFieldPos=13,
-    kCutBFieldNeg=14,
-    kCutTPCSignalNSmall=15,
-    kCutTPCSignalNLarge=16
+    kCutMaxChi2PerClusterTPCSmall=3,
+    kCutMaxChi2PerClusterTPCLarge=4,
+    kCutMaxDCAToVertexXYPtDepLarge=5,
+    kCutVertexZSmall=6,
+    kCutEventVertexZLarge=7,
+    kCutSharedCls=8,
+    kCutFindableClsTight=9,
+    kCutFindableClsLoose=10,
+    kCutPileupLoose=11,
+    kCutBFieldPos=12,
+    kCutBFieldNeg=13,
+    kCutTPCSignalNSmall=14,
+    kCutTPCSignalNLarge=15,
+    kCutNSigmaTOFLoose=16,
+    kCutNSigmaTOFLoose2=17
   };
 
   enum centEst {
@@ -241,9 +247,19 @@ public:
   void   SetWeakAndMaterial(const Bool_t ifWeakAndMaterial = kFALSE)  {fWeakAndMaterial     = ifWeakAndMaterial;}
   void   SetFillEventInfo(const Bool_t ifEventInfo = kFALSE)          {fEventInfo           = ifEventInfo;}
   void   SetPercentageOfEvents(const Int_t nPercentageOfEvents = 0)   {fPercentageOfEvents = nPercentageOfEvents;}
-  void   SetNSettings(const Int_t nSettings = 22)                     {fNSettings = nSettings;}
   void   SetV0InvMassHists(const Bool_t ifV0InvMassHists = kFALSE)    {fV0InvMassHists      = ifV0InvMassHists;}
   void   SetRunNumberForExpecteds(const Int_t ifRunNumberForExpecteds = 0)    {fRunNumberForExpecteds = ifRunNumberForExpecteds;}
+
+  void   SetSettings(const std::vector<Int_t> ifSystSettings) {
+    fSystSettings = ifSystSettings;
+    fNSettings = fSystSettings.size();
+  }
+  void   SetNSettings(const Int_t nSettings = 22) {
+    std::vector<Int_t> tempSettings(nSettings);
+    for (Int_t i = 0; i < nSettings; i++)
+      tempSettings[i] = i;
+    SetSettings(tempSettings);
+  }
 
   //
   Bool_t GetRunOnGrid() const { return fRunOnGrid; }
@@ -269,10 +285,30 @@ public:
   void   SetEffMatrixCentBins(const std::vector<Double_t> nEffMatrixCentBins) {fEffMatrixCentBins = nEffMatrixCentBins;}
   void   SetEffMatrixEtaBins(const std::vector<Double_t> nEffMatrixEtaBins) {fEffMatrixEtaBins = nEffMatrixEtaBins;}
 
-  void   SetNSigmaTPC(const Double_t nSigmaTPC)                   { fNSigmaTPC = nSigmaTPC;}
-  void   SetNSigmaTOF(const Double_t nSigmaTOFDown, const Double_t nSigmaTOFUp) {
-    fNSigmaTOFDown = nSigmaTOFDown;
-    fNSigmaTOFUp = nSigmaTOFUp;
+  void   SetNSigmaTPC(const Double_t nSigmaTPC)                   { fNSigmaTPC = nSigmaTPC; }
+  void   SetNSigmaTOF(const std::vector<Double_t> vecNSigmaTOFDown, const std::vector<Double_t> vecNSigmaTOFUp) {
+    fNSigmaTOFDown = vecNSigmaTOFDown;
+    fNSigmaTOFUp = vecNSigmaTOFUp;
+  }
+
+  std::pair<Double_t, Double_t> GetNSigmaTOF(const Int_t setting) const {
+    Double_t nSigmaDown, nSigmaUp;
+    switch (setting)
+    {
+      case kCutNSigmaTOFLoose:
+        nSigmaDown = fNSigmaTOFDown[1];
+        nSigmaUp = fNSigmaTOFUp[1];
+        break;
+      case kCutNSigmaTOFLoose2:
+        nSigmaDown = fNSigmaTOFDown[2];
+        nSigmaUp = fNSigmaTOFUp[2];
+        break;
+      default:
+        nSigmaDown = fNSigmaTOFDown[0];
+        nSigmaUp = fNSigmaTOFUp[0];
+        break;
+    }
+    return std::make_pair(nSigmaDown, nSigmaUp);
   }
 
 
@@ -656,6 +692,7 @@ private:
   Bool_t            fDefaultCuts;
 
   Int_t             fNSettings;
+  std::vector<Int_t> fSystSettings;
   Int_t             fNMomBins;               // number of mombins --> for 20MeV slice 150 and 10MeV 300
   Float_t           fMomDown;                // bottom limit for the momentum range (default 0.2)
   Float_t           fMomUp;                  // uppper limit for the momentum range (default 3.2)
@@ -778,8 +815,8 @@ private:
   std::vector<Double_t> fEffMatrixEtaBins;
 
   Double_t           fNSigmaTPC;              // n sigma TPC for cut based method
-  Double_t           fNSigmaTOFDown;
-  Double_t           fNSigmaTOFUp;
+  std::vector<Double_t> fNSigmaTOFDown;
+  std::vector<Double_t> fNSigmaTOFUp;
 
   Int_t              fNResModeMC;
   Int_t              fNCentbinsData;
