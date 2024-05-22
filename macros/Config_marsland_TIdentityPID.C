@@ -412,8 +412,9 @@ AliAnalysisTaskTIdentityPID* Config_marsland_TIdentityPID(Bool_t getFromAlien, I
         task->SetDefaultEventCuts(kTRUE);
         std::cout << " special settings for 18q pass3 and 15o pass2 " << std::endl;
       }
-      task->SetNSettings(4);
-      task->SetSettings({0, 1, 16, 17});
+      task->SetNSettings(1);
+      task->SetSettings({0});
+      // task->SetSettings({0, 1, 16, 17});
       task->SetMCTrackOriginType(0);   // 0:full scan, 1: prim
       task->SetCorrectForMissCl(0);
       task->SetDefaultTrackCuts(kTRUE);
@@ -423,6 +424,7 @@ AliAnalysisTaskTIdentityPID* Config_marsland_TIdentityPID(Bool_t getFromAlien, I
       task->SetFillEventInfo(kTRUE);
       task->SetIncludeITScuts(kTRUE);
       task->SetFillArmPodTree(kFALSE);
+      task->SetFillPhiTree(kTRUE);
       task->fEventCuts.fUseVariablesCorrelationCuts = true;
       //
       // acceptance
@@ -1076,6 +1078,7 @@ void SetDefaults(AliAnalysisTaskTIdentityPID *defaultTask, Int_t year, TString p
   defaultTask->SetIsMCtrue(kFALSE);
   defaultTask->SetIncludeITScuts(kTRUE);
   defaultTask->SetFillArmPodTree(kFALSE);
+  defaultTask->SetFillPhiTree(kFALSE);
   defaultTask->SetUsePtCut(1);
   defaultTask->SetMCTrackOriginType(1);   // 0:full scan, 1: prim
   defaultTask->SetRapidityType(0);      // 0:pseudorapidity, 1: rapidity

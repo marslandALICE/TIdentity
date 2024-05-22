@@ -221,6 +221,7 @@ public:
   void   SetRunOnGrid(const Bool_t ifRunOnGrid = kTRUE)               {fRunOnGrid           = ifRunOnGrid;}
   void   SetIncludeITScuts(const Bool_t ifITSCuts = kTRUE)            {fIncludeITS          = ifITSCuts;}
   void   SetFillArmPodTree(const Bool_t ifArmpodTree = kTRUE)         {fFillArmPodTree      = ifArmpodTree;}
+  void   SetFillPhiTree(const Bool_t ifPhiTree = kTRUE)               {fFillPhiTree         = ifPhiTree;}
   void   SetDeDxCheck(const Bool_t ifDeDxCheck = kFALSE)              {fDEdxCheck           = ifDeDxCheck;}
   void   SetEffMatrix(const Bool_t ifEffMatrix = kFALSE)              {fEffMatrix           = ifEffMatrix;}
   void   SetFillAllCutVariables(const Bool_t ifAllCuts = kFALSE)      {fFillTracks          = ifAllCuts;}
@@ -562,6 +563,7 @@ private:
   void WeakAndMaterial();                   // Look full acceptance, weak decay and material
   void FillDnchDeta();                      // Fill dnch/deta values for each cent and eta bin
   void FillEffMatrix();            // Prepare efficiency matrix
+  void FillPhiTree();
   void FillCleanSamples();                    // Fill Clean Pions
   void SelectCleanSamplesFromV0s(AliESDv0 *v0, AliESDtrack *track0, AliESDtrack *track1);
   void SetSpecialV0Cuts(AliESDv0KineCuts* cuts);
@@ -622,6 +624,7 @@ private:
   TTree            * fTreeMCEffCorr;
   TTree            * fTreeExpecteds;          // tree with expected dE/dx
   TTree            * fTreeCutBased;           // tree with moments from cut based method
+  TTree            * fTreePhi;                // tree for phi studies
   TRandom3         fRandom;
 
 
@@ -669,6 +672,7 @@ private:
   Bool_t            fFillEffLookUpTable;     //
   Bool_t            fFillHigherMomentsMCclosure;
   Bool_t            fFillArmPodTree;         // switch whether to fill clean sample tree
+  Bool_t            fFillPhiTree;            // switch whether to fill phi tree
   Bool_t            fRunFastSimulation;      // when running over galice.root do not fill other objects
   Bool_t            fRunFastHighMomentCal;   // when running over galice.root do not fill other objects
   Bool_t            fRunCutBasedMethod;      // moments from cut based method as cross check

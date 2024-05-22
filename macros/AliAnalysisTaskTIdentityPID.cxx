@@ -148,6 +148,7 @@ fTreeDScaled(0x0),
 fTreeMCEffCorr(0x0),
 fTreeExpecteds(0x0),
 fTreeCutBased(0x0),
+fTreePhi(0x0),
 fRandom(0),
 fPeriodName(""),
 fYear(0),
@@ -188,6 +189,7 @@ fFillOnlyHists(kFALSE),
 fFillEffLookUpTable(kFALSE),
 fFillHigherMomentsMCclosure(kFALSE),
 fFillArmPodTree(kTRUE),
+fFillPhiTree(kFALSE),
 fRunFastSimulation(kFALSE),
 fRunFastHighMomentCal(kFALSE),
 fRunCutBasedMethod(kFALSE),
@@ -456,6 +458,7 @@ fTreeDScaled(0x0),
 fTreeMCEffCorr(0x0),
 fTreeExpecteds(0x0),
 fTreeCutBased(0x0),
+fTreePhi(0x0),
 fRandom(0),
 fPeriodName(""),
 fYear(0),
@@ -496,6 +499,7 @@ fFillOnlyHists(kFALSE),
 fFillEffLookUpTable(kFALSE),
 fFillHigherMomentsMCclosure(kFALSE),
 fFillArmPodTree(kTRUE),
+fFillPhiTree(kFALSE),
 fRunFastSimulation(kFALSE),
 fRunFastHighMomentCal(kFALSE),
 fRunCutBasedMethod(kFALSE),
@@ -823,6 +827,7 @@ fPileUpTightnessCut4(0)
   DefineOutput(14, TTree::Class());
   DefineOutput(15, TTree::Class());
   DefineOutput(16, TTree::Class());
+  DefineOutput(17, TTree::Class());
   // ==========================================
 
 }
@@ -1283,6 +1288,7 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
       fTreeMCEffCorr = ((*fTreeSRedirector)<<"mcMoms").GetTree();
       fTreeExpecteds = ((*fTreeSRedirector)<<"expecteds").GetTree();
       fTreeCutBased  = ((*fTreeSRedirector)<<"cutBased").GetTree();
+      fTreePhi       = ((*fTreeSRedirector)<<"phiTree").GetTree();
       //
       // ************************************************************************
       //   Send output objects to container
@@ -1306,6 +1312,7 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
       PostData(14, fTreeMCEffCorr);
       PostData(15, fTreeExpecteds);
       PostData(16, fTreeCutBased);
+      PostData(17, fTreePhi);
 
       fEventCuts.SetManualMode();
 
@@ -1643,6 +1650,7 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
         FillMCFull_NetParticles();
         CalculateMoments_CutBasedMethod();
         if (fFillArmPodTree) FillCleanSamples();
+        if (fFillPhiTree) FillPhiTree();
         if (fEventInfo) {CalculateEventInfo(); CreateEventInfoTree();}
         if (fUseCouts)  std::cout << " Info::marsland: (full MC analysis) End of Filling part = " << fEventCountInFile << std::endl;
         return;
@@ -4585,6 +4593,100 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
 
     }
     //________________________________________________________________________
+    void AliAnalysisTaskTIdentityPID::FillPhiTree()
+    {
+
+      // Fill Phi candidates from kaon pairs
+      if (fUseCouts) std::cout << " Info::marsland: ===== In the FillPhiTree ===== " << std::endl;
+
+      Double_t kaonMass = TDatabasePDG::Instance()->GetParticle(kPDGka)->Mass();
+
+      AliESDtrack* trackPos = nullptr;
+      AliESDtrack* trackNeg = nullptr;
+      Int_t nTracks = fESD->GetNumberOfTracks();
+      for (Int_t iTrackPos = 0; iTrackPos < nTracks; iTrackPos++) {
+        trackPos = (AliESDtrack*) fESD->GetTrack(iTrackPos);
+        if (!trackPos) continue;
+        if (trackPos->Charge() < 0) continue;
+        if (!fMCStack->IsPhysicalPrimary(iTrackPos)) continue;
+        for (Int_t iTrackNeg = 0; iTrackNeg < nTracks; iTrackNeg++) {
+          trackNeg = fESD->GetTrack(iTrackNeg);
+          if (!trackNeg) continue;
+          if (trackNeg->Charge() > 0) continue;
+          if (!fMCStack->IsPhysicalPrimary(iTrackNeg)) continue;
+          if (iTrackNeg == iTrackPos) continue;
+
+          AliMCParticle *trackMCgenPos = (AliMCParticle *)fMCEvent->GetTrack(iTrackPos);
+          AliMCParticle *trackMCgenNeg = (AliMCParticle *)fMCEvent->GetTrack(iTrackNeg);
+
+          Int_t pdgPos = trackMCgenPos->PdgCode();
+          Int_t pdgNeg = trackMCgenNeg->PdgCode();
+
+          if (pdgPos != kPDGka || pdgNeg != -kPDGka) continue;
+
+          // positive leg
+          UInt_t cutBit0 = 0, cutBit1=0, fTrackCutBits=0;
+          cutBit0 = SetCutBitsAndSomeTrackVariables(trackPos,0);
+          Float_t dEdx0    = trackPos->GetTPCsignal();
+          Float_t p0     = trackPos->P();
+          Float_t pt0    = trackPos->Pt();
+          //
+          // negative leg
+          cutBit1 = SetCutBitsAndSomeTrackVariables(trackNeg,0);
+          Float_t dEdx1  = trackNeg->GetTPCsignal();
+          Float_t p1     = trackNeg->P();
+          Float_t pt1    = trackNeg->Pt();
+
+          AliKFParticle* kaPos = new AliKFParticle(*trackPos, kPDGka);
+          AliKFParticle* kaNeg = new AliKFParticle(*trackNeg, -kPDGka);
+          AliKFParticle* phiCandidate = new AliKFParticle(*kaPos, *kaNeg);
+
+          Double_t mass = phiCandidate->GetMass();
+          Double_t ptPhi = phiCandidate->GetPt();
+
+
+          // Double_t ptPhi = TMath::Sqrt(TMath::Power(p0x + p1x, 2) + TMath::Power(p0y + p1y, 2));
+
+          // if (!(0.5 < mass && mass < 1.5)) continue;
+
+          Double_t massGen = -1.;
+
+          Bool_t isPhi = kFALSE;
+          // verify that the mother of both tracks is the a phi
+          if (trackMCgenPos->GetMother() > 0 && (trackMCgenPos->Particle()->GetFirstMother() == trackMCgenNeg->Particle()->GetFirstMother())) {
+            AliMCParticle *mother = (AliMCParticle *)fMCEvent->GetTrack(trackMCgenPos->Particle()->GetFirstMother());
+            if (!mother) continue;
+            if (mother->PdgCode() == 333) {
+              isPhi = kTRUE;
+            }
+            massGen = mother->M();
+          }
+
+          printf("mass %f, isPhi %d\n", mass, isPhi);
+
+          Bool_t defCut0 = GetSystematicClassIndex(cutBit0, kCutReference);
+          Bool_t defCut1 = GetSystematicClassIndex(cutBit1, kCutReference);
+
+          if (!fTreeSRedirector) return;
+          (*fTreeSRedirector) << "phiTree" <<
+            "m=" << mass <<
+            "mGen=" << massGen <<
+            "iTrackPos=" << iTrackPos <<
+            "iTrackNeg=" << iTrackNeg <<
+            "pdgPos=" << pdgPos <<
+            "pdgNeg=" << pdgNeg <<
+            "isPhi=" << isPhi <<
+            "pt0=" << pt0 <<
+            "pt1=" << pt1 <<
+            "ptPhi=" << ptPhi <<
+            "defCut0=" << defCut0 <<
+            "defCut1=" << defCut1 <<
+            "\n";
+        }
+      }
+
+    }
+    //________________________________________________________________________
     void AliAnalysisTaskTIdentityPID::FillCleanSamples()
     {
 
@@ -5454,6 +5556,9 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
       // --------------------------------------------------------------
       //  some extra getters
       // --------------------------------------------------------------
+      //
+      if (!track->GetESDEvent())
+        track->SetESDEvent(fESD);
       //
       fDefaultCuts = fESDtrackCuts->AcceptTrack(track);
       Double_t goldenChi2 = 0.;
