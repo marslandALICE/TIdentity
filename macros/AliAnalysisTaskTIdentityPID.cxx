@@ -3066,7 +3066,7 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
       if (nStackTracks>1) fHistCentralityImpPar->Fill(fCentImpBin);
       else return;
       //
-      // count primaries 
+      // count primaries
       Int_t primCounter = 0;
       for (Int_t iTrack = 0; iTrack < nStackTracks; iTrack++)
       {
@@ -3127,7 +3127,7 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
             if (absPDG == kPDGpr) {iPart = 2; fPrMCgen = iPart;} // select pr+
             if (absPDG == kPDGxi) {iPart = 3; fXiMCgen = iPart;} // select ksi
             if (absPDG == kPDGd0) {iPart = 4; fD0MCgen = iPart;} // select D0
-            if (iPart == -10) continue; 
+            if (iPart == -10) continue;
             Bool_t parInterest = (fPiMCgen>-1 || fKaMCgen>-1 || fPrMCgen>-1 || fXiMCgen>-1 || fD0MCgen>-1) ? kTRUE : kFALSE;
             //
             // dump resonance and gen distributions
@@ -3186,9 +3186,9 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
               if(!fTreeSRedirector) return;
               if ( eventToDebug )  {
                 (*fTreeSRedirector)<<"resonance"<<
-                "gid="         << fEventGID << 
-                "nprim="       << primCounter << 
-                "ntracks="     << nStackTracks << 
+                "gid="         << fEventGID <<
+                "nprim="       << primCounter <<
+                "ntracks="     << nStackTracks <<
                 "nhard="       << fNHardScatters <<           // Number of hard scatterings
                 "nproj="       << fNProjectileParticipants << // Number of projectiles participants
                 "ntarget="     << fNTargetParticipants <<     // Number of target participants
@@ -3345,7 +3345,7 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
           if(!fTreeSRedirector) return;
           if (nTracksgen>0){
             (*fTreeSRedirector)<<"mcGen"<<
-            "gid="          << fEventGID << 
+            "gid="          << fEventGID <<
             "ngenacc="      << nTracksgen <<               // number of tracks on gen level
             "isample="      << sampleNo <<                 // sample id for subsample method
             "cent="         << fCentrality <<              // centrality from V0
@@ -4724,6 +4724,7 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
         Double_t thetaP  = acos((vecP * vecM)/(vecP.Mag() * vecM.Mag()));
         Double_t thetaN  = acos((vecN * vecM)/(vecN.Mag() * vecM.Mag()));
         if ( ((vecP.Mag())*cos(thetaP)+(vecN.Mag())*cos(thetaN)) <0.00001) {fTrackCutBits=0; continue;}
+        fCosPA = fV0s->GetV0CosineOfPointingAngle();
         fAlfa = ((vecP.Mag())*cos(thetaP)-(vecN.Mag())*cos(thetaN))/((vecP.Mag())*cos(thetaP)+(vecN.Mag())*cos(thetaN));
         fQt   = vecP.Mag()*sin(thetaP);
         if (fV0InvMassHists) fHistArmPod->Fill(fAlfa,fQt);
@@ -4763,10 +4764,15 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
         //  Invariant mass cuts
         // --------------------------------------------------------------
         //
-        Bool_t isK0sMass        = (kaon.M()>0.485 && kaon.M()<0.51); // (kaon.M()>0.490 && kaon.M()<0.504);
-        Bool_t isLambdaMass     = (lambda.M()>1.112 && lambda.M()<1.119); //(lambda.M()>1.113 && lambda.M()<1.118);
-        Bool_t isAntiLambdaMass = (antiLambda.M()>1.112 && antiLambda.M()<1.119); // (antiLambda.M()>1.113 && antiLambda.M()<1.118);
-        Bool_t isPhotonMass     = (photon.M()<0.005); // (photon.M()<0.005);
+        Double_t k0sMass = kaon.M();
+        Double_t lambdaMass = lambda.M();
+        Double_t antiLambdaMass = antiLambda.M();
+        Double_t photonMass = photon.M();
+        //
+        Bool_t isK0sMass        = (k0sMass>0.475 && k0sMass<0.52); // (kaon.M()>0.490 && kaon.M()<0.504);
+        Bool_t isLambdaMass     = (lambdaMass>1.109 && lambdaMass<1.122); //(lambda.M()>1.113 && lambda.M()<1.118);
+        Bool_t isAntiLambdaMass = (antiLambdaMass>1.109 && antiLambdaMass<1.12); // (antiLambda.M()>1.113 && antiLambda.M()<1.118);
+        Bool_t isPhotonMass     = (photonMass<0.005); // (photon.M()<0.005);
         Double_t oneLegSigma = 3.5;
         if (fQt<0.02 && TMath::Abs(fAlfa)<0.5){
           // Cuts concerns Electrons
@@ -4774,16 +4780,16 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
           // Apply one leg cut for electrons
           if (!(negNTPCSigmaEl<2. || posNTPCSigmaEl<2.)) {fTrackCutBits=0; continue;}
           //
-          if (fV0InvMassHists) fHistInvPhoton->Fill(photon.M());
+          if (fV0InvMassHists) fHistInvPhoton->Fill(photonMass);
           if (isK0sMass) {fTrackCutBits=0; continue;}
           if (isLambdaMass) {fTrackCutBits=0; continue;}
           if (isAntiLambdaMass) {fTrackCutBits=0; continue;}
           if (!isPhotonMass) {fTrackCutBits=0; continue;}
         } else {
           if (fV0InvMassHists) {
-            fHistInvK0s->Fill(kaon.M());
-            fHistInvLambda->Fill(lambda.M());
-            fHistInvAntiLambda->Fill(antiLambda.M());
+            fHistInvK0s->Fill(k0sMass);
+            fHistInvLambda->Fill(lambdaMass);
+            fHistInvAntiLambda->Fill(antiLambdaMass);
           }
           if ( !(isK0sMass || isLambdaMass || isAntiLambdaMass) ) {fTrackCutBits=0; continue;} // Apply inv mass cut
           if (fQt>0.11 && (!(negNTPCSigmaPi < oneLegSigma || posNTPCSigmaPi < oneLegSigma))) {fTrackCutBits=0; continue;} // Apply one leg cut for K0s
@@ -4836,6 +4842,11 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
             "piFromK0="             << fCleanPionsFromK0    <<  // K0s cut for pions
             "v0haspixel="           << fHasV0FirstITSlayer  <<  // ITS pixel cout
             "purity="               << v0purity             <<
+            "lambdaMass="           << lambdaMass           <<  // lambda mass
+            "antiLambdaMass="       << antiLambdaMass       <<  // anti lambda mass
+            "k0sMass="              << k0sMass              <<  // k0s mass
+            "photonMass="           << photonMass           <<  // photon mass
+            "cosPA="                << fCosPA               <<  // cosine of pointing angle
             "qt="                   << fQt                  <<  // qT
             "alfa="                 << fAlfa                <<  // alpha
             "cent="                 << fCentrality          <<  // centrality

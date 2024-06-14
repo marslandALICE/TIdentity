@@ -707,6 +707,7 @@ private:
   Float_t           fArmPodCentrality;
   Float_t           fQt;
   Float_t           fAlfa;
+  Float_t           fCosPA;
   Float_t           fNSigmasElTOF;           // TOF N sigma for Pion
   Float_t           fNSigmasPiTOF;           // TOF N sigma for Pion
   Float_t           fNSigmasKaTOF;           // TOF N sigma for Pion
@@ -908,16 +909,16 @@ private:
   Float_t            fPrFirstMomentsRec[2][4][10][8];    //[2][fNMomBinsMC][fNCentBinsMC][fNEtaWinBinsMC]
 
 
-  std::vector<float>  fetaDownArr;           
-  std::vector<float>  fetaUpArr;             
-  std::vector<float>  fcentDownArr;          
-  std::vector<float>  fcentUpArr;            
-  std::vector<float>  fpDownArr;             
-  std::vector<float>  fpUpArr;               
-  std::vector<float>  fxCentBins;             
-  std::vector<std::string> fResonances;           
+  std::vector<float>  fetaDownArr;
+  std::vector<float>  fetaUpArr;
+  std::vector<float>  fcentDownArr;
+  std::vector<float>  fcentUpArr;
+  std::vector<float>  fpDownArr;
+  std::vector<float>  fpUpArr;
+  std::vector<float>  fxCentBins;
+  std::vector<std::string> fResonances;
   std::vector<int>    fBaryons;
-  
+
   //
   // control and QA histograms
   //
