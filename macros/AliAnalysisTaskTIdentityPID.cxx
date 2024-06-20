@@ -1641,7 +1641,7 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
       // full MC analysis
       //
       if (fMCtrue && fEffMatrix && fESD){
-        // FillEffMatrix();
+        FillEffMatrix();
         FillMCFull_NetParticles();
         CalculateMoments_CutBasedMethod();
         if (fFillArmPodTree) FillCleanSamples();
@@ -2604,6 +2604,44 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
       TVectorF fMomNetPiRec(nMoments);    TVectorF fNRMomNetPiRec(nMoments);
       TVectorF fMomNetKaRec(nMoments);    TVectorF fNRMomNetKaRec(nMoments);
       TVectorF fMomNetPrRec(nMoments);    TVectorF fNRMomNetPrRec(nMoments);
+
+      const size_t etaDim = fetaDownArr.size();
+      const size_t momDim = fNMomBinsMC;
+      Bool_t isInBinRec[etaDim][momDim];
+      Bool_t isInBinGen[etaDim][momDim];
+      Int_t arrGenPos[etaDim][momDim][nParticles];
+      Int_t arrGenNeg[etaDim][momDim][nParticles];
+      Int_t arrRecPos[etaDim][momDim][nParticles];
+      Int_t arrRecNeg[etaDim][momDim][nParticles];
+      Int_t arrNrGenPos[etaDim][momDim][nParticles];
+      Int_t arrNrGenNeg[etaDim][momDim][nParticles];
+      Int_t arrNrRecPos[etaDim][momDim][nParticles];
+      Int_t arrNrRecNeg[etaDim][momDim][nParticles];
+      Int_t arrNtracksRec[etaDim][momDim];
+      Int_t arrNtracksGen[etaDim][momDim];
+      Int_t arrNtracksTPC[etaDim][momDim];
+      Int_t arrNtracksITS[etaDim][momDim];
+
+      for (size_t iEta = 0; iEta < etaDim; iEta++) {
+        for (size_t iMom = 0; iMom < momDim; iMom++) {
+          isInBinRec[iEta][iMom] = kFALSE;
+          isInBinGen[iEta][iMom] = kFALSE;
+          arrNtracksRec[iEta][iMom] = 0;
+          arrNtracksGen[iEta][iMom] = 0;
+          arrNtracksTPC[iEta][iMom] = 0;
+          arrNtracksITS[iEta][iMom] = 0;
+          for (Int_t iPart = 0; iPart < nParticles; iPart++) {
+            arrGenPos[iEta][iMom][iPart] = 0;
+            arrGenNeg[iEta][iMom][iPart] = 0;
+            arrRecPos[iEta][iMom][iPart] = 0;
+            arrRecNeg[iEta][iMom][iPart] = 0;
+            arrNrGenPos[iEta][iMom][iPart] = 0;
+            arrNrGenNeg[iEta][iMom][iPart] = 0;
+            arrNrRecPos[iEta][iMom][iPart] = 0;
+            arrNrRecNeg[iEta][iMom][iPart] = 0;
+          }
+        }
+      }
       //
       Bool_t bCutReference           = (TMath::Abs(fVz)<7 && TMath::Abs(fVz)>0.15);
       Bool_t bEventVertexZLarge      = (TMath::Abs(fVz)<8 && TMath::Abs(fVz)>0.1);
@@ -2611,30 +2649,209 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
       // setting scan
       for (size_t iset=0; iset<fSystSettings.size(); iset++){
         Int_t setting = fSystSettings[iset];
-
-        // Bool_t mainSettings = (iset==0 || iset==11 || iset==15 || iset==21);    // ????
-        // if (!mainSettings) continue;
         //
         // event Vz cuts
         if (setting == kCutEventVertexZLarge && !bEventVertexZLarge) continue;
         else if (setting != kCutEventVertexZLarge && !bCutReference) continue;
         //
-        // Acceptance scan
-        for (Int_t ieta=0; ieta<fNEtaWinBinsMC; ieta++){
-          for (Int_t imom=0; imom<fNMomBinsMC; imom++){
-            for (Int_t iorig=0; iorig<nOriginType; iorig++){
-              for (Int_t ipileup = 0; ipileup < nPileUpSettings; ipileup++)
-              {
-                //
-                // Initialize counters
-                Int_t nTracksrec=0, nTracksgen=0, nTracksTPC = 0, nTracksITS = 0;
-                Bool_t isTPCPileup = kFALSE, isITSPileup = kFALSE;
-                for(Int_t i=0;i<nParticles; i++){
-                  genPos[i]=0.;   nRgenPos[i]=0.;
-                  genNeg[i]=0.;   nRgenNeg[i]=0.;
-                  recPos[i]=0.;   nRrecPos[i]=0.;
-                  recNeg[i]=0.;   nRrecNeg[i]=0.;
+        for (Int_t iorig=0; iorig<nOriginType; iorig++){
+          for (Int_t ipileup = 0; ipileup < nPileUpSettings; ipileup++)
+          {
+            Bool_t isTPCPileup = kFALSE, isITSPileup = kFALSE;
+            // -----------------------------------------------------------------------------------------
+            // ----------------------------   MC generated pure MC particles  --------------------------
+            // -----------------------------------------------------------------------------------------
+            //
+            for (Int_t iTrack = 0; iTrack < fMCEvent->GetNumberOfTracks(); iTrack++)
+            {
+              // track loop
+              //
+              // Select real trigger event and reject other pile up vertices
+              isTPCPileup = AliAnalysisUtils::IsParticleFromOutOfBunchPileupCollision(iTrack,fMCEvent);
+              isITSPileup = AliAnalysisUtils::IsSameBunchPileupInGeneratedEvent(fMCEvent, "Hijing");
+              fIsMCPileup = (isTPCPileup || isITSPileup);
+              if (ipileup==0 && fIsMCPileup) continue;
+              //
+              // initialize the dummy particle id
+              fElMCgen =-100.; fPiMCgen =-100.; fKaMCgen =-100.; fPrMCgen =-100.;
+              AliMCParticle *trackMCgen = (AliMCParticle *)fMCEvent->GetTrack(iTrack);
+              if (!trackMCgen) continue;
+              //
+              // check the origin of the track
+              Bool_t bPrim     = fMCStack->IsPhysicalPrimary(iTrack);
+              Bool_t bMaterial = fMCStack->IsSecondaryFromMaterial(iTrack);
+              Bool_t bWeak     = fMCStack->IsSecondaryFromWeakDecay(iTrack);
+              Bool_t bAcceptOrigin = kFALSE;
+              if (iorig==0) bAcceptOrigin = bPrim;
+              if (iorig==1) bAcceptOrigin = (bPrim || bWeak);
+              if (iorig==2) bAcceptOrigin = (bPrim || bMaterial);
+              if (iorig==3) bAcceptOrigin = (bPrim || bMaterial || bWeak);
+              if (!bAcceptOrigin) continue;
+              //
+              // select particle of interest
+              Int_t iPart = -10;
+              Int_t pdg = trackMCgen->Particle()->GetPdgCode();
+              if (TMath::Abs(pdg) == kPDGpi) {iPart = 0; fPiMCgen = iPart;} // select pi+
+              if (TMath::Abs(pdg) == kPDGka) {iPart = 1; fKaMCgen = iPart;} // select ka+
+              if (TMath::Abs(pdg) == kPDGpr) {iPart = 2; fPrMCgen = iPart;} // select pr+
+              if (iPart == -10) continue; // perfect PID cut
+              //
+              // kinematic variables
+              Double_t ptotMCgen = 0.;
+              if(fUsePtCut==0) ptotMCgen = trackMCgen->P();
+              if(fUsePtCut==1) ptotMCgen = trackMCgen->P();
+              if(fUsePtCut==2) ptotMCgen = trackMCgen->Pt();
+              Float_t phiMCGen  = trackMCgen->Phi();
+              Double_t etaMCgen = trackMCgen->Eta();
+              //
+              for (size_t iEta = 0; iEta < etaDim; iEta++) {
+                for (size_t iMom = 0; iMom < momDim; iMom++) {
+                  Bool_t etaAcc = (etaMCgen>=fetaDownArr[iEta] && etaMCgen<=fetaUpArr[iEta]);
+                  Bool_t momAcc  = (ptotMCgen>=fpDownArr[iMom]  && ptotMCgen<fpUpArr[iMom]);
+                  isInBinGen[iEta][iMom] = (etaAcc && momAcc);
                 }
+              }
+              //
+              // fill the moments
+              if (bPrim && !fIsMCPileup){
+                for (size_t iEta = 0; iEta < etaDim; iEta++) {
+                  for (size_t iMom = 0; iMom < momDim; iMom++) {
+                    if (isInBinGen[iEta][iMom]) {
+                      arrNtracksGen[iEta][iMom]++;
+
+                      if ( fPiMCgen>-1 && pdg<0) arrGenNeg[iEta][iMom][kPi]++;
+                      if ( fKaMCgen>-1 && pdg<0) arrGenNeg[iEta][iMom][kKa]++;
+                      if ( fPrMCgen>-1 && pdg<0) arrGenNeg[iEta][iMom][kPr]++;
+                      if ( fPiMCgen>-1 && pdg>0) arrGenPos[iEta][iMom][kPi]++;
+                      if ( fKaMCgen>-1 && pdg>0) arrGenPos[iEta][iMom][kKa]++;
+                      if ( fPrMCgen>-1 && pdg>0) arrGenPos[iEta][iMom][kPr]++;
+                      //
+                      // reject resonances
+                      Bool_t acceptRes = CheckIfFromAnyResonance(trackMCgen,fetaDownArr[iEta],fetaUpArr[iEta],fpDownArr[iMom],fpUpArr[iMom]);
+                      if ( acceptRes ) {
+                        if ( fPiMCgen>-1 && pdg<0) arrNrGenNeg[iEta][iMom][kPi]++;
+                        if ( fKaMCgen>-1 && pdg<0) arrNrGenNeg[iEta][iMom][kKa]++;
+                        if ( fPrMCgen>-1 && pdg<0) arrNrGenNeg[iEta][iMom][kPr]++;
+                        if ( fPiMCgen>-1 && pdg>0) arrNrGenPos[iEta][iMom][kPi]++;
+                        if ( fKaMCgen>-1 && pdg>0) arrNrGenPos[iEta][iMom][kKa]++;
+                        if ( fPrMCgen>-1 && pdg>0) arrNrGenPos[iEta][iMom][kPr]++;
+                      }
+                    }
+                  }
+                }
+              }
+            } // ======= end of track loop for generated particles =======
+            //
+            // -----------------------------------------------------------------------------------------
+            // ----------------------------   reconstructed MC particles  ------------------------------
+            // -----------------------------------------------------------------------------------------
+            //
+            for(Int_t irectrack = 0; irectrack < fESD->GetNumberOfTracks(); irectrack++)
+            {
+              // track loop
+              //
+              //
+              // initialize the dummy particle id
+              fElMC =-100.; fPiMC =-100.; fKaMC =-100.; fPrMC =-100.;
+              // Esd track
+              fTrackCutBits=0;  // reset the bits for the next track
+              AliESDtrack *trackReal = fESD->GetTrack(irectrack);
+              if (trackReal == NULL) continue;
+              Int_t lab = TMath::Abs(trackReal->GetLabel());           // avoid from negatif labels, they include some garbage
+              // select pile up
+              isTPCPileup = AliAnalysisUtils::IsParticleFromOutOfBunchPileupCollision(lab,fMCEvent);
+              isITSPileup = AliAnalysisUtils::IsSameBunchPileupInGeneratedEvent(fMCEvent, "Hijing");
+              fIsMCPileup = (isTPCPileup || isITSPileup);
+              if (ipileup == 0 && fIsMCPileup) continue;
+              //
+              // check the origin of the track
+              Bool_t bPrim     = fMCStack->IsPhysicalPrimary(lab);
+              Bool_t bMaterial = fMCStack->IsSecondaryFromMaterial(lab);
+              Bool_t bWeak     = fMCStack->IsSecondaryFromWeakDecay(lab);
+              Bool_t bAcceptOrigin = kFALSE;
+              if (iorig == 0) bAcceptOrigin = bPrim;
+              if (iorig == 1) bAcceptOrigin = (bPrim || bWeak);
+              if (iorig == 2) bAcceptOrigin = (bPrim || bMaterial);
+              if (iorig == 3) bAcceptOrigin = (bPrim || bMaterial || bWeak);
+              if (!bAcceptOrigin) continue;
+              //
+              // Identify particle wrt pdg code
+              AliMCParticle *trackMCgen = (AliMCParticle *)fMCEvent->GetTrack(lab);
+              Int_t pdg = trackMCgen->Particle()->GetPdgCode();
+              //
+              Int_t iPart = -10;
+              if (TMath::Abs(pdg) == kPDGpi) { iPart = 0; fPiMC = trackReal->GetTPCsignal(); } // select pi+
+              if (TMath::Abs(pdg) == kPDGka) { iPart = 1; fKaMC = trackReal->GetTPCsignal(); } // select ka+
+              if (TMath::Abs(pdg) == kPDGpr) { iPart = 2; fPrMC = trackReal->GetTPCsignal(); } // select pr+
+              if (iPart == -10) continue; // perfect PID cut
+              //
+              // apply detector cuts
+              Bool_t ifDCAcutIfNoITSPixel = ApplyDCAcutIfNoITSPixel(trackReal);
+              if (!trackReal-> GetInnerParam()) continue;
+              if (!fESDtrackCutsLoose->AcceptTrack(trackReal)) continue;
+              if (!(trackReal->GetTPCsignalN()>0)) continue;
+              if (!ifDCAcutIfNoITSPixel) continue;
+              //
+              // kinematic variables
+              Double_t ptotMCrec = 0.;
+              if(fUsePtCut==0) ptotMCrec = trackReal->GetInnerParam()->GetP();
+              if(fUsePtCut==1) ptotMCrec = trackReal->P();
+              if(fUsePtCut==2) ptotMCrec = trackReal->Pt();
+              Float_t phiMCRec  = trackReal->Phi();
+              Double_t etaMCrec = trackReal->Eta();
+              //
+              for (size_t iEta = 0; iEta < etaDim; iEta++) {
+                for (size_t iMom = 0; iMom < momDim; iMom++) {
+                  Bool_t etaAcc = (etaMCrec>=fetaDownArr[iEta] && etaMCrec<=fetaUpArr[iEta]);
+                  Bool_t momAcc  = (ptotMCrec>=fpDownArr[iMom]  && ptotMCrec<fpUpArr[iMom]);
+                  isInBinRec[iEta][iMom] = (etaAcc && momAcc);
+                }
+              }
+              //
+              // Get the cut bit information apply track cuts
+              SetCutBitsAndSomeTrackVariables(trackReal,iPart);
+              if (!GetSystematicClassIndex(fTrackCutBits,setting)) continue;
+              //
+              if (setting == 0 && iorig == 0 && ipileup == 0) {
+                Double_t closestPar[3];
+                GetExpecteds(trackReal,closestPar);
+              }
+              //
+              // count first moments for given eta and momentum window
+              for (size_t iEta = 0; iEta < etaDim; iEta++) {
+                for (size_t iMom = 0; iMom < momDim; iMom++) {
+                  if (isInBinGen[iEta][iMom]) {
+                    if (trackReal->IsOn(AliESDtrack::kTPCrefit)) arrNtracksTPC[iEta][iMom]++;
+                    if (trackReal->IsOn(AliESDtrack::kITSrefit)) arrNtracksITS[iEta][iMom]++;
+                    arrNtracksRec[iEta][iMom]++;
+                    if ( fPiMC>-1 && pdg<0) arrRecNeg[kPi][iEta][iMom]++;
+                    if ( fKaMC>-1 && pdg<0) arrRecNeg[kKa][iEta][iMom]++;
+                    if ( fPrMC>-1 && pdg<0) arrRecNeg[kPr][iEta][iMom]++;
+                    if ( fPiMC>-1 && pdg>0) arrRecPos[kPi][iEta][iMom]++;
+                    if ( fKaMC>-1 && pdg>0) arrRecPos[kKa][iEta][iMom]++;
+                    if ( fPrMC>-1 && pdg>0) arrRecPos[kPr][iEta][iMom]++;
+                    //
+                    // count first moments for given Centrality and momentum window without resonances
+                    Bool_t acceptRes = CheckIfFromAnyResonance(trackMCgen,fetaDownArr[iEta],fetaUpArr[iEta],fpDownArr[iMom],fpUpArr[iMom]);
+                    if ( acceptRes ) {
+                      if ( fPiMC>-1 && pdg<0) arrNrRecNeg[kPi][iEta][iMom]++;
+                      if ( fKaMC>-1 && pdg<0) arrNrRecNeg[kKa][iEta][iMom]++;
+                      if ( fPrMC>-1 && pdg<0) arrNrRecNeg[kPr][iEta][iMom]++;
+                      if ( fPiMC>-1 && pdg>0) arrNrRecPos[kPi][iEta][iMom]++;
+                      if ( fKaMC>-1 && pdg>0) arrNrRecPos[kKa][iEta][iMom]++;
+                      if ( fPrMC>-1 && pdg>0) arrNrRecPos[kPr][iEta][iMom]++;
+                    }
+                  }
+                }
+              }
+            } // ======= end of track loop =======
+            //
+            // -----------------------------------------------------------------------------------------
+            // --------------------   Calculation of moments on the event level  -----------------------
+            // -----------------------------------------------------------------------------------------
+            //
+            for (size_t iEta = 0; iEta < etaDim; iEta++) {
+              for (size_t iMom = 0; iMom < momDim; iMom++) {
                 for(Int_t i=0;i<nMoments; i++){
                   fMomNetPiGen[i]=0.;       fNRMomNetPiGen[i]=0.;
                   fMomNetKaGen[i]=0.;       fNRMomNetKaGen[i]=0.;
@@ -2643,237 +2860,16 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
                   fMomNetKaRec[i]=0.;       fNRMomNetKaRec[i]=0.;
                   fMomNetPrRec[i]=0.;       fNRMomNetPrRec[i]=0.;
                 }
-                //
-                // -----------------------------------------------------------------------------------------
-                // ----------------------------   MC generated pure MC particles  --------------------------
-                // -----------------------------------------------------------------------------------------
-                //
-                for (Int_t iTrack = 0; iTrack < fMCEvent->GetNumberOfTracks(); iTrack++)
-                {
-                  // track loop
-                  //
-                  // Select real trigger event and reject other pile up vertices
-                  isTPCPileup = AliAnalysisUtils::IsParticleFromOutOfBunchPileupCollision(iTrack,fMCEvent);
-                  isITSPileup = AliAnalysisUtils::IsSameBunchPileupInGeneratedEvent(fMCEvent, "Hijing");
-                  fIsMCPileup = (isTPCPileup || isITSPileup);
-                  if (ipileup==0 && fIsMCPileup) continue;
-                  //
-                  // initialize the dummy particle id
-                  fElMCgen =-100.; fPiMCgen =-100.; fKaMCgen =-100.; fPrMCgen =-100.;
-                  AliMCParticle *trackMCgen = (AliMCParticle *)fMCEvent->GetTrack(iTrack);
-                  if (!trackMCgen) continue;
-                  //
-                  // check the origin of the track
-                  Bool_t bPrim     = fMCStack->IsPhysicalPrimary(iTrack);
-                  Bool_t bMaterial = fMCStack->IsSecondaryFromMaterial(iTrack);
-                  Bool_t bWeak     = fMCStack->IsSecondaryFromWeakDecay(iTrack);
-                  Bool_t bAcceptOrigin = kFALSE;
-                  if (iorig==0) bAcceptOrigin = bPrim;
-                  if (iorig==1) bAcceptOrigin = (bPrim || bWeak);
-                  if (iorig==2) bAcceptOrigin = (bPrim || bMaterial);
-                  if (iorig==3) bAcceptOrigin = (bPrim || bMaterial || bWeak);
-                  if (!bAcceptOrigin) continue;
-                  //
-                  // select particle of interest
-                  Int_t iPart = -10;
-                  Int_t pdg = trackMCgen->Particle()->GetPdgCode();
-                  if (TMath::Abs(pdg) == kPDGpi) {iPart = 0; fPiMCgen = iPart;} // select pi+
-                  if (TMath::Abs(pdg) == kPDGka) {iPart = 1; fKaMCgen = iPart;} // select ka+
-                  if (TMath::Abs(pdg) == kPDGpr) {iPart = 2; fPrMCgen = iPart;} // select pr+
-                  if (iPart == -10) continue; // perfect PID cut
-                  //
-                  Double_t ptotMCgen = 0.;
-                  if(fUsePtCut==0) ptotMCgen = trackMCgen->P();
-                  if(fUsePtCut==1) ptotMCgen = trackMCgen->P();
-                  if(fUsePtCut==2) ptotMCgen = trackMCgen->Pt();
-                  Float_t phiMCGen  = trackMCgen->Phi();
-                  Double_t etaMCgen = trackMCgen->Eta();
-                  Bool_t etaAcc  = (etaMCgen>=fetaDownArr[ieta] && etaMCgen<=fetaUpArr[ieta]);
-                  Bool_t momAcc  = (ptotMCgen>=fpDownArr[imom]  && ptotMCgen<fpUpArr[imom]);
-                  Bool_t etaAccMaxWindow = (etaMCgen>=fEtaDown  && etaMCgen<=fEtaUp);
-                  Bool_t momAccMaxWindow = (ptotMCgen>=fMomDown && ptotMCgen<=fMomUp);
-                  //
-                  // Fill eff Matrix
-                  if (fEffMatrix && !fRunOnGrid && etaAccMaxWindow && momAccMaxWindow && ieta==0 && imom==0 && ipileup==1){
-                    //
-                    // Eff matrix phi etc.
-                    if (setting==kCutReference && bPrim && !fIsMCPileup){
-                      Double_t xxxGen[5]={Float_t(iPart),fCentrality,ptotMCgen,etaMCgen,phiMCGen};
-                      if (pdg>0) fHistPosEffMatrixGen->Fill(xxxGen);
-                      if (pdg<0) fHistNegEffMatrixGen->Fill(xxxGen);
-                    }
-                    //
-                    // systematic scan
-                    if (bPrim && !fIsMCPileup && (iorig == 0 || iorig == 3)) {
-                      Double_t xxxGenSystScan[7]={0.,static_cast<Double_t>(iorig > 0),Float_t(setting),Float_t(iPart),fCentrality,ptotMCgen,etaMCgen};
-                      if (pdg>0) fHistPosEffMatrixScanGen->Fill(xxxGenSystScan);
-                      if (pdg<0) fHistNegEffMatrixScanGen->Fill(xxxGenSystScan);
-                      // generated does not know about TOF
-                      Double_t xxxGenSystScanTOF[7]={1.,static_cast<Double_t>(iorig > 0),Float_t(setting),Float_t(iPart),fCentrality,ptotMCgen,etaMCgen};
-                      if (pdg>0) fHistPosEffMatrixScanGen->Fill(xxxGenSystScanTOF);
-                      if (pdg<0) fHistNegEffMatrixScanGen->Fill(xxxGenSystScanTOF);
-                    }
-                  }
-                  //
-                  // fill the moments
-                  if (etaAcc && momAcc && bPrim && !fIsMCPileup){
-                    nTracksgen++;
-                    if ( fPiMCgen>-1 && pdg<0) genNeg[kPi]++;
-                    if ( fKaMCgen>-1 && pdg<0) genNeg[kKa]++;
-                    if ( fPrMCgen>-1 && pdg<0) genNeg[kPr]++;
-                    if ( fPiMCgen>-1 && pdg>0) genPos[kPi]++;
-                    if ( fKaMCgen>-1 && pdg>0) genPos[kKa]++;
-                    if ( fPrMCgen>-1 && pdg>0) genPos[kPr]++;
-                    //
-                    // reject resonances
-                    Bool_t acceptRes = CheckIfFromAnyResonance(trackMCgen,fetaDownArr[ieta],fetaUpArr[ieta],fpDownArr[imom],fpUpArr[imom]);
-                    if ( acceptRes ) {
-                      if ( fPiMCgen>-1 && pdg<0) nRgenNeg[kPi]++;
-                      if ( fKaMCgen>-1 && pdg<0) nRgenNeg[kKa]++;
-                      if ( fPrMCgen>-1 && pdg<0) nRgenNeg[kPr]++;
-                      if ( fPiMCgen>-1 && pdg>0) nRgenPos[kPi]++;
-                      if ( fKaMCgen>-1 && pdg>0) nRgenPos[kKa]++;
-                      if ( fPrMCgen>-1 && pdg>0) nRgenPos[kPr]++;
-                    }
-                  }
-                } // ======= end of track loop for generated particles =======
-                //
-                // -----------------------------------------------------------------------------------------
-                // ----------------------------   reconstructed MC particles  ------------------------------
-                // -----------------------------------------------------------------------------------------
-                //
-                for(Int_t irectrack = 0; irectrack < fESD->GetNumberOfTracks(); irectrack++)
-                {
-                  // track loop
-                  //
-                  //
-                  // initialize the dummy particle id
-                  fElMC =-100.; fPiMC =-100.; fKaMC =-100.; fPrMC =-100.;
-                  // Esd track
-                  fTrackCutBits=0;  // reset the bits for the next track
-                  AliESDtrack *trackReal = fESD->GetTrack(irectrack);
-                  if (trackReal==NULL) continue;
-                  Int_t lab = TMath::Abs(trackReal->GetLabel());           // avoid from negatif labels, they include some garbage
-                  // select pile up
-                  isTPCPileup = AliAnalysisUtils::IsParticleFromOutOfBunchPileupCollision(lab,fMCEvent);
-                  isITSPileup = AliAnalysisUtils::IsSameBunchPileupInGeneratedEvent(fMCEvent, "Hijing");
-                  fIsMCPileup = (isTPCPileup || isITSPileup);
-                  if (ipileup==0 && fIsMCPileup) continue;
-                  //
-                  // check the origin of the track
-                  Bool_t bPrim     = fMCStack->IsPhysicalPrimary(lab);
-                  Bool_t bMaterial = fMCStack->IsSecondaryFromMaterial(lab);
-                  Bool_t bWeak     = fMCStack->IsSecondaryFromWeakDecay(lab);
-                  Bool_t bAcceptOrigin = kFALSE;
-                  if (iorig==0) bAcceptOrigin = bPrim;
-                  if (iorig==1) bAcceptOrigin = (bPrim || bWeak);
-                  if (iorig==2) bAcceptOrigin = (bPrim || bMaterial);
-                  if (iorig==3) bAcceptOrigin = (bPrim || bMaterial || bWeak);
-                  if (!bAcceptOrigin) continue;
-                  //
-                  // Identify particle wrt pdg code
-                  AliMCParticle *trackMCgen = (AliMCParticle *)fMCEvent->GetTrack(lab); // TParticle *trackMC  = fMCStack->Particle(lab);
-                  Int_t pdg = trackMCgen->Particle()->GetPdgCode();                     // Int_t pdg = trackMC->GetPdgCode();
-                  //
-                  Int_t iPart = -10;
-                  if (TMath::Abs(pdg) == kPDGpi) { iPart = 0; fPiMC = trackReal->GetTPCsignal(); } // select pi+
-                  if (TMath::Abs(pdg) == kPDGka) { iPart = 1; fKaMC = trackReal->GetTPCsignal(); } // select ka+
-                  if (TMath::Abs(pdg) == kPDGpr) { iPart = 2; fPrMC = trackReal->GetTPCsignal(); } // select pr+
-                  if (iPart == -10) continue; // perfect PID cut
-                  //
-                  // apply detector cuts
-                  Bool_t ifDCAcutIfNoITSPixel = ApplyDCAcutIfNoITSPixel(trackReal);
-                  if (!trackReal-> GetInnerParam()) continue;
-                  if (!fESDtrackCutsLoose->AcceptTrack(trackReal))  continue;    // Loose Cuts
-                  if (!(trackReal->GetTPCsignalN()>0)) continue;
-                  if (!ifDCAcutIfNoITSPixel) continue;
-                  //
-                  // acceptance cuts
-                  Double_t ptotMCrec = 0.;
-                  if(fUsePtCut==0) ptotMCrec = trackReal->GetInnerParam()->GetP();
-                  if(fUsePtCut==1) ptotMCrec = trackReal->P();
-                  if(fUsePtCut==2) ptotMCrec = trackReal->Pt();
-                  Float_t phiMCRec  = trackReal->Phi();
-                  Double_t etaMCrec = trackReal->Eta();
-                  Bool_t etaAcc  = (etaMCrec>=fetaDownArr[ieta] && etaMCrec<fetaUpArr[ieta]);
-                  Bool_t momAcc  = (ptotMCrec>=fpDownArr[imom]  && ptotMCrec<fpUpArr[imom]);
-                  Bool_t etaAccMaxWindow = (etaMCrec>=fEtaDown  && etaMCrec<=fEtaUp);
-                  Bool_t momAccMaxWindow = (ptotMCrec>=fMomDown && ptotMCrec<=fMomUp);
-                  //
-                  // Get the cut bit information apply track cuts
-                  Double_t closestPar[3];
-                  GetExpecteds(trackReal,closestPar);
-                  SetCutBitsAndSomeTrackVariables(trackReal,iPart);
-                  if (!GetSystematicClassIndex(fTrackCutBits,setting)) continue;
-                  //
-                  // Fill Efficiency Matrices
-                  if (fEffMatrix && !fRunOnGrid && etaAccMaxWindow && momAccMaxWindow && ieta==0 && imom==0 && ipileup==1){
-                    //
-                    // Eff matrix with phi etc. for the default setting
-                    if (setting==kCutReference){
-                      Double_t xxxRec[5]={Float_t(iPart),fCentrality,ptotMCrec,etaMCrec,phiMCRec};
-                      if (pdg>0) fHistPosEffMatrixRec->Fill(xxxRec);
-                      if (pdg<0) fHistNegEffMatrixRec->Fill(xxxRec);
-                    }
-                    //
-                    if ((iorig == 0 || iorig == 3)) {
-                      // TPC eff matrix for all settings
-                      Double_t xxxRecSystScan[7]={0.,static_cast<Double_t>(iorig > 0),Float_t(setting),Float_t(iPart),fCentrality,ptotMCrec,etaMCrec};
-                      if (pdg>0) fHistPosEffMatrixScanRec->Fill(xxxRecSystScan);
-                      if (pdg<0) fHistNegEffMatrixScanRec->Fill(xxxRecSystScan);
-                      //
-                      // TOF+TPC eff matrix for all settings
-
-                      Double_t nSigmaTOFPi = fPIDResponse->NumberOfSigmasTOF(trackReal, AliPID::kPion);
-                      Double_t nSigmaTOFKa = fPIDResponse->NumberOfSigmasTOF(trackReal, AliPID::kKaon);
-                      Double_t nSigmaTOFPr = fPIDResponse->NumberOfSigmasTOF(trackReal, AliPID::kProton);
-
-                      Double_t nSigmaTOFDown, nSigmaTOFUp;
-                      tie(nSigmaTOFDown, nSigmaTOFUp) = GetNSigmaTOF(setting);
-
-                      Bool_t piTOF = (nSigmaTOFPi > nSigmaTOFDown && nSigmaTOFPi <= nSigmaTOFUp);
-                      Bool_t kaTOF = (nSigmaTOFKa > nSigmaTOFDown && nSigmaTOFKa <= nSigmaTOFUp);
-                      Bool_t prTOF = (nSigmaTOFPr > nSigmaTOFDown && nSigmaTOFPr <= nSigmaTOFUp);
-
-                      if ( (piTOF && iPart==0) ||  (kaTOF && iPart==1) || (prTOF && iPart==2) ) {
-                        Double_t xxxRecTOF[7]={1.,static_cast<Double_t>(iorig > 0),Float_t(setting),Float_t(iPart),fCentrality,ptotMCrec,etaMCrec};
-                        if (pdg>0) fHistPosEffMatrixScanRec->Fill(xxxRecTOF);
-                        if (pdg<0) fHistNegEffMatrixScanRec->Fill(xxxRecTOF);
-                      }
-                    }
-                  }
-                  //
-                  // count first moments for given Centrality and momentum window
-                  if (etaAcc && momAcc){
-                    //
-                    if (trackReal->IsOn(AliESDtrack::kTPCrefit)) nTracksTPC++;
-                    if (trackReal->IsOn(AliESDtrack::kITSrefit)) nTracksITS++;
-                    nTracksrec++;
-                    if ( fPiMC>-1 && pdg<0) recNeg[kPi]++;
-                    if ( fKaMC>-1 && pdg<0) recNeg[kKa]++;
-                    if ( fPrMC>-1 && pdg<0) recNeg[kPr]++;
-                    if ( fPiMC>-1 && pdg>0) recPos[kPi]++;
-                    if ( fKaMC>-1 && pdg>0) recPos[kKa]++;
-                    if ( fPrMC>-1 && pdg>0) recPos[kPr]++;
-                    //
-                    // count first moments for given Centrality and momentum window without resonances
-                    Bool_t acceptRes = CheckIfFromAnyResonance(trackMCgen,fetaDownArr[ieta],fetaUpArr[ieta],fpDownArr[imom],fpUpArr[imom]);
-                    if ( acceptRes ) {
-                      if ( fPiMC>-1 && pdg<0) nRrecNeg[kPi]++;
-                      if ( fKaMC>-1 && pdg<0) nRrecNeg[kKa]++;
-                      if ( fPrMC>-1 && pdg<0) nRrecNeg[kPr]++;
-                      if ( fPiMC>-1 && pdg>0) nRrecPos[kPi]++;
-                      if ( fKaMC>-1 && pdg>0) nRrecPos[kKa]++;
-                      if ( fPrMC>-1 && pdg>0) nRrecPos[kPr]++;
-                    }
-                  }
-
-                } // ======= end of track loop =======
-                //
-                // -----------------------------------------------------------------------------------------
-                // --------------------   Calculation of moments on the event level  -----------------------
-                // -----------------------------------------------------------------------------------------
-                //
+                for (Int_t iPart = 0; iPart < nParticles; iPart++) {
+                  genPos[iPart] = arrGenPos[iEta][iMom][iPart];
+                  genNeg[iPart] = arrGenNeg[iEta][iMom][iPart];
+                  recPos[iPart] = arrRecPos[iEta][iMom][iPart];
+                  recNeg[iPart] = arrRecNeg[iEta][iMom][iPart];
+                  nRgenPos[iPart] = arrNrGenPos[iEta][iMom][iPart];
+                  nRgenNeg[iPart] = arrNrGenNeg[iEta][iMom][iPart];
+                  nRrecPos[iPart] = arrNrRecPos[iEta][iMom][iPart];
+                  nRrecNeg[iPart] = arrNrRecNeg[iEta][iMom][iPart];
+                }
                 // ************************************************************************
                 //   Moments with resonances
                 // ************************************************************************
@@ -2987,14 +2983,16 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
                 //
                 // fill tree which contains moments
                 if(!fTreeSRedirector) return;
-                if (nTracksrec>0){
+                if (arrNtracksRec[iEta][iMom] > 0){
+                  Int_t tempNtracksTPC = arrNtracksTPC[iEta][iMom];
+                  Int_t tempNtracksITS = arrNtracksITS[iEta][iMom];
                   (*fTreeSRedirector)<<"mcFull"<<
                   "ispileup="     << ipileup <<                  // pileup or not
                   "syst="         << setting <<                     // systematic setting index
                   "isample="      << sampleNo <<                 // sample id for subsample method
                   "orig="         << iorig <<                    // origin type primary, or several combinations
-                  "nTPC="         << nTracksTPC <<               // number of tracks in the TPC
-                  "nITS="         << nTracksITS <<               // number of tracks in the ITS
+                  "nTPC="         << tempNtracksTPC <<               // number of tracks in the TPC
+                  "nITS="         << tempNtracksITS <<               // number of tracks in the ITS
                   "vZ="           << fVz <<                      // event vertex z
                   "cent="         << fCentrality <<              // centrality from V0
                   "centimp="      << fCentImpBin <<              // centraltiy from impact parameter
@@ -3011,10 +3009,10 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
                   "multv0a="      << multV0A <<                  // V0A multiplicity
                   "multv0c="      << multV0C <<                  // V0C multiplicity
                   //
-                  "pDown="        << fpDownArr[imom] <<          // lower edge of momentum bin
-                  "pUp="          << fpUpArr[imom] <<            // upper edge of momentum bin
-                  "etaDown="      << fetaDownArr[ieta] <<        // lower edge of eta bin
-                  "etaUp="        << fetaUpArr[ieta] <<          // upper edge of eta bin
+                  "pDown="        << fpDownArr[iMom] <<          // lower edge of momentum bin
+                  "pUp="          << fpUpArr[iMom] <<            // upper edge of momentum bin
+                  "etaDown="      << fetaDownArr[iEta] <<        // lower edge of eta bin
+                  "etaUp="        << fetaUpArr[iEta] <<          // upper edge of eta bin
                   //
                   "netPiMomGen.="   << &fMomNetPiGen <<         // momnets up to 3rd order for (net)pions on generated level with resonances
                   "netKaMomGen.="   << &fMomNetKaGen <<         // momnets up to 3rd order for (net)kaons on generated level with resonances
@@ -3040,13 +3038,11 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
                   // "nRnegRec.="   << &nRrecNeg <<                // counters for reconstruced positive particles without resonances
                   "\n";
                 }
-                //
-              }
-            } // track origin loop
-          } // ======= end of momentum loop =======
-        } // ======= end of eta loop =======
-      } // settitngs loop
-
+              } // momemtum loop
+            } // eta loop
+          } // pileup loop
+        } // track origin loop
+      } // settings loop
     }
     //________________________________________________________________________
     void AliAnalysisTaskTIdentityPID::FastGen_NetParticles()
@@ -3548,7 +3544,7 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
       } // ======= end of track loop for MC dEdx filling =======
 
 
-
+      if (fUseCouts) std::cout << " Info::marsland: ===== Out of FillTreeMC ===== " << std::endl;
     }
     //________________________________________________________________________
     void AliAnalysisTaskTIdentityPID::FillGenDistributions()
@@ -4445,146 +4441,214 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
     {
 
       //
-      // Fill dEdx information for the TPC and also the clean kaon and protons
+      // Fill Efficiency Matrix histograms for rec and gen
       //
-      Int_t trackOrigin = -10;
-      Int_t sampleNo = 0;
-      Int_t nSubSample = 20;
-      sampleNo = Int_t(fEventGID)%nSubSample;
       if (fUseCouts) std::cout << " Info::marsland: ===== In the FillEffMatrix ===== " << std::endl;
       //
-      // -----------------------------------------------------------------------------------------
-      // ----------------------------   reconstructed MC particles  ------------------------------
-      // -----------------------------------------------------------------------------------------
+      // check if the MC event is full
+      Int_t nStackTracks = fMCEvent->GetNumberOfTracks();
+      if (nStackTracks>1) fHistCentralityImpPar->Fill(fCentImpBin);
+      else return;
       //
+      const Int_t nParticles  = 3;
+      const Int_t nPileUpSettings = 2;
+      Int_t nOriginType = (fTrackOriginOnlyPrimary!=1) ? 4 : 1;
       //
-      Bool_t bEventVertexZSmall      = (TMath::Abs(fVz)<6 && TMath::Abs(fVz)>0.2);
       Bool_t bCutReference           = (TMath::Abs(fVz)<7 && TMath::Abs(fVz)>0.15);
       Bool_t bEventVertexZLarge      = (TMath::Abs(fVz)<8 && TMath::Abs(fVz)>0.1);
-      Bool_t bEventVertexZALICE      = (TMath::Abs(fVz)<10);
-      Bool_t bEventVertexZALICETight = (TMath::Abs(fVz)<7);
       //
-      // loop over tracks
-      for (Int_t iset=0; iset<fNSettings; iset++) {
+      // setting scan
+      for (size_t iset=0; iset<fSystSettings.size(); iset++){
         Int_t setting = fSystSettings[iset];
-        //
         // event Vz cuts
-        if (setting==kCutEventVertexZLarge      && !bEventVertexZLarge)      continue;
-        else if ( !bCutReference ) continue;
+        if (setting == kCutEventVertexZLarge && !bEventVertexZLarge) continue;
+        else if (setting != kCutEventVertexZLarge && !bCutReference) continue;
         //
-        for(Int_t irectrack = 0; irectrack < fESD->GetNumberOfTracks(); irectrack++)
-        { // track loop
-          //
-          fTrackCutBits=0;  // reset the bits for the next track
-          AliESDtrack *trackReal = fESD->GetTrack(irectrack);
-          if (trackReal==NULL) continue;
-          Int_t lab = TMath::Abs(trackReal->GetLabel()); // avoid from negatif labels, they include some garbage
+        for (Int_t iorig=0; iorig<nOriginType; iorig++){
+          for (Int_t ipileup = 0; ipileup < nPileUpSettings; ipileup++)
+          {
+            //
+            // Initialize counters
+            Int_t nTracksrec=0, nTracksgen=0, nTracksTPC = 0, nTracksITS = 0;
+            Bool_t isTPCPileup = kFALSE, isITSPileup = kFALSE;
+            //
+            // -----------------------------------------------------------------------------------------
+            // ----------------------------   MC generated pure MC particles  --------------------------
+            // -----------------------------------------------------------------------------------------
+            //
+            for (Int_t iTrack = 0; iTrack < fMCEvent->GetNumberOfTracks(); iTrack++)
+            {
+              // track loop
+              //
+              // Select real trigger event and reject other pile up vertices
+              isTPCPileup = AliAnalysisUtils::IsParticleFromOutOfBunchPileupCollision(iTrack,fMCEvent);
+              isITSPileup = AliAnalysisUtils::IsSameBunchPileupInGeneratedEvent(fMCEvent, "Hijing");
+              fIsMCPileup = (isTPCPileup || isITSPileup);
+              if (ipileup==0 && fIsMCPileup) continue;
+              //
+              // initialize the dummy particle id
+              fElMCgen =-100.; fPiMCgen =-100.; fKaMCgen =-100.; fPrMCgen =-100.;
+              AliMCParticle *trackMCgen = (AliMCParticle *)fMCEvent->GetTrack(iTrack);
+              if (!trackMCgen) continue;
+              //
+              // check the origin of the track
+              Bool_t bPrim     = fMCStack->IsPhysicalPrimary(iTrack);
+              Bool_t bMaterial = fMCStack->IsSecondaryFromMaterial(iTrack);
+              Bool_t bWeak     = fMCStack->IsSecondaryFromWeakDecay(iTrack);
+              Bool_t bAcceptOrigin = kFALSE;
+              if (iorig==0) bAcceptOrigin = bPrim;
+              if (iorig==1) bAcceptOrigin = (bPrim || bWeak);
+              if (iorig==2) bAcceptOrigin = (bPrim || bMaterial);
+              if (iorig==3) bAcceptOrigin = (bPrim || bMaterial || bWeak);
+              if (!bAcceptOrigin) continue;
+              //
+              // select particle of interest
+              Int_t iPart = -10;
+              Int_t pdg = trackMCgen->Particle()->GetPdgCode();
+              if (TMath::Abs(pdg) == kPDGpi) {iPart = 0; fPiMCgen = iPart;} // select pi+
+              if (TMath::Abs(pdg) == kPDGka) {iPart = 1; fKaMCgen = iPart;} // select ka+
+              if (TMath::Abs(pdg) == kPDGpr) {iPart = 2; fPrMCgen = iPart;} // select pr+
+              if (iPart == -10) continue; // perfect PID cut
+              //
+              Double_t ptotMCgen = 0.;
+              if(fUsePtCut==0) ptotMCgen = trackMCgen->P();
+              if(fUsePtCut==1) ptotMCgen = trackMCgen->P();
+              if(fUsePtCut==2) ptotMCgen = trackMCgen->Pt();
+              Float_t phiMCGen  = trackMCgen->Phi();
+              Double_t etaMCgen = trackMCgen->Eta();
+              Bool_t etaAccMaxWindow = (etaMCgen>=fEtaDown  && etaMCgen<=fEtaUp);
+              Bool_t momAccMaxWindow = (ptotMCgen>=fMomDown && ptotMCgen<=fMomUp);
+              //
+              // Fill eff Matrix
+              if (fEffMatrix && !fRunOnGrid && etaAccMaxWindow && momAccMaxWindow && ipileup==1){
+                //
+                // Eff matrix phi etc.
+                if (setting==kCutReference && bPrim && !fIsMCPileup){
+                  Double_t xxxGen[5]={Float_t(iPart),fCentrality,ptotMCgen,etaMCgen,phiMCGen};
+                  if (pdg>0) fHistPosEffMatrixGen->Fill(xxxGen);
+                  if (pdg<0) fHistNegEffMatrixGen->Fill(xxxGen);
+                }
+                //
+                // systematic scan
+                if (bPrim && !fIsMCPileup && (iorig == 0 || iorig == 3)) {
+                  Double_t xxxGenSystScan[7]={0.,static_cast<Double_t>(iorig > 0),Float_t(setting),Float_t(iPart),fCentrality,ptotMCgen,etaMCgen};
+                  if (pdg>0) fHistPosEffMatrixScanGen->Fill(xxxGenSystScan);
+                  if (pdg<0) fHistNegEffMatrixScanGen->Fill(xxxGenSystScan);
+                  // generated does not know about TOF
+                  Double_t xxxGenSystScanTOF[7]={1.,static_cast<Double_t>(iorig > 0),Float_t(setting),Float_t(iPart),fCentrality,ptotMCgen,etaMCgen};
+                  if (pdg>0) fHistPosEffMatrixScanGen->Fill(xxxGenSystScanTOF);
+                  if (pdg<0) fHistNegEffMatrixScanGen->Fill(xxxGenSystScanTOF);
+                }
+              }
+            } // ======= end of track loop for generated particles =======
+            //
+            // -----------------------------------------------------------------------------------------
+            // ----------------------------   reconstructed MC particles  ------------------------------
+            // -----------------------------------------------------------------------------------------
+            //
+            for(Int_t irectrack = 0; irectrack < fESD->GetNumberOfTracks(); irectrack++)
+            {
+              // track loop
+              //
+              //
+              // initialize the dummy particle id
+              fElMC =-100.; fPiMC =-100.; fKaMC =-100.; fPrMC =-100.;
+              // Esd track
+              fTrackCutBits=0;  // reset the bits for the next track
+              AliESDtrack *trackReal = fESD->GetTrack(irectrack);
+              if (trackReal==NULL) continue;
+              Int_t lab = TMath::Abs(trackReal->GetLabel());           // avoid from negatif labels, they include some garbage
+              // select pile up
+              isTPCPileup = AliAnalysisUtils::IsParticleFromOutOfBunchPileupCollision(lab,fMCEvent);
+              isITSPileup = AliAnalysisUtils::IsSameBunchPileupInGeneratedEvent(fMCEvent, "Hijing");
+              fIsMCPileup = (isTPCPileup || isITSPileup);
+              if (ipileup==0 && fIsMCPileup) continue;
+              //
+              // check the origin of the track
+              Bool_t bPrim     = fMCStack->IsPhysicalPrimary(lab);
+              Bool_t bMaterial = fMCStack->IsSecondaryFromMaterial(lab);
+              Bool_t bWeak     = fMCStack->IsSecondaryFromWeakDecay(lab);
+              Bool_t bAcceptOrigin = kFALSE;
+              if (iorig==0) bAcceptOrigin = bPrim;
+              if (iorig==1) bAcceptOrigin = (bPrim || bWeak);
+              if (iorig==2) bAcceptOrigin = (bPrim || bMaterial);
+              if (iorig==3) bAcceptOrigin = (bPrim || bMaterial || bWeak);
+              if (!bAcceptOrigin) continue;
+              //
+              // Identify particle wrt pdg code
+              AliMCParticle *trackMCgen = (AliMCParticle *)fMCEvent->GetTrack(lab); // TParticle *trackMC  = fMCStack->Particle(lab);
+              Int_t pdg = trackMCgen->Particle()->GetPdgCode();                     // Int_t pdg = trackMC->GetPdgCode();
+              //
+              Int_t iPart = -10;
+              if (TMath::Abs(pdg) == kPDGpi) { iPart = 0; fPiMC = trackReal->GetTPCsignal(); } // select pi+
+              if (TMath::Abs(pdg) == kPDGka) { iPart = 1; fKaMC = trackReal->GetTPCsignal(); } // select ka+
+              if (TMath::Abs(pdg) == kPDGpr) { iPart = 2; fPrMC = trackReal->GetTPCsignal(); } // select pr+
+              if (iPart == -10) continue; // perfect PID cut
+              //
+              // apply detector cuts
+              Bool_t ifDCAcutIfNoITSPixel = ApplyDCAcutIfNoITSPixel(trackReal);
+              if (!trackReal-> GetInnerParam()) continue;
+              if (!fESDtrackCutsLoose->AcceptTrack(trackReal))  continue;    // Loose Cuts
+              if (!(trackReal->GetTPCsignalN()>0)) continue;
+              if (!ifDCAcutIfNoITSPixel) continue;
+              //
+              // acceptance cuts
+              Double_t ptotMCrec = 0.;
+              if(fUsePtCut==0) ptotMCrec = trackReal->GetInnerParam()->GetP();
+              if(fUsePtCut==1) ptotMCrec = trackReal->P();
+              if(fUsePtCut==2) ptotMCrec = trackReal->Pt();
+              Float_t phiMCRec  = trackReal->Phi();
+              Double_t etaMCrec = trackReal->Eta();
+              Bool_t etaAccMaxWindow = (etaMCrec>=fEtaDown  && etaMCrec<=fEtaUp);
+              Bool_t momAccMaxWindow = (ptotMCrec>=fMomDown && ptotMCrec<=fMomUp);
+              //
+              // Get the cut bit information apply track cuts
+              Double_t closestPar[3];
+              GetExpecteds(trackReal,closestPar);
+              SetCutBitsAndSomeTrackVariables(trackReal,iPart);
+              if (!GetSystematicClassIndex(fTrackCutBits,setting)) continue;
+              //
+              // Fill Efficiency Matrices
+              if (fEffMatrix && !fRunOnGrid && etaAccMaxWindow && momAccMaxWindow && ipileup==1){
+                //
+                // Eff matrix with phi etc. for the default setting
+                if (setting==kCutReference){
+                  Double_t xxxRec[5]={Float_t(iPart),fCentrality,ptotMCrec,etaMCrec,phiMCRec};
+                  if (pdg>0) fHistPosEffMatrixRec->Fill(xxxRec);
+                  if (pdg<0) fHistNegEffMatrixRec->Fill(xxxRec);
+                }
+                //
+                if ((iorig == 0 || iorig == 3)) {
+                  // TPC eff matrix for all settings
+                  Double_t xxxRecSystScan[7]={0.,static_cast<Double_t>(iorig > 0),Float_t(setting),Float_t(iPart),fCentrality,ptotMCrec,etaMCrec};
+                  if (pdg>0) fHistPosEffMatrixScanRec->Fill(xxxRecSystScan);
+                  if (pdg<0) fHistNegEffMatrixScanRec->Fill(xxxRecSystScan);
+                  //
+                  // TOF+TPC eff matrix for all settings
 
-          //
-          Float_t etaMCrec = (fRapidityType==0) ? trackReal->Eta() :  trackReal->Y();
-          if ((etaMCrec<fEtaDown) || (etaMCrec>fEtaUp)) continue;   // eta [-0.8,0.8]
-          if (!fMCStack->IsPhysicalPrimary(lab)) continue;   // MC primary track check
-          //
-          Bool_t ifDCAcutIfNoITSPixel = ApplyDCAcutIfNoITSPixel(trackReal);
-          if (!trackReal->GetInnerParam()) continue;   // If track in TPC
-          if (!fESDtrackCutsLoose->AcceptTrack(trackReal)) continue;   // apply esdtrack cuts
-          if (!ifDCAcutIfNoITSPixel) continue;   // apply esdtrack cuts
-          //
-          // access generated track info
-          AliMCParticle *trackMCgen = (AliMCParticle *)fMCEvent->GetTrack(lab);
-          Int_t pdg = trackMCgen->Particle()->GetPdgCode();  //  Int_t pdg = trackMC->GetPdgCode();   TODO
-          //
-          // get track info
-          Float_t fPtRec = 0.;
-          if(fUsePtCut==1) fPtRec = trackReal->P();
-          if(fUsePtCut==2) fPtRec = trackReal->Pt();
-          if ((fPtRec<fMomDown) || (fPtRec>fMomUp)) continue;
-          //
-          Int_t fPartID  = -10;
-          if (TMath::Abs(pdg) == kPDGpi) fPartID=0; // select pi
-          if (TMath::Abs(pdg) == kPDGka) fPartID=1; // select ka
-          if (TMath::Abs(pdg) == kPDGpr) fPartID=2; // select pr
-          if (fPartID == -10) continue;
-          //
-          // Loop over all track settings
-          Double_t closestPar[3];
-          GetExpecteds(trackReal,closestPar);
-          SetCutBitsAndSomeTrackVariables(trackReal,fPartID);
-          //
-          if (GetSystematicClassIndex(fTrackCutBits,setting)){
-            //
-            // Fill TPC eff matrix
-            Double_t xxxRec[6]={0.,Float_t(setting),Float_t(fPartID),fCentrality,fPtRec,etaMCrec};
-            if (pdg>0) fHistPosEffMatrixScanRec->Fill(xxxRec);
-            if (pdg<0) fHistNegEffMatrixScanRec->Fill(xxxRec);
-            //
-            // Fill TOF eff matrix
-            Bool_t piTOF = (TMath::Abs(fPIDResponse->NumberOfSigmasTOF(trackReal, AliPID::kPion))  <=2.5);
-            Bool_t kaTOF = (TMath::Abs(fPIDResponse->NumberOfSigmasTOF(trackReal, AliPID::kKaon))  <=2.5);
-            Bool_t prTOF = (TMath::Abs(fPIDResponse->NumberOfSigmasTOF(trackReal, AliPID::kProton))<=2.5);
-            if ( (piTOF && fPartID==0) ||  (kaTOF && fPartID==1) || (prTOF && fPartID==2) ) {
-              Double_t xxxRecTOF[6]={1.,Float_t(setting),Float_t(fPartID),fCentrality,fPtRec,etaMCrec};
-              if (pdg>0) fHistPosEffMatrixScanRec->Fill(xxxRecTOF);
-              if (pdg<0) fHistNegEffMatrixScanRec->Fill(xxxRecTOF);
-            }
+                  Double_t nSigmaTOFPi = fPIDResponse->NumberOfSigmasTOF(trackReal, AliPID::kPion, fPIDResponse->GetTOFResponse().GetTimeZero());
+                  Double_t nSigmaTOFKa = fPIDResponse->NumberOfSigmasTOF(trackReal, AliPID::kKaon, fPIDResponse->GetTOFResponse().GetTimeZero());
+                  Double_t nSigmaTOFPr = fPIDResponse->NumberOfSigmasTOF(trackReal, AliPID::kProton, fPIDResponse->GetTOFResponse().GetTimeZero());
+
+                  Double_t nSigmaTOFDown, nSigmaTOFUp;
+                  tie(nSigmaTOFDown, nSigmaTOFUp) = GetNSigmaTOF(setting);
+
+                  Bool_t piTOF = (nSigmaTOFPi > nSigmaTOFDown && nSigmaTOFPi <= nSigmaTOFUp);
+                  Bool_t kaTOF = (nSigmaTOFKa > nSigmaTOFDown && nSigmaTOFKa <= nSigmaTOFUp);
+                  Bool_t prTOF = (nSigmaTOFPr > nSigmaTOFDown && nSigmaTOFPr <= nSigmaTOFUp);
+
+                  if ( (piTOF && iPart==0) ||  (kaTOF && iPart==1) || (prTOF && iPart==2) ) {
+                    Double_t xxxRecTOF[7]={1.,static_cast<Double_t>(iorig > 0),Float_t(setting),Float_t(iPart),fCentrality,ptotMCrec,etaMCrec};
+
+                    if (pdg>0) fHistPosEffMatrixScanRec->Fill(xxxRecTOF);
+                    if (pdg<0) fHistNegEffMatrixScanRec->Fill(xxxRecTOF);
+                  }
+                }
+              }
+            } // ======= end of track loop =======
           }
-
-        } // ======= end of rec track loop =======
-        //
-        // -----------------------------------------------------------------------------------------
-        // ----------------------------   MC generated pure MC particles  --------------------------
-        // -----------------------------------------------------------------------------------------
-        //
-        // only event Vz cuts can be applied on generated level
-        if ( setting==kCutReference || setting==kCutEventVertexZLarge ) {
-          //
-          for (Int_t iTrack = 0; iTrack < fMCEvent->GetNumberOfTracks(); iTrack++)
-          { // track loop
-            //
-            // Select real trigger event and reject other pile up vertices
-            Bool_t isTPCPileup = AliAnalysisUtils::IsParticleFromOutOfBunchPileupCollision(iTrack,fMCEvent);
-            Bool_t isITSPileup = AliAnalysisUtils::IsSameBunchPileupInGeneratedEvent(fMCEvent, "Hijing");
-            if (isTPCPileup || isITSPileup) continue;
-            //
-            AliMCParticle *trackMCgen = (AliMCParticle *)fMCEvent->GetTrack(iTrack);
-            if (!trackMCgen) continue;
-            //
-            // apply primary track and acceptance cuts
-            if (!fMCStack->IsPhysicalPrimary(iTrack)) continue;
-            //
-            // Aplly eta acceptance
-            Float_t etaMCgen = (fRapidityType==0) ? trackMCgen->Eta() :  trackMCgen->Y();
-            if ((etaMCgen<fEtaDown) || (etaMCgen>fEtaUp))  continue;
-            //
-            // Aplly momentum acceptance
-            Float_t ptotMCgen =0.;
-            if(fUsePtCut==1) ptotMCgen = trackMCgen->P();
-            if(fUsePtCut==2) ptotMCgen = trackMCgen->Pt();
-            if ((ptotMCgen<fMomDown) || (ptotMCgen>fMomUp)) continue;
-            //
-            // Efficiency matices for individual particles
-            Int_t fPartID  = -10;
-            Int_t pdg  = trackMCgen->Particle()->GetPdgCode();
-            if (TMath::Abs(pdg) == kPDGpi) fPartID=0; // select pi
-            if (TMath::Abs(pdg) == kPDGka) fPartID=1; // select ka
-            if (TMath::Abs(pdg) == kPDGpr) fPartID=2; // select pr
-            if (fPartID == -10) continue;
-            //
-            Double_t xxxGen[6]={0.,Float_t(setting),Float_t(fPartID),fCentrality,ptotMCgen,etaMCgen};
-            if (pdg>0) fHistPosEffMatrixScanGen->Fill(xxxGen);
-            if (pdg<0) fHistNegEffMatrixScanGen->Fill(xxxGen);
-            // generated does not know about TOF
-            Double_t xxxGenTOF[6]={1.,Float_t(setting),Float_t(fPartID),fCentrality,ptotMCgen,etaMCgen};
-            if (pdg>0) fHistPosEffMatrixScanGen->Fill(xxxGenTOF);
-            if (pdg<0) fHistNegEffMatrixScanGen->Fill(xxxGenTOF);
-
-          } // ======= end of gen track loop =======
-        }
-        //
-        if (fDefaultTrackCuts && setting==kCutReference) break; // for default track cuts run only once
-
-      }
-
+        } // track origin loop
+      } // settings loop
     }
     //________________________________________________________________________
     void AliAnalysisTaskTIdentityPID::FillCleanSamples()
