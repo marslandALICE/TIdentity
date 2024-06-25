@@ -123,6 +123,7 @@ AliAnalysisTask *AddTask_marsland_TIdentityPID(Bool_t getFromAlien=kFALSE, TStri
   AliAnalysisDataContainer *coutput5, *coutput6, *coutput7, *coutput8, *coutput9;
   AliAnalysisDataContainer *coutput10, *coutput11, *coutput12, *coutput13,*coutput14;
   AliAnalysisDataContainer *coutput15, *coutput16;
+  AliAnalysisDataContainer *coutput17, *coutput18, *coutput19, *coutput20, *coutput21, *coutput22, *coutput23;
   //
   //  find and connect input container // Output files --> File opening order is important
   cinput  = mgr->GetCommonInputContainer();
@@ -159,10 +160,18 @@ AliAnalysisTask *AddTask_marsland_TIdentityPID(Bool_t getFromAlien=kFALSE, TStri
   coutput10 = mgr->CreateContainer(combinedName+"_resonance",     TTree::Class(), AliAnalysisManager::kOutputContainer, fileDirStructure);
   coutput11 = mgr->CreateContainer(combinedName+"_mcGenMoms",     TTree::Class(), AliAnalysisManager::kOutputContainer, fileDirStructure);
   coutput12 = mgr->CreateContainer(combinedName+"_eventInfo",     TTree::Class(), AliAnalysisManager::kOutputContainer, fileDirStructure);
-  coutput13 = mgr->CreateContainer(combinedName+"_dscaled",       TTree::Class(), AliAnalysisManager::kOutputContainer, fileDirStructure);
-  coutput14 = mgr->CreateContainer(combinedName+"_mcMoms",        TTree::Class(), AliAnalysisManager::kOutputContainer, fileDirStructure);
-  coutput15 = mgr->CreateContainer(combinedName+"_expecteds",     TTree::Class(), AliAnalysisManager::kOutputContainer, fileDirStructure);
-  coutput16 = mgr->CreateContainer(combinedName+"_cutBased",      TTree::Class(), AliAnalysisManager::kOutputContainer, fileDirStructure);
+  coutput13 = mgr->CreateContainer(combinedName+"_eventInfoMC",   TTree::Class(), AliAnalysisManager::kOutputContainer, fileDirStructure);
+  coutput14 = mgr->CreateContainer(combinedName+"_dscaled",       TTree::Class(), AliAnalysisManager::kOutputContainer, fileDirStructure);
+  coutput15 = mgr->CreateContainer(combinedName+"_mcMoms",        TTree::Class(), AliAnalysisManager::kOutputContainer, fileDirStructure);
+  coutput16 = mgr->CreateContainer(combinedName+"_expecteds",     TTree::Class(), AliAnalysisManager::kOutputContainer, fileDirStructure);
+  coutput17 = mgr->CreateContainer(combinedName+"_cutBased",      TTree::Class(), AliAnalysisManager::kOutputContainer, fileDirStructure);
+  coutput18 = mgr->CreateContainer(combinedName+"_jetsFJ",        TTree::Class(), AliAnalysisManager::kOutputContainer, fileDirStructure);
+  coutput19 = mgr->CreateContainer(combinedName+"_jetsFJBG",      TTree::Class(), AliAnalysisManager::kOutputContainer, fileDirStructure);
+  coutput20 = mgr->CreateContainer(combinedName+"_jetsFJconst",   TTree::Class(), AliAnalysisManager::kOutputContainer, fileDirStructure);
+  coutput21 = mgr->CreateContainer(combinedName+"_jetsFJGen",     TTree::Class(), AliAnalysisManager::kOutputContainer, fileDirStructure);
+  coutput22 = mgr->CreateContainer(combinedName+"_jetsFJBGGen",   TTree::Class(), AliAnalysisManager::kOutputContainer, fileDirStructure);
+  coutput23 = mgr->CreateContainer(combinedName+"_jetsFJconstGen",TTree::Class(), AliAnalysisManager::kOutputContainer, fileDirStructure);
+
   mgr->ConnectOutput (task,  1, coutput1);
   mgr->ConnectOutput (task,  2, coutput2);
   mgr->ConnectOutput (task,  3, coutput3);
@@ -179,6 +188,14 @@ AliAnalysisTask *AddTask_marsland_TIdentityPID(Bool_t getFromAlien=kFALSE, TStri
   mgr->ConnectOutput (task,  14, coutput14);
   mgr->ConnectOutput (task,  15, coutput15);
   mgr->ConnectOutput (task,  16, coutput16);
+  mgr->ConnectOutput (task,  17, coutput17);
+  mgr->ConnectOutput (task,  18, coutput18);
+  mgr->ConnectOutput (task,  19, coutput19);
+  mgr->ConnectOutput (task,  20, coutput20);
+  mgr->ConnectOutput (task,  21, coutput21);
+  mgr->ConnectOutput (task,  22, coutput22);
+  mgr->ConnectOutput (task,  23, coutput22);
+
 
   std::cout << " Info::marsland: === Containers are ready === " << std::endl;
   return task;

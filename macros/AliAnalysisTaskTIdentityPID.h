@@ -249,6 +249,8 @@ public:
   void   SetPercentageOfEvents(const Int_t nPercentageOfEvents = 0)   {fPercentageOfEvents = nPercentageOfEvents;}
   void   SetV0InvMassHists(const Bool_t ifV0InvMassHists = kFALSE)    {fV0InvMassHists      = ifV0InvMassHists;}
   void   SetRunNumberForExpecteds(const Int_t ifRunNumberForExpecteds = 0)    {fRunNumberForExpecteds = ifRunNumberForExpecteds;}
+  void   SetFillJetsBG(const Int_t ifFillJetsBG = kTRUE)              {fFillJetsBG          = ifFillJetsBG;}
+  void   SetFillResonances(const Bool_t ifFillResonances = kFALSE)    {fFillResonances      = ifFillResonances;}
 
   void   SetSettings(const std::vector<Int_t> ifSystSettings) {
     fSystSettings = ifSystSettings;
@@ -257,7 +259,7 @@ public:
   void   SetNSettings(const Int_t nSettings = 22) {
     std::vector<Int_t> tempSettings(nSettings);
     for (Int_t i = 0; i < nSettings; i++)
-      tempSettings[i] = i;
+    tempSettings[i] = i;
     SetSettings(tempSettings);
   }
 
@@ -280,6 +282,7 @@ public:
   void   SetMomUpperEdge(const Float_t momUpperEdge = 12.)        {fMomUp               = momUpperEdge;}
   void   SetNMomBins(const Int_t nMombins = 600)                  {fNMomBins            = nMombins;}
   void   SetNGenprotonBins(const Int_t nGenprotonBins = 100)      {fGenprotonBins       = nGenprotonBins;}
+  void   SetCollisionType(Int_t collisionType = 0)          {fCollisionType       = collisionType;}
 
   void   SetEffMatrixMomBins(const std::vector<Double_t> nEffMatrixMomBins) {fEffMatrixMomBins = nEffMatrixMomBins;}
   void   SetEffMatrixCentBins(const std::vector<Double_t> nEffMatrixCentBins) {fEffMatrixCentBins = nEffMatrixCentBins;}
@@ -296,17 +299,17 @@ public:
     switch (setting)
     {
       case kCutNSigmaTOFLoose:
-        nSigmaDown = fNSigmaTOFDown[1];
-        nSigmaUp = fNSigmaTOFUp[1];
-        break;
+      nSigmaDown = fNSigmaTOFDown[1];
+      nSigmaUp = fNSigmaTOFUp[1];
+      break;
       case kCutNSigmaTOFLoose2:
-        nSigmaDown = fNSigmaTOFDown[2];
-        nSigmaUp = fNSigmaTOFUp[2];
-        break;
+      nSigmaDown = fNSigmaTOFDown[2];
+      nSigmaUp = fNSigmaTOFUp[2];
+      break;
       default:
-        nSigmaDown = fNSigmaTOFDown[0];
-        nSigmaUp = fNSigmaTOFUp[0];
-        break;
+      nSigmaDown = fNSigmaTOFDown[0];
+      nSigmaUp = fNSigmaTOFUp[0];
+      break;
     }
     return std::make_pair(nSigmaDown, nSigmaUp);
   }
@@ -580,10 +583,21 @@ private:
   Bool_t ApplyDCAcutIfNoITSPixel(AliESDtrack *track);
   Bool_t GetSystematicClassIndex(UInt_t cut,Int_t syst);
   Bool_t CheckPsiPair(const AliESDv0* v0);
+  //
+  // Jet Functions
+  void FindJetsFJ();
+  void FindJetsFJGen();
+  void MakeEventPlane(Double_t &Psi_full_r, Double_t &Psi_full_r_Psi3, Int_t doEP_Psi2, Int_t doEP_Psi3, Int_t setting);
+  void GetFlatenicityMC();
+  void GetFlatenicity();
+  Double_t ComputeSpherocity(Int_t setting);
+  void FillEventInfoMC();
+
+  //
   // ---------------------------------------------------------------------------------
   //                                   Members
   // ---------------------------------------------------------------------------------
-
+  //
   AliPIDResponse   * fPIDResponse;            //! PID response object
   AliESDEvent      * fESD;                    //! ESD object
   TList            * fListHist;               //! list for histograms
@@ -618,10 +632,17 @@ private:
   TTree            * fTreeResonance;          // tree with full acceptance filled with MC
   TTree            * fTreeMCgenMoms;          // tree with higher moment calculations
   TTree            * fTreeEvents;
+  TTree            * fTreeEventsMC;
   TTree            * fTreeDScaled;
   TTree            * fTreeMCEffCorr;
   TTree            * fTreeExpecteds;          // tree with expected dE/dx
   TTree            * fTreeCutBased;           // tree with moments from cut based method
+  TTree            * fTreejetsFJ;             // tree for fastjet signal jets
+  TTree            * fTreejetsFJBG;           // tree for fastjet background jets
+  TTree            * fTreejetsFJconst;          // tree for fastjet signal jet constituents
+  TTree            * fTreejetsFJGen;
+  TTree            * fTreejetsFJBGGen;
+  TTree            * fTreejetsFJconstGen;
   TRandom3         fRandom;
 
 
@@ -677,6 +698,8 @@ private:
   Bool_t            fDefaultTrackCuts;
   Bool_t            fDefaultEventCuts;
   Bool_t            fFillNudynFastGen;
+  Bool_t            fFillResonances;
+  Int_t             fCollisionType;
   Int_t             fCorrectForMissCl;       // 0; defaults crows, 1; ncls used wo correction, 2; ncls used with correction
   Int_t             fUsePtCut;
   Int_t             fTrackOriginOnlyPrimary;
@@ -763,13 +786,12 @@ private:
 
   Float_t           fElMCgen;
   Float_t           fXiMCgen;
-  Float_t           fD0MCgen;
+  Float_t           fLaMCgen;
   Float_t           fPiMCgen;
   Float_t           fKaMCgen;
   Float_t           fPrMCgen;
   Float_t           fDeMCgen;
   Float_t           fMuMCgen;
-  Float_t           fLaMCgen;
   Float_t           fBaMCgen;
 
 
@@ -830,7 +852,44 @@ private:
   Float_t            fBField;
   TString            fBeamType;
   Bool_t             fIsMCPileup;
+  //
+  // Jet variables
+  Float_t            fLeadingJetCut;
+  Double_t           fJetPt;
+  Double_t           fJetEta;
+  Double_t           fJetPhi;
+  Float_t            fjetRhoVal;
+  Float_t            fRhoFJ;
+  Bool_t             fhasAcceptedFJjet;
+  Bool_t             fhasRealFJjet;
+  Int_t              fFillJetsBG;          // switch whether to fill jetsEMC constituent tree
+  TH1F              *fJetHistptSub;              // control histogram for rho subtrated jet pt
 
+  //
+  // Event shape
+  Double_t fEP_2_Qx_neg;
+  Double_t fEP_2_Qx_pos;
+  Double_t fEP_2_Qy_neg;
+  Double_t fEP_2_Qy_pos;
+  Double_t fEP_2_Psi_pos;
+  Double_t fEP_2_Psi_neg;
+  Double_t fEP_2_Psi;
+  Double_t fEP_ntracks_neg;
+  Double_t fEP_ntracks_pos;
+  //
+  Double_t fEP_3_Qx_neg;
+  Double_t fEP_3_Qx_pos;
+  Double_t fEP_3_Qy_neg;
+  Double_t fEP_3_Qy_pos;
+  Double_t fEP_3_Psi_pos;
+  Double_t fEP_3_Psi_neg;
+  Double_t fEP_3_Psi;
+  //
+  Double_t fFlatenicity;
+  Double_t fFlatenicityScaled;
+  Double_t fSpherocity;
+
+  //
   // Cut variables
   Double_t fTrackProbElTPC;
   Double_t fTrackProbPiTPC;
@@ -961,7 +1020,7 @@ private:
   AliEventCuts* fPileUpTightnessCut2;
   AliEventCuts* fPileUpTightnessCut1;
 
-  ClassDef(AliAnalysisTaskTIdentityPID, 7);
+  ClassDef(AliAnalysisTaskTIdentityPID, 8);
 
 };
 
