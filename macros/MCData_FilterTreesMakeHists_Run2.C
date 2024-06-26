@@ -278,45 +278,47 @@ enum trackCutBit {
   kVertexZ=9,
   kEventVertexZ=10,
   kEventVertexZLarge=11,
-  kActiveZone=12,
-  kTPCSignalNSmall=13,
-  kTPCSignalN=14,
-  kTPCSignalNLarge=16,
-  kCleanPrTOF=17,
-  kCleanKaTOF=18,
-  kCleanKaTOFTRD=19,
-  kTrackProbKaTOF=20,
-  kTrackProbPrTOF=21,
-  kCleanDeTOF=22,
-  kPileup=23,
-  kPileupLoose=24,
-  kSharedCls=25,
-  kSharedClsLoose=26,
-  kFindableCls=27,
-  kFindableClsLoose=28,
-  kFindableClsLoosest=29,
-  kBFieldPos=30,
-  kBFieldNeg=31
+  kTPCSignalNSmall=12,
+  kTPCSignalN=13,
+  kTPCSignalNLarge=14,
+  kCleanPrTOF=15,
+  kCleanKaTOF=16,
+  kCleanKaTOFTRD=17,
+  kTrackProbKaTOF=18,
+  kCleanPiTOF=19,
+  kCleanDeTOF=20,
+  kPileup=21,
+  kPileupLoose=22,
+  kSharedCls=23,
+  kSharedClsLoose=24,
+  kFindableCls=25,
+  kFindableClsTight=26,
+  kFindableClsLoose=27,
+  kBFieldPos=28,
+  kBFieldNeg=29,
+  kNSigmaTOFLoose=30,
+  kNSigmaTOFLoose2=31
 };
 
 enum cutSettings {
   kCutReference=0,
   kCutCrossedRowsTPC70=1,
   kCutCrossedRowsTPC90=2,
-  kCutActiveZone=3,
-  kCutMaxChi2PerClusterTPCSmall=4,
-  kCutMaxChi2PerClusterTPCLarge=5,
-  kCutMaxDCAToVertexXYPtDepLarge=6,
-  kCutVertexZSmall=7,
-  kCutEventVertexZLarge=8,
-  kCutSharedCls=9,
+  kCutMaxChi2PerClusterTPCSmall=3,
+  kCutMaxChi2PerClusterTPCLarge=4,
+  kCutMaxDCAToVertexXYPtDepLarge=5,
+  kCutVertexZSmall=6,
+  kCutEventVertexZLarge=7,
+  kCutSharedCls=8,
+  kCutFindableClsTight=9,
   kCutFindableClsLoose=10,
-  kCutFindableClsLoosest=11,
-  kCutPileupLoose=12,
-  kCutBFieldPos=13,
-  kCutBFieldNeg=14,
-  kCutTPCSignalNSmall=15,
-  kCutTPCSignalNLarge=16
+  kCutPileupLoose=11,
+  kCutBFieldPos=12,
+  kCutBFieldNeg=13,
+  kCutTPCSignalNSmall=14,
+  kCutTPCSignalNLarge=15,
+  kCutNSigmaTOFLoose=16,
+  kCutNSigmaTOFLoose2=17
 };
 
 
@@ -695,7 +697,7 @@ Bool_t ApplyTreeSelection(Int_t syst, UInt_t cutBit)
   13 --> kTPCSignalNLarge
   */
 
-std::vector<Int_t> fCutArr;
+  std::vector<Int_t> fCutArr;
 
   switch(syst) {
 
@@ -717,45 +719,45 @@ std::vector<Int_t> fCutArr;
     }
     break;
     //
-    case kCutActiveZone:  // 3 -->  kActiveZone
-    {
-      fCutArr = {kActiveZone,  kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDep, kVertexZ, kEventVertexZ, kPileup, kSharedCls, kFindableCls,kTPCSignalN};
-    }
-    break;
-    //
-    case kCutMaxChi2PerClusterTPCSmall:   // 4 -->  kMaxChi2PerClusterTPCSmall
+    case kCutMaxChi2PerClusterTPCSmall:   // 3 -->  kMaxChi2PerClusterTPCSmall
     {
       fCutArr = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPCSmall, kMaxDCAToVertexXYPtDep, kVertexZ, kEventVertexZ, kPileup, kSharedCls, kFindableCls,kTPCSignalN};
     }
     break;
     //
-    case kCutMaxChi2PerClusterTPCLarge:   // 5 -->  kMaxChi2PerClusterTPCLarge
+    case kCutMaxChi2PerClusterTPCLarge:   // 4 -->  kMaxChi2PerClusterTPCLarge
     {
       fCutArr = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPCLarge, kMaxDCAToVertexXYPtDep, kVertexZ, kEventVertexZ, kPileup, kSharedCls, kFindableCls,kTPCSignalN};
     }
     break;
     //
-    case kCutMaxDCAToVertexXYPtDepLarge:   // 6 -->  kMaxDCAToVertexXYPtDepLarge
+    case kCutMaxDCAToVertexXYPtDepLarge:   // 5 -->  kMaxDCAToVertexXYPtDepLarge
     {
       fCutArr = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDepLarge, kVertexZ, kEventVertexZ, kPileup, kSharedCls, kFindableCls,kTPCSignalN};
     }
     break;
     //
-    case kCutVertexZSmall:   // 7 -->  kVertexZSmall
+    case kCutVertexZSmall:   // 6 -->  kVertexZSmall
     {
       fCutArr = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDep, kVertexZSmall, kEventVertexZ, kPileup, kSharedCls, kFindableCls,kTPCSignalN};
     }
     break;
     //
-    case kCutEventVertexZLarge:  // 8 -->  kEventVertexZLarge
+    case kCutEventVertexZLarge:  // 7 -->  kEventVertexZLarge
     {
       fCutArr = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDep, kVertexZ, kEventVertexZLarge, kPileup, kSharedCls, kFindableCls,kTPCSignalN};
     }
     break;
     //
-    case kCutSharedCls:   // 9 -->  kSharedClsLoose
+    case kCutSharedCls:   // 8 -->  kSharedClsLoose
     {
       fCutArr = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDep, kVertexZ, kEventVertexZ, kPileup, kSharedClsLoose, kFindableCls,kTPCSignalN};
+    }
+    break;
+    //
+    case kCutFindableClsTight:   // 9 -->  kFindableClsTight
+    {
+      fCutArr = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDep, kVertexZ, kEventVertexZ, kPileup, kSharedCls, kFindableClsTight,kTPCSignalN};
     }
     break;
     //
@@ -765,39 +767,45 @@ std::vector<Int_t> fCutArr;
     }
     break;
     //
-    case kCutFindableClsLoosest:   // 11 -->  kFindableClsLoosest
-    {
-      fCutArr = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDep, kVertexZ, kEventVertexZ, kPileup, kSharedCls, kFindableClsLoosest,kTPCSignalN};
-    }
-    break;
-    //
-    case kCutPileupLoose:   // 12 -->  kPileupLoose
+    case kCutPileupLoose:   // 11 -->  kPileupLoose
     {
       fCutArr = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDep, kVertexZ, kEventVertexZ, kPileupLoose, kSharedCls, kFindableCls,kTPCSignalN};
     }
     break;
     //
-    case kCutBFieldPos:   // 13 -->  kBFieldPos
+    case kCutBFieldPos:   // 12 -->  kBFieldPos
     {
       fCutArr = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDep, kVertexZ, kEventVertexZ, kPileup, kSharedCls, kFindableCls,kTPCSignalN,kBFieldPos};
     }
     break;
     //
-    case kCutBFieldNeg:   // 14 --> kBFieldNeg
+    case kCutBFieldNeg:   // 13 --> kBFieldNeg
     {
       fCutArr = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDep, kVertexZ, kEventVertexZ, kPileup, kSharedCls, kFindableCls,kTPCSignalN,kBFieldNeg};
     }
     break;
     //
-    case kCutTPCSignalNSmall:   // 15 --> kTPCSignalNSmall
+    case kCutTPCSignalNSmall:   // 14 --> kTPCSignalNSmall
     {
       fCutArr = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDep, kVertexZ, kEventVertexZ, kPileup, kSharedCls, kFindableCls,kTPCSignalNSmall};
     }
     break;
     //
-    case kCutTPCSignalNLarge:   // 16 --> kTPCSignalNLarge
+    case kCutTPCSignalNLarge:   // 15 --> kTPCSignalNLarge
     {
       fCutArr = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDep, kVertexZ, kEventVertexZ, kPileup, kSharedCls, kFindableCls,kTPCSignalNLarge};
+    }
+    break;
+    //
+    case kCutNSigmaTOFLoose:   // 16 --> kNSigmaTOFLoose
+    {
+      fCutArr = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDep, kVertexZ, kEventVertexZ, kPileup, kSharedCls, kFindableCls,kTPCSignalN, kNSigmaTOFLoose};
+    }
+    break;
+    //
+    case kCutNSigmaTOFLoose2:   // 17 --> kNSigmaTOFLoose
+    {
+      fCutArr = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDep, kVertexZ, kEventVertexZ, kPileup, kSharedCls, kFindableCls,kTPCSignalN, kNSigmaTOFLoose2};
     }
     break;
     //
@@ -1389,7 +1397,7 @@ void FillQAHistograms(Bool_t beforeCuts = kTRUE) {
     hfTreeMC_dcaz2D->Fill(ffTreeMC_pT, ffTreeMC_dcaz);
     hfTreeMC_vZ->Fill(ffTreeMC_vZ);
     hfTreeMC_sharedCls->Fill(static_cast<Double_t>(ffTreeMC_tpcSharedCls) / ffTreeMC_ncltpc, static_cast<Double_t>(ffTreeMC_tpcSharedCls) / ffTreeMC_cRows);
-    hfTreeMC_findableCls->Fill(static_cast<Double_t>(ffTreeMC_cRows) / ffTreeMC_tpcFindableCls);
+    hfTreeMC_findableCls->Fill(static_cast<Double_t>(ffTreeMC_cRows) / (ffTreeMC_tpcFindableCls + 1e-10)); // protect against division by zero before cuts
     hfTreeMC_pileup->Fill(ffTreeMC_tpcclmult, ffTreeMC_itsclmult);
     hfTreeMC_bField->Fill(ffTreeMC_bField);
     hfTreeMC_tpcSignalN->Fill(ffTreeMC_tpcSignalN);
