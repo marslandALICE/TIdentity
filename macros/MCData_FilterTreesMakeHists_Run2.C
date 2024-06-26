@@ -1389,7 +1389,7 @@ void FillQAHistograms(Bool_t beforeCuts = kTRUE) {
     hfTreeMC_dcaz2D->Fill(ffTreeMC_pT, ffTreeMC_dcaz);
     hfTreeMC_vZ->Fill(ffTreeMC_vZ);
     hfTreeMC_sharedCls->Fill(static_cast<Double_t>(ffTreeMC_tpcSharedCls) / ffTreeMC_ncltpc, static_cast<Double_t>(ffTreeMC_tpcSharedCls) / ffTreeMC_cRows);
-    hfTreeMC_findableCls->Fill(ffTreeMC_tpcFindableCls);
+    hfTreeMC_findableCls->Fill(static_cast<Double_t>(ffTreeMC_cRows) / ffTreeMC_tpcFindableCls);
     hfTreeMC_pileup->Fill(ffTreeMC_tpcclmult, ffTreeMC_itsclmult);
     hfTreeMC_bField->Fill(ffTreeMC_bField);
     hfTreeMC_tpcSignalN->Fill(ffTreeMC_tpcSignalN);
@@ -1403,7 +1403,7 @@ void FillQAHistograms(Bool_t beforeCuts = kTRUE) {
     hfTreeMC_dcaz2D_After->Fill(ffTreeMC_pT, ffTreeMC_dcaz);
     hfTreeMC_vZ_After->Fill(ffTreeMC_vZ);
     hfTreeMC_sharedCls_After->Fill(static_cast<Double_t>(ffTreeMC_tpcSharedCls) / ffTreeMC_ncltpc, static_cast<Double_t>(ffTreeMC_tpcSharedCls) / ffTreeMC_cRows);
-    hfTreeMC_findableCls_After->Fill(ffTreeMC_tpcFindableCls);
+    hfTreeMC_findableCls_After->Fill(static_cast<Double_t>(ffTreeMC_cRows) / ffTreeMC_tpcFindableCls);
     hfTreeMC_pileup_After->Fill(ffTreeMC_tpcclmult, ffTreeMC_itsclmult);
     hfTreeMC_bField_After->Fill(ffTreeMC_bField);
     hfTreeMC_tpcSignalN_After->Fill(ffTreeMC_tpcSignalN);

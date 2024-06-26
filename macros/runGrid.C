@@ -31,9 +31,9 @@ Location of the train
 /alice/cern.ch/user/p/pwg_pp/PWGPP695_MC_remapping/LHC20e3a_pass3_20230624_1611/2020/297595/048
 
 
-Example usage: 
+Example usage:
 
-cd /home/marsland/Desktop/ubuntu_desktop/workdir/RUN_ON_GRID/Ebye/test/root6_based/4thMoment_29092021 
+cd /home/marsland/Desktop/ubuntu_desktop/workdir/RUN_ON_GRID/Ebye/test/root6_based/4thMoment_29092021
 aliroot -b -q 'runGrid.C(0,0,"test",0,"3","$RUN_ON_GRID_DIR/Ebye/lists/runs-2020-LHC20e3a-pass3.list","PWGPP695_MC_remapping",1,65,1,2018,"18q",3,"vAN-20221119_O2-1")'
 aliroot -b -q 'runGrid.C(0,0,"test",0,"3","$RUN_ON_GRID_DIR/Ebye/lists/runs-2020-LHC20e3a-pass3.list","PWGPP695_MC_remapping",1,65,1,2018,"18q",3,"vAN-20221119_O2-1")'
 aliroot -b -q 'runGrid.C(0,0,"test",0,"3","$RUN_ON_GRID_DIR/Ebye/lists/runsIlya1run-2018-LHC18q-pass3.list","PWGPP695_MC_remapping",0,4 ,0,2018,"18q",3,"vAN-20221119_O2-1")'
@@ -44,7 +44,7 @@ aliroot -b -q 'runGrid.C(1,0,"test",0,"3","$RUN_ON_GRID_DIR/Ebye/lists/runs-2018
 # salman
 aliroot -b -q 'runGrid.C(0,0,"full",0,"2","$RUN_ON_GRID_DIR/Ebye/lists/runsTest-2015-LHC15o-pass2.list","PWGPP695_MC_remapping",0,4 ,0,2015,"15o",2,"vAN-20221119_O2-1")'
 
-# ilya and sierra version 
+# ilya and sierra version
 aliroot -b -q 'runGrid.C(0,0,"test",0,"3","$RUN_ON_GRID_DIR/Ebye/lists/runsIlya1run-2018-LHC18q-pass3.list","PWGPP695_MC_remapping",0,4,0 ,2018,"18q",3,"vAN-20221119_O2-1")'
 aliroot -b -q 'runGrid.C(1,0,"test",0,"3","$RUN_ON_GRID_DIR/Ebye/lists/runsIlya1run-2018-LHC18q-pass3.list","PWGPP695_MC_remapping",0,4,0 ,2018,"18q",3,"vAN-20221119_O2-1")'
 
@@ -56,7 +56,7 @@ aliroot -b -q 'runGrid.C(0,0,"full",1,"3","$RUN_ON_GRID_DIR/Ebye/lists/runs50lon
 # make list of runs --> alien_ls  /alice/sim/2022/LHC22d1a | sed 's/^/\/alice\/sim\/2022\/LHC22d1a\//' > runsGen-2022-LHC22d1a-pass3.list
 # cd ~/Desktop/ubuntu_desktop/workdir/RUN_ON_GRID/Ebye/test_fastGen_netParticles_HIJING
 # cd /lustre/nyx/alice/users/marsland/workdir/ThirdMoment_Paper_03022022
-# run over local fles 
+# run over local fles
 # alien.py find /alice/sim/2022/LHC22d1b/ "galice.root" | wc -l  --> 7100
 # alien.py find /alice/sim/2022/LHC22d1a/ "galice.root" | wc -l  --> 7294
 # alien.py find /alice/sim/2022/LHC22d1c/ "galice.root" | wc -l  --> 7432
@@ -64,7 +64,7 @@ aliroot -b -q 'runGrid.C(0,0,"full",1,"3","$RUN_ON_GRID_DIR/Ebye/lists/runs50lon
 # alien.py find /alice/sim/2022/LHC22d1d2/ "galice.root" | wc -l --> 113418
 # alien.py find /alice/sim/2022/LHC22d1c2/ "galice.root" | wc -l --> 116642
 #
-# run on grid 
+# run on grid
 aliroot -b -q 'runGrid.C(0,0,"test",0,"2","$RUN_ON_GRID_DIR/Ebye/lists/runsGen-2022-LHC22d1a-pass3.list","PWGPP695_MC_remapping",2,201 ,0,2022,"22d1a",2,"vAN-20221119_O2-1")'
 aliroot -b -q 'runGrid.C(0,0,"full",1,"2","$RUN_ON_GRID_DIR/Ebye/lists/runsGen-2022-LHC22d1a-pass3.list","PWGPP695_MC_remapping",2,201 ,0,2022,"22d1a",2,"vAN-20221119_O2-1")'
 
@@ -90,13 +90,13 @@ TFile f("AnalysisResults.root");
 jetsFJ->Draw("jetptsub","syst==0 && abs(jetRadius-0.4)<0.001")
 jetsEMC->Draw("jetptsub","","same")
 
-// to kill jobs in alien 
+// to kill jobs in alien
 for i in $(cat jobs.list); do alien.py kill $i; done
 
 fRunLocalFiles --> 0; run over local code but remote data, 1; run over local code and data
 valgrindOption --> 0 --> Normal, 1--> valgrind, 2--> callgrind, 3-->Massif
-modes          --> "test"      --> to run over a small set of files (requires alien connection but everything stored locally), 
-                   "full"      --> to run over everything on the grid, 
+modes          --> "test"      --> to run over a small set of files (requires alien connection but everything stored locally),
+                   "full"      --> to run over everything on the grid,
                    "terminate" --> to merge results after "full"
 localOrGrid    --> 0 --> Use only one run and run locally, 1 --> run for all runs on the grid
 list           --> defines the data set according to year, period and pass --> "test-2015-LHC15o-pass5_lowIR.list"
@@ -110,7 +110,7 @@ lhcYear        --> year
 Bool_t fAddFilteredTrees = kFALSE;
 Bool_t fAddJetHadroTask  = kFALSE;
 Bool_t fAddTIdentityTask = kTRUE;
-// 
+//
 const Int_t timelimitTTL=9000; // in terms of hours 9000/60/60 = 2.5 hours
 const Int_t nTestFiles = 1;
 const Int_t nChunksPerJob = 10;
@@ -415,7 +415,7 @@ AliAnalysisGrid* CreateAlienHandler(Int_t valgrindOption = 0,TString mode="test"
   plugin->SetAdditionalLibs("AliAnalysisTaskTIdentityPID.cxx AliAnalysisTaskTIdentityPID.h AliAnalysisJetHadro.cxx AliAnalysisJetHadro.h");
   // plugin->SetAnalysisSource("AliAnalysisJetHadro.cxx");
   // plugin->SetAdditionalLibs("AliAnalysisJetHadro.cxx AliAnalysisJetHadro.h");
- 
+
   // ----------------------------------------------------------------------------------------------------------------------
   // ----------------------------------------------------------------------------------------------------------------------
   //
@@ -430,7 +430,7 @@ AliAnalysisGrid* CreateAlienHandler(Int_t valgrindOption = 0,TString mode="test"
   //plugin->SetMaxMergeFiles(40);
   plugin->SetMaxMergeStages(4);
 
-  plugin->SetTTL(timelimitTTL); 
+  plugin->SetTTL(timelimitTTL);
   // Optionally set input format (default xml-single)
   plugin->SetInputFormat("xml-single");
   // Optionally modify job price (default 1)
