@@ -155,7 +155,7 @@ Double_t etaMax = 0.8;
 const Int_t nCentDim = 14;
 const Int_t nEtaDim = 17;
 Float_t etaBinning[nEtaDim]   = {-0.8,-0.7,-0.6,-0.5,-0.4,-0.3,-0.2,-0.1, 0., 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8};
-Float_t centBinning[nCentDim] = { 0., 5., 10., 20., 30., 40., 50., 60., 70., 80., 85., 90., 95., 100.};
+Float_t centBinning[nCentDim] = { 0., 5., 10., 20., 30., 40., 50., 60., 65., 70., 75., 80., 85., 90.};
 //
 TTreeSRedirector *tidenTreeStream[nCentBins];
 //

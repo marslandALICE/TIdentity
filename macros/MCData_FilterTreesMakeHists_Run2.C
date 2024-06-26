@@ -84,24 +84,24 @@ const Int_t nEtaBins = 16;  // ???
 Double_t etaMin = -0.8;
 Double_t etaMax = 0.8;
 //
-const Int_t nCentDim = 10;
+const Int_t nCentDim = 14;
 const Int_t nEtaDim = 17;
 // const Int_t nEtaDim = 9;
 Float_t etaBinning[nEtaDim]   = {-0.8,-0.7,-0.6,-0.5,-0.4,-0.3,-0.2,-0.1, 0., 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8};
 // Float_t etaBinning[nEtaDim]   = {-0.8,-0.6,-0.4,-0.2, 0., 0.2, 0.4, 0.6, 0.8};
-Float_t centBinning[nCentDim] = { 0., 5., 10., 20., 30., 40., 50., 60., 70., 80.};
+Float_t centBinning[nCentDim] = { 0., 5., 10., 20., 30., 40., 50., 60., 65., 70., 75., 80., 85., 90.};
 //
 // Acceptance arrays
 const Int_t nCentAcc = 13;
 const Int_t nEtaAcc = 8;
 Float_t etaAccDown[nEtaAcc] = {-0.8,-0.7,-0.6,-0.5,-0.4,-0.3,-0.2,-0.1};
 Float_t etaAccUp[nEtaAcc]   = { 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1};
-Float_t centAccDown[nCentAcc] = { 0., 5., 10., 20., 30., 40., 50., 60., 70., 80., 85., 90., 95.};
-Float_t centAccUp[nCentAcc]   = { 5., 10., 20., 30., 40., 50., 60., 70., 80., 85., 90., 95., 105.};
+Float_t centAccDown[nCentAcc] = { 0., 5., 10., 20., 30., 40., 50., 60., 65., 70., 75., 80., 85.};
+Float_t centAccUp[nCentAcc]   = { 5., 10., 20., 30., 40., 50., 60., 65., 70., 75., 80., 85., 90.};
 //
 // Efficiency  matrix
 const Int_t nSigns = 2;
-const Int_t nCentBins = nCentAcc + 1;
+const Int_t nCentBins = nCentAcc;
 const Int_t nParticlesEffMatrix = 3;
 THnF *posRec, *posGen, *negRec, *negGen;
 TH2F *h2EtaMom[nSigns][nParticlesEffMatrix][nCentBins];
