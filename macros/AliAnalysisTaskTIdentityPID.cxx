@@ -1837,9 +1837,9 @@ void AliAnalysisTaskTIdentityPID::UserExec(Option_t *)
     } else {
       if (fUseCouts) std::cout << " Info::marsland: (full MC analysis) End of Filling part = " << fEventCountInFile << std::endl;
       FillEffMatrix();
-      CalculateEventInfo(); 
+      CalculateEventInfo();
       CreateEventInfoTree();
-      FillEventInfoMC(); 
+      FillEventInfoMC();
       FillTreeMC();
       if (fFillArmPodTree && fFillDebug) FillCleanSamples();
       if (fTaskSelection==0) {FillMCFull_NetParticles(); CalculateMoments_CutBasedMethod(); FindJetsFJ(); FindJetsFJGen();} // bot jet and net-p
@@ -2116,12 +2116,14 @@ void AliAnalysisTaskTIdentityPID::CalculateMoments_CutBasedMethod()
   size_t orderR = 4;
   size_t orderS = 4;
 
+  Bool_t passesVzCut[settingsDim];
   UInt_t recProtonCounter[settingsDim][etaDim][momentumDim][signDim];
 
   // store qs up to the given order
   Double_t arrQ[settingsDim][etaDim][momentumDim][orderR][orderS];
 
   for (size_t iSetting = 0; iSetting < settingsDim; iSetting++) {
+    passesVzCut[iSetting] = kTRUE;
     for (size_t iEta = 0; iEta < etaDim; iEta++) {
       for (size_t iMomentum = 0; iMomentum < momentumDim; iMomentum++) {
         for (size_t iSign = 0; iSign < signDim; iSign++) {
@@ -2185,8 +2187,13 @@ void AliAnalysisTaskTIdentityPID::CalculateMoments_CutBasedMethod()
         for (size_t iset = 0; iset < settingsDim; iset++) {
           Int_t setting = fSystSettings[iset];
           // event Vz cuts
-          if (setting == kCutEventVertexZLarge && !bEventVertexZLarge) continue;
-          else if (setting != kCutEventVertexZLarge && !bCutReference) continue;
+          if (passesVzCut[iset] == kTRUE && setting == kCutEventVertexZLarge && !bEventVertexZLarge) {
+            passesVzCut[iset] = kFALSE;
+            continue;
+          } else if (passesVzCut[iset] == kTRUE && setting != kCutEventVertexZLarge && !bCutReference) {
+            passesVzCut[iset] = kFALSE;
+            continue;
+          }
 
           if (GetSystematicClassIndex(fTrackCutBits,setting)) {
 
@@ -2248,10 +2255,12 @@ void AliAnalysisTaskTIdentityPID::CalculateMoments_CutBasedMethod()
     } // ======= end of eta loop =======
   } // ======= end of track loop =======
 
-  for (size_t ieta = 0; ieta < etaDim; ieta++) {
-    for (size_t imom = 0; imom < momentumDim; imom++) {
-      for (size_t iset = 0; iset < settingsDim; iset++) {
-        Int_t setting = fSystSettings[iset];
+  for (size_t iset = 0; iset < settingsDim; iset++) {
+    if (!passesVzCut[iset]) continue;
+    Int_t setting = fSystSettings[iset];
+
+    for (size_t ieta = 0; ieta < etaDim; ieta++) {
+      for (size_t imom = 0; imom < momentumDim; imom++) {
 
         TVectorF fMomNetPrRec(nMoments);
 
@@ -2301,9 +2310,9 @@ void AliAnalysisTaskTIdentityPID::CalculateMoments_CutBasedMethod()
           "qMatrix.=" << &qMatrix << // matrix with qs for efficiency correction
           "\n";
         }
-      } // ======= end of settings loop =======
-    } // ======= end of momentum loop =======
-  } // ======= end of eta loop =======
+      } // ======= end of momentum loop =======
+    } // ======= end of eta loop =======
+  } // ======= end of settings loop =======
 }
 //________________________________________________________________________
 void AliAnalysisTaskTIdentityPID::FillMCFull_NetParticles()
