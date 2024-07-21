@@ -1,6 +1,7 @@
 
 void SetDefaults(AliAnalysisTaskTIdentityPID *defaultTask, Int_t year, TString periodName, Int_t passIndex);
 TTree *GetLookUpTable(Bool_t runOnGrid, Int_t index);
+vector<THnF*> GetEffMatrixObjects(Bool_t runOnGrid, TString filename);
 //
 //
 AliAnalysisTaskTIdentityPID* Config_marsland_TIdentityPID(Bool_t getFromAlien, Int_t settingType, Int_t year, TString periodName, Int_t passIndex, Int_t lookUpTableIndex, TString combinedName) {
@@ -136,8 +137,11 @@ AliAnalysisTaskTIdentityPID* Config_marsland_TIdentityPID(Bool_t getFromAlien, I
       // baryons to be included for netbaryon analysis --> light and strange baryons
       // {p,n,delta++,delta+,delta0,delta-,Lambda,}
       const Int_t tmpNbaryons = 18;
-      Int_t tmpBaryonArr[tmpNbaryons] = {2212,2112,2224,2214,2114,1114,3122,3222,3212,3112,3224,3214,3114,3322,3312,3324,3314,3334};  
+      Int_t tmpBaryonArr[tmpNbaryons] = {2212,2112,2224,2214,2114,1114,3122,3222,3212,3112,3224,3214,3114,3322,3312,3324,3314,3334};
       task->SetMCBaryonArray(tmpNbaryons,tmpBaryonArr);
+
+      vector<THnF*> effMatrixObjects = GetEffMatrixObjects(getFromAlien, "AnalysisResults_hists.root");
+      task->SetEffMatrixObjects(effMatrixObjects[0], effMatrixObjects[1], effMatrixObjects[2], effMatrixObjects[3]);
 
     }
     break;
@@ -365,4 +369,31 @@ TTree *GetLookUpTable(Bool_t runOnGrid, Int_t index)
   if(tree) return tree;
   else { std::cout << " Error::marsland: There is no lookUp table" << std::endl; return 0;}
 
+}
+
+vector<THnF*> GetEffMatrixObjects(Bool_t runOnGrid, TString filename) {
+
+  TString lookUpPath = "";
+
+  if (runOnGrid) {
+    TGrid* alien = TGrid::Connect("alien://",0,0,"t");
+    TString lookUpDir = "/alice/cern.ch/user/i/ifokin/ebye/lookuptables/";
+    gSystem->Exec(Form("alien_cp %s/%s .",lookUpDir.Data(),filename.Data()));
+    lookUpPath = Form("%s/%s",gSystem->pwd(),filename.Data());
+  } else {
+    TString lookUpDir = "/misc/alidata141/alice_u/fokin/TIdentity/data/";
+    lookUpPath = Form("%s/%s",lookUpDir.Data(),filename.Data());
+  }
+
+  printf(" Info::ilya: Efficiency histograms used from %s\n", lookUpPath.Data());
+
+  TFile* inputFile = new TFile(lookUpPath, "read");
+  TList* cleanHists = (TList*) inputFile->Get("cleanHists");
+
+  THnF* effMatrixPosRec  = (THnF*) cleanHists->FindObject("fHistPosEffMatrixScanRec");
+  THnF* effMatrixNegRec  = (THnF*) cleanHists->FindObject("fHistNegEffMatrixScanRec");
+  THnF* effMatrixPosGen  = (THnF*) cleanHists->FindObject("fHistPosEffMatrixScanGen");
+  THnF* effMatrixNegGen  = (THnF*) cleanHists->FindObject("fHistNegEffMatrixScanGen");
+
+  return {effMatrixPosGen, effMatrixNegGen, effMatrixPosRec, effMatrixNegRec};
 }

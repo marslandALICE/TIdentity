@@ -421,12 +421,17 @@ fHistPosEffMatrixScanRec(0),
 fHistNegEffMatrixScanRec(0),
 fHistPosEffMatrixScanGen(0),
 fHistNegEffMatrixScanGen(0),
+fEffMatrixProjections(0),
 fHistEmptyEvent(0),
 fHistCentrality(0),
 fHistCentralityImpPar(0),
 fHistImpParam(0),
 fHistVertex(0),
 fHistArmPod(0),
+fEffMatrixGenPos(0),
+fEffMatrixGenNeg(0),
+fEffMatrixRecPos(0),
+fEffMatrixRecNeg(0),
 fEventInfo_PhiTPCdcarA(0),
 fEventInfo_PhiTPCdcarC(0),
 fEventInfo_CacheTrackCounters(0),
@@ -767,12 +772,17 @@ fHistPosEffMatrixScanRec(0),
 fHistNegEffMatrixScanRec(0),
 fHistPosEffMatrixScanGen(0),
 fHistNegEffMatrixScanGen(0),
+fEffMatrixProjections(0),
 fHistEmptyEvent(0),
 fHistCentrality(0),
 fHistCentralityImpPar(0),
 fHistImpParam(0),
 fHistVertex(0),
 fHistArmPod(0),
+fEffMatrixGenPos(0),
+fEffMatrixGenNeg(0),
+fEffMatrixRecPos(0),
+fEffMatrixRecNeg(0),
 fEventInfo_PhiTPCdcarA(0),
 fEventInfo_PhiTPCdcarC(0),
 fEventInfo_CacheTrackCounters(0),
@@ -1263,6 +1273,29 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
     fListHist->Add(fHistNegEffMatrixScanRec);
     fListHist->Add(fHistPosEffMatrixScanGen);
     fListHist->Add(fHistNegEffMatrixScanGen);
+
+    // array to store efficiency matrix projections
+    // dimensions: [setting][cent][eta][isTOF][sign]
+    const size_t etaDim = fEffMatrixRecPos->GetAxis(6)->GetNbins();
+    const size_t centDim = fEffMatrixRecPos->GetAxis(4)->GetNbins();
+    const size_t settingsDim = fEffMatrixRecPos->GetAxis(2)->GetNbins();
+    const size_t signDim = 2;
+
+    fEffMatrixProjections = vector<vector<vector<vector<vector<TH1F*>>>>>(etaDim);
+
+    // resize the vectors to the appropriate dimensions
+    for (size_t iEta = 0; iEta < etaDim; iEta++) {
+      fEffMatrixProjections[iEta] = vector<vector<vector<vector<TH1F*>>>>(centDim);
+      for (size_t iCent = 0; iCent < centDim; iCent++) {
+        fEffMatrixProjections[iEta][iCent] = vector<vector<vector<TH1F*>>>(settingsDim);
+        for (size_t iSetting = 0; iSetting < settingsDim; iSetting++) {
+          fEffMatrixProjections[iEta][iCent][iSetting] = vector<vector<TH1F*>>(signDim);
+          for (size_t iSign = 0; iSign < signDim; iSign++) {
+            fEffMatrixProjections[iEta][iCent][iSetting][iSign] = vector<TH1F*>(2);
+          }
+        }
+      }
+    }
   }
   //
   // ************************************************************************
@@ -1726,7 +1759,7 @@ void AliAnalysisTaskTIdentityPID::UserExec(Option_t *)
   if (fRunFastHighMomentCal)               { FastGenHigherMoments(); return;}
   if (fRunFastSimulation) {
     if (fFillJetsBG>0) FindJetsFJGen();
-    FastGen_NetParticles(); 
+    FastGen_NetParticles();
     return;
   }
   //
@@ -2485,14 +2518,65 @@ void AliAnalysisTaskTIdentityPID::CalculateMoments_CutBasedMethod()
 
   const size_t nMoments = 14 + 1; // moments to fourth order + p-pbar
 
+  // lambda function to get efficiency from eff matrix
+  auto getEff = [&] (Bool_t isTOF, Int_t sign, Int_t setting, Int_t centIndex, Int_t etaIndex, Double_t p, Int_t part) {
+    Double_t ret = -1.;
+
+    Int_t signIndex = (sign == 1) ? 0 : 1;
+
+    // make projections
+    if (!fEffMatrixProjections[etaIndex][centIndex][setting][signIndex][isTOF]) {
+      THnF* effMatrixGen = (sign == 1) ? fEffMatrixGenPos : fEffMatrixGenNeg;
+      THnF* effMatrixRec = (sign == 1) ? fEffMatrixRecPos : fEffMatrixRecNeg;
+
+      for (THnF* effMatrix: {effMatrixGen, effMatrixRec}) {
+        effMatrix->GetAxis(1)->SetRangeUser(0, 1); // origin
+        effMatrix->GetAxis(3)->SetRangeUser(part, part + 1);
+        effMatrix->GetAxis(0)->SetRangeUser(isTOF, isTOF + 1);
+        if (effMatrix == effMatrixRec) {
+          effMatrix->GetAxis(2)->SetRangeUser(setting, setting+1);
+        } else {
+          effMatrix->GetAxis(2)->SetRangeUser(0, 1);
+        }
+        effMatrix->GetAxis(4)->SetRangeUser(fxCentBins[centIndex], fxCentBins[centIndex + 1]);
+        effMatrix->GetAxis(6)->SetRangeUser(fetaDownArr[etaIndex], fetaUpArr[etaIndex]);
+      }
+
+      TH1F* tmpEffGen = (TH1F*)effMatrixGen->Projection(5)->Clone();
+      TH1F* tmpEffRec = (TH1F*)effMatrixRec->Projection(5)->Clone();
+      tmpEffRec->Divide(tmpEffGen);
+      fEffMatrixProjections[etaIndex][centIndex][setting][signIndex][isTOF] = tmpEffRec;
+    }
+
+    ret = fEffMatrixProjections[etaIndex][centIndex][setting][signIndex][isTOF]->GetBinContent(fEffMatrixProjections[etaIndex][centIndex][setting][signIndex][isTOF]->FindBin(p));
+    return ret;
+  };
+
+  size_t orderR = 4;
+  size_t orderS = 4;
+
   UInt_t recProtonCounter[settingsDim][etaDim][momentumDim][signDim];
   UInt_t recProtonCounterTOF[settingsDim][etaDim][momentumDim][signDim];
-  for (size_t iSetting = 0; iSetting < settingsDim; iSetting++)
-  for (size_t iEta = 0; iEta < etaDim; iEta++)
-  for (size_t iMomentum = 0; iMomentum < momentumDim; iMomentum++)
-  for (size_t iSign = 0; iSign < signDim; iSign++) {
-    recProtonCounter[iSetting][iEta][iMomentum][iSign] = 0;
-    recProtonCounterTOF[iSetting][iEta][iMomentum][iSign] = 0;
+
+  // store qs up to the given order
+  Double_t arrQ[settingsDim][etaDim][momentumDim][orderR][orderS];
+  Double_t arrQTOF[settingsDim][etaDim][momentumDim][orderR][orderS];
+
+  for (size_t iSetting = 0; iSetting < settingsDim; iSetting++) {
+    for (size_t iEta = 0; iEta < etaDim; iEta++) {
+      for (size_t iMomentum = 0; iMomentum < momentumDim; iMomentum++) {
+        for (size_t iSign = 0; iSign < signDim; iSign++) {
+          recProtonCounter[iSetting][iEta][iMomentum][iSign] = 0;
+          recProtonCounterTOF[iSetting][iEta][iMomentum][iSign] = 0;
+        }
+        for (size_t iOrderR = 0; iOrderR < orderR; iOrderR++) {
+          for (size_t iOrderS = 0; iOrderS < orderS; iOrderS++) {
+            arrQ[iSetting][iEta][iMomentum][iOrderR][iOrderS] = 0.;
+            arrQTOF[iSetting][iEta][iMomentum][iOrderR][iOrderS] = 0.;
+          }
+        }
+      }
+    }
   }
 
   //
@@ -2548,7 +2632,20 @@ void AliAnalysisTaskTIdentityPID::CalculateMoments_CutBasedMethod()
           else if (setting != kCutEventVertexZLarge && !bCutReference) continue;
 
           if (GetSystematicClassIndex(fTrackCutBits,setting)) {
+
             const Int_t signIndex = (fSign < 0); // +1 -> 0, -1 -> 1
+
+            // get centrality index
+            Int_t centIndex = -1;
+            for (size_t iCent = 0; iCent < fNCentBinsMC; iCent++) {
+              if (fCentrality >= fxCentBins[iCent] && fCentrality < fxCentBins[iCent+1]) {
+                centIndex = iCent;
+                break;
+              }
+            }
+
+            Double_t eff = getEff(kFALSE, fSign, setting, centIndex, ieta, ptotCut, 2);
+            Double_t effTOF = getEff(kTRUE, fSign, setting, centIndex, ieta, ptotCut, 2);
 
             // check pid
             Double_t nSigmaTPC = fPIDResponse->NumberOfSigmasTPC(trackReal, AliPID::kProton);
@@ -2559,6 +2656,17 @@ void AliAnalysisTaskTIdentityPID::CalculateMoments_CutBasedMethod()
 
             if (prTPC) recProtonCounter[iset][ieta][imom][signIndex]++;
             if (prTOF) recProtonCounterTOF[iset][ieta][imom][signIndex]++;
+
+            // sum the qs
+            for (size_t iOrderR = 0; iOrderR < orderR; iOrderR++) {
+              for (size_t iOrderS = 0; iOrderS < orderS; iOrderS++) {
+                Int_t r = iOrderR + 1;
+                Int_t s = iOrderS + 1;
+
+                arrQ[iset][ieta][imom][iOrderR][iOrderS] += pow(fSign, r) / pow(eff, s);
+                arrQTOF[iset][ieta][imom][iOrderR][iOrderS] += pow(fSign, r) / pow(effTOF, s);
+              }
+            }
           }
         } // ======= end of settings loop =======
       } // ======= end of momentum loop =======
@@ -2612,6 +2720,16 @@ void AliAnalysisTaskTIdentityPID::CalculateMoments_CutBasedMethod()
         fMomNetPrRecTOF[kBBBB] = recNegTOF * recNegTOF * recNegTOF * recNegTOF;
         fMomNetPrRecTOF[kAmB]  = recPosTOF - recNegTOF;
 
+        TMatrixF qMatrix(orderR, orderS);
+        TMatrixF qMatrixTOF(orderR, orderS);
+
+        for (size_t iOrderR = 0; iOrderR < orderR; ++iOrderR) {
+          for (size_t iOrderS = 0; iOrderS < orderS; ++iOrderS) {
+            qMatrix(iOrderR, iOrderS) = arrQ[iset][ieta][imom][iOrderR][iOrderS];
+            qMatrixTOF(iOrderR, iOrderS) = arrQTOF[iset][ieta][imom][iOrderR][iOrderS];
+          }
+        }
+
         // fill tree which contains moments
         if(!fTreeSRedirector) return;
         if (counterTracksRec > 0) {
@@ -2629,6 +2747,9 @@ void AliAnalysisTaskTIdentityPID::CalculateMoments_CutBasedMethod()
           //
           "netPrMomRec.="   << &fMomNetPrRec <<         // moments up to 4th order with cut based method
           "netPrMomRecTOF.="   << &fMomNetPrRecTOF <<         // moments up to 4th order with cut based method and TOF cut
+          //
+          "qMatrix.="     << &qMatrix <<                 // matrix with qs for efficiency correction
+          "qMatrixTOF.="  << &qMatrixTOF <<              // matrix with qs for efficiency correction with TOF cut
           "\n";
         }
       } // ======= end of settings loop =======
@@ -7791,7 +7912,7 @@ void AliAnalysisTaskTIdentityPID::MakeEventPlane(Double_t &Psi_full_r, Double_t 
     fEP_2_Psi_pos = Psi_pos_neg[0];
     fEP_2_Psi_neg = Psi_pos_neg[1];
     //
-    // 
+    //
     if(Psi_pos_neg[0] - Psi_pos_neg[1] > 90.0) Psi_pos_neg[1]  -= 180.0;
     else
     {

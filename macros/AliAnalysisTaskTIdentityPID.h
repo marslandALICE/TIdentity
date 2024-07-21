@@ -525,6 +525,17 @@ public:
 
   }
 
+  void SetEffMatrixObjects(THnF* effMatrixGenPos, THnF* effMatrixGenNeg, THnF* effMatrixRecPos, THnF* effMatrixRecNeg)
+  {
+    // set MC eta values to scan
+    std::cout << " Info::ilya: !!!!!! SetEffMatrixObjects is being set !!!!!!!   " << std::endl;
+    //
+    fEffMatrixGenPos = (THnF*) effMatrixGenPos->Clone();
+    fEffMatrixGenNeg = (THnF*) effMatrixGenNeg->Clone();
+    fEffMatrixRecPos = (THnF*) effMatrixRecPos->Clone();
+    fEffMatrixRecNeg = (THnF*) effMatrixRecNeg->Clone();
+  }
+
   void SetLookUpTable_MissCl(TClonesArray *lookUpArray)
   {
     // set MC eta values to scan
@@ -995,6 +1006,11 @@ private:
   TH1F             * fHistImpParam;           // control histogram for impact parameter
   TH1F             * fHistVertex;             // control histogram for vertexZ
   TH2F             * fHistArmPod;             // control histogram for Armanteros Podolanski plot
+  THnF             * fEffMatrixGenPos;           // histogram efficiency matrix read from file
+  THnF             * fEffMatrixGenNeg;           // histogram efficiency matrix read from file
+  THnF             * fEffMatrixRecPos;           // histogram efficiency matrix read from file
+  THnF             * fEffMatrixRecNeg;           // histogram efficiency matrix read from file
+  vector<vector<vector<vector<vector<TH1F*>>>>> fEffMatrixProjections;  // container for efficiency matrix projections
   //
   // Counters for Marian
   //
