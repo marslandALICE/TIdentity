@@ -1,9 +1,11 @@
 # Datasets
 
-| Dataset | System | List                        |
-| ------- | ------ | --------------------------- |
-| LHC18q  | Pb–Pb  | runs-2018-LHC18q-pass3.list |
-| LHC18r  | Pb–Pb  | runs-2018-LHC18r-pass3.list |
+| Dataset | System   | List                        |
+| ------- | -------- | --------------------------- |
+| LHC18q  | Pb–Pb    | runs-2018-LHC18q-pass3.list |
+| LHC18r  | Pb–Pb    | runs-2018-LHC18r-pass3.list |
+| LHC17p  | pp 5 TeV | runs-2017-LHC17p-pass2.list |
+| LHC17p  | pp 5 TeV | runs-2017-LHC17p-pass2.list |
 
 # Productions
 
@@ -14,6 +16,7 @@
 | LHC20k6abcd | Pb–Pb   | LHC18qr | ALIROOT-8580 | Cascade injected HIJING                | runsMC-2020-LHC20k6[a,b,c,d]-pass3.list |
 | LHC22b7abcd | Pb–Pb   | LHC18qr | ALIROOT-8785 | V0 and cascade injected HIJING, GEANT4 | runsMC-2022-LHC22b7[a,b,c,d]-pass3.list |
 | LHC20g4     | pp 5TeV | LHC18qr | ALIROOT-8505 | jet-jet, no ESDs                       |                                         |
+| LHC21j1     | pp 5TeV | LHC17pq | ALIROOT-8751 | General purpose PYTHIA8                | runsMC-2021-LHC21j1a_cent-pass2.list    |
 
 # How to run runGrid.c
 cd $RUN_ON_GRID_DIR/Ebye/test_fastGen_netParticles/
