@@ -338,6 +338,7 @@ fRunNo(0),
 fBField(0),
 fBeamType(0),
 fIsMCPileup(0),
+fMCGeneratorIndex(0),
 fLeadingJetCut(0),
 fJetPt(0),
 fJetEta(0),
@@ -684,6 +685,7 @@ fRunNo(0),
 fBField(0),
 fBeamType(0),
 fIsMCPileup(0),
+fMCGeneratorIndex(0),
 fLeadingJetCut(0),
 fJetPt(0),
 fJetEta(0),
@@ -1726,7 +1728,7 @@ void AliAnalysisTaskTIdentityPID::UserExec(Option_t *)
   if (fRunFastHighMomentCal)               { FastGenHigherMoments(); return;}
   if (fRunFastSimulation) {
     if (fFillJetsBG>0) FindJetsFJGen();
-    FastGen_NetParticles(); 
+    FastGen_NetParticles();
     return;
   }
   //
@@ -2687,7 +2689,7 @@ void AliAnalysisTaskTIdentityPID::FillMCFull_NetParticles()
   const Int_t nParticles  = 3;
   const Int_t nMoments    = 14;
   const Int_t nPileUpSettings = 2;
-  Int_t nOriginType = (fTrackOriginOnlyPrimary!=1) ? 4 : 1;
+  Int_t nOriginType = (fTrackOriginOnlyPrimary!=1) ? 5 : 1;
   //
   // counters with resonances         // counters without resonances
   TVectorF genPos(nParticles);        TVectorF nRgenPos(nParticles);
@@ -2771,15 +2773,24 @@ void AliAnalysisTaskTIdentityPID::FillMCFull_NetParticles()
           AliMCParticle *trackMCgen = (AliMCParticle *)fMCEvent->GetTrack(iTrack);
           if (!trackMCgen) continue;
           //
+          fMCGeneratorIndex = trackMCgen->GetGeneratorIndex();
+          //
+          TString genname = "";
+          fMCEvent->GetCocktailGenerator(trackMCgen->GetLabel(), genname);
+          Bool_t isHijing = genname.Contains("Hijing", TString::kIgnoreCase);
+          Bool_t isPythia = genname.Contains("Pythia", TString::kIgnoreCase);
+          //
           // check the origin of the track
-          Bool_t bPrim     = fMCStack->IsPhysicalPrimary(iTrack);
-          Bool_t bMaterial = fMCStack->IsSecondaryFromMaterial(iTrack);
-          Bool_t bWeak     = fMCStack->IsSecondaryFromWeakDecay(iTrack);
+          Bool_t bPrim     = fMCStack->IsPhysicalPrimary(iTrack) && (isHijing || isPythia);
+          Bool_t bMaterial = fMCStack->IsSecondaryFromMaterial(iTrack) && (isHijing || isPythia);
+          Bool_t bWeak     = fMCStack->IsSecondaryFromWeakDecay(iTrack) && (isHijing || isPythia);
+          Bool_t bInjected = !(isHijing || isPythia);
           Bool_t bAcceptOrigin = kFALSE;
           if (iorig==0) bAcceptOrigin = bPrim;
           if (iorig==1) bAcceptOrigin = (bPrim || bWeak);
           if (iorig==2) bAcceptOrigin = (bPrim || bMaterial);
           if (iorig==3) bAcceptOrigin = (bPrim || bMaterial || bWeak);
+          if (iorig==4) bAcceptOrigin = bInjected;
           if (!bAcceptOrigin) continue;
           //
           // select particle of interest
@@ -2851,6 +2862,7 @@ void AliAnalysisTaskTIdentityPID::FillMCFull_NetParticles()
           AliESDtrack *trackReal = fESD->GetTrack(irectrack);
           if (trackReal == NULL) continue;
           Int_t lab = TMath::Abs(trackReal->GetLabel());           // avoid from negatif labels, they include some garbage
+          AliMCParticle *trackMCgen = (AliMCParticle *)fMCEvent->GetTrack(lab);
           // select pile up
           isTPCPileup = AliAnalysisUtils::IsParticleFromOutOfBunchPileupCollision(lab,fMCEvent);
           isITSPileup = AliAnalysisUtils::IsSameBunchPileupInGeneratedEvent(fMCEvent, "Hijing");
@@ -2858,18 +2870,26 @@ void AliAnalysisTaskTIdentityPID::FillMCFull_NetParticles()
           if (ipileup == 0 && fIsMCPileup) continue;
           //
           // check the origin of the track
-          Bool_t bPrim     = fMCStack->IsPhysicalPrimary(lab);
-          Bool_t bMaterial = fMCStack->IsSecondaryFromMaterial(lab);
-          Bool_t bWeak     = fMCStack->IsSecondaryFromWeakDecay(lab);
+          fMCGeneratorIndex = trackMCgen->GetGeneratorIndex();
+          //
+          TString genname = "";
+          fMCEvent->GetCocktailGenerator(trackMCgen->GetLabel(), genname);
+          Bool_t isHijing = genname.Contains("Hijing", TString::kIgnoreCase);
+          Bool_t isPythia = genname.Contains("Pythia", TString::kIgnoreCase);
+          //
+          Bool_t bPrim     = fMCStack->IsPhysicalPrimary(lab) && (isHijing || isPythia);
+          Bool_t bMaterial = fMCStack->IsSecondaryFromMaterial(lab) && (isHijing || isPythia);
+          Bool_t bWeak     = fMCStack->IsSecondaryFromWeakDecay(lab) && (isHijing || isPythia);
+          Bool_t bInjected = !(isHijing || isPythia);
           Bool_t bAcceptOrigin = kFALSE;
           if (iorig == 0) bAcceptOrigin = bPrim;
           if (iorig == 1) bAcceptOrigin = (bPrim || bWeak);
           if (iorig == 2) bAcceptOrigin = (bPrim || bMaterial);
           if (iorig == 3) bAcceptOrigin = (bPrim || bMaterial || bWeak);
+          if (iorig == 4) bAcceptOrigin = bInjected;
           if (!bAcceptOrigin) continue;
           //
           // Identify particle wrt pdg code
-          AliMCParticle *trackMCgen = (AliMCParticle *)fMCEvent->GetTrack(lab);
           Int_t pdg = trackMCgen->Particle()->GetPdgCode();
           //
           Int_t iPart = -10;
@@ -3646,10 +3666,16 @@ void AliAnalysisTaskTIdentityPID::FillTreeMC()
     Bool_t isITSPileup = AliAnalysisUtils::IsSameBunchPileupInGeneratedEvent(fMCEvent, "Hijing");
     //
     // check the origin of the track
+    TString genname = "";
+    fMCEvent->GetCocktailGenerator(trackMCgen->GetLabel(), genname);
+    Bool_t isHijing = genname.Contains("Hijing", TString::kIgnoreCase);
+    Bool_t isPythia = genname.Contains("Pythia", TString::kIgnoreCase);
+    //
     trackOrigin = -10;
-    if (fMCStack->IsPhysicalPrimary(lab))        trackOrigin = 0;
-    if (fMCStack->IsSecondaryFromMaterial(lab))  trackOrigin = 1;
-    if (fMCStack->IsSecondaryFromWeakDecay(lab)) trackOrigin = 2;
+    if (fMCStack->IsPhysicalPrimary(lab) && (isHijing || isPythia))        trackOrigin = 0;
+    if (fMCStack->IsSecondaryFromMaterial(lab) && (isHijing || isPythia))  trackOrigin = 1;
+    if (fMCStack->IsSecondaryFromWeakDecay(lab) && (isHijing || isPythia)) trackOrigin = 2;
+    if (!isHijing && !isPythia)                                            trackOrigin = 3;
     if (trackOrigin<-1) continue; // TODO
     //
     // Track cuts from dtector
@@ -3756,6 +3782,7 @@ void AliAnalysisTaskTIdentityPID::FillTreeMC()
     "run="       << fRunNo <<  // run Number
     "bField="    << fBField <<  // run Number
     "pileupbit=" << fPileUpBit <<
+    "generatorIndex=" << fMCGeneratorIndex <<  // generator index
     "primmult="  << fNContributors <<  //  #prim tracks
     "ncltpc="    << fNcl                  <<  //  centrality
     "ncltpccorr="<< fNclCorr              <<  //  centrality
@@ -4800,18 +4827,26 @@ void AliAnalysisTaskTIdentityPID::FillEffMatrix()
           if (ipileup==0 && fIsMCPileup) continue;
           //
           // check the origin of the track
-          Bool_t bPrim     = fMCStack->IsPhysicalPrimary(lab);
-          Bool_t bMaterial = fMCStack->IsSecondaryFromMaterial(lab);
-          Bool_t bWeak     = fMCStack->IsSecondaryFromWeakDecay(lab);
+          AliMCParticle *trackMCgen = (AliMCParticle *)fMCEvent->GetTrack(lab); // TParticle *trackMC  = fMCStack->Particle(lab);
+          TString genname = "";
+          fMCEvent->GetCocktailGenerator(trackMCgen->GetLabel(), genname);
+          Bool_t isHijing = genname.Contains("Hijing", TString::kIgnoreCase);
+          Bool_t isPythia = genname.Contains("Pythia", TString::kIgnoreCase);
+          //
+          // check the origin of the track
+          Bool_t bPrim     = fMCStack->IsPhysicalPrimary(lab) && (isHijing || isPythia);
+          Bool_t bMaterial = fMCStack->IsSecondaryFromMaterial(lab) && (isHijing || isPythia);
+          Bool_t bWeak     = fMCStack->IsSecondaryFromWeakDecay(lab) && (isHijing || isPythia);
+          Bool_t bInjected = !(isHijing || isPythia);
           Bool_t bAcceptOrigin = kFALSE;
           if (iorig==0) bAcceptOrigin = bPrim;
           if (iorig==1) bAcceptOrigin = (bPrim || bWeak);
           if (iorig==2) bAcceptOrigin = (bPrim || bMaterial);
           if (iorig==3) bAcceptOrigin = (bPrim || bMaterial || bWeak);
+          if (iorig==4) bAcceptOrigin = bInjected;
           if (!bAcceptOrigin) continue;
           //
           // Identify particle wrt pdg code
-          AliMCParticle *trackMCgen = (AliMCParticle *)fMCEvent->GetTrack(lab); // TParticle *trackMC  = fMCStack->Particle(lab);
           Int_t pdg = trackMCgen->Particle()->GetPdgCode();                     // Int_t pdg = trackMC->GetPdgCode();
           //
           Int_t iPart = -10;
@@ -7791,7 +7826,7 @@ void AliAnalysisTaskTIdentityPID::MakeEventPlane(Double_t &Psi_full_r, Double_t 
     fEP_2_Psi_pos = Psi_pos_neg[0];
     fEP_2_Psi_neg = Psi_pos_neg[1];
     //
-    // 
+    //
     if(Psi_pos_neg[0] - Psi_pos_neg[1] > 90.0) Psi_pos_neg[1]  -= 180.0;
     else
     {

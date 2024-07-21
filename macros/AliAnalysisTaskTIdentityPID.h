@@ -852,6 +852,7 @@ private:
   Float_t            fBField;
   TString            fBeamType;
   Bool_t             fIsMCPileup;
+  Int_t              fMCGeneratorIndex;
   //
   // Jet variables
   Float_t            fLeadingJetCut;
