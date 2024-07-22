@@ -2511,6 +2511,19 @@ void AliAnalysisTaskTIdentityPID::CalculateMoments_CutBasedMethod()
   Int_t nStackTracks = fESD->GetNumberOfTracks();
   if (nStackTracks <= 1) return;
 
+  // get centrality index
+  Int_t centIndex = -1;
+  for (size_t iCent = 0; iCent < fNCentBinsMC; iCent++) {
+    if (fCentrality >= fxCentBins[iCent] && fCentrality < fxCentBins[iCent+1]) {
+      centIndex = iCent;
+      break;
+    }
+  }
+  if (centIndex == -1) {
+    printf("Centrality %f out of range", fCentrality);
+    return;
+  }
+
   const size_t settingsDim = fSystSettings.size();
   const size_t etaDim      = fetaDownArr.size();
   const size_t momentumDim = fpDownArr.size();
@@ -2635,17 +2648,13 @@ void AliAnalysisTaskTIdentityPID::CalculateMoments_CutBasedMethod()
 
             const Int_t signIndex = (fSign < 0); // +1 -> 0, -1 -> 1
 
-            // get centrality index
-            Int_t centIndex = -1;
-            for (size_t iCent = 0; iCent < fNCentBinsMC; iCent++) {
-              if (fCentrality >= fxCentBins[iCent] && fCentrality < fxCentBins[iCent+1]) {
-                centIndex = iCent;
-                break;
-              }
-            }
 
-            Double_t eff = getEff(kFALSE, fSign, setting, centIndex, ieta, ptotCut, 2);
-            Double_t effTOF = getEff(kTRUE, fSign, setting, centIndex, ieta, ptotCut, 2);
+            Double_t eff = 1e-5;
+            Double_t effTOF = 1e-5;
+            if (fEffMatrixGenPos) {
+              eff = getEff(kFALSE, fSign, setting, centIndex, ieta, ptotCut, 2);
+              effTOF = getEff(kTRUE, fSign, setting, centIndex, ieta, ptotCut, 2);
+            }
 
             // check pid
             Double_t nSigmaTPC = fPIDResponse->NumberOfSigmasTPC(trackReal, AliPID::kProton);
