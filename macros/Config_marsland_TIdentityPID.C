@@ -140,7 +140,7 @@ AliAnalysisTaskTIdentityPID* Config_marsland_TIdentityPID(Bool_t getFromAlien, I
       Int_t tmpBaryonArr[tmpNbaryons] = {2212,2112,2224,2214,2114,1114,3122,3222,3212,3112,3224,3214,3114,3322,3312,3324,3314,3334};
       task->SetMCBaryonArray(tmpNbaryons,tmpBaryonArr);
 
-      vector<THnF*> effMatrixObjects = GetEffMatrixObjects(kTRUE, "../data/AnalysisResults_hists.root");
+      vector<THnF*> effMatrixObjects = GetEffMatrixObjects(kTRUE, "AnalysisResults_hists.root");
       task->SetEffMatrixObjects(effMatrixObjects[0], effMatrixObjects[1], effMatrixObjects[2], effMatrixObjects[3]);
 
     }
@@ -379,7 +379,7 @@ vector<THnF*> GetEffMatrixObjects(Bool_t runOnGrid, TString filename) {
     TGrid* alien = TGrid::Connect("alien://",0,0,"t");
     TString lookUpDir = "alien:///alice/cern.ch/user/i/ifokin/ebye/lookuptables/";
     printf("%s/%s\n",lookUpDir.Data(),filename.Data());
-    gSystem->Exec(Form("alien_cp %s/%s .",lookUpDir.Data(),filename.Data()));
+    gSystem->Exec(Form("alien_cp %s/%s file://.",lookUpDir.Data(),filename.Data()));
     lookUpPath = Form("%s/%s",gSystem->pwd(),filename.Data());
   } else {
     TString lookUpDir = "/misc/alidata141/alice_u/fokin/TIdentity/data/";
