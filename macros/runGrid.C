@@ -117,7 +117,7 @@ Bool_t fUseMultSelection = kTRUE;
 TString fname="PWGPP695_MC_remapping";  // output directory name in my home folder in alien
 // 
 const Int_t timelimitTTL=9000; // in terms of hours 9000/60/60 = 2.5 hours
-const Int_t nTestFiles = 20;
+const Int_t nTestFiles = 3;
 const Int_t nChunksPerJob = 10;
 const Int_t nEvents = -1; // set -1 for full stat
 //

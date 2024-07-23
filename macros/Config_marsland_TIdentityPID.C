@@ -12,7 +12,7 @@ AliAnalysisTaskTIdentityPID* Config_marsland_TIdentityPID(Bool_t getFromAlien, I
   SetDefaults(task,year,periodName,passIndex);
   if (year==2010) task->SelectCollisionCandidates(AliVEvent::kMB);   // select minimum bias events for LHC10h
   if (year==2015) task->SelectCollisionCandidates(AliVEvent::kINT7); // select minimum bias events for LHC15o
-  // if (year==2018) task->SelectCollisionCandidates(AliVEvent::kMB | AliVEvent::kCentral | AliVEvent::kSemiCentral) ;
+  if (year==2018) task->SelectCollisionCandidates(AliVEvent::kINT7 | AliVEvent::kCentral | AliVEvent::kSemiCentral); 
   //
   // Get the lookup table
   TTree *lookUpTree=NULL;

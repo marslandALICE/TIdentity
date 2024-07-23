@@ -603,6 +603,7 @@ private:
   void GetFlatenicity();
   Double_t ComputeSpherocity(Int_t setting);
   void FillEventInfoMC();
+  Float_t RelativePhi(Float_t mphi, Float_t vphi);
 
   //
   // ---------------------------------------------------------------------------------
