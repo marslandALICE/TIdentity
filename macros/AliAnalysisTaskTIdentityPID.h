@@ -598,7 +598,7 @@ private:
   // Jet Functions
   void FindJetsFJ();
   void FindJetsFJGen();
-  void MakeEventPlane(Double_t &Psi_full_r, Double_t &Psi_full_r_Psi3, Int_t doEP_Psi2, Int_t doEP_Psi3, Int_t setting);
+  Int_t MakeEventPlane(Int_t doEP_Psi2, Int_t doEP_Psi3, Int_t setting);
   void GetFlatenicityMC();
   void GetFlatenicity();
   Double_t ComputeSpherocity(Int_t setting);

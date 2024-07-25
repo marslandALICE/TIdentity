@@ -38,10 +38,10 @@ void runGrid(Bool_t fRunLocalFiles = kTRUE,
 # Run real data
 aliroot -b -q 'runGrid.C(0,"test",0,  0, "$RUN_ON_GRID_DIR/Ebye/lists/runsIlya1run-2018-LHC18r-pass3.list",0,2018,"18r",3,0)'
 
-
 # run full MC
 aliroot -b -q 'runGrid.C(0,"test",0,  50, "$RUN_ON_GRID_DIR/Ebye/lists/runsTest-2020-LHC20e3a-pass3.list",1,2018,"18q",3,0)'
-
+aliroot -b -q 'runGrid.C(0,"test",0,  50, "$TIdentityDIRcommit/TIdentity/lists/runsMC-2020-LHC20k6a-pass3.list",1,2018,"18q",3,0)'
+aliroot -b -q 'runGrid.C(0,"test",0,  51, "$TIdentityDIRcommit/TIdentity/lists/runsMC-2021-LHC21j1a_cent-pass2.list",1,2017,"LHC17p",3,0)'
 
 # run fastGen
 aliroot -b -q 'runGrid.C(0,"test",0,  200, "$RUN_ON_GRID_DIR/Ebye/lists/runsGen1run-2022-LHC22d1c2-pass3.list",2,2022,"22d1c2",2,0)'
@@ -49,6 +49,8 @@ aliroot -b -q 'runGrid.C(0,"test",0,  200, "$RUN_ON_GRID_DIR/Ebye/lists/runsGen1
 # copy data
 alien_cp -T 6 -parent 99 -glob AnalysisResults.root /Alice/cern.ch/user/m/marsland/PWGPP695_MC_remapping/LHC20e3a_pass3_20240625_228/2020 file:
 
+# merge data e.g. only for ebye fluct. related objects
+alihadd -i "cleanHists" -i "mcFull" -i "mcGen" -i "fTreeMC" -i "eventInfo" -i "eventInfoMC" -i "cutBased" -s 2000000000 AnalysisResults_mcTrees.root  @file.list
 
 
 

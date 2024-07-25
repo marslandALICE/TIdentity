@@ -1734,7 +1734,7 @@ void AliAnalysisTaskTIdentityPID::UserExec(Option_t *)
     //
     if (fUseCouts) {
       std::cout << " Info::marsland: =============================================================================================== " << std::endl;
-      std::cout << " Info::marsland: Event counter = " << fEventCountInFile << " - cent =  " << fCentrality << " = gid = " << gid << " = fEventGID = " << fEventGID << std::endl;
+      std::cout << " Info::marsland: Event counter = " << fEventCountInFile << " - cent =  " << fCentrality << " = gid = " << gid << " = fEventGID = " << fEventGID << " file: " << fChunkName << std::endl;
       std::cout << " Info::marsland: =============================================================================================== " << std::endl;
     }
   }
@@ -1768,11 +1768,11 @@ void AliAnalysisTaskTIdentityPID::UserExec(Option_t *)
   // Real Data Analysis
   //
   if (!fMCtrue && fFillTracks && fESD){
+    if (fEventInfo) {CalculateEventInfo(); CreateEventInfoTree();}
     FillTPCdEdxReal();
-    if (fFillJetsBG>0) FindJetsFJ();
     CalculateMoments_CutBasedMethod();
     if (fFillArmPodTree) FillCleanSamples();
-    if (fEventInfo) {CalculateEventInfo(); CreateEventInfoTree();}
+    if (fFillJetsBG>0) FindJetsFJ();
     if (fUseCouts)  std::cout << " Info::marsland: (Real Data Analysis) End of Filling part = " << fEventCountInFile << std::endl;
     return;
   }
@@ -1780,12 +1780,12 @@ void AliAnalysisTaskTIdentityPID::UserExec(Option_t *)
   // full MC analysis
   //
   if (fMCtrue && fEffMatrix && fESD){
-    if (fFillJetsBG>0) {FindJetsFJ(); FindJetsFJGen();}
+    if (fEventInfo) {CalculateEventInfo(); CreateEventInfoTree();}
     FillEffMatrix();
     FillMCFull_NetParticles();
     CalculateMoments_CutBasedMethod();
     if (fFillArmPodTree) FillCleanSamples();
-    if (fEventInfo) {CalculateEventInfo(); CreateEventInfoTree();}
+    if (fFillJetsBG>0) {FindJetsFJ(); FindJetsFJGen();}
     if (fUseCouts)  std::cout << " Info::marsland: (full MC analysis) End of Filling part = " << fEventCountInFile << std::endl;
     return;
   }
@@ -2214,9 +2214,11 @@ void AliAnalysisTaskTIdentityPID::FillMCFull_piKpr()
         if (!fMCStack->IsPhysicalPrimary(lab)) continue;
         //
         // Select real trigger event and reject other pile up vertices
-        Bool_t isTPCPileup = AliAnalysisUtils::IsParticleFromOutOfBunchPileupCollision(lab,fMCEvent);
-        Bool_t isITSPileup = AliAnalysisUtils::IsSameBunchPileupInGeneratedEvent(fMCEvent, "Hijing");
-        if (isTPCPileup || isITSPileup) continue;
+        if (fCollisionType==0){
+          Bool_t isTPCPileup = AliAnalysisUtils::IsParticleFromOutOfBunchPileupCollision(lab,fMCEvent);
+          Bool_t isITSPileup = AliAnalysisUtils::IsSameBunchPileupInGeneratedEvent(fMCEvent, "Hijing");
+          if (isTPCPileup || isITSPileup) continue;
+        }
         //
         TParticle *trackMC  = fMCStack->Particle(lab);
         Int_t pdg = trackMC->GetPdgCode();
@@ -2307,9 +2309,11 @@ void AliAnalysisTaskTIdentityPID::FillMCFull_piKpr()
       { // track loop
         //
         // Select real trigger event and reject other pile up vertices
-        Bool_t isTPCPileup = AliAnalysisUtils::IsParticleFromOutOfBunchPileupCollision(iTrack,fMCEvent);
-        Bool_t isITSPileup = AliAnalysisUtils::IsSameBunchPileupInGeneratedEvent(fMCEvent, "Hijing");
-        if (isTPCPileup || isITSPileup) continue;
+        if (fCollisionType==0){
+          Bool_t isTPCPileup = AliAnalysisUtils::IsParticleFromOutOfBunchPileupCollision(iTrack,fMCEvent);
+          Bool_t isITSPileup = AliAnalysisUtils::IsSameBunchPileupInGeneratedEvent(fMCEvent, "Hijing");
+          if (isTPCPileup || isITSPileup) continue;
+        }
         //
         // initialize the dummy particle id
         fElMCgen =-100.; fPiMCgen =-100.; fKaMCgen =-100.; fPrMCgen =-100.; fDeMCgen =-100.; fMuMCgen =-100.;
@@ -2895,10 +2899,12 @@ void AliAnalysisTaskTIdentityPID::FillMCFull_NetParticles()
           // track loop
           //
           // Select real trigger event and reject other pile up vertices
-          isTPCPileup = AliAnalysisUtils::IsParticleFromOutOfBunchPileupCollision(iTrack,fMCEvent);
-          isITSPileup = AliAnalysisUtils::IsSameBunchPileupInGeneratedEvent(fMCEvent, "Hijing");
-          fIsMCPileup = (isTPCPileup || isITSPileup);
-          if (ipileup==0 && fIsMCPileup) continue;
+          if (fCollisionType==0){
+            isTPCPileup = AliAnalysisUtils::IsParticleFromOutOfBunchPileupCollision(iTrack,fMCEvent);
+            isITSPileup = AliAnalysisUtils::IsSameBunchPileupInGeneratedEvent(fMCEvent, "Hijing");
+            fIsMCPileup = (isTPCPileup || isITSPileup);
+            if (ipileup==0 && fIsMCPileup) continue;
+          }
           //
           // initialize the dummy particle id
           fElMCgen =-100.; fPiMCgen =-100.; fKaMCgen =-100.; fPrMCgen =-100.;
@@ -2994,10 +3000,12 @@ void AliAnalysisTaskTIdentityPID::FillMCFull_NetParticles()
           Int_t lab = TMath::Abs(trackReal->GetLabel());           // avoid from negatif labels, they include some garbage
           AliMCParticle *trackMCgen = (AliMCParticle *)fMCEvent->GetTrack(lab);
           // select pile up
-          isTPCPileup = AliAnalysisUtils::IsParticleFromOutOfBunchPileupCollision(lab,fMCEvent);
-          isITSPileup = AliAnalysisUtils::IsSameBunchPileupInGeneratedEvent(fMCEvent, "Hijing");
-          fIsMCPileup = (isTPCPileup || isITSPileup);
-          if (ipileup == 0 && fIsMCPileup) continue;
+          if (fCollisionType==0){
+            isTPCPileup = AliAnalysisUtils::IsParticleFromOutOfBunchPileupCollision(lab,fMCEvent);
+            isITSPileup = AliAnalysisUtils::IsSameBunchPileupInGeneratedEvent(fMCEvent, "Hijing");
+            fIsMCPileup = (isTPCPileup || isITSPileup);
+            if (ipileup == 0 && fIsMCPileup) continue;
+          }
           //
           // check the origin of the track
           fMCGeneratorIndex = trackMCgen->GetGeneratorIndex();
@@ -3298,9 +3306,6 @@ void AliAnalysisTaskTIdentityPID::FillEventInfoMC()
   const Int_t nMultType = 5;
   TVectorF fMultTPC(nMultType);
   TVectorF fMultV0M(nMultType);
-  Double_t fPsi2 = 0.;
-  Double_t fPsi3 = 0.;
-  MakeEventPlane(fPsi2, fPsi3, 1, 1, -1);
   if (fCollisionType == 1) {
     GetFlatenicityMC();
     fSpherocity = ComputeSpherocity(-1);
@@ -3787,9 +3792,13 @@ void AliAnalysisTaskTIdentityPID::FillTreeMC()
     Int_t lab = TMath::Abs(trackReal->GetLabel());
     AliMCParticle *trackMCgen = (AliMCParticle *)fMCEvent->GetTrack(lab);
     Int_t pdg = trackMCgen->Particle()->GetPdgCode();
+    Bool_t isTPCPileup=kFALSE, isITSPileup=kFALSE;
     //
-    Bool_t isTPCPileup = AliAnalysisUtils::IsParticleFromOutOfBunchPileupCollision(lab,fMCEvent);
-    Bool_t isITSPileup = AliAnalysisUtils::IsSameBunchPileupInGeneratedEvent(fMCEvent, "Hijing");
+    if (fCollisionType==0){
+      isTPCPileup = AliAnalysisUtils::IsParticleFromOutOfBunchPileupCollision(lab,fMCEvent);
+      isITSPileup = AliAnalysisUtils::IsSameBunchPileupInGeneratedEvent(fMCEvent, "Hijing");
+    }
+
     //
     // check the origin of the track
     TString genname = "";
@@ -3940,9 +3949,11 @@ void AliAnalysisTaskTIdentityPID::FillGenDistributions()
   for (Int_t iTrack = 0; iTrack < fMCEvent->GetNumberOfTracks(); iTrack++)
   { // track loop
     //
-    Bool_t isTPCPileup = AliAnalysisUtils::IsParticleFromOutOfBunchPileupCollision(iTrack,fMCEvent);
-    Bool_t isITSPileup = AliAnalysisUtils::IsSameBunchPileupInGeneratedEvent(fMCEvent, "Hijing");
-    if (isTPCPileup || isITSPileup) continue;
+    if (fCollisionType==0){
+      Bool_t isTPCPileup = AliAnalysisUtils::IsParticleFromOutOfBunchPileupCollision(iTrack,fMCEvent);
+      Bool_t isITSPileup = AliAnalysisUtils::IsSameBunchPileupInGeneratedEvent(fMCEvent, "Hijing");
+      if (isTPCPileup || isITSPileup) continue;
+    }
     //
     // initialize the dummy particle id
     fPiMCgen =-100.; fKaMCgen =-100.; fPrMCgen =-100.;
@@ -4043,9 +4054,11 @@ void AliAnalysisTaskTIdentityPID::FastGen()
           // track loop
           //
           // Select real trigger event and reject other pile up vertices
-          Bool_t isTPCPileup = AliAnalysisUtils::IsParticleFromOutOfBunchPileupCollision(iTrack,fMCEvent);
-          Bool_t isITSPileup = AliAnalysisUtils::IsSameBunchPileupInGeneratedEvent(fMCEvent, "Hijing");
-          if (isTPCPileup || isITSPileup) continue;
+          if (fCollisionType==0){
+            Bool_t isTPCPileup = AliAnalysisUtils::IsParticleFromOutOfBunchPileupCollision(iTrack,fMCEvent);
+            Bool_t isITSPileup = AliAnalysisUtils::IsSameBunchPileupInGeneratedEvent(fMCEvent, "Hijing");
+            if (isTPCPileup || isITSPileup) continue;
+          }
           //
           // initialize the dummy particle id
           fElMCgen =-100.; fPiMCgen =-100.; fKaMCgen =-100.; fPrMCgen =-100.; fDeMCgen =-100.; fMuMCgen =-100.; fLaMCgen =-100., fBaMCgen =-100.;
@@ -4320,9 +4333,11 @@ void AliAnalysisTaskTIdentityPID::FastGenHigherMoments()
           // track loop
           //
           // Select real trigger event and reject other pile up vertices
-          Bool_t isTPCPileup = AliAnalysisUtils::IsParticleFromOutOfBunchPileupCollision(iTrack,fMCEvent);
-          Bool_t isITSPileup = AliAnalysisUtils::IsSameBunchPileupInGeneratedEvent(fMCEvent, "Hijing");
-          if (isTPCPileup || isITSPileup) continue;
+          if (fCollisionType==0){
+            Bool_t isTPCPileup = AliAnalysisUtils::IsParticleFromOutOfBunchPileupCollision(iTrack,fMCEvent);
+            Bool_t isITSPileup = AliAnalysisUtils::IsSameBunchPileupInGeneratedEvent(fMCEvent, "Hijing");
+            if (isTPCPileup || isITSPileup) continue;
+          }
           //
           // initialize the dummy particle id
           fElMCgen =-100.; fPiMCgen =-100.; fKaMCgen =-100.; fPrMCgen =-100.; fDeMCgen =-100.; fMuMCgen =-100.; fLaMCgen =-100.;
@@ -4687,9 +4702,11 @@ void AliAnalysisTaskTIdentityPID::MCclosureHigherMoments()
         { // track loop
           //
           // Select real trigger event and reject other pile up vertices
-          Bool_t isTPCPileup = AliAnalysisUtils::IsParticleFromOutOfBunchPileupCollision(iTrack,fMCEvent);
-          Bool_t isITSPileup = AliAnalysisUtils::IsSameBunchPileupInGeneratedEvent(fMCEvent, "Hijing");
-          if (isTPCPileup || isITSPileup) continue;
+          if (fCollisionType==0){
+            Bool_t isTPCPileup = AliAnalysisUtils::IsParticleFromOutOfBunchPileupCollision(iTrack,fMCEvent);
+            Bool_t isITSPileup = AliAnalysisUtils::IsSameBunchPileupInGeneratedEvent(fMCEvent, "Hijing");
+            if (isTPCPileup || isITSPileup) continue;
+          }
           //
           // initialize the dummy particle id
           Int_t piMCgen =-100., kaMCgen =-100., prMCgen =-100.;
@@ -4869,10 +4886,12 @@ void AliAnalysisTaskTIdentityPID::FillEffMatrix()
           // track loop
           //
           // Select real trigger event and reject other pile up vertices
-          isTPCPileup = AliAnalysisUtils::IsParticleFromOutOfBunchPileupCollision(iTrack,fMCEvent);
-          isITSPileup = AliAnalysisUtils::IsSameBunchPileupInGeneratedEvent(fMCEvent, "Hijing");
-          fIsMCPileup = (isTPCPileup || isITSPileup);
-          if (ipileup==0 && fIsMCPileup) continue;
+          if (fCollisionType==0){
+            isTPCPileup = AliAnalysisUtils::IsParticleFromOutOfBunchPileupCollision(iTrack,fMCEvent);
+            isITSPileup = AliAnalysisUtils::IsSameBunchPileupInGeneratedEvent(fMCEvent, "Hijing");
+            fIsMCPileup = (isTPCPileup || isITSPileup);
+            if (ipileup==0 && fIsMCPileup) continue;
+          }
           //
           // initialize the dummy particle id
           fElMCgen =-100.; fPiMCgen =-100.; fKaMCgen =-100.; fPrMCgen =-100.;
@@ -4947,10 +4966,12 @@ void AliAnalysisTaskTIdentityPID::FillEffMatrix()
           if (trackReal==NULL) continue;
           Int_t lab = TMath::Abs(trackReal->GetLabel());           // avoid from negatif labels, they include some garbage
           // select pile up
-          isTPCPileup = AliAnalysisUtils::IsParticleFromOutOfBunchPileupCollision(lab,fMCEvent);
-          isITSPileup = AliAnalysisUtils::IsSameBunchPileupInGeneratedEvent(fMCEvent, "Hijing");
-          fIsMCPileup = (isTPCPileup || isITSPileup);
-          if (ipileup==0 && fIsMCPileup) continue;
+          if (fCollisionType==0){
+            isTPCPileup = AliAnalysisUtils::IsParticleFromOutOfBunchPileupCollision(lab,fMCEvent);
+            isITSPileup = AliAnalysisUtils::IsSameBunchPileupInGeneratedEvent(fMCEvent, "Hijing");
+            fIsMCPileup = (isTPCPileup || isITSPileup);
+            if (ipileup==0 && fIsMCPileup) continue;
+          }
           //
           // check the origin of the track
           AliMCParticle *trackMCgen = (AliMCParticle *)fMCEvent->GetTrack(lab); // TParticle *trackMC  = fMCStack->Particle(lab);
@@ -5562,9 +5583,11 @@ void AliAnalysisTaskTIdentityPID::WeakAndMaterial()
     // track loop
     //
     // Select real trigger event and reject other pile up vertices
-    Bool_t isTPCPileup = AliAnalysisUtils::IsParticleFromOutOfBunchPileupCollision(iTrack,fMCEvent);
-    Bool_t isITSPileup = AliAnalysisUtils::IsSameBunchPileupInGeneratedEvent(fMCEvent, "Hijing");
-    if (isTPCPileup || isITSPileup) continue;
+    if (fCollisionType==0){
+      Bool_t isTPCPileup = AliAnalysisUtils::IsParticleFromOutOfBunchPileupCollision(iTrack,fMCEvent);
+      Bool_t isITSPileup = AliAnalysisUtils::IsSameBunchPileupInGeneratedEvent(fMCEvent, "Hijing");
+      if (isTPCPileup || isITSPileup) continue;
+    }
     //
     // initialize the dummy particle id
     Int_t fElWeak =-100., fPiWeak =-100., fKaWeak =-100., fPrWeak =-100., fDeWeak =-100., fMuWeak =-100.;
@@ -5642,9 +5665,11 @@ void AliAnalysisTaskTIdentityPID::FillDnchDeta()
         // track loop
         //
         // Select real trigger event and reject other pile up vertices
-        Bool_t isTPCPileup = AliAnalysisUtils::IsParticleFromOutOfBunchPileupCollision(iTrack,fMCEvent);
-        Bool_t isITSPileup = AliAnalysisUtils::IsSameBunchPileupInGeneratedEvent(fMCEvent, "Hijing");
-        if (isTPCPileup || isITSPileup) continue;
+        if (fCollisionType==0){
+          Bool_t isTPCPileup = AliAnalysisUtils::IsParticleFromOutOfBunchPileupCollision(iTrack,fMCEvent);
+          Bool_t isITSPileup = AliAnalysisUtils::IsSameBunchPileupInGeneratedEvent(fMCEvent, "Hijing");
+          if (isTPCPileup || isITSPileup) continue;
+        }
         //
         // initialize the dummy particle id
         trackMCgen = (AliMCParticle *)fMCEvent->GetTrack(iTrack);
@@ -6489,12 +6514,11 @@ void AliAnalysisTaskTIdentityPID::CreateEventInfoTree()
 {
 
   if (fUseCouts) std::cout << " Info::marsland: ===== In the CreateEventInfoTree ===== " << std::endl;
-  Double_t fPsi2 = 0.;
-  Double_t fPsi3 = 0.;
-  MakeEventPlane(fPsi2, fPsi3, 1, 1, 0);
+  //
+  Int_t validEvent = (fMCEvent) ? MakeEventPlane(1, 1, -1) : MakeEventPlane(1, 1, 0);
   if (fCollisionType == 1) {
     GetFlatenicityMC();
-    fSpherocity = ComputeSpherocity(0);
+    fSpherocity = (fMCEvent) ? ComputeSpherocity(-1): ComputeSpherocity(0);
   }
 
   Int_t tpcClusterMultiplicity   = fESD->GetNumberOfTPCClusters();
@@ -6575,7 +6599,6 @@ void AliAnalysisTaskTIdentityPID::CreateEventInfoTree()
   "tpcClusterMult="       << tpcClusterMultiplicity <<  // tpc cluster multiplicity
   "tpcTrackBeforeClean="  << tpcTrackBeforeClean    <<   // tpc track before cleaning
   "itsTracklets="         << itsNumberOfTracklets   <<  // number of ITS tracklets
-  "pileupbit="            << fPileUpBit             <<
   //
   // "fmdMult.="             << &fmdMult               <<  // T0 multiplicity
   "tZeroMult.="           << &tzeroMult             <<  // T0 multiplicity
@@ -7219,22 +7242,45 @@ void AliAnalysisTaskTIdentityPID::FindJetsFJ()
   if (fUseCouts) std::cout << " Info::marsland: ===== In the FindJetsFJ ===== " << std::endl;
   //
   // Create jetwrapper with the same settings used in FindJetsEMC
-  int nJetRadiusBins = 3;
-  int nJetPtsubMinBins = 1;
   float fTrackMinPt = 0.15;
+  float fMaxRap = 0.9;
   float fGhostArea = 0.005;
-  float bgJetAbsEtaCut = 0.7;           // fixed
-  float bgJetRadius = 0.2;              // fixed
+  float bgJetAbsEtaCut = 0.7;           
+  float bgJetRadius = 0.2;   
   //
+  int nJetRadiusBins = 3;
+  int nJetPtsubMinBins = 1; // TODO       
   std::vector<float> fJetRadius{0.2,0.4,0.6};
   std::vector<float> fPtSubMin{40.,60.,80.}; // jet pt cut
   //
   // loop over settings and jets radius
   for (size_t iset=0; iset<fSystSettings.size(); iset++){
     Int_t setting = fSystSettings[iset];
-    Double_t fPsi2 = 0.;
-    Double_t fPsi3 = 0.;
-    MakeEventPlane(fPsi2, fPsi3, 1, 1, setting);
+    //
+    // Check if the event selection is passed
+    Int_t countTrack = 0;
+    for (Int_t iTrack = 0; iTrack < fESD->GetNumberOfTracks(); iTrack++) {
+      AliESDtrack* track = fESD->GetTrack(iTrack);
+      if (!track) continue;
+      if (fMCEvent){
+        Int_t lab = TMath::Abs(track->GetLabel());
+        Bool_t bPrim = fMCStack->IsPhysicalPrimary(lab);
+        if (fCollisionType==0){
+          Bool_t isTPCPileup = AliAnalysisUtils::IsParticleFromOutOfBunchPileupCollision(lab,fMCEvent);
+          Bool_t isITSPileup = AliAnalysisUtils::IsSameBunchPileupInGeneratedEvent(fMCEvent, "Hijing");
+          fIsMCPileup = (isTPCPileup || isITSPileup);
+          if (fIsMCPileup) continue;
+        }
+        if (!bPrim) continue;
+      } else {
+        SetCutBitsAndSomeTrackVariables(track,0);
+        if (!GetSystematicClassIndex(fTrackCutBits,setting)) continue;
+      }
+      countTrack++;
+    }
+    if (countTrack<1) return;
+    //
+    // radius loop
     for (int iJetRadius=0; iJetRadius<nJetRadiusBins; iJetRadius++){
       for (int iJetPt=0; iJetPt<nJetPtsubMinBins; iJetPt++){
         //
@@ -7253,8 +7299,8 @@ void AliAnalysisTaskTIdentityPID::FindJetsFJ()
         fFastJetWrapper->SetStrategy(fastjet::Strategy::Best);
         fFastJetWrapper->SetGhostArea(fGhostArea);
         fFastJetWrapper->SetAreaType(fastjet::AreaType::active_area);
-        fFastJetWrapper->SetMaxRap(0.9);
-        fFastJetWrapper->SetMinJetPt(0.15);
+        fFastJetWrapper->SetMaxRap(fMaxRap);
+        fFastJetWrapper->SetMinJetPt(fTrackMinPt);
         std::vector<int> trackTTIndex;
         trackTTIndex.clear();
         std::vector<fastjet::PseudoJet> particlesEmbeddedSubtracted; //will be filled with your subtracted event
@@ -7275,10 +7321,12 @@ void AliAnalysisTaskTIdentityPID::FindJetsFJ()
           if (fMCEvent){
             Int_t lab = TMath::Abs(track->GetLabel());
             Bool_t bPrim = fMCStack->IsPhysicalPrimary(lab);
-            Bool_t isTPCPileup = AliAnalysisUtils::IsParticleFromOutOfBunchPileupCollision(lab,fMCEvent);
-            Bool_t isITSPileup = AliAnalysisUtils::IsSameBunchPileupInGeneratedEvent(fMCEvent, "Hijing");
-            fIsMCPileup = (isTPCPileup || isITSPileup);
-            if (fIsMCPileup) continue;
+            if (fCollisionType==0){
+              Bool_t isTPCPileup = AliAnalysisUtils::IsParticleFromOutOfBunchPileupCollision(lab,fMCEvent);
+              Bool_t isITSPileup = AliAnalysisUtils::IsSameBunchPileupInGeneratedEvent(fMCEvent, "Hijing");
+              fIsMCPileup = (isTPCPileup || isITSPileup);
+              if (fIsMCPileup) continue;
+            }
             //
             // only primary particle condition for set=4 for set==-1 and set==0 jet finder runs over all selected particles
             if (setting>0 && !bPrim) continue;
@@ -7307,11 +7355,11 @@ void AliAnalysisTaskTIdentityPID::FindJetsFJ()
         // start of background jet loop
         if (fFillJetsBG==2){
           for (Int_t ijet=0; ijet<Int_t(jetsBG.size()); ijet++) {
-            fastjet::PseudoJet jet = jetsBG[ijet];
-            Float_t jetpt = jet.pt();
-            Float_t jetphi = jet.phi();
-            Float_t jeteta = jet.eta();
-            Float_t jetArea = jet.area();
+            fastjet::PseudoJet jetbg = jetsBG[ijet];
+            Float_t jetpt = jetbg.pt();
+            Float_t jetphi = jetbg.phi();
+            Float_t jeteta = jetbg.eta();
+            Float_t jetArea = jetbg.area();
             Float_t jetptsub = jetpt - fRhoFJ*jetArea;
             Int_t nJets = jetsBG.size();
             (*fTreeSRedirector)<<"jetsFJBG"<<
@@ -7517,35 +7565,26 @@ void AliAnalysisTaskTIdentityPID::FindJetsFJ()
           //
           // Rorate all other tracks
           int trackLabel = -1.0;
-          int indexCounter = -1.0;
-          // std::vector<Float_t> fShapesVar_Particles_E;
-          // std::vector<Float_t> fShapesVar_Particles_pT;
-          // std::vector<Float_t> fShapesVar_Particles_Phi;
-          // std::vector<Float_t> fShapesVar_Particles_Theta;
-          // std::vector<Float_t> fShapesVar_Particles_InJet;
-          // std::vector<Float_t> fShapesVar_Particles_DeltaR;
-          // std::vector<Float_t> fShapesVar_Particles_NRPhi;
-          // std::vector<Float_t> fShapesVar_Particles_Eta;
+          int indexCounter = 0.0;
           for (Int_t iTrack = 0; iTrack < fESD->GetNumberOfTracks(); iTrack++) {
             //
             // track selection
             AliESDtrack* track = fESD->GetTrack(iTrack);
-            if (!fESDtrackCutsLoose->AcceptTrack(track)) continue;
             if (TMath::Abs(track->Eta()) > 0.9) continue;
             if (!track->GetInnerParam()) continue;
             if (!(track->GetTPCsignalN()>0)) continue;
-            Double_t closestPar[3];
-            GetExpecteds(track,closestPar);
             SetCutBitsAndSomeTrackVariables(track,0);
             if (!GetSystematicClassIndex(fTrackCutBits,setting)) continue;
             //
             if (fMCEvent){
               Int_t lab = TMath::Abs(track->GetLabel());
               Bool_t bPrim = fMCStack->IsPhysicalPrimary(lab);
-              Bool_t isTPCPileup = AliAnalysisUtils::IsParticleFromOutOfBunchPileupCollision(lab,fMCEvent);
-              Bool_t isITSPileup = AliAnalysisUtils::IsSameBunchPileupInGeneratedEvent(fMCEvent, "Hijing");
-              fIsMCPileup = (isTPCPileup || isITSPileup);
-              if (fIsMCPileup) continue;
+              if (fCollisionType==0){
+                Bool_t isTPCPileup = AliAnalysisUtils::IsParticleFromOutOfBunchPileupCollision(lab,fMCEvent);
+                Bool_t isITSPileup = AliAnalysisUtils::IsSameBunchPileupInGeneratedEvent(fMCEvent, "Hijing");
+                fIsMCPileup = (isTPCPileup || isITSPileup);
+                if (fIsMCPileup) continue;
+              }
               if (setting>0 && !bPrim) continue;
             }
             //
@@ -7573,16 +7612,6 @@ void AliAnalysisTaskTIdentityPID::FindJetsFJ()
             }
             Float_t particleDeltaR = TMath::Sqrt(TMath::Power(RelativePhi(track->Phi(),jetphi),2)+TMath::Power((track->Eta()-jeteta),2));
             //
-            // Fill track vectors
-            // fShapesVar_Particles_E.push_back(track->E());
-            // fShapesVar_Particles_pT.push_back(track->Pt());
-            // fShapesVar_Particles_Phi.push_back(phiTrack);
-            // fShapesVar_Particles_Theta.push_back(thetaTrack);
-            // fShapesVar_Particles_InJet.push_back(isInJet);
-            // fShapesVar_Particles_DeltaR.push_back(particleDeltaR);
-            // fShapesVar_Particles_NRPhi.push_back(track->Phi());
-            // fShapesVar_Particles_Eta.push_back(track->Eta());
-
             fShapesVar_Particles_E[indexCounter] = track->E();
             fShapesVar_Particles_pT[indexCounter] = track->Pt();
             fShapesVar_Particles_Phi[indexCounter] = phiTrack;
@@ -7601,8 +7630,8 @@ void AliAnalysisTaskTIdentityPID::FindJetsFJ()
           "deltar="       << deltaR <<
           "planarflowjet="<< planarFlowJet <<
           "tau2to1="      << tau2to1 <<
-          "psi2="         << fPsi2 <<
-          "psi3="         << fPsi3 <<
+          "psi2="         << fEP_2_Psi <<
+          "psi3="         << fEP_3_Psi <<
           "ijet="         << ijet <<
           "syst="         << setting << //  syst setting
           "ptsubmin="     << fPtSubMin[iJetPt] <<
@@ -7682,7 +7711,7 @@ void AliAnalysisTaskTIdentityPID::FindJetsFJ()
             if((length > 0) && (tofSignal > 0)) beta = length / 2.99792458e-2 / tofSignal;
             //
             (*fTreeSRedirector)<<"jetsFJconst"<<
-            // "ptsubmin="  << fPtSubMin[iJetPt] <<
+            "ptsubmin="  << fPtSubMin[iJetPt] <<
             "constlabel="<< trackIndex <<
             "nsub1="     << Result_NSub1 <<
             "nsub2="     << Result_NSub2 <<
@@ -7821,12 +7850,12 @@ void AliAnalysisTaskTIdentityPID::FindJetsFJGen()
     {
       // track loop
       //
-      // Select real trigger event and reject other pile up vertices
-      Bool_t isTPCPileup = AliAnalysisUtils::IsParticleFromOutOfBunchPileupCollision(iTrack,fMCEvent);
-      Bool_t isITSPileup = AliAnalysisUtils::IsSameBunchPileupInGeneratedEvent(fMCEvent, "Hijing");
-      fIsMCPileup = (isTPCPileup || isITSPileup);
-      if (fIsMCPileup) {
-        continue;
+      // Select real trigger event and reject other pile up vertices for PbPb
+      if (fCollisionType==0){
+        Bool_t isTPCPileup = AliAnalysisUtils::IsParticleFromOutOfBunchPileupCollision(iTrack,fMCEvent);
+        Bool_t isITSPileup = AliAnalysisUtils::IsSameBunchPileupInGeneratedEvent(fMCEvent, "Hijing");
+        fIsMCPileup = (isTPCPileup || isITSPileup);
+        if (fIsMCPileup) continue;
       }
       //
       // initialize the dummy particle id
@@ -8016,7 +8045,7 @@ void AliAnalysisTaskTIdentityPID::FindJetsFJGen()
 
 }
 //________________________________________________________________________
-void AliAnalysisTaskTIdentityPID::MakeEventPlane(Double_t &Psi_full_r, Double_t &Psi_full_r_Psi3, Int_t doEP_Psi2, Int_t doEP_Psi3, Int_t setting)
+Int_t AliAnalysisTaskTIdentityPID::MakeEventPlane(Int_t doEP_Psi2, Int_t doEP_Psi3, Int_t setting)
 {
 
   if (fUseCouts) std::cout << " -- Info::marsland: ===== In the MakeEventPlane ===== " << std::endl;
@@ -8025,8 +8054,7 @@ void AliAnalysisTaskTIdentityPID::MakeEventPlane(Double_t &Psi_full_r, Double_t 
   vec_TV3_Qvec_eta.resize(2);
   vec_TV3_Qvec_eta[0].clear();
   vec_TV3_Qvec_eta[1].clear();
-
-  if (setting == -1){
+  if (setting == -1){ // for MC gen level event plane
     for (Int_t iTrack = 0; iTrack < fMCEvent->GetNumberOfTracks(); iTrack++)
     {
       AliMCParticle *trackMCgen = (AliMCParticle *)fMCEvent->GetTrack(iTrack);
@@ -8035,64 +8063,58 @@ void AliAnalysisTaskTIdentityPID::MakeEventPlane(Double_t &Psi_full_r, Double_t 
       Float_t pTMCgen   = trackMCgen->Pt();
       Float_t pxMCgen   = trackMCgen->Px();
       Float_t pyMCgen   = trackMCgen->Py();
-      Float_t phiMCGen  = trackMCgen->Phi();
       Float_t etaMCgen  = trackMCgen->Eta();
-      if((fabs(pTMCgen) < 0.15)) continue;
+      if(pTMCgen < 0.15) continue;
+      if(pTMCgen > 3.0 ) continue;
       if((fabs(etaMCgen)) > 0.9) continue;
       //
       // use all tracks and accumulate them in a vector for the
-      if(pTMCgen < 3.0)
+      if(etaMCgen < 0.9 && etaMCgen > 0.1)
       {
-        if(etaMCgen < 0.9 && etaMCgen > 0.1)
-        {
-          Qvec_eta_pos.SetXYZ(pxMCgen,pyMCgen,0.0);
-          vec_TV3_Qvec_eta[0].push_back(Qvec_eta_pos);
-        }
-        if(etaMCgen > -0.9 && etaMCgen < -0.1)
-        {
-          Qvec_eta_neg.SetXYZ(pxMCgen,pyMCgen,0.0);
-          vec_TV3_Qvec_eta[1].push_back(Qvec_eta_neg);
-        }
+        Qvec_eta_pos.SetXYZ(pxMCgen,pyMCgen,0.0);
+        vec_TV3_Qvec_eta[0].push_back(Qvec_eta_pos);
       }
-
+      if(etaMCgen > -0.9 && etaMCgen < -0.1)
+      {
+        Qvec_eta_neg.SetXYZ(pxMCgen,pyMCgen,0.0);
+        vec_TV3_Qvec_eta[1].push_back(Qvec_eta_neg);
+      }
     }
-  } else {
+  } else { // for data event plane
     for (Int_t iTrack = 0; iTrack < fESD->GetNumberOfTracks(); iTrack++) {
       AliESDtrack* track = fESD->GetTrack(iTrack);
-      if (!fESDtrackCutsLoose->AcceptTrack(track)) continue;
+      if (!fESDtrackCuts->AcceptTrack(track)) continue;
       if (!track->GetInnerParam()) continue;
       if (!(track->GetTPCsignalN()>0)) continue;
-      Double_t closestPar[3];
-      GetExpecteds(track,closestPar);
       SetCutBitsAndSomeTrackVariables(track,0);
-      if (!GetSystematicClassIndex(fTrackCutBits,setting)) continue;
-      if((fabs(fPt) < 0.15)) continue;
+      if(fPt < 0.15) continue;
+      if(fPt > 3.0 ) continue;
       if((fabs(fEta)) > 0.9) continue;
       //
       // use all tracks and accumulate them in a vector for the
-      if(fPt < 3.0 && fabs(fTrackDCAxy) < 1.0 && fabs(fTrackDCAz) < 1.0)
+      if(fEta < 0.9 && fEta > 0.1)
       {
-        if(fEta < 0.9 && fEta > 0.1)
-        {
-          Qvec_eta_pos.SetXYZ(fPx,fPy,0.0);
-          vec_TV3_Qvec_eta[0].push_back(Qvec_eta_pos);
-        }
-        if(fEta > -0.9 && fEta < -0.1)
-        {
-          Qvec_eta_neg.SetXYZ(fPx,fPy,0.0);
-          vec_TV3_Qvec_eta[1].push_back(Qvec_eta_neg);
-        }
+        Qvec_eta_pos.SetXYZ(fPx,fPy,0.0);
+        vec_TV3_Qvec_eta[0].push_back(Qvec_eta_pos);
       }
+      if(fEta > -0.9 && fEta < -0.1)
+      {
+        Qvec_eta_neg.SetXYZ(fPx,fPy,0.0);
+        vec_TV3_Qvec_eta[1].push_back(Qvec_eta_neg);
+      }
+
     }
   }
+  // check if the event is full
+  if ( vec_TV3_Qvec_eta[0].size() + vec_TV3_Qvec_eta[0].size() < 1) return 0;
 
   if(doEP_Psi2)
   {
-    Psi_full_r  = 0.0;
+    Double_t Psi_full_r  = 0.0;
     TVector3 TV3_sum_Qvec_eta[2];
     std::vector<Double_t> Psi_pos_neg = {0.0,0.0};
-    Double_t Qvec_correction_qx[2] = {0.0};
-    Double_t Qvec_correction_qy[2] = {0.0};
+    Double_t Qvec_correction_qx[2] = {0.0,0.0};
+    Double_t Qvec_correction_qy[2] = {0.0,0.0};
     Double_t harmonic = 2.0; // level of harmonic
     //
     // get values for Q-vector correction
@@ -8107,11 +8129,6 @@ void AliAnalysisTaskTIdentityPID::MakeEventPlane(Double_t &Psi_full_r, Double_t 
     //   Qvec_correction_qx[1] = 0;
     //   Qvec_correction_qy[1] = 0;
     // }
-    Qvec_correction_qx[0] = 0;
-    Qvec_correction_qy[0] = 0;
-    Qvec_correction_qx[1] = 0;
-    Qvec_correction_qy[1] = 0;
-
     for(Int_t i_eta_pos_neg = 0; i_eta_pos_neg < 2; i_eta_pos_neg++)
     {
       TV3_sum_Qvec_eta[i_eta_pos_neg].SetXYZ(0.0,0.0,0.0);
@@ -8147,17 +8164,16 @@ void AliAnalysisTaskTIdentityPID::MakeEventPlane(Double_t &Psi_full_r, Double_t 
       // }
       Psi_pos_neg[i_eta_pos_neg] = TMath::RadToDeg()*TMath::ATan2(Psi_nom,Psi_den)/harmonic;
     }
-
+    //
+    // To be filled in the histogram
     fEP_2_Psi_pos = Psi_pos_neg[0];
     fEP_2_Psi_neg = Psi_pos_neg[1];
-    //
-    //
     if(Psi_pos_neg[0] - Psi_pos_neg[1] > 90.0) Psi_pos_neg[1]  -= 180.0;
     else
     {
       if(Psi_pos_neg[1] - Psi_pos_neg[0] > 90.0) Psi_pos_neg[0]  -= 180.0;
     }
-
+    //
     // final observable per event --> Phi2
     Psi_full_r = (Psi_pos_neg[0] + Psi_pos_neg[1])/2.0;
     if(Psi_full_r > 90.0)  Psi_full_r -= 180.0;
@@ -8170,7 +8186,7 @@ void AliAnalysisTaskTIdentityPID::MakeEventPlane(Double_t &Psi_full_r, Double_t 
   if(doEP_Psi3)
   {
     TVector3 TV3_sum_Qvec_eta_Psi3[2];
-    Psi_full_r_Psi3  = 0.0;
+    Double_t Psi_full_r_Psi3  = 0.0;
     std::vector<Double_t> Psi_pos_neg_Psi3 = {0.0,0.0};
     Double_t Qvec_correction_qx_Psi3[2] = {0.0};
     Double_t Qvec_correction_qy_Psi3[2] = {0.0};
@@ -8214,27 +8230,26 @@ void AliAnalysisTaskTIdentityPID::MakeEventPlane(Double_t &Psi_full_r, Double_t 
       }
 
     }
-
-    Double_t Psi_diff_Psi3 =  Psi_pos_neg_Psi3[0] - Psi_pos_neg_Psi3[1];
-
-    if(Psi_diff_Psi3 < -60.0) Psi_diff_Psi3 += 120.0;
-    if(Psi_diff_Psi3 > +60.0) Psi_diff_Psi3 -= 120.0;
+    //
+    // to fill histogram
+    fEP_3_Psi_neg = Psi_pos_neg_Psi3[0];
+    fEP_3_Psi_pos = Psi_pos_neg_Psi3[1];
     if(Psi_pos_neg_Psi3[0] - Psi_pos_neg_Psi3[1] > 60.0) Psi_pos_neg_Psi3[1]  -= 120.0;
     else
     {
       if(Psi_pos_neg_Psi3[1] - Psi_pos_neg_Psi3[0] > 60.0) Psi_pos_neg_Psi3[0]  -= 120.0;
     }
-
-    // final observable per event --> Phi2
+    //
+    // final observable per event --> Phi3
     Psi_full_r_Psi3 = (Psi_pos_neg_Psi3[0] + Psi_pos_neg_Psi3[1])/2.0;
     if(Psi_full_r_Psi3 > 60.0)  Psi_full_r_Psi3 -= 120.0;
     if(Psi_full_r_Psi3 < -60.0) Psi_full_r_Psi3 += 120.0;
 
-    fEP_3_Psi_neg = Psi_pos_neg_Psi3[0];
-    fEP_3_Psi_pos = Psi_pos_neg_Psi3[1];
+
     fEP_3_Psi = Psi_full_r_Psi3;
 
   }
+  return 1;
 
 }
 //______________________________________________________________________________
@@ -8298,7 +8313,7 @@ void AliAnalysisTaskTIdentityPID::GetFlatenicity()
   //   Float_t multRho = 0;
   Float_t flatenicity = -1;
   for (Int_t iCh = 0; iCh < nCells; iCh++) {
-    mRho    += RhoLattice[iCh];
+    mRho += RhoLattice[iCh];
     //     multRho += multLattice[iCh];
   }
   Float_t multV0Mdeta = mRho;
@@ -8455,11 +8470,9 @@ Double_t AliAnalysisTaskTIdentityPID::ComputeSpherocity(Int_t setting)
   } else {
     for (Int_t iTrack = 0; iTrack < fESD->GetNumberOfTracks(); iTrack++) {
       AliESDtrack* track = fESD->GetTrack(iTrack);
-      if (!fESDtrackCutsLoose->AcceptTrack(track)) continue;
+      if (!fESDtrackCuts->AcceptTrack(track)) continue;
       if (!track->GetInnerParam()) continue;
       if (!(track->GetTPCsignalN()>0)) continue;
-      SetCutBitsAndSomeTrackVariables(track,0);
-      if (!GetSystematicClassIndex(fTrackCutBits,0)) continue;
       Float_t pTreal   = track->Pt();
       Float_t phireal  = track->Phi();
       Float_t etareal  = track->Eta();
