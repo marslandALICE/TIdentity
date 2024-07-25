@@ -553,6 +553,18 @@ public:
 
   }
 
+  Bool_t IsFromPileup(Int_t label) {
+    Bool_t isTPCPileup = kFALSE;
+    Bool_t isITSPileup = kFALSE;
+
+    if (fCollisionType == 0) {
+      isTPCPileup = AliAnalysisUtils::IsParticleFromOutOfBunchPileupCollision(label,fMCEvent);
+      isITSPileup = AliAnalysisUtils::IsSameBunchPileupInGeneratedEvent(fMCEvent, "Hijing");
+    }
+
+    return isTPCPileup || isITSPileup;
+  }
+
 private:
 
   AliAnalysisTaskTIdentityPID(const AliAnalysisTaskTIdentityPID&);

@@ -2214,11 +2214,7 @@ void AliAnalysisTaskTIdentityPID::FillMCFull_piKpr()
         if (!fMCStack->IsPhysicalPrimary(lab)) continue;
         //
         // Select real trigger event and reject other pile up vertices
-        if (fCollisionType==0){
-          Bool_t isTPCPileup = AliAnalysisUtils::IsParticleFromOutOfBunchPileupCollision(lab,fMCEvent);
-          Bool_t isITSPileup = AliAnalysisUtils::IsSameBunchPileupInGeneratedEvent(fMCEvent, "Hijing");
-          if (isTPCPileup || isITSPileup) continue;
-        }
+        if (IsFromPileup(lab)) continue;
         //
         TParticle *trackMC  = fMCStack->Particle(lab);
         Int_t pdg = trackMC->GetPdgCode();
@@ -2309,11 +2305,7 @@ void AliAnalysisTaskTIdentityPID::FillMCFull_piKpr()
       { // track loop
         //
         // Select real trigger event and reject other pile up vertices
-        if (fCollisionType==0){
-          Bool_t isTPCPileup = AliAnalysisUtils::IsParticleFromOutOfBunchPileupCollision(iTrack,fMCEvent);
-          Bool_t isITSPileup = AliAnalysisUtils::IsSameBunchPileupInGeneratedEvent(fMCEvent, "Hijing");
-          if (isTPCPileup || isITSPileup) continue;
-        }
+        if (IsFromPileup(iTrack)) continue;
         //
         // initialize the dummy particle id
         fElMCgen =-100.; fPiMCgen =-100.; fKaMCgen =-100.; fPrMCgen =-100.; fDeMCgen =-100.; fMuMCgen =-100.;
@@ -2898,18 +2890,13 @@ void AliAnalysisTaskTIdentityPID::FillMCFull_NetParticles()
         for (Int_t iTrack = 0; iTrack < fMCEvent->GetNumberOfTracks(); iTrack++) {
           // track loop
           //
-          // Select real trigger event and reject other pile up vertices
-          if (fCollisionType==0){
-            isTPCPileup = AliAnalysisUtils::IsParticleFromOutOfBunchPileupCollision(iTrack,fMCEvent);
-            isITSPileup = AliAnalysisUtils::IsSameBunchPileupInGeneratedEvent(fMCEvent, "Hijing");
-            fIsMCPileup = (isTPCPileup || isITSPileup);
-            if (ipileup==0 && fIsMCPileup) continue;
-          }
-          //
           // initialize the dummy particle id
           fElMCgen =-100.; fPiMCgen =-100.; fKaMCgen =-100.; fPrMCgen =-100.;
           AliMCParticle *trackMCgen = (AliMCParticle *)fMCEvent->GetTrack(iTrack);
           if (!trackMCgen) continue;
+          // Select real trigger event and reject other pile up vertices
+          if (ipileup==0 && IsFromPileup(iTrack)) continue;
+          //
           //
           fMCGeneratorIndex = trackMCgen->GetGeneratorIndex();
           //
@@ -3000,12 +2987,7 @@ void AliAnalysisTaskTIdentityPID::FillMCFull_NetParticles()
           Int_t lab = TMath::Abs(trackReal->GetLabel());           // avoid from negatif labels, they include some garbage
           AliMCParticle *trackMCgen = (AliMCParticle *)fMCEvent->GetTrack(lab);
           // select pile up
-          if (fCollisionType==0){
-            isTPCPileup = AliAnalysisUtils::IsParticleFromOutOfBunchPileupCollision(lab,fMCEvent);
-            isITSPileup = AliAnalysisUtils::IsSameBunchPileupInGeneratedEvent(fMCEvent, "Hijing");
-            fIsMCPileup = (isTPCPileup || isITSPileup);
-            if (ipileup == 0 && fIsMCPileup) continue;
-          }
+          if (ipileup==0 && IsFromPileup(lab)) continue;
           //
           // check the origin of the track
           fMCGeneratorIndex = trackMCgen->GetGeneratorIndex();
@@ -3949,11 +3931,7 @@ void AliAnalysisTaskTIdentityPID::FillGenDistributions()
   for (Int_t iTrack = 0; iTrack < fMCEvent->GetNumberOfTracks(); iTrack++)
   { // track loop
     //
-    if (fCollisionType==0){
-      Bool_t isTPCPileup = AliAnalysisUtils::IsParticleFromOutOfBunchPileupCollision(iTrack,fMCEvent);
-      Bool_t isITSPileup = AliAnalysisUtils::IsSameBunchPileupInGeneratedEvent(fMCEvent, "Hijing");
-      if (isTPCPileup || isITSPileup) continue;
-    }
+    if (IsFromPileup(iTrack)) continue;
     //
     // initialize the dummy particle id
     fPiMCgen =-100.; fKaMCgen =-100.; fPrMCgen =-100.;
@@ -4054,11 +4032,7 @@ void AliAnalysisTaskTIdentityPID::FastGen()
           // track loop
           //
           // Select real trigger event and reject other pile up vertices
-          if (fCollisionType==0){
-            Bool_t isTPCPileup = AliAnalysisUtils::IsParticleFromOutOfBunchPileupCollision(iTrack,fMCEvent);
-            Bool_t isITSPileup = AliAnalysisUtils::IsSameBunchPileupInGeneratedEvent(fMCEvent, "Hijing");
-            if (isTPCPileup || isITSPileup) continue;
-          }
+          if (IsFromPileup(iTrack)) continue;
           //
           // initialize the dummy particle id
           fElMCgen =-100.; fPiMCgen =-100.; fKaMCgen =-100.; fPrMCgen =-100.; fDeMCgen =-100.; fMuMCgen =-100.; fLaMCgen =-100., fBaMCgen =-100.;
@@ -4333,11 +4307,7 @@ void AliAnalysisTaskTIdentityPID::FastGenHigherMoments()
           // track loop
           //
           // Select real trigger event and reject other pile up vertices
-          if (fCollisionType==0){
-            Bool_t isTPCPileup = AliAnalysisUtils::IsParticleFromOutOfBunchPileupCollision(iTrack,fMCEvent);
-            Bool_t isITSPileup = AliAnalysisUtils::IsSameBunchPileupInGeneratedEvent(fMCEvent, "Hijing");
-            if (isTPCPileup || isITSPileup) continue;
-          }
+          if (IsFromPileup(iTrack)) continue;
           //
           // initialize the dummy particle id
           fElMCgen =-100.; fPiMCgen =-100.; fKaMCgen =-100.; fPrMCgen =-100.; fDeMCgen =-100.; fMuMCgen =-100.; fLaMCgen =-100.;
@@ -4702,11 +4672,7 @@ void AliAnalysisTaskTIdentityPID::MCclosureHigherMoments()
         { // track loop
           //
           // Select real trigger event and reject other pile up vertices
-          if (fCollisionType==0){
-            Bool_t isTPCPileup = AliAnalysisUtils::IsParticleFromOutOfBunchPileupCollision(iTrack,fMCEvent);
-            Bool_t isITSPileup = AliAnalysisUtils::IsSameBunchPileupInGeneratedEvent(fMCEvent, "Hijing");
-            if (isTPCPileup || isITSPileup) continue;
-          }
+          if (IsFromPileup(iTrack)) continue;
           //
           // initialize the dummy particle id
           Int_t piMCgen =-100., kaMCgen =-100., prMCgen =-100.;
@@ -4886,12 +4852,7 @@ void AliAnalysisTaskTIdentityPID::FillEffMatrix()
           // track loop
           //
           // Select real trigger event and reject other pile up vertices
-          if (fCollisionType==0){
-            isTPCPileup = AliAnalysisUtils::IsParticleFromOutOfBunchPileupCollision(iTrack,fMCEvent);
-            isITSPileup = AliAnalysisUtils::IsSameBunchPileupInGeneratedEvent(fMCEvent, "Hijing");
-            fIsMCPileup = (isTPCPileup || isITSPileup);
-            if (ipileup==0 && fIsMCPileup) continue;
-          }
+          if (ipileup==0 && IsFromPileup(iTrack)) continue;
           //
           // initialize the dummy particle id
           fElMCgen =-100.; fPiMCgen =-100.; fKaMCgen =-100.; fPrMCgen =-100.;
@@ -4966,12 +4927,7 @@ void AliAnalysisTaskTIdentityPID::FillEffMatrix()
           if (trackReal==NULL) continue;
           Int_t lab = TMath::Abs(trackReal->GetLabel());           // avoid from negatif labels, they include some garbage
           // select pile up
-          if (fCollisionType==0){
-            isTPCPileup = AliAnalysisUtils::IsParticleFromOutOfBunchPileupCollision(lab,fMCEvent);
-            isITSPileup = AliAnalysisUtils::IsSameBunchPileupInGeneratedEvent(fMCEvent, "Hijing");
-            fIsMCPileup = (isTPCPileup || isITSPileup);
-            if (ipileup==0 && fIsMCPileup) continue;
-          }
+          if (ipileup==0 && IsFromPileup(lab)) continue;
           //
           // check the origin of the track
           AliMCParticle *trackMCgen = (AliMCParticle *)fMCEvent->GetTrack(lab); // TParticle *trackMC  = fMCStack->Particle(lab);
@@ -5583,11 +5539,7 @@ void AliAnalysisTaskTIdentityPID::WeakAndMaterial()
     // track loop
     //
     // Select real trigger event and reject other pile up vertices
-    if (fCollisionType==0){
-      Bool_t isTPCPileup = AliAnalysisUtils::IsParticleFromOutOfBunchPileupCollision(iTrack,fMCEvent);
-      Bool_t isITSPileup = AliAnalysisUtils::IsSameBunchPileupInGeneratedEvent(fMCEvent, "Hijing");
-      if (isTPCPileup || isITSPileup) continue;
-    }
+    if (IsFromPileup(iTrack)) continue;
     //
     // initialize the dummy particle id
     Int_t fElWeak =-100., fPiWeak =-100., fKaWeak =-100., fPrWeak =-100., fDeWeak =-100., fMuWeak =-100.;
@@ -5665,11 +5617,7 @@ void AliAnalysisTaskTIdentityPID::FillDnchDeta()
         // track loop
         //
         // Select real trigger event and reject other pile up vertices
-        if (fCollisionType==0){
-          Bool_t isTPCPileup = AliAnalysisUtils::IsParticleFromOutOfBunchPileupCollision(iTrack,fMCEvent);
-          Bool_t isITSPileup = AliAnalysisUtils::IsSameBunchPileupInGeneratedEvent(fMCEvent, "Hijing");
-          if (isTPCPileup || isITSPileup) continue;
-        }
+        if (IsFromPileup(iTrack)) continue;
         //
         // initialize the dummy particle id
         trackMCgen = (AliMCParticle *)fMCEvent->GetTrack(iTrack);
@@ -6165,8 +6113,12 @@ UInt_t AliAnalysisTaskTIdentityPID::SetCutBitsAndSomeTrackVariables(AliESDtrack 
     if (fPileUpBit & 1 << 0) (fTrackCutBits |= 1 << kPileup);
     if (fPileUpBit & 1 << 1) (fTrackCutBits |= 1 << kPileupLoose);
   } else {
-    if (!fIsMCPileup) (fTrackCutBits |= 1 << kPileup);
-    fTrackCutBits |= 1 << kPileupLoose; // fill for all events if no pileup rejection
+    if (fCollisionType == 0) { // PbPb
+      if (!fIsMCPileup) (fTrackCutBits |= 1 << kPileup);
+      fTrackCutBits |= 1 << kPileupLoose; // fill for all events if no pileup rejection
+    } else if (fCollisionType == 1) { // pp
+      fTrackCutBits |= 1 << kPileup; // no pileup in pp mc, so we always set this bit
+    }
   }
   //
   // B field polarity
@@ -7245,11 +7197,11 @@ void AliAnalysisTaskTIdentityPID::FindJetsFJ()
   float fTrackMinPt = 0.15;
   float fMaxRap = 0.9;
   float fGhostArea = 0.005;
-  float bgJetAbsEtaCut = 0.7;           
-  float bgJetRadius = 0.2;   
+  float bgJetAbsEtaCut = 0.7;
+  float bgJetRadius = 0.2;
   //
   int nJetRadiusBins = 3;
-  int nJetPtsubMinBins = 1; // TODO       
+  int nJetPtsubMinBins = 1; // TODO
   std::vector<float> fJetRadius{0.2,0.4,0.6};
   std::vector<float> fPtSubMin{40.,60.,80.}; // jet pt cut
   //
@@ -7265,12 +7217,8 @@ void AliAnalysisTaskTIdentityPID::FindJetsFJ()
       if (fMCEvent){
         Int_t lab = TMath::Abs(track->GetLabel());
         Bool_t bPrim = fMCStack->IsPhysicalPrimary(lab);
-        if (fCollisionType==0){
-          Bool_t isTPCPileup = AliAnalysisUtils::IsParticleFromOutOfBunchPileupCollision(lab,fMCEvent);
-          Bool_t isITSPileup = AliAnalysisUtils::IsSameBunchPileupInGeneratedEvent(fMCEvent, "Hijing");
-          fIsMCPileup = (isTPCPileup || isITSPileup);
-          if (fIsMCPileup) continue;
-        }
+        fIsMCPileup = IsFromPileup(lab);
+        if (fIsMCPileup) continue;
         if (!bPrim) continue;
       } else {
         SetCutBitsAndSomeTrackVariables(track,0);
@@ -7321,12 +7269,8 @@ void AliAnalysisTaskTIdentityPID::FindJetsFJ()
           if (fMCEvent){
             Int_t lab = TMath::Abs(track->GetLabel());
             Bool_t bPrim = fMCStack->IsPhysicalPrimary(lab);
-            if (fCollisionType==0){
-              Bool_t isTPCPileup = AliAnalysisUtils::IsParticleFromOutOfBunchPileupCollision(lab,fMCEvent);
-              Bool_t isITSPileup = AliAnalysisUtils::IsSameBunchPileupInGeneratedEvent(fMCEvent, "Hijing");
-              fIsMCPileup = (isTPCPileup || isITSPileup);
-              if (fIsMCPileup) continue;
-            }
+            fIsMCPileup = IsFromPileup(lab);
+            if (fIsMCPileup) continue;
             //
             // only primary particle condition for set=4 for set==-1 and set==0 jet finder runs over all selected particles
             if (setting>0 && !bPrim) continue;
@@ -7579,12 +7523,8 @@ void AliAnalysisTaskTIdentityPID::FindJetsFJ()
             if (fMCEvent){
               Int_t lab = TMath::Abs(track->GetLabel());
               Bool_t bPrim = fMCStack->IsPhysicalPrimary(lab);
-              if (fCollisionType==0){
-                Bool_t isTPCPileup = AliAnalysisUtils::IsParticleFromOutOfBunchPileupCollision(lab,fMCEvent);
-                Bool_t isITSPileup = AliAnalysisUtils::IsSameBunchPileupInGeneratedEvent(fMCEvent, "Hijing");
-                fIsMCPileup = (isTPCPileup || isITSPileup);
-                if (fIsMCPileup) continue;
-              }
+              fIsMCPileup = IsFromPileup(lab);
+              if (fIsMCPileup) continue;
               if (setting>0 && !bPrim) continue;
             }
             //
@@ -7851,12 +7791,8 @@ void AliAnalysisTaskTIdentityPID::FindJetsFJGen()
       // track loop
       //
       // Select real trigger event and reject other pile up vertices for PbPb
-      if (fCollisionType==0){
-        Bool_t isTPCPileup = AliAnalysisUtils::IsParticleFromOutOfBunchPileupCollision(iTrack,fMCEvent);
-        Bool_t isITSPileup = AliAnalysisUtils::IsSameBunchPileupInGeneratedEvent(fMCEvent, "Hijing");
-        fIsMCPileup = (isTPCPileup || isITSPileup);
-        if (fIsMCPileup) continue;
-      }
+      fIsMCPileup = IsFromPileup(iTrack);
+      if (fIsMCPileup) continue;
       //
       // initialize the dummy particle id
       AliMCParticle *trackMCgen = (AliMCParticle *)fMCEvent->GetTrack(iTrack);
