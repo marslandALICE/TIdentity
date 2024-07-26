@@ -1738,6 +1738,9 @@ void AliAnalysisTaskTIdentityPID::UserExec(Option_t *)
       std::cout << " Info::marsland: =============================================================================================== " << std::endl;
     }
   }
+  if (fCentrality > 95.) {
+    printf(" Error::ilya: Unreasonable centrality %f. Returning\n", fCentrality);
+  }
   fHistCentrality->Fill(fCentrality);  // count events after physics and vertex selection
   //
   // if (!fESDtool) {
@@ -2531,40 +2534,6 @@ void AliAnalysisTaskTIdentityPID::CalculateMoments_CutBasedMethod()
 
   const size_t nMoments = 14 + 1; // moments to fourth order + p-pbar
 
-  // lambda function to get efficiency from eff matrix
-  auto getEff = [&] (Bool_t isTOF, Int_t sign, Int_t setting, Int_t centIndex, Int_t etaIndex, Double_t p, Int_t part) {
-    Double_t ret = -1.;
-
-    Int_t signIndex = (sign == 1) ? 0 : 1;
-
-    // make projections
-    if (!fEffMatrixProjections[etaIndex][centIndex][setting][signIndex][isTOF]) {
-      THnF* effMatrixGen = (sign == 1) ? fEffMatrixGenPos : fEffMatrixGenNeg;
-      THnF* effMatrixRec = (sign == 1) ? fEffMatrixRecPos : fEffMatrixRecNeg;
-
-      for (THnF* effMatrix: {effMatrixGen, effMatrixRec}) {
-        effMatrix->GetAxis(1)->SetRangeUser(0, 1); // origin
-        effMatrix->GetAxis(3)->SetRangeUser(part, part + 1);
-        effMatrix->GetAxis(0)->SetRangeUser(isTOF, isTOF + 1);
-        if (effMatrix == effMatrixRec) {
-          effMatrix->GetAxis(2)->SetRangeUser(setting, setting+1);
-        } else {
-          effMatrix->GetAxis(2)->SetRangeUser(0, 1);
-        }
-        effMatrix->GetAxis(4)->SetRangeUser(fxCentBins[centIndex], fxCentBins[centIndex + 1]);
-        effMatrix->GetAxis(6)->SetRangeUser(fetaDownArr[etaIndex], fetaUpArr[etaIndex]);
-      }
-
-      TH1F* tmpEffGen = (TH1F*)effMatrixGen->Projection(5)->Clone();
-      TH1F* tmpEffRec = (TH1F*)effMatrixRec->Projection(5)->Clone();
-      tmpEffRec->Divide(tmpEffGen);
-      fEffMatrixProjections[etaIndex][centIndex][setting][signIndex][isTOF] = tmpEffRec;
-    }
-
-    ret = fEffMatrixProjections[etaIndex][centIndex][setting][signIndex][isTOF]->GetBinContent(fEffMatrixProjections[etaIndex][centIndex][setting][signIndex][isTOF]->FindBin(p));
-    return ret;
-  };
-
   size_t orderR = 4;
   size_t orderS = 4;
 
@@ -2648,12 +2617,11 @@ void AliAnalysisTaskTIdentityPID::CalculateMoments_CutBasedMethod()
 
             const Int_t signIndex = (fSign < 0); // +1 -> 0, -1 -> 1
 
-
             Double_t eff = 1e-5;
             Double_t effTOF = 1e-5;
             if (fEffMatrixGenPos) {
-              eff = getEff(kFALSE, fSign, setting, centIndex, ieta, ptotCut, 2);
-              effTOF = getEff(kTRUE, fSign, setting, centIndex, ieta, ptotCut, 2);
+              eff = GetTrackEfficiency(2, ptotCut, ieta, fCentrality, setting, fSign);
+              effTOF = GetTrackEfficiency(2, ptotCut, ieta, fCentrality, setting, fSign, kTRUE);
             }
 
             // check pid
@@ -7164,6 +7132,53 @@ Bool_t AliAnalysisTaskTIdentityPID::CheckPsiPair(const AliESDv0* v0)
 
   return abs(deltat / chipair) <= 1;
 }
+//______________________________________________________________________________
+Double_t AliAnalysisTaskTIdentityPID::GetTrackEfficiency(const Int_t& part, const Double_t& ptot, const Int_t& etaIndex, const Double_t& cent, const Int_t& setting, const Int_t& sign, const Bool_t& isTOF) {
+  // Get the efficiency for a given particle species, momentum, eta window, centrality, syst setting, sign, and TOF setting
+  Double_t ret = -1.;
+
+  Int_t signIndex = (sign == 1) ? 0 : 1;
+
+  // get centrality index
+  Int_t centIndex = -1;
+  for (size_t iCent = 0; iCent < fNCentBinsMC; iCent++) {
+    if (fCentrality >= fxCentBins[iCent] && fCentrality < fxCentBins[iCent+1]) {
+      centIndex = iCent;
+      break;
+    }
+  }
+  if (centIndex == -1) {
+    printf("Centrality %f out of range", fCentrality);
+    return ret;
+  }
+
+  // make projections
+  if (!fEffMatrixProjections[etaIndex][centIndex][setting][signIndex][isTOF]) {
+    THnF* effMatrixGen = (sign == 1) ? fEffMatrixGenPos : fEffMatrixGenNeg;
+    THnF* effMatrixRec = (sign == 1) ? fEffMatrixRecPos : fEffMatrixRecNeg;
+
+    for (THnF* effMatrix: {effMatrixGen, effMatrixRec}) {
+      effMatrix->GetAxis(1)->SetRangeUser(0, 1); // origin
+      effMatrix->GetAxis(3)->SetRangeUser(part, part + 1);
+      effMatrix->GetAxis(0)->SetRangeUser(isTOF, isTOF + 1);
+      if (effMatrix == effMatrixRec) {
+        effMatrix->GetAxis(2)->SetRangeUser(setting, setting+1);
+      } else {
+        effMatrix->GetAxis(2)->SetRangeUser(0, 1);
+      }
+      effMatrix->GetAxis(4)->SetRangeUser(fxCentBins[centIndex], fxCentBins[centIndex + 1]);
+      effMatrix->GetAxis(6)->SetRangeUser(fetaDownArr[etaIndex], fetaUpArr[etaIndex]);
+    }
+
+    TH1F* tmpEffGen = (TH1F*)effMatrixGen->Projection(5)->Clone();
+    TH1F* tmpEffRec = (TH1F*)effMatrixRec->Projection(5)->Clone();
+    tmpEffRec->Divide(tmpEffGen);
+    fEffMatrixProjections[etaIndex][centIndex][setting][signIndex][isTOF] = tmpEffRec;
+  }
+
+  ret = fEffMatrixProjections[etaIndex][centIndex][setting][signIndex][isTOF]->GetBinContent(fEffMatrixProjections[etaIndex][centIndex][setting][signIndex][isTOF]->FindBin(ptot));
+  return ret;
+};
 //________________________________________________________________________
 Float_t AliAnalysisTaskTIdentityPID::RelativePhi(Float_t mphi, Float_t vphi) {
   if (mphi < -TMath::Pi()){
