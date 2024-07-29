@@ -606,7 +606,7 @@ private:
   Bool_t ApplyDCAcutIfNoITSPixel(AliESDtrack *track);
   Bool_t GetSystematicClassIndex(UInt_t cut,Int_t syst);
   Bool_t CheckPsiPair(const AliESDv0* v0);
-  Double_t GetTrackEfficiency(const Int_t& part, const Double_t& ptot, const Int_t& etaIndex, const Double_t& cent, const Int_t& setting, const Int_t& sign, const Bool_t& isTOF=kFALSE);
+  Double_t GetTrackEfficiency(const Int_t& part, const Double_t& ptot, const Int_t& eta, const Int_t& setting, const Int_t& sign, const Bool_t& isTOF=kFALSE);
   //
   // Jet Functions
   void FindJetsFJ();

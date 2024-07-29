@@ -4,7 +4,7 @@
 | ------- | --------  | --------------------------- |
 | LHC18q  | Pb–Pb     | runs-2018-LHC18q-pass3.list |
 | LHC18r  | Pb–Pb     | runs-2018-LHC18r-pass3.list |
-| LHC18b  | pp 13 TeV | runs-2017-LHC17p-pass2.list |
+| LHC18b  | pp 13 TeV | runs-2017-LHC17p-pass2_CENT.list |
 
 # Productions
 
@@ -36,6 +36,8 @@ void runGrid(Bool_t fRunLocalFiles = kTRUE,
              )
 # Run real data
 aliroot -b -q 'runGrid.C(0,"test",0,  0, "$RUN_ON_GRID_DIR/Ebye/lists/runsIlya1run-2018-LHC18r-pass3.list",0,2018,"18r",3,0)'
+aliroot -b -q 'runGrid.C(0,"test",0,  11, "$TIdentityDIRcommit/TIdentity/lists/runs-2017-LHC17p-pass2_CENT.list",0,2018,"18b",3,0)'
+
 
 # run full MC
 aliroot -b -q 'runGrid.C(0,"test",0,  50, "$RUN_ON_GRID_DIR/Ebye/lists/runsTest-2020-LHC20e3a-pass3.list",1,2018,"18q",3,0)'

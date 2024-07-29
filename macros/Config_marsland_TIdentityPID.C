@@ -62,6 +62,40 @@ AliAnalysisTaskTIdentityPID* Config_marsland_TIdentityPID(Bool_t getFromAlien, I
         task->SetRunNumberForExpecteds(246087);
     }
     break;
+    case 11:{
+      std::cout << " SETTING TYPE = " << settingType << " Info::marsland: Real data " << std::endl;
+      // Real data settings
+      if( (passIndex==3 && periodName.Contains("18")) || (passIndex==2 && periodName.Contains("15")) ) {
+        task->SetDefaultEventCuts(kTRUE);
+      }
+      // task->SetNSettings(4);
+      // task->SetSettings({0, 1, 16, 17});
+      task->SetCollisionType(1); // 0 for PbPb, 1 for pp
+      task->SetNSettings(1);
+      task->SetSettings({0});
+      task->SetFillJetsBG(2);
+      task->SetRunOnGrid(kTRUE);
+      task->SetUseCouts(kTRUE);
+      //
+      task->SetFillEventInfo(kTRUE);
+      task->SetFillAllCutVariables(kTRUE);
+      task->SetFillDistributions(kTRUE);
+      task->SetDefaultTrackCuts(kTRUE);
+      task->SetFillArmPodTree(kTRUE);
+      task->SetV0InvMassHists(kTRUE);
+      const Int_t tmpCentbins = 14;
+      Float_t tmpfxCentBins[tmpCentbins] = {0,5,10,20,30,40,50,60,65,70,75,80,85,90};
+      task->SetCentralityBinning(tmpCentbins,tmpfxCentBins);
+      task->fEventCuts.fUseVariablesCorrelationCuts = true;
+
+      if (periodName.Contains("18q"))
+        task->SetRunNumberForExpecteds(296433);
+      else if (periodName.Contains("18r"))
+        task->SetRunNumberForExpecteds(296749);
+      else if (periodName.Contains("15o"))
+        task->SetRunNumberForExpecteds(246087);
+    }
+    break;
     //
     // ====================================================================================
     // =================================== FULL MC  =======================================
