@@ -36,7 +36,7 @@ void runGrid(Bool_t fRunLocalFiles = kTRUE,
              )
 # Run real data
 aliroot -b -q 'runGrid.C(0,"test",0,  0, "$RUN_ON_GRID_DIR/Ebye/lists/runsIlya1run-2018-LHC18r-pass3.list",0,2018,"18r",3,0)'
-aliroot -b -q 'runGrid.C(0,"test",0,  11, "$TIdentityDIRcommit/TIdentity/lists/runs-2017-LHC17p-pass2_CENT.list",0,2018,"18b",3,0)'
+aliroot -b -q 'runGrid.C(0,"test",0,  11, "$TIdentityDIRcommit/TIdentity/lists/runs-2018-LHC18b-pass2.list",0,2018,"18b",3,0)'
 
 
 # run full MC
