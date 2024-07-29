@@ -1283,18 +1283,15 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
     const size_t settingsDim = fEffMatrixRecPos->GetAxis(2)->GetNbins();
     const size_t signDim = 2;
 
-    fEffMatrixProjections = vector<vector<vector<vector<vector<TH1F*>>>>>(etaDim);
+    fEffMatrixProjections = vector<vector<vector<vector<TH2F*>>>>(centDim);
 
     // resize the vectors to the appropriate dimensions
-    for (size_t iEta = 0; iEta < etaDim; iEta++) {
-      fEffMatrixProjections[iEta] = vector<vector<vector<vector<TH1F*>>>>(centDim);
-      for (size_t iCent = 0; iCent < centDim; iCent++) {
-        fEffMatrixProjections[iEta][iCent] = vector<vector<vector<TH1F*>>>(settingsDim);
-        for (size_t iSetting = 0; iSetting < settingsDim; iSetting++) {
-          fEffMatrixProjections[iEta][iCent][iSetting] = vector<vector<TH1F*>>(signDim);
-          for (size_t iSign = 0; iSign < signDim; iSign++) {
-            fEffMatrixProjections[iEta][iCent][iSetting][iSign] = vector<TH1F*>(2);
-          }
+    for (size_t iCent = 0; iCent < centDim; iCent++) {
+      fEffMatrixProjections[iCent] = vector<vector<vector<TH2F*>>>(settingsDim);
+      for (size_t iSetting = 0; iSetting < settingsDim; iSetting++) {
+        fEffMatrixProjections[iCent][iSetting] = vector<vector<TH2F*>>(signDim);
+        for (size_t iSign = 0; iSign < signDim; iSign++) {
+          fEffMatrixProjections[iCent][iSetting][iSign] = vector<TH2F*>(2);
         }
       }
     }
@@ -7128,7 +7125,7 @@ Bool_t AliAnalysisTaskTIdentityPID::CheckPsiPair(const AliESDv0* v0)
   return abs(deltat / chipair) <= 1;
 }
 //______________________________________________________________________________
-Double_t AliAnalysisTaskTIdentityPID::GetTrackEfficiency(const Int_t& part, const Double_t& ptot, const Int_t& eta, const Int_t& setting, const Int_t& sign, const Bool_t& isTOF) {
+Double_t AliAnalysisTaskTIdentityPID::GetTrackEfficiency(const Int_t& part, const Double_t& ptot, const Double_t& eta, const Int_t& setting, const Int_t& sign, const Bool_t& isTOF) {
   // Get the efficiency for a given particle species, momentum, eta window, centrality, syst setting, sign, and TOF setting
   Double_t ret = -1.;
 
@@ -7147,21 +7144,9 @@ Double_t AliAnalysisTaskTIdentityPID::GetTrackEfficiency(const Int_t& part, cons
     return ret;
   }
   //
-  // get eta index
-  Int_t etaIndex = -1;
-  for (size_t iEta = 0; iEta < fNEtaBins; iEta++) {
-    if (fEta >= fetaUpArr[iEta] && fEta < fetaUpArr[iEta+1]) {
-      etaIndex = iEta;
-      break;
-    }
-  }
-  if (centIndex == -1) {
-    printf("Centrality %f out of range", fCentrality);
-    return ret;
-  }
 
   // make projections
-  if (!fEffMatrixProjections[etaIndex][centIndex][setting][signIndex][isTOF]) {
+  if (!fEffMatrixProjections[centIndex][setting][signIndex][isTOF]) {
     THnF* effMatrixGen = (sign == 1) ? fEffMatrixGenPos : fEffMatrixGenNeg;
     THnF* effMatrixRec = (sign == 1) ? fEffMatrixRecPos : fEffMatrixRecNeg;
 
@@ -7175,16 +7160,21 @@ Double_t AliAnalysisTaskTIdentityPID::GetTrackEfficiency(const Int_t& part, cons
         effMatrix->GetAxis(2)->SetRangeUser(0, 1);
       }
       effMatrix->GetAxis(4)->SetRangeUser(fxCentBins[centIndex], fxCentBins[centIndex + 1]);
-      effMatrix->GetAxis(6)->SetRangeUser(fetaDownArr[etaIndex], fetaUpArr[etaIndex]);
     }
 
-    TH1F* tmpEffGen = (TH1F*)effMatrixGen->Projection(5)->Clone();
-    TH1F* tmpEffRec = (TH1F*)effMatrixRec->Projection(5)->Clone();
+    TH2F* tmpEffGen = (TH2F*)effMatrixGen->Projection(5, 6)->Clone();
+    TH2F* tmpEffRec = (TH2F*)effMatrixRec->Projection(5, 6)->Clone();
     tmpEffRec->Divide(tmpEffGen);
-    fEffMatrixProjections[etaIndex][centIndex][setting][signIndex][isTOF] = tmpEffRec;
+    fEffMatrixProjections[centIndex][setting][signIndex][isTOF] = tmpEffRec;
+
+    // plot the projection
+    TCanvas* c = new TCanvas();
+    fEffMatrixProjections[centIndex][setting][signIndex][isTOF]->Draw("colz");
+    c->SaveAs(Form("effMatrix_cent_%.2f_%.2f_setting_%d_sign_%d_isTOF_%d.png", fxCentBins[centIndex], fxCentBins[centIndex + 1], setting, sign, isTOF));
+    delete c;
   }
 
-  ret = fEffMatrixProjections[etaIndex][centIndex][setting][signIndex][isTOF]->GetBinContent(fEffMatrixProjections[etaIndex][centIndex][setting][signIndex][isTOF]->FindBin(ptot));
+  ret = fEffMatrixProjections[centIndex][setting][signIndex][isTOF]->GetBinContent(fEffMatrixProjections[centIndex][setting][signIndex][isTOF]->FindBin(fEta, ptot));
   return ret;
 };
 //________________________________________________________________________
@@ -7404,7 +7394,7 @@ void AliAnalysisTaskTIdentityPID::FindJetsFJ()
           Float_t jetptsub = jetpt - fRhoFJ*jetArea;
           Float_t jetMass = ((jetE * jetE) - (jetpt * jetpt) - (jetpz * jetpz) >0) ? TMath::Sqrt((jetE * jetE) - (jetpt * jetpt) - (jetpz * jetpz)) : 1; // TODO
           fJetHistptSub->Fill(jetptsub);
-          if (jetpt<5) continue; 
+          if (jetpt<5) continue;
           //
           // Nsubjettiness
           // AliEmcalJetFinder::Nsubjettiness( *pJet, *pContJets,  Double_t dVtx[3], Int_t N, Int_t Algorithm, Double_t Radius, Double_t Beta, Int_t Option, Int_t Measure, Double_t Beta_SD, Double_t ZCut, Int_t SoftDropOn){
@@ -7610,25 +7600,25 @@ void AliAnalysisTaskTIdentityPID::FindJetsFJ()
           "psi2="         << fEP_2_Psi << // event shape 2nd harmonic
           "psi3="         << fEP_3_Psi << // event shape 3rd harmonic
           //
-          "ptsubmin="     << fPtSubMin[iJetPt] << // cut to be applied on the minimum rho subtracted jetpt 
+          "ptsubmin="     << fPtSubMin[iJetPt] << // cut to be applied on the minimum rho subtracted jetpt
           "jetetacut="    << jetAbsEtaCut << //abs eta cut for jet
           "jetradius="    << fJetRadius[iJetRadius] << // jet Radius
           "maxpt="        << leadingPt << // leading particle pt in jet
-          "jetptsub="     << jetptsub << // rho subtracted jet pT --> (pt - rho*Area) 
+          "jetptsub="     << jetptsub << // rho subtracted jet pT --> (pt - rho*Area)
           "rhofj="        << fRhoFJ << // event rho
           "nsub1="        << Result_NSub1 <<
           "nsub2="        << Result_NSub2 <<
           "deltar="       << deltaR <<
           "planarflowjet="<< planarFlowJet <<
           //
-          "jetpx="        << jetpx <<     
-          "jetpy="        << jetpy <<     
-          "jetpz="        << jetpz <<     
-          "jetE="         << jetE <<     
-          "jetpt="        << jetpt <<     
-          "jetphi="       << jetphi <<    
-          "jeteta="       << jeteta <<    
-          "jetarea="      << jetArea << 
+          "jetpx="        << jetpx <<
+          "jetpy="        << jetpy <<
+          "jetpz="        << jetpz <<
+          "jetE="         << jetE <<
+          "jetpt="        << jetpt <<
+          "jetphi="       << jetphi <<
+          "jeteta="       << jeteta <<
+          "jetarea="      << jetArea <<
           "jetmass="      << jetMass <<
           //
           "particles_E.="      << &fShapesVar_Particles_E <<

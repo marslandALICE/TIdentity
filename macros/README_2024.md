@@ -4,7 +4,7 @@
 | ------- | --------  | --------------------------- |
 | LHC18q  | Pb–Pb     | runs-2018-LHC18q-pass3.list |
 | LHC18r  | Pb–Pb     | runs-2018-LHC18r-pass3.list |
-| LHC18b  | pp 13 TeV | runs-2017-LHC17p-pass2_CENT.list |
+| LHC18b  | pp 13 TeV | runs-2018-LHC18b-pass2.list |
 
 # Productions
 

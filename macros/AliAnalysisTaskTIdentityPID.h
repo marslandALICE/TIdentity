@@ -606,7 +606,7 @@ private:
   Bool_t ApplyDCAcutIfNoITSPixel(AliESDtrack *track);
   Bool_t GetSystematicClassIndex(UInt_t cut,Int_t syst);
   Bool_t CheckPsiPair(const AliESDv0* v0);
-  Double_t GetTrackEfficiency(const Int_t& part, const Double_t& ptot, const Int_t& eta, const Int_t& setting, const Int_t& sign, const Bool_t& isTOF=kFALSE);
+  Double_t GetTrackEfficiency(const Int_t& part, const Double_t& ptot, const Double_t& eta, const Int_t& setting, const Int_t& sign, const Bool_t& isTOF=kFALSE);
   //
   // Jet Functions
   void FindJetsFJ();
@@ -1025,7 +1025,7 @@ private:
   THnF             * fEffMatrixGenNeg;           // histogram efficiency matrix read from file
   THnF             * fEffMatrixRecPos;           // histogram efficiency matrix read from file
   THnF             * fEffMatrixRecNeg;           // histogram efficiency matrix read from file
-  vector<vector<vector<vector<vector<TH1F*>>>>> fEffMatrixProjections;  // container for efficiency matrix projections
+  vector<vector<vector<vector<TH2F*>>>> fEffMatrixProjections;  // container for efficiency matrix projections
   //
   // Counters for Marian
   //
