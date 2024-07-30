@@ -7168,7 +7168,7 @@ Double_t AliAnalysisTaskTIdentityPID::GetTrackEfficiency(const Int_t& part, cons
     fEffMatrixProjections[centIndex][setting][signIndex][isTOF] = tmpEffRec;
   }
 
-  ret = fEffMatrixProjections[centIndex][setting][signIndex][isTOF]->GetBinContent(fEffMatrixProjections[centIndex][setting][signIndex][isTOF]->FindBin(fEta, ptot));
+  ret = fEffMatrixProjections[centIndex][setting][signIndex][isTOF]->GetBinContent(fEffMatrixProjections[centIndex][setting][signIndex][isTOF]->FindBin(eta, ptot));
   return ret;
 };
 //________________________________________________________________________
