@@ -7166,12 +7166,6 @@ Double_t AliAnalysisTaskTIdentityPID::GetTrackEfficiency(const Int_t& part, cons
     TH2F* tmpEffRec = (TH2F*)effMatrixRec->Projection(5, 6)->Clone();
     tmpEffRec->Divide(tmpEffGen);
     fEffMatrixProjections[centIndex][setting][signIndex][isTOF] = tmpEffRec;
-
-    // plot the projection
-    TCanvas* c = new TCanvas();
-    fEffMatrixProjections[centIndex][setting][signIndex][isTOF]->Draw("colz");
-    c->SaveAs(Form("effMatrix_cent_%.2f_%.2f_setting_%d_sign_%d_isTOF_%d.png", fxCentBins[centIndex], fxCentBins[centIndex + 1], setting, sign, isTOF));
-    delete c;
   }
 
   ret = fEffMatrixProjections[centIndex][setting][signIndex][isTOF]->GetBinContent(fEffMatrixProjections[centIndex][setting][signIndex][isTOF]->FindBin(fEta, ptot));
