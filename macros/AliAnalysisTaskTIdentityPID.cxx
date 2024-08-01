@@ -1282,7 +1282,7 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
     // dimensions: [setting][cent][eta][isTOF][sign]
     const size_t etaDim = fEffMatrixRecPos->GetAxis(6)->GetNbins();
     const size_t centDim = fEffMatrixRecPos->GetAxis(4)->GetNbins();
-    const size_t settingsDim = fEffMatrixRecPos->GetAxis(2)->GetNbins();
+    const size_t settingsDim = fNSettings;
     const size_t signDim = 2;
 
     fEffMatrixProjections = vector<vector<vector<vector<TH2F*>>>>(centDim);
