@@ -250,6 +250,7 @@ public:
   void   SetV0InvMassHists(const Bool_t ifV0InvMassHists = kFALSE)    {fV0InvMassHists      = ifV0InvMassHists;}
   void   SetRunNumberForExpecteds(const Int_t ifRunNumberForExpecteds = 0)    {fRunNumberForExpecteds = ifRunNumberForExpecteds;}
   void   SetFillJetsBG(const Int_t ifFillJetsBG = kTRUE)              {fFillJetsBG          = ifFillJetsBG;}
+  void   SetTaskSelection(const Int_t ifTaskSelection = kTRUE)        {fTaskSelection          = ifTaskSelection;}
   void   SetFillResonances(const Bool_t ifFillResonances = kFALSE)    {fFillResonances      = ifFillResonances;}
 
   void   SetSettings(const std::vector<Int_t> ifSystSettings) {
@@ -889,7 +890,8 @@ private:
   Bool_t             fhasAcceptedFJjet;
   Bool_t             fhasRealFJjet;
   Int_t              fFillJetsBG;          // switch whether to fill jetsEMC constituent tree
-  TH1F              *fJetHistptSub;              // control histogram for rho subtrated jet pt
+  Int_t              fTaskSelection;       // switch whether to fill jetsEMC constituent tree
+  TH1F              *fJetHistptSub;        // control histogram for rho subtrated jet pt
 
   //
   // Event shape

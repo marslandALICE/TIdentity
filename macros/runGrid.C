@@ -117,14 +117,16 @@ Bool_t fUseMultSelection = kTRUE;
 TString fname="PWGPP695_MC_remapping";  // output directory name in my home folder in alien
 // 
 const Int_t timelimitTTL=9000; // in terms of hours 9000/60/60 = 2.5 hours
-const Int_t nTestFiles = 3;
-const Int_t nChunksPerJob = 10;
+const Int_t nTestFiles = 1;
 const Int_t nEvents = -1; // set -1 for full stat
+const Int_t nTestRuns = 1; // set -1 for full stat
+const Int_t nChunksPerJob = 20;
+
 //
 // Set the local inout directory 
 // TString dataBaseDir = "/eos/user/m/marsland/data";
 TString dataBaseDir = "/media/marsland/T7/data";
-TString aliPhysicsTag = "vAN-20240619_O2-1"; // crosscheck with lego trains
+TString aliPhysicsTag = "vAN-20240617_O2-1"; // crosscheck with lego trains
 //
 // debugging options
 TString fValgrind  = "/usr/bin/valgrind --leak-check=full --leak-resolution=high --num-callers=40 --error-limit=no --show-reachable=yes  --log-file=xxx.txt --suppressions=$ROOTSYS/etc/valgrind-root.supp  -v ";
@@ -328,6 +330,7 @@ AliAnalysisGrid* CreateAlienHandler(Int_t valgrindOption = 0,TString list = "", 
     else continue;
     plugin->AddRunNumber(run);
     std::cout << nRuns+1 << "  " << run << "  is included in the processing "<< std::endl;
+    if (nTestRuns>0 && nRuns+1 == nTestRuns) break;
     nRuns++;
     if ( localOrGrid==0 && nRuns==1 ) {
       std::cout << " in test mode process only one run " << std::endl;
@@ -363,14 +366,16 @@ AliAnalysisGrid* CreateAlienHandler(Int_t valgrindOption = 0,TString list = "", 
   }
   else if (isMC==1) {  // RUN2 full MC gen+rec
     std::cout << " Data SOURCE = RUN2 full MC gen+rec " << std::endl;
+    plugin->SetAdditionalLibs("libAliPythia6 pythia6 Tree Geom VMC Physics Minuit Gui Minuit2 STEERBase ESD OADB ANALYSIS ANALYSISalice CDB STEER CORRFW EMCALUtils EMCALrec VZERObase VZEROrec");
+    plugin->SetAdditionalRootLibs("libVMC.so libPhysics.so libTree.so libMinuit.so libProof.so libSTEERBase.so libESD.so libAOD.so libAliPythia6.so");
     plugin->SetGridDataDir(Form("/alice/sim/%d/%s/",year,period.Data()));
     plugin->SetDataPattern("/*/AliESDs.root");
   }
   else if (isMC==2) {  // RUN2 fast MC gen
     std::cout << " Data SOURCE = RUN2 fast MC gen " << std::endl;
     // /alice/sim/2022/LHC22d1d/244917/001
-    // plugin->SetAdditionalLibs("pythia6 Tree Geom VMC Physics Minuit Gui Minuit2 STEERBase ESD OADB ANALYSIS ANALYSISalice CDB STEER CORRFW EMCALUtils EMCALrec VZERObase VZEROrec");
-    // plugin->SetAdditionalRootLibs("libVMC.so libPhysics.so libTree.so libMinuit.so libProof.so libSTEERBase.so libESD.so libAOD.so");
+    plugin->SetAdditionalLibs("pythia6 Tree Geom VMC Physics Minuit Gui Minuit2 STEERBase ESD OADB ANALYSIS ANALYSISalice CDB STEER CORRFW EMCALUtils EMCALrec VZERObase VZEROrec");
+    plugin->SetAdditionalRootLibs("libVMC.so libPhysics.so libTree.so libMinuit.so libProof.so libSTEERBase.so libESD.so libAOD.so libAliPythia6.so");
     // plugin->SetMCLoop(kTRUE);
     // plugin->SetUseMCchain();
     // plugin->SetNMCjobs(1000);
@@ -383,6 +388,8 @@ AliAnalysisGrid* CreateAlienHandler(Int_t valgrindOption = 0,TString list = "", 
   }
   else if (isMC==3) {  // RUN1 full MC gen+rec HIJING
     std::cout << " Data SOURCE = RUN1 full MC gen+rec HIJING " << std::endl;
+    plugin->SetAdditionalLibs("pythia6 Tree Geom VMC Physics Minuit Gui Minuit2 STEERBase ESD OADB ANALYSIS ANALYSISalice CDB STEER CORRFW EMCALUtils EMCALrec VZERObase VZEROrec");
+    plugin->SetAdditionalRootLibs("libVMC.so libPhysics.so libTree.so libMinuit.so libProof.so libSTEERBase.so libESD.so libAOD.so libAliPythia6.so");
     plugin->SetGridDataDir(Form("/alice/sim/%s/",period.Data()));
     plugin->SetDataPattern("/*/AliESDs.root");
   }
@@ -447,7 +454,6 @@ AliAnalysisGrid* CreateAlienHandler(Int_t valgrindOption = 0,TString list = "", 
   plugin->SetKeepLogs(kFALSE);
   plugin->SetOutputToRunNo(1);
   // my settings
-  // if (localOrGrid==0) plugin->SetKeepLogs(kTRUE); // keep the log files
   plugin->SetKeepLogs(kTRUE); // keep the log files
 
   return plugin;

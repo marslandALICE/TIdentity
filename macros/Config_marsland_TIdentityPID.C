@@ -37,11 +37,12 @@ AliAnalysisTaskTIdentityPID* Config_marsland_TIdentityPID(Bool_t getFromAlien, I
       // task->SetNSettings(4);
       // task->SetSettings({0, 1, 16, 17});
       task->SetCollisionType(0); // 0 for PbPb, 1 for pp
+      task->SetTaskSelection(0); // 0; both jet+net-p, 1: only jet, 2: only net-p
       task->SetNSettings(1);
       task->SetSettings({0});
-      task->SetFillJetsBG(2);
+      task->SetFillJetsBG(2); // 0: no PID info for const + no BG, 1: fill BG tree, 2: no BG tree + PID info
       task->SetRunOnGrid(kTRUE);
-      task->SetUseCouts(kTRUE);
+      task->SetUseCouts(kFALSE);
       //
       task->SetFillEventInfo(kTRUE);
       task->SetFillAllCutVariables(kTRUE);
@@ -71,11 +72,12 @@ AliAnalysisTaskTIdentityPID* Config_marsland_TIdentityPID(Bool_t getFromAlien, I
       // task->SetNSettings(4);
       // task->SetSettings({0, 1, 16, 17});
       task->SetCollisionType(1); // 0 for PbPb, 1 for pp
+      task->SetTaskSelection(0); // 0; both jet+net-p, 1: only jet, 2: only net-p
       task->SetNSettings(1);
       task->SetSettings({0});
       task->SetFillJetsBG(2);
       task->SetRunOnGrid(kTRUE);
-      task->SetUseCouts(kTRUE);
+      task->SetUseCouts(kFALSE);
       //
       task->SetFillEventInfo(kTRUE);
       task->SetFillAllCutVariables(kTRUE);
@@ -102,12 +104,13 @@ AliAnalysisTaskTIdentityPID* Config_marsland_TIdentityPID(Bool_t getFromAlien, I
     // ====================================================================================
     //
     case 50:{
-      std::cout << " SETTING TYPE = " << settingType << " Info::marsland: Full MC " << std::endl;
+      std::cout << " SETTING TYPE = " << settingType << " Info::marsland: Full MC PbPb " << std::endl;
       task->SetFillJetsBG(2);
       task->SetCollisionType(0); // 0 for PbPb, 1 for pp
+      task->SetTaskSelection(0); // 0; both jet+net-p, 1: only jet, 2: only net-p
       task->SetEffMatrix(kTRUE);
       task->SetIsMCtrue(kTRUE);
-      task->SetUseCouts(kTRUE);
+      task->SetUseCouts(kFALSE);
       task->SetFillAllCutVariables(kTRUE);  // conditions to enter FillMCFull_NetParticles()
       //
       std::cout << "period and pass = " << periodName << "    " << passIndex << std::endl;
@@ -128,10 +131,10 @@ AliAnalysisTaskTIdentityPID* Config_marsland_TIdentityPID(Bool_t getFromAlien, I
       task->fEventCuts.fUseVariablesCorrelationCuts = true;
       //
       // acceptance & settings
+      task->SetNSettings(17);
+      // task->SetSettings({0, 1, 2, 3});
       // task->SetNSettings(4);
       // task->SetSettings({0, 1, 16, 17});
-      task->SetNSettings(1);
-      task->SetSettings({0});
       //
       const Int_t tmpCentbins  = 14;
       const Int_t tmpEtaBinsMC = 8;
@@ -180,12 +183,13 @@ AliAnalysisTaskTIdentityPID* Config_marsland_TIdentityPID(Bool_t getFromAlien, I
     }
     break;
       case 51:{
-      std::cout << " SETTING TYPE = " << settingType << " Info::marsland: Full MC " << std::endl;
+      std::cout << " SETTING TYPE = " << settingType << " Info::marsland: Full MC pp " << std::endl;
       task->SetFillJetsBG(2);
       task->SetCollisionType(1); // 0 for PbPb, 1 for pp
+      task->SetTaskSelection(0); // 0; both jet+net-p, 1: only jet, 2: only net-p
       task->SetEffMatrix(kTRUE);
       task->SetIsMCtrue(kTRUE);
-      task->SetUseCouts(kTRUE);
+      task->SetUseCouts(kFALSE);
       task->SetFillAllCutVariables(kTRUE);  // conditions to enter FillMCFull_NetParticles()
       //
       std::cout << "period and pass = " << periodName << "    " << passIndex << std::endl;
