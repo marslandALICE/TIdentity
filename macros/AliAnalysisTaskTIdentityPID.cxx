@@ -2639,8 +2639,9 @@ void AliAnalysisTaskTIdentityPID::CalculateMoments_CutBasedMethod()
                 Int_t r = iOrderR + 1;
                 Int_t s = iOrderS + 1;
 
-                arrQ[iset][ieta][imom][iOrderR][iOrderS] += pow(fSign, r) / pow(eff, s);
-                arrQTOF[iset][ieta][imom][iOrderR][iOrderS] += pow(fSign, r) / pow(effTOF, s);
+                if (eff > 0) arrQ[iset][ieta][imom][iOrderR][iOrderS] += pow(fSign, r) / pow(eff, s);
+                if (effTOF > 0) arrQTOF[iset][ieta][imom][iOrderR][iOrderS] += pow(fSign, r) / pow(effTOF, s);
+                if (fUseCouts && (eff == 0 || effTOF == 0)) printf(" -- Warn::ilya: efficiency zero: eff = %f, effTOF = %f\n", eff, effTOF);
               }
             }
           }
