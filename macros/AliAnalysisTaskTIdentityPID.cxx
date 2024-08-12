@@ -2987,7 +2987,7 @@ void AliAnalysisTaskTIdentityPID::FillMCFull_NetParticles()
           // count first moments for given eta and momentum window
           for (size_t iEta = 0; iEta < etaDim; iEta++) {
             for (size_t iMom = 0; iMom < momDim; iMom++) {
-              if (isInBinGen[iEta][iMom]) {
+              if (isInBinRec[iEta][iMom]) {
                 if (trackReal->IsOn(AliESDtrack::kTPCrefit)) arrNtracksTPC[iEta][iMom]++;
                 if (trackReal->IsOn(AliESDtrack::kITSrefit)) arrNtracksITS[iEta][iMom]++;
                 arrNtracksRec[iEta][iMom]++;
