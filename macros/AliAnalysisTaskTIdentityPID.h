@@ -289,30 +289,31 @@ public:
   void   SetEffMatrixCentBins(const std::vector<Double_t> nEffMatrixCentBins) {fEffMatrixCentBins = nEffMatrixCentBins;}
   void   SetEffMatrixEtaBins(const std::vector<Double_t> nEffMatrixEtaBins) {fEffMatrixEtaBins = nEffMatrixEtaBins;}
 
-  void   SetNSigmaTPC(const Double_t nSigmaTPC)                   { fNSigmaTPC = nSigmaTPC; }
-  void   SetNSigmaTOF(const std::vector<Double_t> vecNSigmaTOFDown, const std::vector<Double_t> vecNSigmaTOFUp) {
+  void   SetNSigmaTPC(const std::vector<Double_t>& vecNSigmaTPC)  { fNSigmaTPC = vecNSigmaTPC; }
+  void   SetNSigmaTPC(const Double_t nSigmaTPC)                   {
+    std::vector<Double_t> vecNSigmaTPC(3, nSigmaTPC);
+    SetNSigmaTPC(vecNSigmaTPC);
+  }
+  void   SetNSigmaTOF(const std::vector<Double_t>& vecNSigmaTOFDown, const std::vector<Double_t>& vecNSigmaTOFUp) {
     fNSigmaTOFDown = vecNSigmaTOFDown;
     fNSigmaTOFUp = vecNSigmaTOFUp;
   }
 
-  std::pair<Double_t, Double_t> GetNSigmaTOF(const Int_t setting) const {
-    Double_t nSigmaDown, nSigmaUp;
+  std::vector<Double_t> GetNSigmas(const Int_t setting) {
+    std::vector<Double_t> ret(4);
     switch (setting)
     {
       case kCutNSigmaTOFLoose:
-      nSigmaDown = fNSigmaTOFDown[1];
-      nSigmaUp = fNSigmaTOFUp[1];
+      ret = {-fNSigmaTPC[1], fNSigmaTPC[1], fNSigmaTOFDown[1], fNSigmaTOFUp[1]};
       break;
       case kCutNSigmaTOFLoose2:
-      nSigmaDown = fNSigmaTOFDown[2];
-      nSigmaUp = fNSigmaTOFUp[2];
+      ret = {-fNSigmaTPC[2], fNSigmaTPC[2], fNSigmaTOFDown[2], fNSigmaTOFUp[2]};
       break;
       default:
-      nSigmaDown = fNSigmaTOFDown[0];
-      nSigmaUp = fNSigmaTOFUp[0];
+      ret = {-fNSigmaTPC[0], fNSigmaTPC[0], fNSigmaTOFDown[0], fNSigmaTOFUp[0]};
       break;
     }
-    return std::make_pair(nSigmaDown, nSigmaUp);
+    return ret;
   }
 
 
@@ -607,7 +608,7 @@ private:
   Bool_t ApplyDCAcutIfNoITSPixel(AliESDtrack *track);
   Bool_t GetSystematicClassIndex(UInt_t cut,Int_t syst);
   Bool_t CheckPsiPair(const AliESDv0* v0);
-  Double_t GetTrackEfficiency(const Int_t& part, const Double_t& ptot, const Double_t& eta, const Int_t& setting, const Int_t& sign, const Bool_t& isTOF=kFALSE);
+  Double_t GetTrackEfficiency(const Int_t& part, const Double_t& ptot, const Double_t& eta, const Int_t& setting, const Int_t& sign, const Int_t& pidCutType=0);
   //
   // Jet Functions
   void FindJetsFJ();
@@ -863,7 +864,7 @@ private:
   std::vector<Double_t> fEffMatrixCentBins;
   std::vector<Double_t> fEffMatrixEtaBins;
 
-  Double_t           fNSigmaTPC;              // n sigma TPC for cut based method
+  std::vector<Double_t> fNSigmaTPC;              // n sigma TPC for cut based method
   std::vector<Double_t> fNSigmaTOFDown;
   std::vector<Double_t> fNSigmaTOFUp;
 
