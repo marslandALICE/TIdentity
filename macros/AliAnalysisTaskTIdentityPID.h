@@ -129,7 +129,8 @@ public:
     kCutTPCSignalNSmall=14,
     kCutTPCSignalNLarge=15,
     kCutNSigmaTOFLoose=16,
-    kCutNSigmaTOFLoose2=17
+    kCutNSigmaTOFLoose2=17,
+    kCutSettingsCount = 18
   };
 
   enum centEst {
@@ -148,6 +149,7 @@ public:
     kPDGla=3122,
     kPDGxi=3312,
     kPDGd0=421,
+    kPDGph=333,
   };
 
   enum kNetMoments{
@@ -222,9 +224,9 @@ public:
   void   SetIncludeITScuts(const Bool_t ifITSCuts = kTRUE)            {fIncludeITS          = ifITSCuts;}
   void   SetFillArmPodTree(const Bool_t ifArmpodTree = kTRUE)         {fFillArmPodTree      = ifArmpodTree;}
   void   SetDeDxCheck(const Bool_t ifDeDxCheck = kFALSE)              {fDEdxCheck           = ifDeDxCheck;}
-  void   SetEffMatrix(const Bool_t ifEffMatrix = kFALSE)              {fEffMatrix           = ifEffMatrix;}
-  void   SetFillAllCutVariables(const Bool_t ifAllCuts = kFALSE)      {fFillTracks          = ifAllCuts;}
-  void   SetFillOnlyHists(const Bool_t ifFillOnlyHists = kFALSE)      {fFillOnlyHists       = ifFillOnlyHists;}
+  void   SetFillEffMatrix(const Bool_t ifFillEffMatrix = kFALSE)      {fFillEffMatrix       = ifFillEffMatrix;}
+  void   SetFillDebug(const Bool_t ifFillDebug = kFALSE)              {fFillDebug           = ifFillDebug;}
+  void   SetFillTracksMCgen(const Bool_t ifFillTracksMCgen = kFALSE)  {fFillTracksMCgen     = ifFillTracksMCgen;}
   void   SetFillEffLookUpTable(const Bool_t ifEffLookUpTable = kFALSE){fFillEffLookUpTable  = ifEffLookUpTable;}
   void   SetFillHigherMomentsMCclosure(const Bool_t ifHigherMomentsMCclosure = kFALSE){fFillHigherMomentsMCclosure  = ifHigherMomentsMCclosure;}
   void   SetRunFastSimulation(const Bool_t ifFastSimul = kFALSE)      {fRunFastSimulation   = ifFastSimul;}
@@ -236,21 +238,20 @@ public:
   void   SetDefaultTrackCuts(const Bool_t ifDefaultTrackCuts = kFALSE){fDefaultTrackCuts= ifDefaultTrackCuts;}
   void   SetDefaultEventCuts(const Bool_t ifDefaultEventCuts = kFALSE){fDefaultEventCuts= ifDefaultEventCuts;}
   void   SetFillNudynFastGen(const Bool_t ifNudynFastGen = kFALSE)    {fFillNudynFastGen= ifNudynFastGen;}
-  void   SetCorrectForMissCl(const Int_t ifCorrectForMissCl = kFALSE)    {fCorrectForMissCl= ifCorrectForMissCl;}
+  void   SetCorrectForMissCl(const Int_t ifCorrectForMissCl = kFALSE) {fCorrectForMissCl= ifCorrectForMissCl;}
   void   SetUsePtCut(const Int_t ifUsePtCut = 1)                      {fUsePtCut            = ifUsePtCut;}
   void   SetMCTrackOriginType(const Int_t ifTrackOriginOnlyPrimary = 0) {fTrackOriginOnlyPrimary     = ifTrackOriginOnlyPrimary;}
   void   SetRapidityType(const Int_t ifRapidityType = 0)              {fRapidityType        = ifRapidityType;}
   void   SetSisterCheck(const Int_t ifSisterCheck = 0)                {fSisterCheck         = ifSisterCheck;}
-  void   SetFillDnchDeta(const Bool_t ifDnchDetaCal = kFALSE)         {fFillDnchDeta        = ifDnchDetaCal;}
   void   SetIncludeTOF(const Bool_t ifIncludeTOF = kFALSE)            {fIncludeTOF          = ifIncludeTOF;}
   void   SetUseCouts(const Bool_t ifUseCouts = kFALSE)                {fUseCouts            = ifUseCouts;}
   void   SetWeakAndMaterial(const Bool_t ifWeakAndMaterial = kFALSE)  {fWeakAndMaterial     = ifWeakAndMaterial;}
   void   SetFillEventInfo(const Bool_t ifEventInfo = kFALSE)          {fEventInfo           = ifEventInfo;}
-  void   SetPercentageOfEvents(const Int_t nPercentageOfEvents = 0)   {fPercentageOfEvents = nPercentageOfEvents;}
+  void   SetDownscalingFactor(const Float_t nDownscalingFactor = 0)   {fDownscalingFactor   = nDownscalingFactor;}
   void   SetV0InvMassHists(const Bool_t ifV0InvMassHists = kFALSE)    {fV0InvMassHists      = ifV0InvMassHists;}
   void   SetRunNumberForExpecteds(const Int_t ifRunNumberForExpecteds = 0)    {fRunNumberForExpecteds = ifRunNumberForExpecteds;}
   void   SetFillJetsBG(const Int_t ifFillJetsBG = kTRUE)              {fFillJetsBG          = ifFillJetsBG;}
-  void   SetTaskSelection(const Int_t ifTaskSelection = kTRUE)        {fTaskSelection          = ifTaskSelection;}
+  void   SetTaskSelection(const Int_t ifTaskSelection = kTRUE)        {fTaskSelection       = ifTaskSelection;}
   void   SetFillResonances(const Bool_t ifFillResonances = kFALSE)    {fFillResonances      = ifFillResonances;}
 
   void   SetSettings(const std::vector<Int_t> ifSystSettings) {
@@ -578,17 +579,10 @@ private:
 
   void FillTPCdEdxReal();                   // Main function to fill all info + TIden
   void CalculateMoments_CutBasedMethod();
-  void FillTrackVariables(AliESDtrack *track);
-  void FillTPCdEdxCheck();                  // Quick check for the TPC dEdx
-  void FillMCFull_piKpr();                     // Fill all info + TIdenMC from MC to do MC closure test
   void FillMCFull_NetParticles();
   void FillTreeMC();
-  void FastGen();                           // Run over galice.root for Fastgen 2nd moments
   void FastGen_NetParticles();              // Run over galice.root for Fastgen higher moments
-  void FastGenHigherMoments();     // Run over galice.root for Fastgen and calculate higher moments
   void MCclosureHigherMoments();   // Calculate higher moments for REC and GEN
-  void WeakAndMaterial();                   // Look full acceptance, weak decay and material
-  void FillDnchDeta();                      // Fill dnch/deta values for each cent and eta bin
   void FillEffMatrix();            // Prepare efficiency matrix
   void FillCleanSamples();                    // Fill Clean Pions
   void SelectCleanSamplesFromV0s(AliESDv0 *v0, AliESDtrack *track0, AliESDtrack *track1);
@@ -598,12 +592,11 @@ private:
   void DumpDownScaledTree();
   void GetExpecteds(AliESDtrack *track, Double_t closestPar[3]);
   void CreateEventInfoTree();
-  void FillGenDistributions();
   //
   Int_t CountEmptyEvents(Int_t counterBin);  // Just count if there is empty events
   Int_t CacheTPCEventInformation();
   UInt_t SetCutBitsAndSomeTrackVariables(AliESDtrack *track, Int_t particleType);
-  Bool_t CheckIfFromResonance(Int_t mcType, AliMCParticle *trackMCgen, Int_t trackIndex, Bool_t parInterest, Double_t ptot, Double_t eta, Double_t cent, Bool_t fillTree);
+  Bool_t CheckIfFromResonance(AliMCParticle *trackMCgen);
   Bool_t CheckIfFromAnyResonance(AliMCParticle *trackMCgen, Float_t etaLow, Float_t etaUp, Float_t pDown, Float_t pUp);
   Bool_t ApplyDCAcutIfNoITSPixel(AliESDtrack *track);
   Bool_t GetSystematicClassIndex(UInt_t cut,Int_t syst);
@@ -649,19 +642,19 @@ private:
 
   TTree            * fArmPodTree;             // Tree for clean pion and proton selection
   TTreeSRedirector * fTreeSRedirector;        /// temp tree to dump output
-  TTree            * fTreeMCFull;             // tree for reconstructed moments
-  TTree            * fTreeMCgen;              // tree for reconstructed moments
-  TTree            * fTreeDnchDeta;           // tree for dnch/deta calculation
-  TTree            * fTreeMC;                 // tree for mc samples
-  TTree            * fTreedEdxCheck;          // tree to check dEdx performance for a small data sample
-  TTree            * fTreeCuts;               // tree to save all variables for control plots
-  TTree            * fTreeMCFullAcc;          // tree with full acceptance filled with MC
-  TTree            * fTreeResonance;          // tree with full acceptance filled with MC
-  TTree            * fTreeMCgenMoms;          // tree with higher moment calculations
+  TTree            * fTreeMomentsMCfull;      // tree for reconstructed moments
+  TTree            * fTreeTracksMCgen;        // tree for reconstructed moments
+  TTree            * fTreeDebug3;             // tree for dnch/deta calculation
+  TTree            * fTreeTracksMCrec;        // tree for mc samples
+  TTree            * fTreeDebug4;             // tree to check dEdx performance for a small data sample
+  TTree            * fTreeTracks;             // tree to save all variables for control plots
+  TTree            * fTreeDebug;              // tree for debugging
+  TTree            * fTreeResonances;         // tree with full acceptance filled with MC
+  TTree            * fTreeMomentsMCgen;       // tree with higher moment calculations
   TTree            * fTreeEvents;
   TTree            * fTreeEventsMC;
   TTree            * fTreeDScaled;
-  TTree            * fTreeMCEffCorr;
+  TTree            * fTreeDebug2;
   TTree            * fTreeExpecteds;          // tree with expected dE/dx
   TTree            * fTreeCutBased;           // tree with moments from cut based method
   TTree            * fTreejetsFJ;             // tree for fastjet signal jets
@@ -703,17 +696,19 @@ private:
   Double_t          fEtaDown;
   Double_t          fEtaUp;
   Int_t             fNEtaBins;
-  Int_t             fPercentageOfEvents;     // when only a fPercentageOfEvents is enough
+  Float_t           fDownscalingFactor;     // when only a fDownscalingFactor is enough
+  Int_t             fEventIDinFile;         // event id in file
+  Int_t             fChunkIDinJob;          // event id in file
 
   Bool_t            fRunOnGrid;              // flag if real data or MC is processed
   Bool_t            fMCtrue;                 // flag if real data or MC is processed
   Bool_t            fEventInfo;              // flag if event info and downscaled track tree is filled
   Bool_t            fWeakAndMaterial;        // flag for the Weak and Material analysis
-  Bool_t            fEffMatrix;              // flag for efficiency matrix filling
+  Bool_t            fFillEffMatrix;          // flag for efficiency matrix filling
+  Bool_t            fFillDebug;              // flag for efficiency matrix filling
   Bool_t            fDEdxCheck;              // flag to check only the dEdx performance
   Bool_t            fIncludeITS;             // decide whether to use ITS or not
-  Bool_t            fFillTracks;             // switch whether to fill all cut variables
-  Bool_t            fFillOnlyHists;          //
+  Bool_t            fFillTracksMCgen;          //
   Bool_t            fFillEffLookUpTable;     //
   Bool_t            fFillHigherMomentsMCclosure;
   Bool_t            fFillArmPodTree;         // switch whether to fill clean sample tree
@@ -733,7 +728,6 @@ private:
   Int_t             fRapidityType;
   Int_t             fSisterCheck;           // 0: reject the mother anyways, 1: if both girls are in acceptance rejet mother
 
-  Bool_t            fFillDnchDeta;           // switch on calculation of the dncdeta for fastgens
   Bool_t            fIncludeTOF;             // Include TOF information to investigate the efficiency loss effects on observable
   Bool_t            fUseCouts;               // for debugging
   Bool_t            fV0InvMassHists;         // V0 invariant mass for QA
@@ -820,6 +814,7 @@ private:
   Float_t           fDeMCgen;
   Float_t           fMuMCgen;
   Float_t           fBaMCgen;
+  Float_t           fPhMCgen;
 
 
   Float_t           fPx;                     // x component of momentum

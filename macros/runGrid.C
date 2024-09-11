@@ -29,9 +29,9 @@ Location of the train
 /alice/cern.ch/user/p/pwg_pp/PWGPP695_MC_remapping/LHC20e3a_pass3_20230624_1611/2020/297595/048
 
 
-Example usage: 
+Example usage:
 
-cd /home/marsland/Desktop/ubuntu_desktop/workdir/RUN_ON_GRID/Ebye/test/root6_based/4thMoment_29092021 
+cd /home/marsland/Desktop/ubuntu_desktop/workdir/RUN_ON_GRID/Ebye/test/root6_based/4thMoment_29092021
 aliroot -b -q 'runGrid.C(0,0,"test",0,"3","$RUN_ON_GRID_DIR/Ebye/lists/runs-2020-LHC20e3a-pass3.list","PWGPP695_MC_remapping",1,65,1,2018,"18q",3,"vAN-20221119_O2-1")'
 aliroot -b -q 'runGrid.C(0,0,"test",0,"3","$RUN_ON_GRID_DIR/Ebye/lists/runs-2020-LHC20e3a-pass3.list","PWGPP695_MC_remapping",1,65,1,2018,"18q",3,"vAN-20221119_O2-1")'
 aliroot -b -q 'runGrid.C(0,0,"test",0,"3","$RUN_ON_GRID_DIR/Ebye/lists/runsIlya1run-2018-LHC18q-pass3.list","PWGPP695_MC_remapping",0,4 ,0,2018,"18q",3,"vAN-20221119_O2-1")'
@@ -42,7 +42,7 @@ aliroot -b -q 'runGrid.C(1,0,"test",0,"3","$RUN_ON_GRID_DIR/Ebye/lists/runs-2018
 # salman
 aliroot -b -q 'runGrid.C(0,0,"test",0,"2","$RUN_ON_GRID_DIR/Ebye/lists/runsTest-2015-LHC15o-pass2.list","PWGPP695_MC_remapping",0,4 ,0,2015,"15o",2,"vAN-20221119_O2-1")'
 
-# ilya and sierra version 
+# ilya and sierra version
 aliroot -b -q 'runGrid.C(0,0,"test",0,"3","$RUN_ON_GRID_DIR/Ebye/lists/runsIlya1run-2018-LHC18q-pass3.list","PWGPP695_MC_remapping",0,4,0 ,2018,"18q",3,"vAN-20221119_O2-1")'
 aliroot -b -q 'runGrid.C(1,0,"test",0,"3","$RUN_ON_GRID_DIR/Ebye/lists/runsIlya1run-2018-LHC18q-pass3.list","PWGPP695_MC_remapping",0,4,0 ,2018,"18q",3,"vAN-20221119_O2-1")'
 
@@ -54,7 +54,7 @@ aliroot -b -q 'runGrid.C(0,0,"full",1,"3","$RUN_ON_GRID_DIR/Ebye/lists/runs50lon
 # make list of runs --> alien_ls  /alice/sim/2022/LHC22d1a | sed 's/^/\/alice\/sim\/2022\/LHC22d1a\//' > runsGen-2022-LHC22d1a-pass3.list
 # cd ~/Desktop/ubuntu_desktop/workdir/RUN_ON_GRID/Ebye/test_fastGen_netParticles_HIJING
 # cd /lustre/nyx/alice/users/marsland/workdir/ThirdMoment_Paper_03022022
-# run over local fles 
+# run over local fles
 # alien.py find /alice/sim/2022/LHC22d1b/ "galice.root" | wc -l  --> 7100
 # alien.py find /alice/sim/2022/LHC22d1a/ "galice.root" | wc -l  --> 7294
 # alien.py find /alice/sim/2022/LHC22d1c/ "galice.root" | wc -l  --> 7432
@@ -62,7 +62,7 @@ aliroot -b -q 'runGrid.C(0,0,"full",1,"3","$RUN_ON_GRID_DIR/Ebye/lists/runs50lon
 # alien.py find /alice/sim/2022/LHC22d1d2/ "galice.root" | wc -l --> 113418
 # alien.py find /alice/sim/2022/LHC22d1c2/ "galice.root" | wc -l --> 116642
 #
-# run on grid 
+# run on grid
 # HIJING gen level
 aliroot -b -q 'runGrid.C(0,0,"test",0,"2","$RUN_ON_GRID_DIR/Ebye/lists/runsGen-2022-LHC22d1a-pass3.list","PWGPP695_MC_remapping",2,201 ,0,2022,"22d1a",2,"vAN-20221119_O2-1")'
 aliroot -b -q 'runGrid.C(0,0,"full",1,"2","$RUN_ON_GRID_DIR/Ebye/lists/runsGen-2022-LHC22d1a-pass3.list","PWGPP695_MC_remapping",2,201 ,0,2022,"22d1a",2,"vAN-20221119_O2-1")'
@@ -83,7 +83,7 @@ alien_cp -T 8 -parent 99 -glob AnalysisResults.root /alice/cern.ch/user/p/pwg_pp
 alien_cp -T 8 -parent 99 -glob AnalysisResults.root  /alice/cern.ch/user/p/pwg_pp/PWGPP695_MC_remapping/LHC22d1a_pass3_20240423_1547/ file:
 alien_cp -T 8 -parent 99 -glob AnalysisResults.root  /alice/cern.ch/user/p/pwg_pp/PWGPP695_MC_remapping/LHC22d1c2_pass3_20240423_1142/ file:
 
-# merge output 
+# merge output
 alihadd -s 2000000000  AnalysisResults_gen.root     @files_local.list
 
 LHC22d1a_pass3_20231016_39/
@@ -94,7 +94,7 @@ LHC22d1d2_pass3_20231016_722/
 
 aliroot -b -q 'runGrid.C(kFALSE,0,"test",0,"3","$RUN_ON_GRID_DIR/Ebye/lists/runs-2020-LHC20e3a-pass3.list","PWGPP695_MC_remapping",1,65,0,2018,"18q",3,"vAN-20221110_ROOT6-1")'
 
-// to kill jobs in alien 
+// to kill jobs in alien
 for i in $(cat jobs.list); do alien.py kill $i; done
 
 fRunLocalFiles --> 0; run over local code but remote data, 1; run over local code and data
@@ -110,20 +110,21 @@ lhcYear        --> year
 
 */
 
-Bool_t fAddFilteredTrees = kFALSE;
+Bool_t fAddFilteredTrees = kTRUE;
 Bool_t fAddTIdentityTask = kTRUE;
 //
 Bool_t fUseMultSelection = kTRUE;
 TString fname="PWGPP695_MC_remapping";  // output directory name in my home folder in alien
-// 
-const Int_t timelimitTTL=9000; // in terms of hours 9000/60/60 = 2.5 hours
-const Int_t nTestFiles = 1;
-const Int_t nEvents = -1; // set -1 for full stat
-const Int_t nTestRuns = 1; // set -1 for full stat
-const Int_t nChunksPerJob = 20;
+//
+const Int_t timelimitTTL=10000; // in terms of hours 9000/60/60 = 2.5 hours
+const Int_t nTestFiles = 4;
+const Int_t nEvents = -1; // set -1 for all events in a given chunk
+// run selections
+const Int_t nTestRuns = -1; // set -1 for all runs of the list
+const Int_t nChunksPerJob = 25;
 
 //
-// Set the local inout directory 
+// Set the local inout directory
 // TString dataBaseDir = "/eos/user/m/marsland/data";
 TString dataBaseDir = "/media/marsland/T7/data";
 TString aliPhysicsTag = "vAN-20240617_O2-1"; // crosscheck with lego trains
@@ -135,17 +136,17 @@ TString fMassif    = "/usr/bin/valgrind --tool=massif ";
 
 Bool_t fDoAOD = kFALSE;
 
-void runGrid(Bool_t fRunLocalFiles = kTRUE, 
-             TString mode="test",
-             Int_t localOrGrid=0, 
-             Int_t setType=3, 
-             TString list = "", 
-             Int_t isMC=0, 
-             Int_t lhcYear=2015, 
-             TString periodName="15o", 
-             Int_t passIndex=2, 
-             Int_t valgrindOption = 0
-             )
+void runGrid(Bool_t fRunLocalFiles = kTRUE,
+  TString mode="test",
+  Int_t localOrGrid=0,
+  Int_t setType=3,
+  TString list = "",
+  Int_t isMC=0,
+  Int_t lhcYear=2015,
+  TString periodName="15o",
+  Int_t passIndex=2,
+  Int_t valgrindOption = 0
+)
 {
 
   AliLog::SetGlobalDebugLevel(0);
@@ -239,7 +240,7 @@ void runGrid(Bool_t fRunLocalFiles = kTRUE,
   if (fAddTIdentityTask){
     gROOT->LoadMacro("AliAnalysisTaskTIdentityPID.cxx++g");
     AliAnalysisTask *ana = AddTask_marsland_TIdentityPID(kFALSE,"Config_marsland_TIdentityPID.C",setType,lhcYear,periodName,passIndex);
-  }  
+  }
   //
   // ----------------------------------------------------------------------------------------------------------------------
   // ----------------------------------------------------------------------------------------------------------------------
@@ -249,12 +250,12 @@ void runGrid(Bool_t fRunLocalFiles = kTRUE,
   TChain *chain;
   if (!fRunLocalFiles) {
     // Start analysis in grid.
-    if (nEvents<0) mgr->StartAnalysis("grid");   
+    if (nEvents<0) mgr->StartAnalysis("grid");
     else mgr->StartAnalysis("grid",nEvents);
   } else {
     // to run over files stored locally, uncomment this section,
     // and comment out the above lines related to alienHandler and StartAnalysis("grid")
-    if (isMC!=2){
+    if (isMC==0){
       chain = new TChain("esdTree");
       TString localFiles[] =
       {
@@ -280,7 +281,7 @@ void runGrid(Bool_t fRunLocalFiles = kTRUE,
         "/alice/data/2018/LHC18q/000296622/pass3/18000296622037.325/AliESDs.root"
       };
       for (int ifile =0; ifile<nTestFiles; ifile++) chain->AddFile(dataBaseDir+localFiles[ifile]);
-    } else {
+    } else if(isMC==2) {
       chain = new TChain("TE");
       TString localFiles[] =
       {
@@ -288,8 +289,16 @@ void runGrid(Bool_t fRunLocalFiles = kTRUE,
         "/alice/sim/2022/LHC22d1a/297595/001/galice.root" // HIJING
       };
       for (int ifile =0; ifile<nTestFiles; ifile++) chain->AddFile(dataBaseDir+localFiles[ifile]);
+    } else if(isMC==1) {
+      chain = new TChain("esdTree");
+      TString localFiles[] =
+      {
+        "/alice/sim/2020/LHC20e3a/297379/001/AliESDs.root",
+        "/alice/sim/2020/LHC20e3a/297379/002/AliESDs.root"
+      };
+      for (int ifile =0; ifile<nTestFiles; ifile++) chain->AddFile(dataBaseDir+localFiles[ifile]);
     }
-    if (nEvents<0) mgr->StartAnalysis("local",chain);   
+    if (nEvents<0) mgr->StartAnalysis("local",chain);
     else mgr->StartAnalysis("local",chain,nEvents);
   }
 
@@ -330,7 +339,7 @@ AliAnalysisGrid* CreateAlienHandler(Int_t valgrindOption = 0,TString list = "", 
     else continue;
     plugin->AddRunNumber(run);
     std::cout << nRuns+1 << "  " << run << "  is included in the processing "<< std::endl;
-    if (nTestRuns>0 && nRuns+1 == nTestRuns) break;
+    if (nTestRuns>0 && (nRuns+1 == nTestRuns) ) break;
     nRuns++;
     if ( localOrGrid==0 && nRuns==1 ) {
       std::cout << " in test mode process only one run " << std::endl;
@@ -443,7 +452,7 @@ AliAnalysisGrid* CreateAlienHandler(Int_t valgrindOption = 0,TString list = "", 
   //plugin->SetMaxMergeFiles(40);
   plugin->SetMaxMergeStages(4);
 
-  plugin->SetTTL(timelimitTTL); 
+  plugin->SetTTL(timelimitTTL);
   // Optionally set input format (default xml-single)
   plugin->SetInputFormat("xml-single");
   // Optionally modify job price (default 1)

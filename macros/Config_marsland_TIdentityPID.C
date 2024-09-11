@@ -45,7 +45,6 @@ AliAnalysisTaskTIdentityPID* Config_marsland_TIdentityPID(Bool_t getFromAlien, I
       task->SetUseCouts(kFALSE);
       //
       task->SetFillEventInfo(kTRUE);
-      task->SetFillAllCutVariables(kTRUE);
       task->SetFillDistributions(kTRUE);
       task->SetDefaultTrackCuts(kTRUE);
       task->SetFillArmPodTree(kTRUE);
@@ -80,7 +79,6 @@ AliAnalysisTaskTIdentityPID* Config_marsland_TIdentityPID(Bool_t getFromAlien, I
       task->SetUseCouts(kFALSE);
       //
       task->SetFillEventInfo(kTRUE);
-      task->SetFillAllCutVariables(kTRUE);
       task->SetFillDistributions(kTRUE);
       task->SetDefaultTrackCuts(kTRUE);
       task->SetFillArmPodTree(kTRUE);
@@ -100,50 +98,46 @@ AliAnalysisTaskTIdentityPID* Config_marsland_TIdentityPID(Bool_t getFromAlien, I
     break;
     //
     // ====================================================================================
-    // =================================== FULL MC  =======================================
+    // =================================== Fill only EffMatrix ============================
     // ====================================================================================
     //
-    case 50:{
-      std::cout << " SETTING TYPE = " << settingType << " Info::marsland: Full MC PbPb " << std::endl;
-      task->SetFillJetsBG(2);
-      task->SetCollisionType(0); // 0 for PbPb, 1 for pp
-      task->SetTaskSelection(0); // 0; both jet+net-p, 1: only jet, 2: only net-p
-      task->SetEffMatrix(kTRUE);
-      task->SetIsMCtrue(kTRUE);
+    case 40:{
+      std::cout << " SETTING TYPE = " << settingType << " Info::marsland: Fill only EffMatrix " << std::endl;
+      //
+      // Main command of this case
+      task->SetFillEffMatrix(kTRUE); // It fills only eff histograms
+      task->SetFillTracksMCgen(kFALSE);
+      task->SetFillEventInfo(kTRUE);
       task->SetUseCouts(kFALSE);
-      task->SetFillAllCutVariables(kTRUE);  // conditions to enter FillMCFull_NetParticles()
+      task->SetCollisionType(0); // 0 for PbPb, 1 for pp
+      task->SetIsMCtrue(kTRUE);
       //
       std::cout << "period and pass = " << periodName << "    " << passIndex << std::endl;
       if( (passIndex==3) || (passIndex==2) ) {
         task->SetDefaultEventCuts(kTRUE);
         std::cout << " special settings for 18q pass3 and 15o pass2 " << std::endl;
       }
-      task->SetFillArmPodTree(kFALSE);
-      task->SetFillResonances(kTRUE);
       task->SetMCTrackOriginType(0);   // 0:full scan, 1: prim
-      task->SetCorrectForMissCl(0);
       task->SetDefaultTrackCuts(kTRUE);
       task->SetRapidityType(0);      // 0: pseudorapidity, 1: rapidity
       task->SetUsePtCut(0);          // 0: tpc momcut, 1: vertex momcut, 2: pT cut
-      task->SetFillTreeMC(kTRUE);
-      task->SetFillEventInfo(kTRUE);
       task->SetIncludeITScuts(kTRUE);
       task->fEventCuts.fUseVariablesCorrelationCuts = true;
       //
       // acceptance & settings
-      task->SetNSettings(17);
-      // task->SetSettings({0, 1, 2, 3});
+      task->SetNSettings(13);
+      task->SetSettings({0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 16, 17});
       // task->SetNSettings(4);
       // task->SetSettings({0, 1, 16, 17});
       //
       const Int_t tmpCentbins  = 14;
       const Int_t tmpEtaBinsMC = 8;
-      const Int_t tmpMomBinsMC = 6;
+      const Int_t tmpMomBinsMC = 15;
       Float_t tmpfxCentBins[tmpCentbins] = {0,5,10,20,30,40,50,60,65,70,75,80,85,90};
       Float_t tmpetaDownArr[tmpEtaBinsMC] = {-0.1,-0.2,-0.3,-0.4,-0.5,-0.6,-0.7,-0.8};
       Float_t tmpetaUpArr[tmpEtaBinsMC]   = { 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8};
-      Float_t tmppDownArr[tmpMomBinsMC] = {0.6, 0.6, 1.5, 1.5, 1.5, 3.0};
-      Float_t tmppUpArr[tmpMomBinsMC]   = {1.5, 2.0, 3.0, 4.0, 5.0, 5.0};
+      Float_t tmppDownArr[tmpMomBinsMC] = {0.3, 0.3, 0.3, 0.3, 0.6, 0.6, 0.6, 0.6, 1.5, 1.5, 1.5, 3.0, 0.4, 0.4,  0.4 };
+      Float_t tmppUpArr[tmpMomBinsMC]   = {1.5, 2.0, 3.0, 5.0, 1.5, 2.0, 3.0, 5.0, 3.0, 4.0, 5.0, 5.0, 5.0, 10.0, 20.0};
       task->SetMCEtaScanArray(tmpEtaBinsMC, tmpetaDownArr, tmpetaUpArr);
       task->SetMCMomScanArray(tmpMomBinsMC, tmppDownArr,   tmppUpArr);
       task->SetCentralityBinning(tmpCentbins,tmpfxCentBins);
@@ -163,7 +157,7 @@ AliAnalysisTaskTIdentityPID* Config_marsland_TIdentityPID(Bool_t getFromAlien, I
       std::vector<Double_t> effMatrixCentBins = {0,5,10,20,30,40,50,60,70,80,90};
       task->SetEffMatrixMomBins(effMatrixMomBins);
       task->SetEffMatrixCentBins(effMatrixCentBins);
-      task->SetNSigmaTPC({3.0, 2.5, 3.5});
+      task->SetNSigmaTPC({3.0, 3.5, 3.5});
       task->SetNSigmaTOF({-2.5, -3.0, -3.5}, {2.5, 2.5, 2.5});
 
       // resonances to exclude
@@ -182,15 +176,105 @@ AliAnalysisTaskTIdentityPID* Config_marsland_TIdentityPID(Bool_t getFromAlien, I
 
     }
     break;
-      case 51:{
-      std::cout << " SETTING TYPE = " << settingType << " Info::marsland: Full MC pp " << std::endl;
+     //
+    // ====================================================================================
+    // =================================== FULL MC  =======================================
+    // ====================================================================================
+    //
+    case 50:{
+      std::cout << " SETTING TYPE = " << settingType << " Info::marsland: Full MC PbPb " << std::endl;
+      // 
+      // Main task of this case
+      task->SetCollisionType(0); // 0 for PbPb, 1 for pp
+      task->SetFillTracksMCgen(kTRUE);
+      task->SetFillDebug(kTRUE);
+      task->SetUseCouts(kTRUE);
+      //
       task->SetFillJetsBG(2);
+      task->SetTaskSelection(2); // 0; both jet+net-p, 1: only jet, 2: only net-p
+      task->SetIsMCtrue(kTRUE);
+      task->SetSisterCheck(0);
+      //
+      std::cout << "period and pass = " << periodName << "    " << passIndex << std::endl;
+      if( (passIndex==3) || (passIndex==2) ) {
+        task->SetDefaultEventCuts(kTRUE);
+        std::cout << " special settings for 18q pass3 and 15o pass2 " << std::endl;
+      }
+      task->SetFillArmPodTree(kFALSE);
+      task->SetFillResonances(kTRUE);
+      task->SetMCTrackOriginType(0);   // 0:full scan, 1: prim
+      task->SetCorrectForMissCl(0);
+      task->SetDefaultTrackCuts(kTRUE);
+      task->SetRapidityType(0);      // 0: pseudorapidity, 1: rapidity
+      task->SetUsePtCut(0);          // 0: tpc momcut, 1: vertex momcut, 2: pT cut
+      task->SetFillTreeMC(kTRUE);
+      task->SetFillEventInfo(kTRUE);
+      task->SetIncludeITScuts(kTRUE);
+      task->fEventCuts.fUseVariablesCorrelationCuts = true;
+      //
+      // acceptance & settings
+      task->SetNSettings(13);
+      task->SetSettings({0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 16, 17});
+      // task->SetNSettings(4);
+      // task->SetSettings({0, 1, 16, 17});
+      //
+      const Int_t tmpCentbins  = 14;
+      const Int_t tmpEtaBinsMC = 8;
+      const Int_t tmpMomBinsMC = 15;
+      Float_t tmpfxCentBins[tmpCentbins] = {0,5,10,20,30,40,50,60,65,70,75,80,85,90};
+      Float_t tmpetaDownArr[tmpEtaBinsMC] = {-0.1,-0.2,-0.3,-0.4,-0.5,-0.6,-0.7,-0.8};
+      Float_t tmpetaUpArr[tmpEtaBinsMC]   = { 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8};
+      Float_t tmppDownArr[tmpMomBinsMC] = {0.3, 0.3, 0.3, 0.3, 0.6, 0.6, 0.6, 0.6, 1.5, 1.5, 1.5, 3.0, 0.4, 0.4,  0.4 };
+      Float_t tmppUpArr[tmpMomBinsMC]   = {1.5, 2.0, 3.0, 5.0, 1.5, 2.0, 3.0, 5.0, 3.0, 4.0, 5.0, 5.0, 5.0, 10.0, 20.0};
+      task->SetMCEtaScanArray(tmpEtaBinsMC, tmpetaDownArr, tmpetaUpArr);
+      task->SetMCMomScanArray(tmpMomBinsMC, tmppDownArr,   tmppUpArr);
+      task->SetCentralityBinning(tmpCentbins,tmpfxCentBins);
+
+      std::vector<Double_t> effMatrixMomBins = {
+                      0.20, 0.22, 0.24, 0.26, 0.28, 0.30, 0.32, 0.34, 0.36, 0.38,
+                      0.40, 0.42, 0.44, 0.46, 0.48, 0.50, 0.52, 0.54, 0.56, 0.58,
+                      0.60, 0.62, 0.64, 0.66, 0.68, 0.70, 0.72, 0.74, 0.76, 0.78,
+                      0.80, 0.82, 0.84, 0.86, 0.88, 0.90, 0.92, 0.94, 0.96, 0.98,
+                      1.00, 1.02, 1.04, 1.06, 1.08, 1.10, 1.12, 1.14, 1.16, 1.18,
+                      1.20, 1.22, 1.24, 1.26, 1.28, 1.30, 1.32, 1.34, 1.36, 1.38,
+                      1.40, 1.44, 1.48, 1.52, 1.56, 1.60, 1.64, 1.68, 1.72, 1.76,
+                      1.80, 1.84, 1.88, 1.92, 1.96, 2.00, 2.04, 2.08, 2.12, 2.16,
+                      2.20, 2.40, 2.60, 2.80, 3.00, 3.20, 3.40, 3.60, 3.80, 4.00,
+                      4.20, 4.40, 4.60, 4.80, 5.00, 5.20
+      };
+      std::vector<Double_t> effMatrixCentBins = {0,5,10,20,30,40,50,60,70,80,90};
+      task->SetEffMatrixMomBins(effMatrixMomBins);
+      task->SetEffMatrixCentBins(effMatrixCentBins);
+      task->SetNSigmaTPC({3.0, 3.5, 3.5});
+      task->SetNSigmaTOF({-2.5, -3.0, -3.5}, {2.5, 2.5, 2.5});
+
+      // resonances to exclude
+      const Int_t tmpNresonances = 1;
+      TString tmpResArr[tmpNresonances] = {"xxx"};
+      task->SetMCResonanceArray(tmpNresonances,tmpResArr);
+      //
+      // baryons to be included for netbaryon analysis --> light and strange baryons
+      // {p,n,delta++,delta+,delta0,delta-,Lambda,}
+      const Int_t tmpNbaryons = 18;
+      Int_t tmpBaryonArr[tmpNbaryons] = {2212,2112,2224,2214,2114,1114,3122,3222,3212,3112,3224,3214,3114,3322,3312,3324,3314,3334};
+      task->SetMCBaryonArray(tmpNbaryons,tmpBaryonArr);
+
+      vector<THnF*> effMatrixObjects = GetEffMatrixObjects(kTRUE, "AnalysisResults_hists.root");
+      task->SetEffMatrixObjects(effMatrixObjects[0], effMatrixObjects[1], effMatrixObjects[2], effMatrixObjects[3]);
+
+    }
+    break;
+    case 51:{
+      std::cout << " SETTING TYPE = " << settingType << " Info::marsland: Full MC pp " << std::endl;
+       // 
+      // Main task of this case
       task->SetCollisionType(1); // 0 for PbPb, 1 for pp
+      //
+      task->SetFillJetsBG(2);
       task->SetTaskSelection(0); // 0; both jet+net-p, 1: only jet, 2: only net-p
-      task->SetEffMatrix(kTRUE);
       task->SetIsMCtrue(kTRUE);
       task->SetUseCouts(kFALSE);
-      task->SetFillAllCutVariables(kTRUE);  // conditions to enter FillMCFull_NetParticles()
+      task->SetSisterCheck(0);
       //
       std::cout << "period and pass = " << periodName << "    " << passIndex << std::endl;
       if( (passIndex==3) || (passIndex==2) ) {
@@ -217,12 +301,12 @@ AliAnalysisTaskTIdentityPID* Config_marsland_TIdentityPID(Bool_t getFromAlien, I
       //
       const Int_t tmpCentbins  = 14;
       const Int_t tmpEtaBinsMC = 8;
-      const Int_t tmpMomBinsMC = 6;
+      const Int_t tmpMomBinsMC = 15;
       Float_t tmpfxCentBins[tmpCentbins] = {0,5,10,20,30,40,50,60,65,70,75,80,85,90};
       Float_t tmpetaDownArr[tmpEtaBinsMC] = {-0.1,-0.2,-0.3,-0.4,-0.5,-0.6,-0.7,-0.8};
       Float_t tmpetaUpArr[tmpEtaBinsMC]   = { 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8};
-      Float_t tmppDownArr[tmpMomBinsMC] = {0.6, 0.6, 1.5, 1.5, 1.5, 3.0};
-      Float_t tmppUpArr[tmpMomBinsMC]   = {1.5, 2.0, 3.0, 4.0, 5.0, 5.0};
+      Float_t tmppDownArr[tmpMomBinsMC] = {0.3, 0.3, 0.3, 0.3, 0.6, 0.6, 0.6, 0.6, 1.5, 1.5, 1.5, 3.0, 0.4, 0.4,  0.4 };
+      Float_t tmppUpArr[tmpMomBinsMC]   = {1.5, 2.0, 3.0, 5.0, 1.5, 2.0, 3.0, 5.0, 3.0, 4.0, 5.0, 5.0, 5.0, 10.0, 20.0};
       task->SetMCEtaScanArray(tmpEtaBinsMC, tmpetaDownArr, tmpetaUpArr);
       task->SetMCMomScanArray(tmpMomBinsMC, tmppDownArr,   tmppUpArr);
       task->SetCentralityBinning(tmpCentbins,tmpfxCentBins);
@@ -242,7 +326,7 @@ AliAnalysisTaskTIdentityPID* Config_marsland_TIdentityPID(Bool_t getFromAlien, I
       std::vector<Double_t> effMatrixCentBins = {0,5,10,20,30,40,50,60,70,80,90};
       task->SetEffMatrixMomBins(effMatrixMomBins);
       task->SetEffMatrixCentBins(effMatrixCentBins);
-      task->SetNSigmaTPC(3.0);
+      task->SetNSigmaTPC({3.0, 3.5, 3.5});
       task->SetNSigmaTOF({-2.5, -3.0, -3.5}, {2.5, 2.5, 2.5});
 
       // resonances to exclude
@@ -268,15 +352,21 @@ AliAnalysisTaskTIdentityPID* Config_marsland_TIdentityPID(Bool_t getFromAlien, I
     //
     case 200:{
       std::cout << " SETTING TYPE = " << settingType << " Info::marsland: Fast Gen for scoping document " << std::endl;
-      task->SetFillJetsBG(2);
+      task->SetTaskSelection(2); // 0; both jet+net-p, 1: only jet, 2: only net-p
       task->SetFillResonances(kTRUE);
       task->SetCollisionType(0); // 0 for PbPb, 1 for pp
-      task->SetRunOnGrid(kFALSE);
       task->SetRunFastSimulation(kTRUE);
-      task->SetPercentageOfEvents(0);
+      task->SetFillTracksMCgen(kTRUE);
+      task->SetFillDebug(kFALSE);
+      task->SetDownscalingFactor(0.001);
       task->SetUseCouts(kTRUE);
       task->SetIsMCtrue(kTRUE);
-      task->SetUsePtCut(1); // 0: tpc momcut, 1: vertex momcut, 2: pT cut
+      task->SetUsePtCut(0); // 0: tpc momcut, 1: vertex momcut, 2: pT cut
+      task->SetSisterCheck(0);
+      task->SetRapidityType(0);      // 0: pseudorapidity, 1: rapidity
+      // 
+      // Main task of this case
+      //
       // eta bin scan
       const Int_t tmpCentbins  = 14;
       const Int_t tmpEtaBinsMC = 8;
@@ -296,6 +386,9 @@ AliAnalysisTaskTIdentityPID* Config_marsland_TIdentityPID(Bool_t getFromAlien, I
       // const Int_t tmpNresonances = 5;
       // TString tmpResArr[tmpNresonances] = {"rho","phi","omega","eta","Delta"};
       // task->SetMCResonanceArray(tmpNresonances,tmpResArr);
+      vector<THnF*> effMatrixObjects = GetEffMatrixObjects(kFALSE, "AnalysisResults_hists.root");
+      task->SetEffMatrixObjects(effMatrixObjects[0], effMatrixObjects[1], effMatrixObjects[2], effMatrixObjects[3]);
+
     }
     break;
     case 201:{
@@ -305,7 +398,7 @@ AliAnalysisTaskTIdentityPID* Config_marsland_TIdentityPID(Bool_t getFromAlien, I
       task->SetCollisionType(0); // 0 for PbPb, 1 for pp
       task->SetRunOnGrid(kFALSE);
       task->SetRunFastSimulation(kTRUE);
-      task->SetPercentageOfEvents(0);
+      task->SetDownscalingFactor(0.001);
       task->SetUseCouts(kTRUE);
       task->SetIsMCtrue(kTRUE);
       task->SetUsePtCut(1); // 0: tpc momcut, 1: vertex momcut, 2: pT cut
@@ -351,6 +444,7 @@ void SetDefaults(AliAnalysisTaskTIdentityPID *defaultTask, Int_t year, TString p
   std::cout << " Info::marsland: ------------------------------------------------------------------------------------- " << std::endl;
   std::cout << " Info::marsland: ------------------------------------------------------------------------------------- " << std::endl;
 
+  defaultTask->SetSisterCheck(0);
   defaultTask->SetNSettings(4);
   defaultTask->SetSettings({0, 1, 16, 17});
   defaultTask->SetCorrectForMissCl(0);
@@ -368,7 +462,7 @@ void SetDefaults(AliAnalysisTaskTIdentityPID *defaultTask, Int_t year, TString p
   defaultTask->SetMomLowerEdge(0.2);
   defaultTask->SetMomUpperEdge(5.2);
   defaultTask->SetNGenprotonBins(100);
-  defaultTask->SetPercentageOfEvents(0);
+  defaultTask->SetDownscalingFactor(0.001);
 
   // DEFAULT SETTINGS
   const Int_t tmpCentbins  = 14;
@@ -415,18 +509,16 @@ void SetDefaults(AliAnalysisTaskTIdentityPID *defaultTask, Int_t year, TString p
 
   // Extra Boolians which are by default === OFF ===
   defaultTask->SetDeDxCheck(kFALSE);
-  defaultTask->SetEffMatrix(kFALSE);
-  defaultTask->SetFillAllCutVariables(kFALSE);
-  defaultTask->SetFillOnlyHists(kFALSE);
+  defaultTask->SetFillEffMatrix(kFALSE);
+  defaultTask->SetFillDebug(kFALSE);
+  defaultTask->SetFillTracksMCgen(kFALSE);
   defaultTask->SetRunFastSimulation(kFALSE);
   defaultTask->SetFillHigherMomentsMCclosure(kFALSE);
-  defaultTask->SetFillDnchDeta(kFALSE);
   defaultTask->SetIncludeTOF(kFALSE);
   defaultTask->SetUseCouts(kFALSE);
   defaultTask->SetWeakAndMaterial(kFALSE);
   defaultTask->SetFillEventInfo(kFALSE);
   defaultTask->SetFillTreeMC(kFALSE);
-  defaultTask->SetFillAllCutVariables(kFALSE);
   defaultTask->SetFillNudynFastGen(kFALSE);
   defaultTask->SetDefaultTrackCuts(kTRUE);
   defaultTask->SetDefaultEventCuts(kFALSE);

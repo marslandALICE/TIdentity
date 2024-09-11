@@ -119,11 +119,11 @@ AliAnalysisTask *AddTask_marsland_TIdentityPID(Bool_t getFromAlien=kFALSE, TStri
   //
   // ****** Do not forget to "DefineOutput(5, TTree::Class());" In the contructor of the task ******
   //define output containers, please use 'username'_'somename'
-  AliAnalysisDataContainer *cinput, *coutput1, *coutput2, *coutput3, *coutput4;
-  AliAnalysisDataContainer *coutput5, *coutput6, *coutput7, *coutput8, *coutput9;
-  AliAnalysisDataContainer *coutput10, *coutput11, *coutput12, *coutput13,*coutput14;
-  AliAnalysisDataContainer *coutput15, *coutput16;
-  AliAnalysisDataContainer *coutput17, *coutput18, *coutput19, *coutput20, *coutput21, *coutput22, *coutput23;
+  AliAnalysisDataContainer *cinput,    *coutput1,  *coutput2,  *coutput3,  *coutput4;
+  AliAnalysisDataContainer *coutput5,  *coutput6,  *coutput7,  *coutput8,  *coutput9;
+  AliAnalysisDataContainer *coutput10, *coutput11, *coutput12, *coutput13, *coutput14;
+  AliAnalysisDataContainer *coutput15, *coutput16, *coutput17, *coutput18, *coutput19;
+  AliAnalysisDataContainer *coutput20, *coutput21, *coutput22, *coutput23;
   //
   //  find and connect input container // Output files --> File opening order is important
   cinput  = mgr->GetCommonInputContainer();
@@ -149,20 +149,20 @@ AliAnalysisTask *AddTask_marsland_TIdentityPID(Bool_t getFromAlien=kFALSE, TStri
   //
   // Output containers
   coutput1  = mgr->CreateContainer(listName,                      TList::Class(), AliAnalysisManager::kOutputContainer, fileDirStructure);
-  coutput2  = mgr->CreateContainer(combinedName+"_armPodTree",    TTree::Class(), AliAnalysisManager::kOutputContainer, fileDirStructure);
-  coutput3  = mgr->CreateContainer(combinedName+"_mcFull",        TTree::Class(), AliAnalysisManager::kOutputContainer, fileDirStructure);
-  coutput4  = mgr->CreateContainer(combinedName+"_mcGen",         TTree::Class(), AliAnalysisManager::kOutputContainer, fileDirStructure);
-  coutput5  = mgr->CreateContainer(combinedName+"_fTreeMC",       TTree::Class(), AliAnalysisManager::kOutputContainer, fileDirStructure);
-  coutput6  = mgr->CreateContainer(combinedName+"_fTreedEdxCheck",TTree::Class(), AliAnalysisManager::kOutputContainer, fileDirStructure);
-  coutput7  = mgr->CreateContainer(combinedName+"_tracks",        TTree::Class(), AliAnalysisManager::kOutputContainer, fileDirStructure);
-  coutput8  = mgr->CreateContainer(combinedName+"_dnchdeta",      TTree::Class(), AliAnalysisManager::kOutputContainer, fileDirStructure);
-  coutput9  = mgr->CreateContainer(combinedName+"_fullacc",       TTree::Class(), AliAnalysisManager::kOutputContainer, fileDirStructure);
-  coutput10 = mgr->CreateContainer(combinedName+"_resonance",     TTree::Class(), AliAnalysisManager::kOutputContainer, fileDirStructure);
-  coutput11 = mgr->CreateContainer(combinedName+"_mcGenMoms",     TTree::Class(), AliAnalysisManager::kOutputContainer, fileDirStructure);
-  coutput12 = mgr->CreateContainer(combinedName+"_eventInfo",     TTree::Class(), AliAnalysisManager::kOutputContainer, fileDirStructure);
-  coutput13 = mgr->CreateContainer(combinedName+"_eventInfoMC",   TTree::Class(), AliAnalysisManager::kOutputContainer, fileDirStructure);
-  coutput14 = mgr->CreateContainer(combinedName+"_dscaled",       TTree::Class(), AliAnalysisManager::kOutputContainer, fileDirStructure);
-  coutput15 = mgr->CreateContainer(combinedName+"_mcMoms",        TTree::Class(), AliAnalysisManager::kOutputContainer, fileDirStructure);
+  coutput2  = mgr->CreateContainer(combinedName+"_cleanSamp",     TTree::Class(), AliAnalysisManager::kOutputContainer, fileDirStructure);
+  coutput3  = mgr->CreateContainer(combinedName+"_eventInfo",     TTree::Class(), AliAnalysisManager::kOutputContainer, fileDirStructure);
+  coutput4  = mgr->CreateContainer(combinedName+"_eventInfoMC",   TTree::Class(), AliAnalysisManager::kOutputContainer, fileDirStructure);
+  coutput5  = mgr->CreateContainer(combinedName+"_tracks",        TTree::Class(), AliAnalysisManager::kOutputContainer, fileDirStructure);
+  coutput6  = mgr->CreateContainer(combinedName+"_tracksMCgen",   TTree::Class(), AliAnalysisManager::kOutputContainer, fileDirStructure);
+  coutput7  = mgr->CreateContainer(combinedName+"_tracksMCrec",   TTree::Class(), AliAnalysisManager::kOutputContainer, fileDirStructure);
+  coutput8  = mgr->CreateContainer(combinedName+"_tracksdscaled", TTree::Class(), AliAnalysisManager::kOutputContainer, fileDirStructure);
+  coutput9  = mgr->CreateContainer(combinedName+"_momentsMCrec",  TTree::Class(), AliAnalysisManager::kOutputContainer, fileDirStructure);
+  coutput10 = mgr->CreateContainer(combinedName+"_momentsMCgen",  TTree::Class(), AliAnalysisManager::kOutputContainer, fileDirStructure);
+  coutput11 = mgr->CreateContainer(combinedName+"_debug",         TTree::Class(), AliAnalysisManager::kOutputContainer, fileDirStructure);
+  coutput12 = mgr->CreateContainer(combinedName+"_debug2",        TTree::Class(), AliAnalysisManager::kOutputContainer, fileDirStructure);
+  coutput13 = mgr->CreateContainer(combinedName+"_debug3",        TTree::Class(), AliAnalysisManager::kOutputContainer, fileDirStructure);
+  coutput14 = mgr->CreateContainer(combinedName+"_dEbug4",        TTree::Class(), AliAnalysisManager::kOutputContainer, fileDirStructure);
+  coutput15 = mgr->CreateContainer(combinedName+"_resonances",    TTree::Class(), AliAnalysisManager::kOutputContainer, fileDirStructure);
   coutput16 = mgr->CreateContainer(combinedName+"_expecteds",     TTree::Class(), AliAnalysisManager::kOutputContainer, fileDirStructure);
   coutput17 = mgr->CreateContainer(combinedName+"_cutBased",      TTree::Class(), AliAnalysisManager::kOutputContainer, fileDirStructure);
   coutput18 = mgr->CreateContainer(combinedName+"_jetsFJ",        TTree::Class(), AliAnalysisManager::kOutputContainer, fileDirStructure);
@@ -194,7 +194,7 @@ AliAnalysisTask *AddTask_marsland_TIdentityPID(Bool_t getFromAlien=kFALSE, TStri
   mgr->ConnectOutput (task,  20, coutput20);
   mgr->ConnectOutput (task,  21, coutput21);
   mgr->ConnectOutput (task,  22, coutput22);
-  mgr->ConnectOutput (task,  23, coutput22);
+  mgr->ConnectOutput (task,  23, coutput23);
 
 
   std::cout << " Info::marsland: === Containers are ready === " << std::endl;
