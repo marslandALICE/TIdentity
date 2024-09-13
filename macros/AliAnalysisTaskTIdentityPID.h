@@ -593,10 +593,11 @@ private:
   void GetExpecteds(AliESDtrack *track, Double_t closestPar[3]);
   void CreateEventInfoTree();
   //
-  Int_t CountEmptyEvents(Int_t counterBin);  // Just count if there is empty events
+  Int_t CountEmptyEvents(Int_t counterBin, Int_t setting);
   Int_t CacheTPCEventInformation();
   UInt_t SetCutBitsAndSomeTrackVariables(AliESDtrack *track, Int_t particleType);
   Bool_t CheckIfFromResonance(AliMCParticle *trackMCgen);
+  Bool_t CheckIfBaryon(AliMCParticle *trackMCgen);
   Bool_t CheckIfFromAnyResonance(AliMCParticle *trackMCgen, Float_t etaLow, Float_t etaUp, Float_t pDown, Float_t pUp);
   Bool_t ApplyDCAcutIfNoITSPixel(AliESDtrack *track);
   Bool_t GetSystematicClassIndex(UInt_t cut,Int_t syst);

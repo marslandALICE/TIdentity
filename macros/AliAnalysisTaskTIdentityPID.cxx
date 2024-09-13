@@ -6,17 +6,17 @@
 *                                                                        *
 * Permission to use, copy, modify and distribute this software and its   *
 * documentation strictly for non-commercial purposes is hereby granted   *
-* without fee, proviyaded that the above copyright notice appears in all *
+* without fee, provided that the above copyright notice appears in all   *
 * copies and that both the copyright notice and this permission notice   *
 * appear in the supporting documentation. The authors make no claims     *
-* about the suitability of this software for any purapose. It is         *
+* about the suitability of this software for any purpose. It is          *
 * provided "as is" without express or implied warranty.                  *
 **************************************************************************/
 
 ///////////////////////////////////////////////////////////////////////////
 //                                                                       //
 //                                                                       //
-//          Analysis for event-by-event particle ratio studies           //
+// Analysis for net particle fluctuations and jet-substructure studies   //
 //                                                                       //
 //                                                                       //
 ///////////////////////////////////////////////////////////////////////////
@@ -1088,8 +1088,8 @@ void AliAnalysisTaskTIdentityPID::Initialize()
   fESDtrackCuts->SetRequireITSRefit(kTRUE);
   fESDtrackCuts->SetMinNCrossedRowsTPC(70);
   fESDtrackCuts->SetMaxDCAToVertexXYPtDep("0.0208+0.04/pt^1.01");
-  fESDtrackCuts->SetMaxDCAToVertexXY(2.4);   // hybrid cuts  TODO
-  fESDtrackCuts->SetMaxDCAToVertexZ(3.2);    // hybrid cuts  TODO
+  fESDtrackCuts->SetMaxDCAToVertexXY(2.4);
+  fESDtrackCuts->SetMaxDCAToVertexZ(3.2);
   fESDtrackCuts->SetRequireSigmaToVertex(kFALSE);
   fESDtrackCuts->SetDCAToVertex2D(kTRUE);  // fESDtrackCuts->SetDCAToVertex2D(kFALSE);    TODO
   if ( (fYear==2015&&fPassIndex==2) || (fYear==2018&&fPassIndex==3) ){
@@ -1109,8 +1109,8 @@ void AliAnalysisTaskTIdentityPID::Initialize()
   fESDtrackCutsLoose->SetAcceptKinkDaughters(kFALSE);
   fESDtrackCutsLoose->SetMinNClustersTPC(50);
   fESDtrackCutsLoose->SetMinNCrossedRowsTPC(50);
-  fESDtrackCutsLoose->SetMaxDCAToVertexXY(10);   // hybrid cuts  TODO
-  fESDtrackCutsLoose->SetMaxDCAToVertexZ(10);    // hybrid cuts  TODO
+  fESDtrackCutsLoose->SetMaxDCAToVertexXY(10);
+  fESDtrackCutsLoose->SetMaxDCAToVertexZ(10);
   //
   // track cuts to be used for v0s
   fESDtrackCutsCleanSamp = new AliESDtrackCuts("AliESDtrackCutsV0","");
@@ -1756,6 +1756,7 @@ void AliAnalysisTaskTIdentityPID::UserExec(Option_t *)
   // Real Data Analysis
   //
   if (!fMCtrue && fESD){
+    if (CountEmptyEvents(2,0)<1) return;
     if (fUseCouts)  std::cout << " Info::marsland: (Real Data Analysis) Filling = " << fEventCountInFile << std::endl;
     CalculateEventInfo(); CreateEventInfoTree();
     if (fFillArmPodTree) FillCleanSamples();
@@ -1769,16 +1770,17 @@ void AliAnalysisTaskTIdentityPID::UserExec(Option_t *)
   // Full MC analysis
   //
   if (fMCtrue && fESD && !fRunFastSimulation){
+    if (CountEmptyEvents(2,0)<1) return;
     if (fFillEffMatrix) {
       if (fUseCouts)  std::cout << " Info::marsland: Fill only EffMatrix, event and downscaled trees = " << fEventCountInFile << std::endl;
       FillEventInfoMC(); FillEffMatrix();
       CalculateEventInfo(); CreateEventInfoTree();
-      if (fUseCouts)  std::cout << " Info::marsland: Fill only EffMatrix, event and downscaled trees END = " << fEventCountInFile << std::endl;
       return;
     } else {
       if (fUseCouts) std::cout << " Info::marsland: (full MC analysis) End of Filling part = " << fEventCountInFile << std::endl;
       CalculateEventInfo(); CreateEventInfoTree();
       FillEventInfoMC(); FillEffMatrix(); FillTreeMC();
+      FastGen_NetParticles();
       if (fFillArmPodTree) FillCleanSamples();
       if (fTaskSelection==0) {FillMCFull_NetParticles(); CalculateMoments_CutBasedMethod(); FindJetsFJ(); FindJetsFJGen();} // bot jet and net-p
       if (fTaskSelection==1) {FindJetsFJ(); FindJetsFJGen();} // only jet
@@ -1796,12 +1798,12 @@ void AliAnalysisTaskTIdentityPID::UserExec(Option_t *)
   // FastGen analysis
   //
   if (fRunFastSimulation) {
+    if (CountEmptyEvents(2,-1)<1) return;
     if (fUseCouts)  std::cout << " Info::marsland: FastGen Filling = " << fEventCountInFile << std::endl;
     FillEventInfoMC();
     if (fTaskSelection==0) {FindJetsFJGen(); FastGen_NetParticles();} // bot jet and net-p
     if (fTaskSelection==1) {FindJetsFJGen(); } // only jet
     if (fTaskSelection==2) {FastGen_NetParticles();} // only net-p
-    if (fUseCouts)  std::cout << " Info::marsland: FastGen Filling END = " << fEventCountInFile << std::endl;
     return;
   }
 
@@ -1817,8 +1819,6 @@ void AliAnalysisTaskTIdentityPID::FillTPCdEdxReal()
   // --------------------------------------------------------------
   // Get the event
   AliVEvent *event=InputEvent();
-  if (CountEmptyEvents(2)<1) return;
-
   //
   // --------------------------------------------------------------
   //  Main track loop
@@ -1900,7 +1900,6 @@ void AliAnalysisTaskTIdentityPID::FillTPCdEdxReal()
     //
     "gid=" << fEventGID << // global event ID
     "cutBit=" << fTrackCutBits << // Systematic Cuts
-    "settings.=" << &settings << // Systematic settings
     "dEdx=" << fTPCSignal <<  // dEdx of the track
     "beta=" << beta << // TOF beta  --> beta = GetIntegratedLength / 2.99792458e-2 / tofSignal;
     "sign=" << fSign <<  // charge
@@ -1912,6 +1911,7 @@ void AliAnalysisTaskTIdentityPID::FillTPCdEdxReal()
     "cent=" << fCentrality; // centrality from V0
     if (fFillDebug){
       (*fTreeSRedirector)<<"tracks"<<
+      "settings.=" << &settings << // Systematic settings
       "run=" << fRunNo << // run Number
       "bField=" << fBField << // magnetic filed
       "intrate=" << fIntRate <<  // interaction rate
@@ -2662,53 +2662,55 @@ void AliAnalysisTaskTIdentityPID::FillMCFull_NetParticles()
             if(!fTreeSRedirector) return;
             Int_t tempNtracksTPC = arrNtracksTPC[iEta][iMom];
             Int_t tempNtracksITS = arrNtracksITS[iEta][iMom];
-            if (arrNtracksRec[iEta][iMom] > 0){
-              (*fTreeSRedirector)<<"momentsMCrec"<<
-              "gid=" << fEventGID <<
-              "isample=" << sampleNo << // sample id for subsample method
-              "nTPC=" << tempNtracksTPC << // number of tracks in the TPC
-              "nITS=" << tempNtracksITS << // number of tracks in the ITS
-              "multv0a=" << multV0A << // V0A multiplicity
-              "multv0c=" << multV0C << // V0C multiplicity
-              "vZ=" << fVz << // event vertex z
-              "centimp=" << fCentImpBin << // centraltiy from impact parameter
-              "impPar=" << fMCImpactParameter << // impact parameter taken from MC event header
-              //
-              "nhard=" << fNHardScatters << // Number of hard scatterings
-              "nproj=" << fNProjectileParticipants << // Number of projectiles participants
-              "ntarget=" << fNTargetParticipants << // Number of target participants
-              "nn=" << fNNColl << // Number of N-N collisions
-              "nnw=" << fNNwColl << // Number of N-Nwounded collisions
-              "nwn=" << fNwNColl << // Number of Nwounded-N collisons
-              "nwnw=" << fNwNwColl << // Number of Nwounded-Nwounded collisions
-              "nch=" << nChGen << // Number of charged particles in 4pi
-              //
-              "syst=" << setting << // systematic setting index
-              "orig=" << iorig << // origin type primary, or several combinations
-              "pileup=" << ipileup << // pileup or not
-              "pDown=" << fpDownArr[iMom] << // lower edge of momentum bin
-              "pUp=" << fpUpArr[iMom] << // upper edge of momentum bin
-              "etaDown=" << fetaDownArr[iEta] << // lower edge of eta bin
-              "etaUp=" << fetaUpArr[iEta] << // upper edge of eta bin
-              "cent=" << fCentrality << // centrality from V0
-              //
-              "netPiMomGen.=" << &fMomNetPiGen << // momnets up to 3rd order for (net)pions on generated level with resonances
-              "netKaMomGen.=" << &fMomNetKaGen << // momnets up to 3rd order for (net)kaons on generated level with resonances
-              "netPrMomGen.=" << &fMomNetPrGen << // momnets up to 3rd order for (net)protons on generated level with resonances
-              //
-              "netPiMomRec.=" << &fMomNetPiRec << // momnets up to 3rd order for (net)pions on reconstruced level with resonances
-              "netKaMomRec.=" << &fMomNetKaRec << // momnets up to 3rd order for (net)kaons on reconstruced level with resonances
-              "netPrMomRec.=" << &fMomNetPrRec << // momnets up to 3rd order for (net)protons on reconstruced level with resonances
-              //
-              "nRnetPiMomGen.=" << &fNRMomNetPiGen << // momnets up to 3rd order for (net)pions on generated level without resonances
-              "nRnetKaMomGen.=" << &fNRMomNetKaGen << // momnets up to 3rd order for (net)kaons on generated level without resonances
-              "nRnetPrMomGen.=" << &fNRMomNetPrGen << // momnets up to 3rd order for (net)protons on generated level without resonances
-              //
-              "nRnetPiMomRec.=" << &fNRMomNetPiRec << // momnets up to 3rd order for (net)pions on reconstruced level without resonances
-              "nRnetKaMomRec.=" << &fNRMomNetKaRec << // momnets up to 3rd order for (net)kaons on reconstruced level without resonances
-              "nRnetPrMomRec.=" << &fNRMomNetPrRec << // momnets up to 3rd order for (net)protons on reconstruced level without resonances
-              "\n";
-            }
+            (*fTreeSRedirector)<<"momentsMCrec"<<
+            "gid=" << fEventGID <<
+            "ieta=" << iEta <<
+            "imom=" << iMom <<
+            "binMult=" << arrNtracksRec[iEta][iMom] <<
+            "isample=" << sampleNo << // sample id for subsample method
+            "nTPC=" << tempNtracksTPC << // number of tracks in the TPC
+            "nITS=" << tempNtracksITS << // number of tracks in the ITS
+            "multv0a=" << multV0A << // V0A multiplicity
+            "multv0c=" << multV0C << // V0C multiplicity
+            "vZ=" << fVz << // event vertex z
+            "centimp=" << fCentImpBin << // centraltiy from impact parameter
+            "impPar=" << fMCImpactParameter << // impact parameter taken from MC event header
+            //
+            "nhard=" << fNHardScatters << // Number of hard scatterings
+            "nproj=" << fNProjectileParticipants << // Number of projectiles participants
+            "ntarget=" << fNTargetParticipants << // Number of target participants
+            "nn=" << fNNColl << // Number of N-N collisions
+            "nnw=" << fNNwColl << // Number of N-Nwounded collisions
+            "nwn=" << fNwNColl << // Number of Nwounded-N collisons
+            "nwnw=" << fNwNwColl << // Number of Nwounded-Nwounded collisions
+            "nch=" << nChGen << // Number of charged particles in 4pi
+            //
+            "syst=" << setting << // systematic setting index
+            "orig=" << iorig << // origin type primary, or several combinations
+            "pileup=" << ipileup << // pileup or not
+            "pDown=" << fpDownArr[iMom] << // lower edge of momentum bin
+            "pUp=" << fpUpArr[iMom] << // upper edge of momentum bin
+            "etaDown=" << fetaDownArr[iEta] << // lower edge of eta bin
+            "etaUp=" << fetaUpArr[iEta] << // upper edge of eta bin
+            "cent=" << fCentrality << // centrality from V0
+            //
+            "netPiMomGen.=" << &fMomNetPiGen << // momnets up to 3rd order for (net)pions on generated level with resonances
+            "netKaMomGen.=" << &fMomNetKaGen << // momnets up to 3rd order for (net)kaons on generated level with resonances
+            "netPrMomGen.=" << &fMomNetPrGen << // momnets up to 3rd order for (net)protons on generated level with resonances
+            //
+            "netPiMomRec.=" << &fMomNetPiRec << // momnets up to 3rd order for (net)pions on reconstruced level with resonances
+            "netKaMomRec.=" << &fMomNetKaRec << // momnets up to 3rd order for (net)kaons on reconstruced level with resonances
+            "netPrMomRec.=" << &fMomNetPrRec << // momnets up to 3rd order for (net)protons on reconstruced level with resonances
+            //
+            "nRnetPiMomGen.=" << &fNRMomNetPiGen << // momnets up to 3rd order for (net)pions on generated level without resonances
+            "nRnetKaMomGen.=" << &fNRMomNetKaGen << // momnets up to 3rd order for (net)kaons on generated level without resonances
+            "nRnetPrMomGen.=" << &fNRMomNetPrGen << // momnets up to 3rd order for (net)protons on generated level without resonances
+            //
+            "nRnetPiMomRec.=" << &fNRMomNetPiRec << // momnets up to 3rd order for (net)pions on reconstruced level without resonances
+            "nRnetKaMomRec.=" << &fNRMomNetKaRec << // momnets up to 3rd order for (net)kaons on reconstruced level without resonances
+            "nRnetPrMomRec.=" << &fNRMomNetPrRec << // momnets up to 3rd order for (net)protons on reconstruced level without resonances
+            "\n";
+
           } // momemtum loop
         } // eta loop
       } // pileup loop
@@ -2828,9 +2830,15 @@ void AliAnalysisTaskTIdentityPID::FillEventInfoMC()
       // if (fFillTracksMCgen && (bTPCacc || bV0Macc) ){
       if (fFillTracksMCgen && bTPCacc && TMath::Abs(sign)>1 ){
         Int_t detectorAcc = (bV0Macc) ? 0 : 1;
+        Bool_t ifBar = CheckIfBaryon(trackMCgen);
+        Bool_t acceptRes = CheckIfFromResonance(trackMCgen);
+        Bool_t acceptAnyRes = CheckIfFromAnyResonance(trackMCgen,-0.8,0.8,0.2,10.);
         (*fTreeSRedirector)<<"tracksMCgen"<<
         "gid=" << fEventGID << // global event ID
         "part=" << iPart << // particle index --> pi, ka, pr, el, de, ksi, la, phi
+        "ifBar=" << ifBar <<
+        "acceptRes=" << acceptRes <<
+        "acceptAnyRes=" << acceptAnyRes <<
         "sign=" << sign << // sign
         "p=" << ptotMCgen << // vertex momentum
         "px=" << pxMCgen << // vertex momentum
@@ -2925,16 +2933,6 @@ void AliAnalysisTaskTIdentityPID::FastGen_NetParticles()
   Int_t nStackTracks = fMCEvent->GetNumberOfTracks();
   if (nStackTracks>1) fHistCentralityImpPar->Fill(fCentImpBin);
   else return;
-  //
-  // count primaries
-  Int_t primCounter = 0;
-  for (Int_t iTrack = 0; iTrack < nStackTracks; iTrack++)
-  {
-    AliMCParticle *trackMCprimCount = (AliMCParticle *)fMCEvent->GetTrack(iTrack);
-    if (!trackMCprimCount) continue;
-    if (!fMCStack->IsPhysicalPrimary(iTrack)) continue;
-    primCounter++;
-  }
   //
   // keep onepermile of the events as debug
   Bool_t eventToDebug = kFALSE;
@@ -3038,6 +3036,7 @@ void AliAnalysisTaskTIdentityPID::FastGen_NetParticles()
       //
       Bool_t etaAccMaxWindow = (etaMCgen>=-0.8  && etaMCgen<=0.8);
       Bool_t momAccMaxWindow = (ptotMCgen>=0.15 && ptotMCgen<=100.);
+      Bool_t ifBar = CheckIfBaryon(trackMCgen);
       Bool_t acceptRes = CheckIfFromResonance(trackMCgen);
       Bool_t acceptAnyRes = CheckIfFromAnyResonance(trackMCgen,-0.8,0.8,0.2,10.);
       //
@@ -3048,10 +3047,9 @@ void AliAnalysisTaskTIdentityPID::FastGen_NetParticles()
         "gid=" << fEventGID <<
         "event=" << fEventCountInFile <<
         "chunk=" << fChunkIDinJob <<
+        "ifBar=" << ifBar <<
         "acceptRes=" << acceptRes <<
         "acceptAnyRes=" << acceptAnyRes <<
-        "nprim=" << primCounter <<
-        "ntracks=" << nStackTracks <<
         "pcode=" << pcode <<
         "part=" << iPart <<
         "parInterest=" << parInterest << // only pi, ka, and proton
@@ -3260,37 +3258,36 @@ void AliAnalysisTaskTIdentityPID::FastGen_NetParticles()
       //
       // fill tree which contains moments
       if(!fTreeSRedirector) return;
-      if (genPos[kPi]+genPos[kKa]+genPos[kPr]+genPos[3]+genPos[4]>0){
-        (*fTreeSRedirector)<<"momentsMCgen"<<
-        "gid=" << fEventGID <<
-        "momtype=" << fUsePtCut <<
-        "isample=" << sampleNo << // sample id for subsample method
-        "cent=" << fCentrality << // centrality from V0
-        "impPar=" << fMCImpactParameter << // impact parameter taken from MC event header
-        //
-        "nhard=" << fNHardScatters << // Number of hard scatterings
-        "nproj=" << fNProjectileParticipants << // Number of projectiles participants
-        "ntarget=" << fNTargetParticipants << // Number of target participants
-        "nn=" << fNNColl << // Number of N-N collisions
-        "nnw=" << fNNwColl << // Number of N-Nwounded collisions
-        "nwn=" << fNwNColl << // Number of Nwounded-N collisons
-        "nwnw=" << fNwNwColl << // Number of Nwounded-Nwounded collisions
-        //
-        "pDown=" << fpDownArr[iMom] << // lower edge of momentum bin
-        "pUp=" << fpUpArr[iMom] << // upper edge of momentum bin
-        "etaDown=" << fetaDownArr[iEta] << // lower edge of eta bin
-        "etaUp=" << fetaUpArr[iEta] << // upper edge of eta bin
-        //
-        "netPiMomGen.=" << &fMomNetPiGen << // momnets up to 4th order for (net)pions on gen level
-        "netKaMomGen.=" << &fMomNetKaGen << // momnets up to 4th order for (net)kaons on gen level
-        "netPrMomGen.=" << &fMomNetPrGen << // momnets up to 4th order for (net)protons on gen level
-        "netDeMomGen.=" << &fMomNetDeGen << // momnets up to 4th order for (net)protons on gen level
-        "netElMomGen.=" << &fMomNetElGen << // momnets up to 4th order for (net)protons on gen level
-        "netXiMomGen.=" << &fMomNetXiGen << // momnets up to 4th order for (net)xi on gen level
-        "netLaMomGen.=" << &fMomNetLaGen << // momnets up to 4th order for (net)La on gen level
-        "netPhMomGen.=" << &fMomNetPhGen << // momnets up to 4th order for (net)xi on gen level
-        "\n";
-      }
+      (*fTreeSRedirector)<<"momentsMCgen"<<
+      "gid=" << fEventGID <<
+      "momtype=" << fUsePtCut <<
+      "isample=" << sampleNo << // sample id for subsample method
+      "cent=" << fCentrality << // centrality from V0
+      "impPar=" << fMCImpactParameter << // impact parameter taken from MC event header
+      //
+      "nhard=" << fNHardScatters << // Number of hard scatterings
+      "nproj=" << fNProjectileParticipants << // Number of projectiles participants
+      "ntarget=" << fNTargetParticipants << // Number of target participants
+      "nn=" << fNNColl << // Number of N-N collisions
+      "nnw=" << fNNwColl << // Number of N-Nwounded collisions
+      "nwn=" << fNwNColl << // Number of Nwounded-N collisons
+      "nwnw=" << fNwNwColl << // Number of Nwounded-Nwounded collisions
+      //
+      "pDown=" << fpDownArr[iMom] << // lower edge of momentum bin
+      "pUp=" << fpUpArr[iMom] << // upper edge of momentum bin
+      "etaDown=" << fetaDownArr[iEta] << // lower edge of eta bin
+      "etaUp=" << fetaUpArr[iEta] << // upper edge of eta bin
+      //
+      "netPiMomGen.=" << &fMomNetPiGen << // momnets up to 4th order for (net)pions on gen level
+      "netKaMomGen.=" << &fMomNetKaGen << // momnets up to 4th order for (net)kaons on gen level
+      "netPrMomGen.=" << &fMomNetPrGen << // momnets up to 4th order for (net)protons on gen level
+      "netDeMomGen.=" << &fMomNetDeGen << // momnets up to 4th order for (net)protons on gen level
+      "netElMomGen.=" << &fMomNetElGen << // momnets up to 4th order for (net)protons on gen level
+      "netXiMomGen.=" << &fMomNetXiGen << // momnets up to 4th order for (net)xi on gen level
+      "netLaMomGen.=" << &fMomNetLaGen << // momnets up to 4th order for (net)La on gen level
+      "netPhMomGen.=" << &fMomNetPhGen << // momnets up to 4th order for (net)xi on gen level
+      "\n";
+
     } // ======= end of momentum loop =======
   } // ======= end of eta loop =======
 
@@ -3425,9 +3422,12 @@ void AliAnalysisTaskTIdentityPID::FillTreeMC()
     }
     //
     // get efficiency per track
-    Double_t effNoCut  = GetTrackEfficiency(2, fPtotMC, fEta, 0, fSign);
-    Double_t effTOF    = GetTrackEfficiency(2, fPtotMC, fEta, 0, fSign, 1);
-    Double_t effTPCTOF = GetTrackEfficiency(2, fPtotMC, fEta, 0, fSign, 2);
+    Double_t effNoCut   = GetTrackEfficiency(2, fPtotMC, fEta, 0, fSign);
+    Double_t effTOF     = GetTrackEfficiency(2, fPtotMC, fEta, 0, fSign, 1);
+    Double_t effTPCTOF  = GetTrackEfficiency(2, fPtotMC, fEta, 0, fSign, 2);
+    //
+    Bool_t acceptRes    = CheckIfFromResonance(trackMCgen);
+    Bool_t acceptAnyRes = CheckIfFromAnyResonance(trackMCgen,-0.8,0.8,0.2,10.);
     //
     // Fill MC closure tree
     if(!fTreeSRedirector) return;
@@ -3435,6 +3435,8 @@ void AliAnalysisTaskTIdentityPID::FillTreeMC()
     "gid=" << fEventGID <<  //  global event ID
     "orig=" << trackOrigin <<   // origin of the track
     "part=" << iPart <<
+    "acceptRes=" << acceptRes <<
+    "acceptAnyRes=" << acceptAnyRes <<
     "dEdx=" << fTPCSignalMC <<    // dEdx of mc track
     "beta=" << beta <<
     "cutBit=" << fTrackCutBits <<  //  Systematic Cuts
@@ -3446,11 +3448,14 @@ void AliAnalysisTaskTIdentityPID::FillTreeMC()
     "eta=" << fEtaMC <<          // mc eta
     "phi=" << fPhiMC <<          // mc eta
     "cent=" << fCentrality <<     // Centrality
-    "nsigmatofka=" << fNSigmasKaTOF <<  // interaction rate
-    "nsigmatofpr=" << fNSigmasPrTOF <<  // interaction rate
-    "nsigmatpcpr=" << fNSigmasPrTPC <<  // interaction rate
     "tpcpileup=" << isTPCPileup <<
     "itspileup=" << isITSPileup <<
+    "nsigmatofpi=" << fNSigmasPiTOF <<  // interaction rate
+    "nsigmatofka=" << fNSigmasKaTOF <<  // interaction rate
+    "nsigmatofpr=" << fNSigmasPrTOF <<  // interaction rate
+    "nsigmatpcpi=" << fNSigmasPiTPC <<  // interaction rate
+    "nsigmatpcka=" << fNSigmasKaTPC <<  // interaction rate
+    "nsigmatpcpr=" << fNSigmasPrTPC <<  // interaction rate
     "effNoCut=" << effNoCut <<
     "effTOF=" << effTOF <<
     "effTPCTOF=" << effTPCTOF ;
@@ -3941,7 +3946,6 @@ void AliAnalysisTaskTIdentityPID::FillEffMatrix()
             if (pdg<0) fHistNegEffMatrixRec->Fill(xxxRec);
           }
           //
-          // if (bPrim &&  (iorig == 0 || iorig == 3)) {
           if ((iorig == 0 || iorig == 3)) {
             // TPC eff matrix for all settings
             Double_t xxxRecSystScan[7]={0.,static_cast<Double_t>(iorig > 0),Float_t(setting),Float_t(iPart),fCentrality,ptotMCrec,etaMCrec};
@@ -4407,6 +4411,24 @@ Bool_t AliAnalysisTaskTIdentityPID::CheckIfFromResonance(AliMCParticle *trackMCg
     }
   }
   return acceptRes;
+
+}
+//________________________________________________________________________
+Bool_t AliAnalysisTaskTIdentityPID::CheckIfBaryon(AliMCParticle *trackMCgen)
+{
+  //
+  // default is accept baryons
+  Bool_t ifBar = kFALSE;
+  Int_t pdg = trackMCgen->Particle()->GetPdgCode();
+  //
+  //Check if the particle is in the baryon list
+  for (Int_t ibar=0;ibar<fNBarBins;ibar++){
+    if ( fBaryons[ibar] == pdg ) {
+      ifBar = kTRUE;
+      break;
+    }
+  }
+  return ifBar;
 
 }
 //________________________________________________________________________
@@ -5054,31 +5076,45 @@ void AliAnalysisTaskTIdentityPID::BinLogAxis(TH1 *h)
 
 }
 //________________________________________________________________________
-Int_t AliAnalysisTaskTIdentityPID::CountEmptyEvents(Int_t counterBin)
+Int_t AliAnalysisTaskTIdentityPID::CountEmptyEvents(Int_t counterBin, Int_t setting)
 {
 
   //
-  // count Empty Events
-  //
-  Int_t emptyCount=0;
-  for (Int_t itrack=0;itrack<fESD->GetNumberOfTracks();++itrack) {   // Track loop
-    fTrackCutBits=0;  // reset the bits for the next track
-    AliESDtrack *track = fESD->GetTrack(itrack);
-    if (!track->GetInnerParam()) continue;
-    Float_t momtrack = track->GetInnerParam()->GetP();
-    if (momtrack<fMomDown || momtrack>fMomUp) continue;
-    if (!fESDtrackCuts->AcceptTrack(track)) continue;
-    if (track->GetTPCsignalN()<60) continue;
-    if (track->GetTPCsignal()>0) emptyCount++;
+  // Detect Empty Events
+  Int_t trackcounter = 0;
+  if (setting == -1){ // for MC gen level track counting
+    if (fUseCouts) std::cout << " Info::marsland: ===== In the CountEmptyEvents from MC gen info ===== " << std::endl;
+    for (Int_t iTrack = 0; iTrack < fMCEvent->GetNumberOfTracks(); iTrack++)
+    {
+      AliMCParticle *trackMCgen = (AliMCParticle *)fMCEvent->GetTrack(iTrack);
+      if (!trackMCgen) continue;
+      if (!fMCStack->IsPhysicalPrimary(iTrack)) continue;
+      Float_t pTMCgen   = trackMCgen->Pt();
+      Float_t etaMCgen  = trackMCgen->Eta();
+      Bool_t momAcceptance = (pTMCgen > 0.15 && pTMCgen < 10.);
+      Bool_t etaAcceptance = (etaMCgen > -0.8 && etaMCgen < 0.8);
+      if (momAcceptance && etaAcceptance) trackcounter++;
+    }
+  } else { // for data event plane
+    if (fUseCouts) std::cout << " Info::marsland: ===== In the CountEmptyEvents from ESD tracks ===== " << std::endl;
+    for (Int_t iTrack = 0; iTrack < fESD->GetNumberOfTracks(); iTrack++) {
+      AliESDtrack* track = fESD->GetTrack(iTrack);
+      if (!fESDtrackCuts->AcceptTrack(track)) continue;
+      if (!track->GetInnerParam()) continue;
+      if (!(track->GetTPCsignalN()>0)) continue;
+      SetCutBitsAndSomeTrackVariables(track,0);
+      Bool_t momAcceptance = (fPt > 0.15 && fPt < 10.);
+      Bool_t etaAcceptance = (fEta > -0.8 && fEta < 0.8);
+      if (momAcceptance && etaAcceptance) trackcounter++;
+    }
   }
   //
   // check if the event is empty
-  if (emptyCount<1) {
+  if (trackcounter<1) {
     fHistEmptyEvent->Fill(counterBin);
-    std::cout << " Info::marsland: Empty event in " << fChunkName << std::endl;
+    std::cout << " Info::marsland: AAAAAA Empty event in " << fChunkName << std::endl;
   }
-  if (fUseCouts) std::cout << " Info::marsland: ====== EVENT IS COOL GO AHEAD ======= " << std::endl;
-  return emptyCount;
+  return trackcounter;
 
 }
 //
