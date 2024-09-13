@@ -2291,27 +2291,6 @@ void AliAnalysisTaskTIdentityPID::FillMCFull_NetParticles()
   Int_t arrNtracksGen[etaDim][momDim];
   Int_t arrNtracksTPC[etaDim][momDim];
   Int_t arrNtracksITS[etaDim][momDim];
-
-  for (size_t iEta = 0; iEta < etaDim; iEta++) {
-    for (size_t iMom = 0; iMom < momDim; iMom++) {
-      isInBinRec[iEta][iMom] = kFALSE;
-      isInBinGen[iEta][iMom] = kFALSE;
-      arrNtracksRec[iEta][iMom] = 0;
-      arrNtracksGen[iEta][iMom] = 0;
-      arrNtracksTPC[iEta][iMom] = 0;
-      arrNtracksITS[iEta][iMom] = 0;
-      for (Int_t iPart = 0; iPart < nParticles; iPart++) {
-        arrGenPos[iEta][iMom][iPart] = 0;
-        arrGenNeg[iEta][iMom][iPart] = 0;
-        arrRecPos[iEta][iMom][iPart] = 0;
-        arrRecNeg[iEta][iMom][iPart] = 0;
-        arrNrGenPos[iEta][iMom][iPart] = 0;
-        arrNrGenNeg[iEta][iMom][iPart] = 0;
-        arrNrRecPos[iEta][iMom][iPart] = 0;
-        arrNrRecNeg[iEta][iMom][iPart] = 0;
-      }
-    }
-  }
   //
   Bool_t bCutReference           = (TMath::Abs(fVz)<7 && TMath::Abs(fVz)>0.15);
   Bool_t bEventVertexZLarge      = (TMath::Abs(fVz)<8 && TMath::Abs(fVz)>0.1);
@@ -2326,6 +2305,27 @@ void AliAnalysisTaskTIdentityPID::FillMCFull_NetParticles()
     //
     for (Int_t iorig=0; iorig<nOriginType; iorig++) {
       for (Int_t ipileup = 0; ipileup < nPileUpSettings; ipileup++) {
+        // initialize counters
+        for (size_t iEta = 0; iEta < etaDim; iEta++) {
+          for (size_t iMom = 0; iMom < momDim; iMom++) {
+            isInBinRec[iEta][iMom] = kFALSE;
+            isInBinGen[iEta][iMom] = kFALSE;
+            arrNtracksRec[iEta][iMom] = 0;
+            arrNtracksGen[iEta][iMom] = 0;
+            arrNtracksTPC[iEta][iMom] = 0;
+            arrNtracksITS[iEta][iMom] = 0;
+            for (Int_t iPart = 0; iPart < nParticles; iPart++) {
+              arrGenPos[iEta][iMom][iPart] = 0;
+              arrGenNeg[iEta][iMom][iPart] = 0;
+              arrRecPos[iEta][iMom][iPart] = 0;
+              arrRecNeg[iEta][iMom][iPart] = 0;
+              arrNrGenPos[iEta][iMom][iPart] = 0;
+              arrNrGenNeg[iEta][iMom][iPart] = 0;
+              arrNrRecPos[iEta][iMom][iPart] = 0;
+              arrNrRecNeg[iEta][iMom][iPart] = 0;
+            }
+          }
+        }
         // -----------------------------------------------------------------------------------------
         // ----------------------------   MC generated pure MC particles  --------------------------
         // -----------------------------------------------------------------------------------------
