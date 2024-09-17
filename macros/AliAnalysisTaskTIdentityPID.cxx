@@ -1156,7 +1156,7 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
   //
   // Create output histograms, trees of the analysis (called once)
   //
-  if (!fDEdxCheck) Initialize();
+  Initialize();
   std::cout << " Info::marsland: ===== In the UserCreateOutputObjects ===== " << std::endl;
   // ------------  setup PIDCombined  ---------------
   fPIDCombined = new AliPIDCombined("pidCombined","");
@@ -1518,7 +1518,7 @@ void AliAnalysisTaskTIdentityPID::UserExec(Option_t *)
         if (fPileUpTightnessCut2->AcceptEvent(fESD)) { fPileUpBit |= 1 << 1; if (fUseCouts) std::cout << "pileupbit: " << std::bitset<4>(fPileUpBit) << std::endl;}
         if (fPileUpTightnessCut1->AcceptEvent(fESD)) { fPileUpBit |= 1 << 0; if (fUseCouts) std::cout << "pileupbit: " << std::bitset<4>(fPileUpBit) << std::endl;}
         fEventCuts.SetRejectTPCPileupWithITSTPCnCluCorr(kTRUE,0); // do not apply any pile cut
-        if (!fEventCuts.AcceptEvent(fESD)) {cout<< "pileup event " << endl; return;}
+        // if (!fEventCuts.AcceptEvent(fESD)) {cout<< "pileup event " << endl; fHistEmptyEvent->Fill(0); return;} // TODO
       }
     }
     //
@@ -1535,7 +1535,7 @@ void AliAnalysisTaskTIdentityPID::UserExec(Option_t *)
     fRunNo = fESD->GetRunNumber();
     //
     // if the run number is specified, fill expecteds only for that run. otherwise fill for any run
-    if (fRunNumberForExpecteds > 0 && fRunOnGrid) fFillExpecteds = (fRunNo == fRunNumberForExpecteds);
+    if (fRunNumberForExpecteds > 0) fFillExpecteds = (fRunNo == fRunNumberForExpecteds);
     else fFillExpecteds = kTRUE;
     //
     static Int_t timeStampCache = -1;
@@ -2130,9 +2130,9 @@ void AliAnalysisTaskTIdentityPID::CalculateMoments_CutBasedMethod()
             // check pid
             std::vector<Double_t> nSigmaLimits = GetNSigmas(setting);
             Double_t nSigmaTPCDown = nSigmaLimits[0];
-            Double_t nSigmaTPCUp = nSigmaLimits[1];
+            Double_t nSigmaTPCUp   = nSigmaLimits[1];
             Double_t nSigmaTOFDown = nSigmaLimits[2];
-            Double_t nSigmaTOFUp = nSigmaLimits[3];
+            Double_t nSigmaTOFUp   = nSigmaLimits[3];
 
             Bool_t prTPC = (fNSigmasPrTPC > nSigmaTPCDown && fNSigmasPrTPC <= nSigmaTPCUp);
             Bool_t prTOF = (fNSigmasPrTOF > nSigmaTOFDown && fNSigmasPrTOF <= nSigmaTOFUp);
@@ -2140,6 +2140,27 @@ void AliAnalysisTaskTIdentityPID::CalculateMoments_CutBasedMethod()
             Bool_t passesPIDCut = (ptotCut < 0.7 && prTPC) || (ptotCut >= 0.7 && prTOF && prTPC);
 
             if (passesPIDCut) recProtonCounter[iset][ieta][imom][signIndex]++;
+            if (fFillDebug){
+              (*fTreeSRedirector)<<"debug"<<
+              "eff=" << eff <<
+              "nSigmaTPCDown=" << nSigmaTPCDown <<
+              "nSigmaTPCUp=" << nSigmaTPCUp <<
+              "nSigmaTOFDown=" << nSigmaTOFDown <<
+              "prTPC=" << prTPC <<
+              "prTOF=" << prTOF <<
+              "passesPIDCut=" << passesPIDCut <<
+              "ptotCut=" << ptotCut <<
+              "p=" << fPVertex <<  // momentum at vertex
+              "pT=" << fPt <<  // transverse momentum
+              "fEta=" << fEta <<
+              "setting=" << setting <<
+              "fSign=" << fSign <<
+              "momAcc=" << momAcc <<
+              "etaAcc=" << etaAcc <<
+              "dEdx=" << fTPCSignal <<  // dEdx of the track
+              "cent=" << fCentrality << // centrality from V0
+              "\n";
+            }
 
             // sum the qs
             for (size_t iOrderR = 0; iOrderR < orderR; iOrderR++) {
