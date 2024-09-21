@@ -1019,6 +1019,9 @@ private:
   TH1F             * fHistCentralityImpPar;         // control histogram for centrality
   TH1F             * fHistImpParam;           // control histogram for impact parameter
   TH1F             * fHistVertex;             // control histogram for vertexZ
+  TH1D             * fHistReturns;               // control histogram for reasons of returns
+  TH1D             * fHistPileup;                // control histogram for pileup cut
+  TH3D             * fHistPileup2D;                // control histogram for pileup cut
   TH2F             * fHistArmPod;             // control histogram for Armanteros Podolanski plot
   THnF             * fEffMatrixGenPos;           // histogram efficiency matrix read from file
   THnF             * fEffMatrixGenNeg;           // histogram efficiency matrix read from file

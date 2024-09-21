@@ -29,6 +29,8 @@
 #include "TSystem.h"
 #include "TCutG.h"
 #include "TH1F.h"
+#include "TH1.h"
+#include "TH3.h"
 #include "THn.h"
 #include "THnSparse.h"
 #include "TList.h"
@@ -431,6 +433,9 @@ fHistCentrality(0),
 fHistCentralityImpPar(0),
 fHistImpParam(0),
 fHistVertex(0),
+fHistReturns(0),
+fHistPileup(0),
+fHistPileup2D(0),
 fHistArmPod(0),
 fEffMatrixGenPos(0),
 fEffMatrixGenNeg(0),
@@ -786,6 +791,9 @@ fHistCentrality(0),
 fHistCentralityImpPar(0),
 fHistImpParam(0),
 fHistVertex(0),
+fHistReturns(0),
+fHistPileup(0),
+fHistPileup2D(0),
 fHistArmPod(0),
 fEffMatrixGenPos(0),
 fEffMatrixGenNeg(0),
@@ -1310,6 +1318,15 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
   fHistCentralityImpPar  = new TH1F("hCentralityImpPar",     "control histogram for centrality imppar"    , 10,  0., 100.);
   fHistImpParam          = new TH1F("hImpParam",             "control histogram for impact parameter"     , 200, 0., 20.);
   fHistVertex            = new TH1F("hVertex",               "control histogram for vertex Z position"    , 200, -20., 20.);
+  fHistReturns           = new TH1D("hReturns",              "control histogram for reasons of returns"   , 7, 0, 7);
+  fHistPileup            = new TH1D("hPileup",               "control histogram for pileup cut"           , 5, 0, 5);
+  fHistPileup2D          = new TH3D("hPileup2D",             "control histogram for pileup cut"           , 100, 0, 50000, 180, 0, 4500000, 5, 0, 5);
+
+  vector<TString> returnLabels = {"All", "Vz>12", "Vertex ok", "Cent > 90", "Empty", "Finished"};
+  for (size_t i = 0; i < returnLabels.size(); i++) {
+    fHistReturns->GetXaxis()->SetBinLabel(i + 1, returnLabels[i]);
+  }
+
   fHistGenMult           = new TH1F("hGenPrMult",            "generated protons"                          , fGenprotonBins,0., 200.);
   fHistRapDistFullAccPr  = new TH2F("hRapDistFullAccPr",     "rapidity dist of protons in full acceptance"    , nSafeBins, -15, 15., 10, 0., 100.);
   fHistRapDistFullAccAPr = new TH2F("hRapDistFullAccApr",    "rapidity dist of antiprotons in full acceptance", nSafeBins, -15, 15., 10, 0., 100.);
@@ -1325,6 +1342,9 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
     fListHist->Add(fHistRapDistFullAccAPr);
   }
   fListHist->Add(fHistVertex);
+  fListHist->Add(fHistReturns);
+  fListHist->Add(fHistPileup);
+  fListHist->Add(fHistPileup2D);
   fEventInfo_CentralityEstimates  = new TVectorF(3);
   for (Int_t i=0;i<3;i++) (*fEventInfo_CentralityEstimates)[i]=-10.;
   //
@@ -1513,11 +1533,27 @@ void AliAnalysisTaskTIdentityPID::UserExec(Option_t *)
         //
         // pileup bit: 0bxxxx, where the leftmost bit is the tightest and the rightmost is the loosest cut
         // OOB pileup cut (for Pb-Pb) based on ITS and TPC clusters: 0-> no cut; 1-> default cut (remove all OOB pileup); 2-> looser cut; 3-> even more looser cut; 4-> very loose cut
-        if (fPileUpTightnessCut4->AcceptEvent(fESD)) { fPileUpBit |= 1 << 3; if (fUseCouts) std::cout << "pileupbit: " << std::bitset<4>(fPileUpBit) << std::endl;}
-        if (fPileUpTightnessCut3->AcceptEvent(fESD)) { fPileUpBit |= 1 << 2; if (fUseCouts) std::cout << "pileupbit: " << std::bitset<4>(fPileUpBit) << std::endl;}
-        if (fPileUpTightnessCut2->AcceptEvent(fESD)) { fPileUpBit |= 1 << 1; if (fUseCouts) std::cout << "pileupbit: " << std::bitset<4>(fPileUpBit) << std::endl;}
-        if (fPileUpTightnessCut1->AcceptEvent(fESD)) { fPileUpBit |= 1 << 0; if (fUseCouts) std::cout << "pileupbit: " << std::bitset<4>(fPileUpBit) << std::endl;}
+        vector<AliEventCuts*> pileUpCuts = {fPileUpTightnessCut1, fPileUpTightnessCut2, fPileUpTightnessCut3, fPileUpTightnessCut4};
         fEventCuts.SetRejectTPCPileupWithITSTPCnCluCorr(kTRUE,0); // do not apply any pile cut
+
+        Double_t nTPCClusters = fESD->GetNumberOfTPCClusters();
+        Double_t nITSClusters = 0;
+        AliVMultiplicity *multiObj = fESD->GetMultiplicity();
+        for(Int_t i=2;i<6;i++) nITSClusters += multiObj->GetNumberOfITSClusters(i);
+
+        if (fEventCuts.AcceptEvent(fESD)) {
+          fHistPileup->Fill(0);
+          fHistPileup2D->Fill(nITSClusters, nTPCClusters, 0.);
+        }
+
+        for (size_t iPileupCut = 0; iPileupCut < pileUpCuts.size(); iPileupCut++) {
+          if (pileUpCuts[iPileupCut]->AcceptEvent(fESD)) {
+            fPileUpBit |= 1 << iPileupCut;
+            Double_t binIndex = pileUpCuts.size() - iPileupCut;
+            fHistPileup->Fill(binIndex);
+            fHistPileup2D->Fill(nITSClusters, nTPCClusters, binIndex);
+          }
+        }
         // if (!fEventCuts.AcceptEvent(fESD)) {cout<< "pileup event " << endl; fHistEmptyEvent->Fill(0); return;} // TODO
       }
     }
@@ -1666,6 +1702,8 @@ void AliAnalysisTaskTIdentityPID::UserExec(Option_t *)
     }
     //
   }
+  // the event exists, we start counting from here
+  fHistReturns->Fill(0);
   //
   if (!(fRunFastSimulation || fRunFastHighMomentCal))
   {
@@ -1704,10 +1742,17 @@ void AliAnalysisTaskTIdentityPID::UserExec(Option_t *)
     // if (fMCtrue && TMath::Abs(fVz) > 15) return;   // For MC put fixed cut
     // if (fDefaultTrackCuts && (TMath::Abs(fVz)>7 || TMath::Abs(fVz)<0.15) ) return;
     // else if (TMath::Abs(fVz)>15) return;
-    if (TMath::Abs(fVz)>12) return;
+    if (TMath::Abs(fVz)>12) {
+      fHistReturns->Fill(1);
+      return;
+    }
     //
-    if (fVertex && isVertexOk) fHistVertex->Fill(fVz);
-    else return;
+    if (fVertex && isVertexOk) {
+      fHistVertex->Fill(fVz);
+    } else {
+      fHistReturns->Fill(2);
+      return;
+    }
     //
     // ------------------------------------------------
     // ---------- Centrality definition ---------------
@@ -1737,7 +1782,10 @@ void AliAnalysisTaskTIdentityPID::UserExec(Option_t *)
       std::cout << " Info::marsland: =============================================================================================== " << std::endl;
     }
   }
-  if (fCentrality > 90.) return;
+  if (fCentrality > 90.) {
+    fHistReturns->Fill(3);
+    return;
+  }
   fHistCentrality->Fill(fCentrality);  // count events after physics and vertex selection
   //
   // if (!fESDtool) {
@@ -1756,7 +1804,10 @@ void AliAnalysisTaskTIdentityPID::UserExec(Option_t *)
   // Real Data Analysis
   //
   if (!fMCtrue && fESD){
-    if (CountEmptyEvents(2,0)<1) return;
+    if (CountEmptyEvents(2,0)<1) {
+      fHistReturns->Fill(4);
+      return;
+    }
     if (fUseCouts)  std::cout << " Info::marsland: (Real Data Analysis) Filling = " << fEventCountInFile << std::endl;
     CalculateEventInfo(); CreateEventInfoTree();
     if (fFillArmPodTree) FillCleanSamples();
@@ -1764,17 +1815,24 @@ void AliAnalysisTaskTIdentityPID::UserExec(Option_t *)
     if (fTaskSelection==1) {FindJetsFJ();} // only jet
     if (fTaskSelection==2) {FillTPCdEdxReal(); CalculateMoments_CutBasedMethod();} // only net-p
     if (fUseCouts)  std::cout << " Info::marsland: (Real Data Analysis) End of Filling part = " << fEventCountInFile << std::endl;
+
+    fHistReturns->Fill(5);
     return;
   }
   //
   // Full MC analysis
   //
   if (fMCtrue && fESD && !fRunFastSimulation){
-    if (CountEmptyEvents(2,0)<1) return;
+    if (CountEmptyEvents(2,0)<1) {
+      fHistReturns->Fill(4);
+      return;
+    }
     if (fFillEffMatrix) {
       if (fUseCouts)  std::cout << " Info::marsland: Fill only EffMatrix, event and downscaled trees = " << fEventCountInFile << std::endl;
       FillEventInfoMC(); FillEffMatrix();
       CalculateEventInfo(); CreateEventInfoTree();
+
+      fHistReturns->Fill(5);
       return;
     } else {
       if (fUseCouts) std::cout << " Info::marsland: (full MC analysis) End of Filling part = " << fEventCountInFile << std::endl;
@@ -1785,6 +1843,8 @@ void AliAnalysisTaskTIdentityPID::UserExec(Option_t *)
       if (fTaskSelection==0) {FillMCFull_NetParticles(); CalculateMoments_CutBasedMethod(); FindJetsFJ(); FindJetsFJGen();} // bot jet and net-p
       if (fTaskSelection==1) {FindJetsFJ(); FindJetsFJGen();} // only jet
       if (fTaskSelection==2) {FillMCFull_NetParticles(); CalculateMoments_CutBasedMethod();} // only net-p
+
+      fHistReturns->Fill(5);
       return;
     }
   }
@@ -1792,18 +1852,25 @@ void AliAnalysisTaskTIdentityPID::UserExec(Option_t *)
   if (fMCtrue && fFillHigherMomentsMCclosure){
     if (fUseCouts)  std::cout << " Info::marsland: (MCclosure Higher Moments) End of Filling part = " << fEventCountInFile << std::endl;
     MCclosureHigherMoments();
+
+    fHistReturns->Fill(5);
     return;
   }
   //
   // FastGen analysis
   //
   if (fRunFastSimulation) {
-    if (CountEmptyEvents(2,-1)<1) return;
+    if (CountEmptyEvents(2,0)<1) {
+      fHistReturns->Fill(4);
+      return;
+    }
     if (fUseCouts)  std::cout << " Info::marsland: FastGen Filling = " << fEventCountInFile << std::endl;
     FillEventInfoMC();
     if (fTaskSelection==0) {FindJetsFJGen(); FastGen_NetParticles();} // bot jet and net-p
     if (fTaskSelection==1) {FindJetsFJGen(); } // only jet
     if (fTaskSelection==2) {FastGen_NetParticles();} // only net-p
+
+    fHistReturns->Fill(5);
     return;
   }
 
