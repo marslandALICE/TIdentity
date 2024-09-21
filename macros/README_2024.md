@@ -30,33 +30,33 @@
 | LHC18g4     | alien.py find alien:///alice/sim/2018/LHC18g4    AliESDs.root | 132421 |
 | LHC22d1c2   | alien.py find alien:///alice/sim/2022/LHC22d1c2  galice.root  | 116637 |
 
-# How to run runGrid.c
-cd $RUN_ON_GRID_DIR/Ebye/test_fastGen_netParticles/
-cp $RUN_ON_GRID_DIR/Ebye/code/*.* $RUN_ON_GRID_DIR/Ebye/code/READ*  .; rm *.so *.d
+# How to run runGrid.c <br>
+cd $RUN_ON_GRID_DIR/Ebye/test_fastGen_netParticles/ <br>
+cp $RUN_ON_GRID_DIR/Ebye/code/*.* $RUN_ON_GRID_DIR/Ebye/code/READ*  .; rm *.so *.d *.pcm <br>
 
-# test lxplus
-cp $RUN_ON_GRID_DIR/Ebye/code/AliAnalysisTaskTIdentityPID.*   /afs/cern.ch/work/m/marsland/workdir/test_pp_MC
-cp $RUN_ON_GRID_DIR/Ebye/code/AliAnalysisTaskTIdentityPID.*   /afs/cern.ch/work/m/marsland/workdir/test_pp_MC
-cp $RUN_ON_GRID_DIR/Ebye/code/AddTask_marsland_TIdentityPID.C /afs/cern.ch/work/m/marsland/workdir/test_pp_MC
-cp $RUN_ON_GRID_DIR/Ebye/code/Config_marsland_TIdentityPID.C  /afs/cern.ch/work/m/marsland/workdir/test_pp_MC
-cp $RUN_ON_GRID_DIR/Ebye/code/README_2024.md                  /afs/cern.ch/work/m/marsland/workdir/test_pp_MC
-cp $RUN_ON_GRID_DIR/Ebye/code/runGrid.C                       /afs/cern.ch/work/m/marsland/workdir/test_pp_MC
-cp $RUN_ON_GRID_DIR/Ebye/code/AddTaskFilteredTreeLocal.C      /afs/cern.ch/work/m/marsland/workdir/test_pp_MC
+# test lxplus <br>
+cp $RUN_ON_GRID_DIR/Ebye/code/AliAnalysisTaskTIdentityPID.*   /afs/cern.ch/work/m/marsland/workdir/test_pp_MC <br>
+cp $RUN_ON_GRID_DIR/Ebye/code/AliAnalysisTaskTIdentityPID.*   /afs/cern.ch/work/m/marsland/workdir/test_pp_MC <br>
+cp $RUN_ON_GRID_DIR/Ebye/code/AddTask_marsland_TIdentityPID.C /afs/cern.ch/work/m/marsland/workdir/test_pp_MC <br>
+cp $RUN_ON_GRID_DIR/Ebye/code/Config_marsland_TIdentityPID.C  /afs/cern.ch/work/m/marsland/workdir/test_pp_MC <br>
+cp $RUN_ON_GRID_DIR/Ebye/code/README_2024.md                  /afs/cern.ch/work/m/marsland/workdir/test_pp_MC <br>
+cp $RUN_ON_GRID_DIR/Ebye/code/runGrid.C                       /afs/cern.ch/work/m/marsland/workdir/test_pp_MC <br>
+cp $RUN_ON_GRID_DIR/Ebye/code/AddTaskFilteredTreeLocal.C      /afs/cern.ch/work/m/marsland/workdir/test_pp_MC <br>
 
-# runGrid.C macro parameters
-void runGrid(Bool_t fRunLocalFiles = kTRUE,
-             TString mode="test",
-             Int_t localOrGrid=0,
-             Int_t setType=3,
-             TString list = "",
-             Int_t isMC=0,
-             Int_t lhcYear=2015,
-             TString periodName="15o",
-             Int_t passIndex=2,
-             Int_t valgrindOption = 0
-             )
+# runGrid.C macro parameters <br>
+void runGrid(Bool_t fRunLocalFiles = kTRUE, <br>
+             TString mode="test", <br>
+             Int_t localOrGrid=0, <br>
+             Int_t setType=3, <br>
+             TString list = "", <br>
+             Int_t isMC=0, <br>
+             Int_t lhcYear=2015, <br>
+             TString periodName="15o", <br>
+             Int_t passIndex=2, <br>
+             Int_t valgrindOption = 0 <br>
+             ) <br>
 
-# Fill Eff matrix
+# Fill Eff matrix <br>
 --> PbPb <br>
 aliroot -b -q 'runGrid.C(0,"test",0,  40, "$TIdentityDIRcommit/TIdentity/lists/runsMC-2020-LHC20e3a-pass3.list",1,2018,"18q",3,0)' <br>
 aliroot -b -q 'runGrid.C(0,"test",0,  40, "$TIdentityDIRcommit/TIdentity/lists/runsMC-2020-LHC20e3b-pass3.list",1,2018,"18q",3,0)' <br>
