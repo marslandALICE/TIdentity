@@ -13,7 +13,7 @@ AliAnalysisTaskTIdentityPID* Config_marsland_TIdentityPID(Bool_t getFromAlien, I
   std::cout << " Info::Config::marsland: ===== Physics selection ? = " << std::endl;
   if (year==2010) task->SelectCollisionCandidates(AliVEvent::kMB);   // select minimum bias events for LHC10h
   if (year==2015) task->SelectCollisionCandidates(AliVEvent::kINT7); // select minimum bias events for LHC15o
-  // if (year==2018) task->SelectCollisionCandidates(AliVEvent::kINT7 | AliVEvent::kCentral | AliVEvent::kSemiCentral);
+  if (year==2018) task->SelectCollisionCandidates(AliVEvent::kINT7 | AliVEvent::kCentral | AliVEvent::kSemiCentral);
   //
   // Get the lookup table
   TTree *lookUpTree=NULL;
@@ -90,7 +90,8 @@ AliAnalysisTaskTIdentityPID* Config_marsland_TIdentityPID(Bool_t getFromAlien, I
       task->SetNSigmaTOF({-2.5, -3.0, -3.5}, {2.5, 2.5, 2.5});
       //
       // Read eff matrix
-      vector<THnF*> effMatrixObjects = GetEffMatrixObjects(kFALSE, "AnalysisResults_hists.root");
+      // vector<THnF*> effMatrixObjects = GetEffMatrixObjects(kFALSE, "AnalysisResults_hists.root");
+      vector<THnF*> effMatrixObjects = GetEffMatrixObjects(kTRUE, "AnalysisResults_hists.root");
       task->SetEffMatrixObjects(effMatrixObjects[0], effMatrixObjects[1], effMatrixObjects[2], effMatrixObjects[3]);
 
     }
@@ -216,7 +217,7 @@ AliAnalysisTaskTIdentityPID* Config_marsland_TIdentityPID(Bool_t getFromAlien, I
     //
     case 50:{
       std::cout << " SETTING TYPE = " << settingType << " Info::marsland: Full MC PbPb " << std::endl;
-      // 
+      //
       // Main task of this case
       task->SetCollisionType(0); // 0 for PbPb, 1 for pp
       task->SetDownscalingFactor(0.001);
@@ -279,7 +280,7 @@ AliAnalysisTaskTIdentityPID* Config_marsland_TIdentityPID(Bool_t getFromAlien, I
       task->SetEffMatrixCentBins(effMatrixCentBins);
       task->SetNSigmaTPC({3.0, 3.5, 3.5});
       task->SetNSigmaTOF({-2.5, -3.0, -3.5}, {2.5, 2.5, 2.5});
-      // 
+      //
       // resonances to exclude e.g. {"p","n","delta++","delta+","delta0","delta-","Lambda"}
       const Int_t tmpNresonances = 4;
       TString tmpResArr[tmpNresonances] = {"rho","phi","omega","eta"};
@@ -291,13 +292,14 @@ AliAnalysisTaskTIdentityPID* Config_marsland_TIdentityPID(Bool_t getFromAlien, I
       task->SetMCBaryonArray(tmpNbaryons,tmpBaryonArr);
 
       vector<THnF*> effMatrixObjects = GetEffMatrixObjects(kTRUE, "AnalysisResults_hists.root");
+      // vector<THnF*> effMatrixObjects = GetEffMatrixObjects(kFALSE, "grid_output/AnalysisResults.root");
       task->SetEffMatrixObjects(effMatrixObjects[0], effMatrixObjects[1], effMatrixObjects[2], effMatrixObjects[3]);
 
     }
     break;
     case 51:{
       std::cout << " SETTING TYPE = " << settingType << " Info::marsland: Full MC pp " << std::endl;
-       // 
+       //
       // Main task of this case
       task->SetCollisionType(1); // 0 for PbPb, 1 for pp
       //
@@ -395,7 +397,7 @@ AliAnalysisTaskTIdentityPID* Config_marsland_TIdentityPID(Bool_t getFromAlien, I
       task->SetUsePtCut(0); // 0: tpc momcut, 1: vertex momcut, 2: pT cut
       task->SetSisterCheck(0);
       task->SetRapidityType(0);      // 0: pseudorapidity, 1: rapidity
-      // 
+      //
       // Main task of this case
       const Int_t tmpCentbins  = 14;
       const Int_t tmpEtaBinsMC = 8;
@@ -527,6 +529,7 @@ void SetDefaults(AliAnalysisTaskTIdentityPID *defaultTask, Int_t year, TString p
   defaultTask->SetEffMatrixCentBins(effMatrixCentBins);
   defaultTask->SetEffMatrixEtaBins(effMatrixEtaBins);
   defaultTask->SetNSigmaTOF({-2.5, -3.0, -3.5}, {2.5, 2.5, 2.5});
+  defaultTask->SetTOFMomCut(0.7);
 
   // Boolians which are by default === ON ===
   defaultTask->SetRunOnGrid(kFALSE);

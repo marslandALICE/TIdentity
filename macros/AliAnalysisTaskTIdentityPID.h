@@ -299,6 +299,7 @@ public:
     fNSigmaTOFDown = vecNSigmaTOFDown;
     fNSigmaTOFUp = vecNSigmaTOFUp;
   }
+  void   SetTOFMomCut(const Double_t tofMomCut)                   { fTOFMomCut = tofMomCut; }
 
   std::vector<Double_t> GetNSigmas(const Int_t setting) {
     std::vector<Double_t> ret(4);
@@ -863,6 +864,7 @@ private:
   std::vector<Double_t> fNSigmaTPC;              // n sigma TPC for cut based method
   std::vector<Double_t> fNSigmaTOFDown;
   std::vector<Double_t> fNSigmaTOFUp;
+  Double_t              fTOFMomCut;
 
   Int_t              fNResModeMC;
   Int_t              fNCentbinsData;
