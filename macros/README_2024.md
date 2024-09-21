@@ -57,57 +57,57 @@ void runGrid(Bool_t fRunLocalFiles = kTRUE,
              )
 
 # Fill Eff matrix
---> PbPb
-aliroot -b -q 'runGrid.C(0,"test",0,  40, "$TIdentityDIRcommit/TIdentity/lists/runsMC-2020-LHC20e3a-pass3.list",1,2018,"18q",3,0)'
-aliroot -b -q 'runGrid.C(0,"test",0,  40, "$TIdentityDIRcommit/TIdentity/lists/runsMC-2020-LHC20e3b-pass3.list",1,2018,"18q",3,0)'
-aliroot -b -q 'runGrid.C(0,"test",0,  40, "$TIdentityDIRcommit/TIdentity/lists/runsMC-2020-LHC20e3c-pass3.list",1,2018,"18q",3,0)'
-aliroot -b -q 'runGrid.C(0,"test",0,  40, "$TIdentityDIRcommit/TIdentity/lists/runsMC-2022-LHC22b5-pass3.list",1,2018,"18q",3,0)'
+--> PbPb <br>
+aliroot -b -q 'runGrid.C(0,"test",0,  40, "$TIdentityDIRcommit/TIdentity/lists/runsMC-2020-LHC20e3a-pass3.list",1,2018,"18q",3,0)' <br>
+aliroot -b -q 'runGrid.C(0,"test",0,  40, "$TIdentityDIRcommit/TIdentity/lists/runsMC-2020-LHC20e3b-pass3.list",1,2018,"18q",3,0)' <br>
+aliroot -b -q 'runGrid.C(0,"test",0,  40, "$TIdentityDIRcommit/TIdentity/lists/runsMC-2020-LHC20e3c-pass3.list",1,2018,"18q",3,0)' <br>
+aliroot -b -q 'runGrid.C(0,"test",0,  40, "$TIdentityDIRcommit/TIdentity/lists/runsMC-2022-LHC22b5-pass3.list",1,2018,"18q",3,0)' <br>
 
-# Run real data
-aliroot -b -q 'runGrid.C(0,"test",0,  0,  "$TIdentityDIRcommit/TIdentity/lists/runs-2018-LHC18q-pass3.list",0,2018,"18q",3,0)'
-aliroot -b -q 'runGrid.C(0,"test",0,  0,  "$TIdentityDIRcommit/TIdentity/lists/runs-2018-LHC18r-pass3.list",0,2018,"18r",3,0)'
-aliroot -b -q 'runGrid.C(0,"test",0,  11, "$TIdentityDIRcommit/TIdentity/lists/runs-2018-LHC18b-pass2.list",0,2018,"18b",3,0)'
-
-
-# run full MC
---> pp
-aliroot -b -q 'runGrid.C(0,"test",0,  51, "$TIdentityDIRcommit/TIdentity/lists/runsMC-2018-LHC18g4-pass1.list",1,2018,"18b",3,0)'
-
---> PbPb
-aliroot -b -q 'runGrid.C(0,"test",0,  50, "$TIdentityDIRcommit/TIdentity/lists/runsMC-2020-LHC20e3a-pass3.list",1,2018,"18q",3,0)'
-aliroot -b -q 'runGrid.C(0,"test",0,  50, "$TIdentityDIRcommit/TIdentity/lists/runsMC-2020-LHC20e3b-pass3.list",1,2018,"18q",3,0)'
-aliroot -b -q 'runGrid.C(0,"test",0,  50, "$TIdentityDIRcommit/TIdentity/lists/runsMC-2020-LHC20e3c-pass3.list",1,2018,"18q",3,0)'
-aliroot -b -q 'runGrid.C(0,"test",0,  50, "$TIdentityDIRcommit/TIdentity/lists/runsMC-2022-LHC22b5-pass3.list",1,2018,"18q",3,0)'
-
-aliroot -b -q 'runGrid.C(0,"test",0,  50, "$TIdentityDIRcommit/TIdentity/lists/runsMC-2020-LHC20k6a-pass3.list",1,2018,"18q",3,0)'
-aliroot -b -q 'runGrid.C(0,"test",0,  50, "$TIdentityDIRcommit/TIdentity/lists/runsMC-2020-LHC20k6b-pass3.list",1,2018,"18q",3,0)'
-aliroot -b -q 'runGrid.C(0,"test",0,  50, "$TIdentityDIRcommit/TIdentity/lists/runsMC-2020-LHC20k6c-pass3.list",1,2018,"18q",3,0)'
-aliroot -b -q 'runGrid.C(0,"test",0,  50, "$TIdentityDIRcommit/TIdentity/lists/runsMC-2020-LHC20k6d-pass3.list",1,2018,"18q",3,0)'
+# Run real data <br>
+aliroot -b -q 'runGrid.C(0,"test",0,  0,  "$TIdentityDIRcommit/TIdentity/lists/runs-2018-LHC18q-pass3.list",0,2018,"18q",3,0)' <br>
+aliroot -b -q 'runGrid.C(0,"test",0,  0,  "$TIdentityDIRcommit/TIdentity/lists/runs-2018-LHC18r-pass3.list",0,2018,"18r",3,0)' <br>
+aliroot -b -q 'runGrid.C(0,"test",0,  11, "$TIdentityDIRcommit/TIdentity/lists/runs-2018-LHC18b-pass2.list",0,2018,"18b",3,0)' <br>
 
 
+# run full MC <br>
+--> pp <br>
+aliroot -b -q 'runGrid.C(0,"test",0,  51, "$TIdentityDIRcommit/TIdentity/lists/runsMC-2018-LHC18g4-pass1.list",1,2018,"18b",3,0)' <br>
 
-aliroot -b -q 'runGrid.C(0,"test",0,  51, "$TIdentityDIRcommit/TIdentity/lists/runsMC-2018-LHC18g4-pass1.list",1,2018,"18b",3,0)'
+--> PbPb <br>
+aliroot -b -q 'runGrid.C(0,"test",0,  50, "$TIdentityDIRcommit/TIdentity/lists/runsMC-2020-LHC20e3a-pass3.list",1,2018,"18q",3,0)' <br>
+aliroot -b -q 'runGrid.C(0,"test",0,  50, "$TIdentityDIRcommit/TIdentity/lists/runsMC-2020-LHC20e3b-pass3.list",1,2018,"18q",3,0)' <br>
+aliroot -b -q 'runGrid.C(0,"test",0,  50, "$TIdentityDIRcommit/TIdentity/lists/runsMC-2020-LHC20e3c-pass3.list",1,2018,"18q",3,0)' <br>
+aliroot -b -q 'runGrid.C(0,"test",0,  50, "$TIdentityDIRcommit/TIdentity/lists/runsMC-2022-LHC22b5-pass3.list",1,2018,"18q",3,0)' <br>
 
-# run fastGen
-aliroot -b -q 'runGrid.C(0,"test",0,  200, "$TIdentityDIRcommit/TIdentity/lists/runsGen-2022-LHC22d1c2-pass3.list",2,2022,"22d1c2",2,0)'
-aliroot -b -q 'runGrid.C(0,"test",0,  200, "$TIdentityDIRcommit/TIdentity/lists/runsGen-2022-LHC22d1d2-pass3.list",2,2022,"22d1d2",2,0)'
+aliroot -b -q 'runGrid.C(0,"test",0,  50, "$TIdentityDIRcommit/TIdentity/lists/runsMC-2020-LHC20k6a-pass3.list",1,2018,"18q",3,0)' <br>
+aliroot -b -q 'runGrid.C(0,"test",0,  50, "$TIdentityDIRcommit/TIdentity/lists/runsMC-2020-LHC20k6b-pass3.list",1,2018,"18q",3,0)' <br>
+aliroot -b -q 'runGrid.C(0,"test",0,  50, "$TIdentityDIRcommit/TIdentity/lists/runsMC-2020-LHC20k6c-pass3.list",1,2018,"18q",3,0)' <br>
+aliroot -b -q 'runGrid.C(0,"test",0,  50, "$TIdentityDIRcommit/TIdentity/lists/runsMC-2020-LHC20k6d-pass3.list",1,2018,"18q",3,0)' <br>
 
-# copy data
-alien_cp -T 6 -parent 99 -glob AnalysisResults.root /Alice/cern.ch/user/m/marsland/PWGPP695_MC_remapping/LHC20e3a_pass3_20240625_228/2020 file:
 
-# merge data e.g. only for ebye fluct. related objects
-alihadd -i "cleanHists" -i "mcFull" -i "mcGen" -i "fTreeMC" -i "eventInfo" -i "eventInfoMC" -i "cutBased" -s 2000000000 AnalysisResults_mcTrees.root  @file.list
 
-# kill the list of jobs 
-for i in $(cat jobs.list); do alien.py kill $i; done
+aliroot -b -q 'runGrid.C(0,"test",0,  51, "$TIdentityDIRcommit/TIdentity/lists/runsMC-2018-LHC18g4-pass1.list",1,2018,"18b",3,0)' <br>
 
-# resubmit all jobs of LHC20e3a in error --> see manual of "ps" in https://jalien.docs.cern.ch/jalien_commands/
-for i in $(alien.py ps -E | grep LHC20e3a | awk '{print $2}'); do alien.py resubmit $i; done
+# run fastGen <br>
+aliroot -b -q 'runGrid.C(0,"test",0,  200, "$TIdentityDIRcommit/TIdentity/lists/runsGen-2022-LHC22d1c2-pass3.list",2,2022,"22d1c2",2,0)' <br>
+aliroot -b -q 'runGrid.C(0,"test",0,  200, "$TIdentityDIRcommit/TIdentity/lists/runsGen-2022-LHC22d1d2-pass3.list",2,2022,"22d1d2",2,0)' <br>
 
-# kill all masterjobs for a given period
-for i in $(alien.py ps -M | grep LHC18b   | awk '{print $2}'); do alien.py kill $i; done
-for i in $(alien.py ps -M | grep LHC18g4  | awk '{print $2}'); do alien.py kill $i; done
-for i in $(alien.py ps -M | grep LHC20e3a | awk '{print $2}'); do alien.py kill $i; done
+# copy data <br>
+alien_cp -T 6 -parent 99 -glob AnalysisResults.root /Alice/cern.ch/user/m/marsland/PWGPP695_MC_remapping/LHC20e3a_pass3_20240625_228/2020 file: <br>
+
+# merge data e.g. only for ebye fluct. related objects <br>
+alihadd -i "cleanHists" -i "mcFull" -i "mcGen" -i "fTreeMC" -i "eventInfo" -i "eventInfoMC" -i "cutBased" -s 2000000000 AnalysisResults_mcTrees.root @file.list <br>
+
+# kill the list of jobs  <br>
+for i in $(cat jobs.list); do alien.py kill $i; done <br>
+
+# resubmit all jobs of LHC20e3a in error --> see manual of "ps" in https://jalien.docs.cern.ch/jalien_commands/ <br>
+for i in $(alien.py ps -E | grep LHC20e3a | awk '{print $2}'); do alien.py resubmit $i; done <br>
+
+# kill all masterjobs for a given period <br>
+for i in $(alien.py ps -M | grep LHC18b   | awk '{print $2}'); do alien.py kill $i; done <br>
+for i in $(alien.py ps -M | grep LHC18g4  | awk '{print $2}'); do alien.py kill $i; done <br>
+for i in $(alien.py ps -M | grep LHC20e3a | awk '{print $2}'); do alien.py kill $i; done <br>
 
 
 
