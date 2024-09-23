@@ -277,8 +277,8 @@ public:
   void   SetDeDxLowerEdge(const Float_t dEdxLowerEdge = 20.)      {fDEdxDown            = dEdxLowerEdge;}
   void   SetDeDxUpperEdge(const Float_t dEdxUpperEdge = 1020.)    {fDEdxUp              = dEdxUpperEdge;}
 
-  void   SetEtaLowerEdge(const Float_t etaLowerEdge = -0.8)       {fEtaDown             = etaLowerEdge;}
-  void   SetEtaUpperEdge(const Float_t etaUpperEdge = 0.8)        {fEtaUp               = etaUpperEdge;}
+  void   SetEtaLowerEdge(const Float_t etaLowerEdge = -0.8)       {fEtaMin              = etaLowerEdge;}
+  void   SetEtaUpperEdge(const Float_t etaUpperEdge = 0.8)        {fEtaMax              = etaUpperEdge;}
   void   SetNEtabins(const Int_t nEtaBins = 20)                   {fNEtaBins            = nEtaBins;}
   void   SetMomLowerEdge(const Float_t momLowerEdge = 0.)         {fMomDown             = momLowerEdge;}
   void   SetMomUpperEdge(const Float_t momUpperEdge = 12.)        {fMomUp               = momUpperEdge;}
@@ -695,8 +695,8 @@ private:
 
   UInt_t            fTrackCutBits;           // integer which hold all cut variations as bits
   Int_t             fSystClass;
-  Double_t          fEtaDown;
-  Double_t          fEtaUp;
+  Double_t          fEtaMin;
+  Double_t          fEtaMax;
   Int_t             fNEtaBins;
   Float_t           fDownscalingFactor;     // when only a fDownscalingFactor is enough
   Int_t             fEventIDinFile;         // event id in file

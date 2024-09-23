@@ -110,14 +110,14 @@ lhcYear        --> year
 
 */
 
-Bool_t fAddFilteredTrees = kTRUE;
+Bool_t fAddFilteredTrees = kFALSE;
 Bool_t fAddTIdentityTask = kTRUE;
 //
 Bool_t fUseMultSelection = kTRUE;
 TString fname="PWGPP695_MC_remapping";  // output directory name in my home folder in alien
 //
-const Int_t timelimitTTL=10000; // in terms of hours 9000/60/60 = 2.5 hours
-const Int_t nTestFiles = 4;
+const Int_t timelimitTTL=15000; // in terms of hours 9000/60/60 = 2.5 hours
+const Int_t nTestFiles = 1;
 const Int_t nEvents = -1; // set -1 for all events in a given chunk
 // run selections
 const Int_t nTestRuns = -1; // set -1 for all runs of the list
@@ -250,11 +250,11 @@ void runGrid(Bool_t fRunLocalFiles = kTRUE,
   TChain *chain;
   if (!fRunLocalFiles) {
     // Start analysis in grid.
+    std::cout << " Info::runGrid::marsland: StartStartAnalysis over the files on grid " << std::endl; 
     if (nEvents<0) mgr->StartAnalysis("grid");
     else mgr->StartAnalysis("grid",nEvents);
   } else {
-    // to run over files stored locally, uncomment this section,
-    // and comment out the above lines related to alienHandler and StartAnalysis("grid")
+    std::cout << " Info::runGrid::marsland: StartStartAnalysis over local files " << std::endl; 
     if (isMC==0){
       chain = new TChain("esdTree");
       TString localFiles[] =

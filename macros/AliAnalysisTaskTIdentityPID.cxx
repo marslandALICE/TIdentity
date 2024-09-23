@@ -182,8 +182,8 @@ fH2MissCl(),
 fChunkName(""),
 fTrackCutBits(0),
 fSystClass(0),
-fEtaDown(0),
-fEtaUp(0),
+fEtaMin(0),
+fEtaMax(0),
 fNEtaBins(0),
 fDownscalingFactor(0),
 fEventIDinFile(0),
@@ -541,8 +541,8 @@ fH2MissCl(),
 fChunkName(""),
 fTrackCutBits(0),
 fSystClass(0),
-fEtaDown(0),
-fEtaUp(0),
+fEtaMin(0),
+fEtaMax(0),
 fNEtaBins(0),
 fDownscalingFactor(0),
 fEventIDinFile(0),
@@ -1831,30 +1831,32 @@ void AliAnalysisTaskTIdentityPID::UserExec(Option_t *)
     }
     if (fFillEffMatrix) {
       if (fUseCouts)  std::cout << " Info::marsland: Fill only EffMatrix, event and downscaled trees = " << fEventCountInFile << std::endl;
-      FillEventInfoMC(); FillEffMatrix();
-      CalculateEventInfo(); CreateEventInfoTree();
-
+      FillEffMatrix();
       fHistReturns->Fill(5);
       return;
     } else {
       if (fUseCouts) std::cout << " Info::marsland: (full MC analysis) End of Filling part = " << fEventCountInFile << std::endl;
-      CalculateEventInfo(); CreateEventInfoTree();
-      FillEventInfoMC(); FillEffMatrix(); FillTreeMC();
-      FastGen_NetParticles();
-      if (fFillArmPodTree) FillCleanSamples();
+      FillEffMatrix();
+      CalculateEventInfo(); 
+      CreateEventInfoTree();
+      FillEventInfoMC(); 
+      FillTreeMC();
+      if (fFillArmPodTree && fFillDebug) FillCleanSamples();
       if (fTaskSelection==0) {FillMCFull_NetParticles(); CalculateMoments_CutBasedMethod(); FindJetsFJ(); FindJetsFJGen();} // bot jet and net-p
       if (fTaskSelection==1) {FindJetsFJ(); FindJetsFJGen();} // only jet
       if (fTaskSelection==2) {FillMCFull_NetParticles(); CalculateMoments_CutBasedMethod();} // only net-p
-
       fHistReturns->Fill(5);
       return;
     }
   }
   //
   if (fMCtrue && fFillHigherMomentsMCclosure){
+    if (CountEmptyEvents(2,0)<1) {
+      fHistReturns->Fill(4);
+      return;
+    }
     if (fUseCouts)  std::cout << " Info::marsland: (MCclosure Higher Moments) End of Filling part = " << fEventCountInFile << std::endl;
     MCclosureHigherMoments();
-
     fHistReturns->Fill(5);
     return;
   }
@@ -1862,7 +1864,7 @@ void AliAnalysisTaskTIdentityPID::UserExec(Option_t *)
   // FastGen analysis
   //
   if (fRunFastSimulation) {
-    if (CountEmptyEvents(2,0)<1) {
+    if (CountEmptyEvents(2,-1)<1) {
       fHistReturns->Fill(4);
       return;
     }
@@ -1871,7 +1873,6 @@ void AliAnalysisTaskTIdentityPID::UserExec(Option_t *)
     if (fTaskSelection==0) {FindJetsFJGen(); FastGen_NetParticles();} // bot jet and net-p
     if (fTaskSelection==1) {FindJetsFJGen(); } // only jet
     if (fTaskSelection==2) {FastGen_NetParticles();} // only net-p
-
     fHistReturns->Fill(5);
     return;
   }
@@ -2038,7 +2039,7 @@ void AliAnalysisTaskTIdentityPID::FillTPCdEdxReal()
     // --------------------------------------------------------------
     //
     // define acceptance of interest
-    Bool_t etaAcc  = (fEta >=fEtaDown       && fEta<=fEtaUp);
+    Bool_t etaAcc  = (fEta >=fEtaMin        && fEta<=fEtaMax);
     Bool_t momAcc  = (fPVertex>=fMomDown    && fPVertex<=fMomUp);
     Bool_t dEdxAcc = (fTPCSignal>=fDEdxDown && fTPCSignal<=fDEdxUp);
     Bool_t fAcceptance = (etaAcc && momAcc && dEdxAcc);
@@ -2207,7 +2208,6 @@ void AliAnalysisTaskTIdentityPID::CalculateMoments_CutBasedMethod()
 
             if (passesPIDCut) {
               recProtonCounter[iset][ieta][imom][signIndex]++;
-
               // sum the qs
               if (fEffMatrixGenPos) {
                 eff = GetTrackEfficiency(2, ptotCut, fEta, setting, fSign, 2);
@@ -2216,7 +2216,6 @@ void AliAnalysisTaskTIdentityPID::CalculateMoments_CutBasedMethod()
                 for (size_t iOrderS = 0; iOrderS < orderS; iOrderS++) {
                   Int_t r = iOrderR + 1;
                   Int_t s = iOrderS + 1;
-
                   if (eff > 0) arrQ[iset][ieta][imom][iOrderR][iOrderS] += pow(fSign, r) / pow(eff, s);
                 }
               }
@@ -2290,8 +2289,8 @@ void AliAnalysisTaskTIdentityPID::CalculateMoments_CutBasedMethod()
           "gid=" << fEventGID << // global event ID
           "syst=" << setting << // systematic setting index
           "isample=" << sampleNo << // sample id for subsample method
-          "vZ=" << fVz << // event vertex z
           "cent=" << fCentrality << // centrality from V0
+          "vZ=" << fVz << // event vertex z
           //
           "pDown=" << fpDownArr[imom] << // lower edge of momentum bin
           "pUp=" << fpUpArr[imom] << // upper edge of momentum bin
@@ -2299,7 +2298,6 @@ void AliAnalysisTaskTIdentityPID::CalculateMoments_CutBasedMethod()
           "etaUp=" << fetaUpArr[ieta] << // upper edge of eta bin
           //
           "netPrMomRec.=" << &fMomNetPrRec << // moments up to 4th order with cut based method
-          //
           "qMatrix.=" << &qMatrix << // matrix with qs for efficiency correction
           "\n";
         }
@@ -2756,14 +2754,8 @@ void AliAnalysisTaskTIdentityPID::FillMCFull_NetParticles()
             Int_t tempNtracksITS = arrNtracksITS[iEta][iMom];
             (*fTreeSRedirector)<<"momentsMCrec"<<
             "gid=" << fEventGID <<
-            "ieta=" << iEta <<
-            "imom=" << iMom <<
             "binMult=" << arrNtracksRec[iEta][iMom] <<
             "isample=" << sampleNo << // sample id for subsample method
-            "nTPC=" << tempNtracksTPC << // number of tracks in the TPC
-            "nITS=" << tempNtracksITS << // number of tracks in the ITS
-            "multv0a=" << multV0A << // V0A multiplicity
-            "multv0c=" << multV0C << // V0C multiplicity
             "vZ=" << fVz << // event vertex z
             "centimp=" << fCentImpBin << // centraltiy from impact parameter
             "impPar=" << fMCImpactParameter << // impact parameter taken from MC event header
@@ -3532,7 +3524,6 @@ void AliAnalysisTaskTIdentityPID::FillTreeMC()
     "dEdx=" << fTPCSignalMC <<    // dEdx of mc track
     "beta=" << beta <<
     "cutBit=" << fTrackCutBits <<  //  Systematic Cuts
-    "settings.=" << &settings <<  //  Systematic settings
     "sign=" << fSignMC <<         // sign
     "ptot=" << fPtotMC <<         // tpc momentum
     "p=" << pMC <<             // vertex momentum
@@ -3542,18 +3533,21 @@ void AliAnalysisTaskTIdentityPID::FillTreeMC()
     "cent=" << fCentrality <<     // Centrality
     "tpcpileup=" << isTPCPileup <<
     "itspileup=" << isITSPileup <<
+    "nsigmatofel=" << fNSigmasElTOF <<  // interaction rate
     "nsigmatofpi=" << fNSigmasPiTOF <<  // interaction rate
     "nsigmatofka=" << fNSigmasKaTOF <<  // interaction rate
     "nsigmatofpr=" << fNSigmasPrTOF <<  // interaction rate
+    "nsigmatpcel=" << fNSigmasElTPC <<  // interaction rate
     "nsigmatpcpi=" << fNSigmasPiTPC <<  // interaction rate
     "nsigmatpcka=" << fNSigmasKaTPC <<  // interaction rate
     "nsigmatpcpr=" << fNSigmasPrTPC <<  // interaction rate
-    "effNoCut=" << effNoCut <<
-    "effTOF=" << effTOF <<
-    "effTPCTOF=" << effTPCTOF ;
+    "effnocut=" << effNoCut <<
+    "efftof=" << effTOF <<
+    "efftpctof=" << effTPCTOF ;
     if (fFillDebug){
       (*fTreeSRedirector)<<"tracksMCrec"<<
       "run=" << fRunNo <<  // run Number
+      "settings.=" << &settings <<  //  Systematic settings
       "bField=" << fBField <<  // run Number
       "pileupbit=" << fPileUpBit <<
       "generatorIndex=" << fMCGeneratorIndex <<  // generator index
@@ -3880,8 +3874,8 @@ void AliAnalysisTaskTIdentityPID::FillEffMatrix()
   const Int_t nParticles  = 3;
   Int_t nOriginType = (fTrackOriginOnlyPrimary!=1) ? 4 : 1;
   //
-  Bool_t bCutReference           = (TMath::Abs(fVz)<7 && TMath::Abs(fVz)>0.15);
-  Bool_t bEventVertexZLarge      = (TMath::Abs(fVz)<8 && TMath::Abs(fVz)>0.1);
+  Bool_t bCutReference      = (TMath::Abs(fVz)<7 && TMath::Abs(fVz)>0.15);
+  Bool_t bEventVertexZLarge = (TMath::Abs(fVz)<8 && TMath::Abs(fVz)>0.1);
   //
   // setting scan
   for (size_t iset=0; iset<kCutSettingsCount; iset++){
@@ -3933,7 +3927,7 @@ void AliAnalysisTaskTIdentityPID::FillEffMatrix()
         if(fUsePtCut==2) ptotMCgen = trackMCgen->Pt();
         Float_t phiMCGen  = trackMCgen->Phi();
         Double_t etaMCgen = trackMCgen->Eta();
-        Bool_t etaAccMaxWindow = (etaMCgen>=fEtaDown  && etaMCgen<=fEtaUp);
+        Bool_t etaAccMaxWindow = (etaMCgen>=fEtaMin   && etaMCgen<=fEtaMax);
         Bool_t momAccMaxWindow = (ptotMCgen>=fMomDown && ptotMCgen<=fMomUp);
         //
         // Fill eff Matrix
@@ -4019,7 +4013,7 @@ void AliAnalysisTaskTIdentityPID::FillEffMatrix()
         if(fUsePtCut==2) ptotMCrec = trackReal->Pt();
         Float_t phiMCRec  = trackReal->Phi();
         Double_t etaMCrec = trackReal->Eta();
-        Bool_t etaAccMaxWindow = (etaMCrec>=fEtaDown  && etaMCrec<=fEtaUp);
+        Bool_t etaAccMaxWindow = (etaMCrec>=fEtaMin   && etaMCrec<=fEtaMax);
         Bool_t momAccMaxWindow = (ptotMCrec>=fMomDown && ptotMCrec<=fMomUp);
         //
         // Get the cut bit information apply track cuts
@@ -5423,7 +5417,7 @@ void AliAnalysisTaskTIdentityPID::CalculateEventInfo()
     Double_t phi        = track->GetParameterAtRadius(85,5,7);
     Double_t sectorNumbertmp = (9*phi/TMath::Pi()+18*(phi<0));
     eta = track->Eta();
-    if (TMath::Abs(eta)>0.9) continue;
+    if (TMath::Abs(eta)>fEtaMax) continue;
     Bool_t isOnITS = track->IsOn(AliESDtrack::kITSrefit);
     Bool_t isOnTPC = track->IsOn(AliESDtrack::kTPCrefit);
     // Bool_t isOnTRD = track->IsOn(AliESDtrack::kTRDrefit);
@@ -5513,11 +5507,8 @@ void AliAnalysisTaskTIdentityPID::CalculateEventInfo()
     //      track counter after pile up  ????
     // --------------------------------------------------------------
     //
-    Bool_t pileUpCut=  ( (nclITS>2) || (nclTRD>40) );
-    if (pileUpCut==kFALSE) continue;
     if (TMath::Min(chi2TPC,100.)<0) continue;
     (*fEventInfo_CacheTrackCounters)[1]++;
-    //
     Bool_t itsOK=track->IsOn(AliVTrack::kITSout) && nclITS>2  && chi2ITS>0;
     Bool_t trdOK=track->IsOn(AliVTrack::kTRDout) && nclTRD>35 && chi2TRD>0;
     Bool_t tofOK=track->IsOn(AliVTrack::kTOFout);
@@ -6006,10 +5997,7 @@ Double_t AliAnalysisTaskTIdentityPID::GetTrackEfficiency(const Int_t& part, cons
       break;
     }
   }
-  if (fCollisionType == 1) {
-    centIndex = 0;
-    printf("collision type is pp, setting centIndex to 0\n");
-  }
+  if (fCollisionType == 1) centIndex = 0;
   //
   // make projections
   if (!fEffMatrixProjections[centIndex][setting][signIndex][pidCutType]) {
@@ -6878,16 +6866,16 @@ Int_t AliAnalysisTaskTIdentityPID::MakeEventPlane(Int_t doEP_Psi2, Int_t doEP_Ps
       Float_t etaMCgen  = trackMCgen->Eta();
       if(pTMCgen < 0.15) continue;
       if(pTMCgen > 3.0 ) continue;
-      if((fabs(etaMCgen)) > 0.9) continue;
+      if((fabs(etaMCgen)) > fEtaMax) continue;
       nTracksTPCDefaultSelection++;
       //
       // use all tracks and accumulate them in a vector for the
-      if(etaMCgen < 0.9 && etaMCgen > 0.1)
+      if(etaMCgen < fEtaMax && etaMCgen > 0.1)
       {
         Qvec_eta_pos.SetXYZ(pxMCgen,pyMCgen,0.0);
         vec_TV3_Qvec_eta[0].push_back(Qvec_eta_pos);
       }
-      if(etaMCgen > -0.9 && etaMCgen < -0.1)
+      if(etaMCgen > -fEtaMax && etaMCgen < -0.1)
       {
         Qvec_eta_neg.SetXYZ(pxMCgen,pyMCgen,0.0);
         vec_TV3_Qvec_eta[1].push_back(Qvec_eta_neg);
@@ -6903,16 +6891,16 @@ Int_t AliAnalysisTaskTIdentityPID::MakeEventPlane(Int_t doEP_Psi2, Int_t doEP_Ps
       SetCutBitsAndSomeTrackVariables(track,0);
       if(fPt < 0.15) continue;
       if(fPt > 3.0 ) continue;
-      if((fabs(fEta)) > 0.9) continue;
+      if((fabs(fEta)) > fEtaMax) continue;
       nTracksTPCDefaultSelection++;
       //
       // use all tracks and accumulate them in a vector for the
-      if(fEta < 0.9 && fEta > 0.1)
+      if(fEta < fEtaMax && fEta > 0.1)
       {
         Qvec_eta_pos.SetXYZ(fPx,fPy,0.0);
         vec_TV3_Qvec_eta[0].push_back(Qvec_eta_pos);
       }
-      if(fEta > -0.9 && fEta < -0.1)
+      if(fEta > -fEtaMax && fEta < -0.1)
       {
         Qvec_eta_neg.SetXYZ(fPx,fPy,0.0);
         vec_TV3_Qvec_eta[1].push_back(Qvec_eta_neg);

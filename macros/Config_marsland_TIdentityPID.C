@@ -222,20 +222,26 @@ AliAnalysisTaskTIdentityPID* Config_marsland_TIdentityPID(Bool_t getFromAlien, I
       task->SetCollisionType(0); // 0 for PbPb, 1 for pp
       task->SetDownscalingFactor(0.001);
       task->SetFillTracksMCgen(kTRUE);
-      task->SetFillDebug(kTRUE);
-      task->SetUseCouts(kTRUE);
-      //
       task->SetFillJetsBG(2);
       task->SetTaskSelection(2); // 0; both jet+net-p, 1: only jet, 2: only net-p
       task->SetIsMCtrue(kTRUE);
       task->SetSisterCheck(0);
+      task->SetEtaUpperEdge(0.8);
+      // 
+      // mostly for debugging 
+      task->SetUseCouts(kTRUE);
+      task->SetFillDebug(kFALSE);
+      task->SetFillTracksMCgen(kFALSE);
+      task->SetFillArmPodTree(kFALSE);
+      task->SetV0InvMassHists(kFALSE);
+      //
+
       //
       std::cout << "period and pass = " << periodName << "    " << passIndex << std::endl;
       if( (passIndex==3) || (passIndex==2) ) {
         task->SetDefaultEventCuts(kTRUE);
         std::cout << " special settings for 18q pass3 and 15o pass2 " << std::endl;
       }
-      task->SetFillArmPodTree(kFALSE);
       task->SetFillResonances(kTRUE);
       task->SetMCTrackOriginType(0);   // 0:full scan, 1: prim
       task->SetCorrectForMissCl(0);
@@ -291,15 +297,15 @@ AliAnalysisTaskTIdentityPID* Config_marsland_TIdentityPID(Bool_t getFromAlien, I
       Int_t tmpBaryonArr[tmpNbaryons] = {2212,2112,2224,2214,2114,1114,3122,3222,3212,3112,3224,3214,3114,3322,3312,3324,3314,3334};
       task->SetMCBaryonArray(tmpNbaryons,tmpBaryonArr);
 
-      vector<THnF*> effMatrixObjects = GetEffMatrixObjects(kTRUE, "AnalysisResults_hists.root");
       // vector<THnF*> effMatrixObjects = GetEffMatrixObjects(kFALSE, "grid_output/AnalysisResults.root");
+      vector<THnF*> effMatrixObjects = GetEffMatrixObjects(kTRUE, "AnalysisResults_hists.root");
       task->SetEffMatrixObjects(effMatrixObjects[0], effMatrixObjects[1], effMatrixObjects[2], effMatrixObjects[3]);
 
     }
     break;
     case 51:{
       std::cout << " SETTING TYPE = " << settingType << " Info::marsland: Full MC pp " << std::endl;
-       //
+      //
       // Main task of this case
       task->SetCollisionType(1); // 0 for PbPb, 1 for pp
       //
@@ -418,7 +424,9 @@ AliAnalysisTaskTIdentityPID* Config_marsland_TIdentityPID(Bool_t getFromAlien, I
       // const Int_t tmpNresonances = 5;
       // TString tmpResArr[tmpNresonances] = {"rho","phi","omega","eta","Delta"};
       // task->SetMCResonanceArray(tmpNresonances,tmpResArr);
-      vector<THnF*> effMatrixObjects = GetEffMatrixObjects(kFALSE, "AnalysisResults_hists.root");
+
+      // vector<THnF*> effMatrixObjects = GetEffMatrixObjects(kFALSE, "AnalysisResults_hists.root");
+      vector<THnF*> effMatrixObjects = GetEffMatrixObjects(kTRUE, "AnalysisResults_hists.root");
       task->SetEffMatrixObjects(effMatrixObjects[0], effMatrixObjects[1], effMatrixObjects[2], effMatrixObjects[3]);
 
     }
