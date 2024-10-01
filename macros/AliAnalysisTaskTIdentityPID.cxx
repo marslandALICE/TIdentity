@@ -2297,6 +2297,9 @@ void AliAnalysisTaskTIdentityPID::CalculateMoments_CutBasedMethod()
     if (setting == kCutEventVertexZLarge && !bEventVertexZLarge) continue;
     else if (setting != kCutEventVertexZLarge && !bCutReference) continue;
     //
+    // pileup cut
+    Bool_t isPileupEvent = kTRUE;
+    //
     // track loop
     for (Int_t irectrack = 0; irectrack < fESD->GetNumberOfTracks(); irectrack++) {
 
@@ -2314,6 +2317,10 @@ void AliAnalysisTaskTIdentityPID::CalculateMoments_CutBasedMethod()
       Double_t closestPar[3];
       GetExpecteds(trackReal,closestPar);
       SetCutBitsAndSomeTrackVariables(trackReal,0);
+      //
+      if (isPileupEvent == kTRUE && setting != kCutPileupLoose && fTrackCutBits & (1 << kPileup)) isPileupEvent = kFALSE;
+      if (isPileupEvent == kTRUE && setting == kCutPileupLoose && fTrackCutBits & (1 << kPileupLoose)) isPileupEvent = kFALSE;
+      //
       if (!GetSystematicClassIndex(fTrackCutBits,setting)) continue;
       //
       // acceptance cuts
@@ -2420,40 +2427,42 @@ void AliAnalysisTaskTIdentityPID::CalculateMoments_CutBasedMethod()
     } // ======= end of track loop =======
     //
     // Dump moments
-    for (size_t ieta = 0; ieta < etaDim; ieta++) {
-      for (size_t imom = 0; imom < momentumDim; imom++) {
+    if (!isPileupEvent) {
+      for (size_t ieta = 0; ieta < etaDim; ieta++) {
+        for (size_t imom = 0; imom < momentumDim; imom++) {
 
-        TVectorF fMomNetPrRec(nMoments);
-        Int_t recPos = recProtonCounter[iset][ieta][imom][0];
-        Int_t recNeg = recProtonCounter[iset][ieta][imom][1];
+          TVectorF fMomNetPrRec(nMoments);
+          Int_t recPos = recProtonCounter[iset][ieta][imom][0];
+          Int_t recNeg = recProtonCounter[iset][ieta][imom][1];
 
-        fMomNetPrRec[kA]    = recPos;
-        fMomNetPrRec[kB]    = recNeg;
-        fMomNetPrRec[kAA]   = recPos * recPos;
-        fMomNetPrRec[kBB]   = recNeg * recNeg;
-        fMomNetPrRec[kAB]   = recPos * recNeg;
-        fMomNetPrRec[kAAA]  = recPos * recPos * recPos;
-        fMomNetPrRec[kBBB]  = recNeg * recNeg * recNeg;
-        fMomNetPrRec[kAAB]  = recPos * recPos * recNeg;
-        fMomNetPrRec[kBBA]  = recNeg * recNeg * recPos;
-        fMomNetPrRec[kABBB] = recPos * recNeg * recNeg * recNeg;
-        fMomNetPrRec[kAABB] = recPos * recPos * recNeg * recNeg;
-        fMomNetPrRec[kAAAB] = recPos * recPos * recPos * recNeg;
-        fMomNetPrRec[kAAAA] = recPos * recPos * recPos * recPos;
-        fMomNetPrRec[kBBBB] = recNeg * recNeg * recNeg * recNeg;
-        fMomNetPrRec[kAmB]  = recPos - recNeg;
+          fMomNetPrRec[kA]    = recPos;
+          fMomNetPrRec[kB]    = recNeg;
+          fMomNetPrRec[kAA]   = recPos * recPos;
+          fMomNetPrRec[kBB]   = recNeg * recNeg;
+          fMomNetPrRec[kAB]   = recPos * recNeg;
+          fMomNetPrRec[kAAA]  = recPos * recPos * recPos;
+          fMomNetPrRec[kBBB]  = recNeg * recNeg * recNeg;
+          fMomNetPrRec[kAAB]  = recPos * recPos * recNeg;
+          fMomNetPrRec[kBBA]  = recNeg * recNeg * recPos;
+          fMomNetPrRec[kABBB] = recPos * recNeg * recNeg * recNeg;
+          fMomNetPrRec[kAABB] = recPos * recPos * recNeg * recNeg;
+          fMomNetPrRec[kAAAB] = recPos * recPos * recPos * recNeg;
+          fMomNetPrRec[kAAAA] = recPos * recPos * recPos * recPos;
+          fMomNetPrRec[kBBBB] = recNeg * recNeg * recNeg * recNeg;
+          fMomNetPrRec[kAmB]  = recPos - recNeg;
 
-        TMatrixF qMatrix(orderR, orderS);
+          TMatrixF qMatrix(orderR, orderS);
 
-        for (size_t iOrderR = 0; iOrderR < orderR; ++iOrderR) {
-          for (size_t iOrderS = 0; iOrderS < orderS; ++iOrderS) {
-            qMatrix(iOrderR, iOrderS) = arrQ[iset][ieta][imom][iOrderR][iOrderS];
+          for (size_t iOrderR = 0; iOrderR < orderR; ++iOrderR) {
+            for (size_t iOrderS = 0; iOrderS < orderS; ++iOrderS) {
+              qMatrix(iOrderR, iOrderS) = arrQ[iset][ieta][imom][iOrderR][iOrderS];
+            }
           }
-        }
-        //
-        // fill tree which contains moments
-        if(!fTreeSRedirector) return;
-        if (recProtonCounter[iset][7][2][0]+recProtonCounter[iset][7][2][1]>0){
+          //
+          Bool_t containsProtons = (recPos > 0) || (recNeg > 0);
+          //
+          // fill tree which contains moments
+          if(!fTreeSRedirector) return;
           (*fTreeSRedirector) << "cutBased" <<
           "gid=" << fEventGID << // global event ID
           "syst=" << setting << // systematic setting index
@@ -2471,10 +2480,11 @@ void AliAnalysisTaskTIdentityPID::CalculateMoments_CutBasedMethod()
           //
           "netPrMomRec.=" << &fMomNetPrRec << // moments up to 4th order with cut based method
           "qMatrix.=" << &qMatrix << // matrix with qs for efficiency correction
+          "containsProtons=" << containsProtons << // flag if protons are present
           "\n";
-        }
-      } // ======= end of momentum loop =======
-    } // ======= end of eta loop =======
+        } // ======= end of momentum loop =======
+      } // ======= end of eta loop =======
+    }
   } // ======= end of settings loop =======
 }
 //________________________________________________________________________
