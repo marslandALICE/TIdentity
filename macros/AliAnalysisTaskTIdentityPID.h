@@ -235,7 +235,6 @@ public:
   void   SetFillDistributions(const Bool_t ifGenDistributions = kFALSE) {fFillDistributions= ifGenDistributions;}
   void   SetFillTreeMC(const Bool_t ifTreeMC = kFALSE)                {fFillTreeMC= ifTreeMC;}
 
-  void   SetDefaultTrackCuts(const Bool_t ifDefaultTrackCuts = kFALSE){fDefaultTrackCuts= ifDefaultTrackCuts;}
   void   SetDefaultEventCuts(const Bool_t ifDefaultEventCuts = kFALSE){fDefaultEventCuts= ifDefaultEventCuts;}
   void   SetFillNudynFastGen(const Bool_t ifNudynFastGen = kFALSE)    {fFillNudynFastGen= ifNudynFastGen;}
   void   SetCorrectForMissCl(const Int_t ifCorrectForMissCl = kFALSE) {fCorrectForMissCl= ifCorrectForMissCl;}
@@ -253,6 +252,8 @@ public:
   void   SetFillJetsBG(const Int_t ifFillJetsBG = kTRUE)              {fFillJetsBG          = ifFillJetsBG;}
   void   SetTaskSelection(const Int_t ifTaskSelection = kTRUE)        {fTaskSelection       = ifTaskSelection;}
   void   SetFillResonances(const Bool_t ifFillResonances = kFALSE)    {fFillResonances      = ifFillResonances;}
+  void   SetFillQvectorHists(const Bool_t ifFillQvectorHists = kFALSE){fFillQvectorHists    = ifFillQvectorHists;}
+  void   SetApplyQVectorCorr(const Bool_t ifApplyQVectorCorr = kFALSE){fApplyQVectorCorr    = ifApplyQVectorCorr;}
 
   void   SetSettings(const std::vector<Int_t> ifSystSettings) {
     fSystSettings = ifSystSettings;
@@ -283,7 +284,6 @@ public:
   void   SetMomLowerEdge(const Float_t momLowerEdge = 0.)         {fMomDown             = momLowerEdge;}
   void   SetMomUpperEdge(const Float_t momUpperEdge = 12.)        {fMomUp               = momUpperEdge;}
   void   SetNMomBins(const Int_t nMombins = 600)                  {fNMomBins            = nMombins;}
-  void   SetNGenprotonBins(const Int_t nGenprotonBins = 100)      {fGenprotonBins       = nGenprotonBins;}
   void   SetCollisionType(Int_t collisionType = 0)          {fCollisionType       = collisionType;}
 
   void   SetEffMatrixMomBins(const std::vector<Double_t> nEffMatrixMomBins) {fEffMatrixMomBins = nEffMatrixMomBins;}
@@ -540,6 +540,17 @@ public:
     fEffMatrixRecNeg = (THnF*) effMatrixRecNeg->Clone();
   }
 
+  void SetQvecCorrObjects(TH2F* histEP2QxQypos, TH2F* histEP2QxQyneg, TH2F* histEP3QxQypos, TH2F* histEP3QxQyneg)
+  {
+    // set MC eta values to scan
+    std::cout << " Info::ilya: !!!!!! SetQvecCorrObjects is being set !!!!!!!   " << std::endl;
+    //
+    fHistEP2QxQypos = (TH2F*) histEP2QxQypos->Clone();
+    fHistEP2QxQyneg = (TH2F*) histEP2QxQyneg->Clone();
+    fHistEP3QxQypos = (TH2F*) histEP3QxQypos->Clone();
+    fHistEP3QxQyneg = (TH2F*) histEP3QxQyneg->Clone();
+  }
+
   void SetLookUpTable_MissCl(TClonesArray *lookUpArray)
   {
     // set MC eta values to scan
@@ -674,9 +685,38 @@ private:
   UInt_t             fPileUpBit;
   TH1F             * fHistCent;               // helper histogram for TIdentity tree
   TH1F             * fHistPhi;
-  TH1F             * fHistGenMult;
   TH2F             * fHistRapDistFullAccPr;
   TH2F             * fHistRapDistFullAccAPr;
+  TH1F             * fHistNhard;
+  TH1F             * fHistNproj;
+  TH1F             * fHistNtarget;
+  TH1F             * fHistNN;
+  TH1F             * fHistNNW;
+  TH1F             * fHistNWN;
+  TH1F             * fHistNWNW;
+  TH1F             * fHistNpionsInTPC;
+  TH1F             * fHistNkaonsInTPC;
+  TH1F             * fHistNprotonsInTPC;
+  TH1F             * fHistNchargedInTPC;
+  TH1F             * fHistNallInTPC;
+  TH1F             * fHistNpionsInV0M;
+  TH1F             * fHistNkaonsInV0M;
+  TH1F             * fHistNprotonsInV0M;
+  TH1F             * fHistNchargedInV0M;
+  TH1F             * fHistNallInV0M;
+
+  TH2F             * fHist_EP_2_Qx_Qy_pos;
+  TH2F             * fHist_EP_2_Qx_Qy_neg;
+  TH1F             * fHist_EP_2_Psi_pos;             
+  TH1F             * fHist_EP_2_Psi_neg;
+  TH1F             * fHist_EP_2_Psi;   
+  TH2F             * fHist_EP_3_Qx_Qy_pos;
+  TH2F             * fHist_EP_3_Qx_Qy_neg;
+  TH1F             * fHist_EP_3_Psi_pos;             
+  TH1F             * fHist_EP_3_Psi_neg;
+  TH1F             * fHist_EP_3_Psi;                          
+
+
   TH1F             * fHistInvK0s;             // helper histogram for TIdentity tree
   TH1F             * fHistInvLambda;          // helper histogram for TIdentity tree
   TH1F             * fHistInvAntiLambda;      // helper histogram for TIdentity tree
@@ -719,7 +759,6 @@ private:
   Bool_t            fRunCutBasedMethod;      // moments from cut based method as cross check
   Bool_t            fFillDistributions;   // when running over galice.root do not fill other objects
   Bool_t            fFillTreeMC;
-  Bool_t            fDefaultTrackCuts;
   Bool_t            fDefaultEventCuts;
   Bool_t            fFillNudynFastGen;
   Bool_t            fFillResonances;
@@ -735,6 +774,8 @@ private:
   Bool_t            fV0InvMassHists;         // V0 invariant mass for QA
   Int_t             fRunNumberForExpecteds;  // Run number in which to fill the expecteds tree
   Bool_t            fFillExpecteds;
+  Bool_t            fFillQvectorHists;
+  Bool_t            fApplyQVectorCorr;
   Bool_t            fDefaultCuts;
 
   Int_t             fNSettings;
@@ -855,7 +896,6 @@ private:
   Int_t              fNEtaWinBinsMC;
   Int_t              fNMomBinsMC;
   Int_t              fNCentBinsMC;
-  Int_t              fGenprotonBins;
 
   std::vector<Double_t> fEffMatrixMomBins;
   std::vector<Double_t> fEffMatrixCentBins;
@@ -1029,6 +1069,11 @@ private:
   THnF             * fEffMatrixGenNeg;           // histogram efficiency matrix read from file
   THnF             * fEffMatrixRecPos;           // histogram efficiency matrix read from file
   THnF             * fEffMatrixRecNeg;           // histogram efficiency matrix read from file
+  TH2F             * fHistEP2QxQypos;           // histogram efficiency matrix read from file
+  TH2F             * fHistEP2QxQyneg;           // histogram efficiency matrix read from file
+  TH2F             * fHistEP3QxQypos;           // histogram efficiency matrix read from file
+  TH2F             * fHistEP3QxQyneg;           // histogram efficiency matrix read from file
+
   vector<vector<vector<vector<TH2F*>>>> fEffMatrixProjections;  // container for efficiency matrix projections
   //
   // Counters for Marian

@@ -1,3 +1,12 @@
+# use singularity container at gsi
+```
+singularity shell -B /cvmfs -B /data.local1 -B /u -B /lustre /lustre/alice/users/ifokin/containers/aliphysics_240925.sif
+alienv -w /alice/sw enter AliPhysics/latest
+. ~/bin/basicaliases.sh
+
+singularity shell -B /cvmfs -B /data.local1 -B /u -B /lustre /data.local1/marsland/JIRA/aliphysics_240925.sif
+```
+
 # Datasets
 
 | Dataset | System    | List                        |
@@ -33,8 +42,6 @@
 | LHC22d1a    | alien.py find alien:///alice/sim/2022/LHC22d1a   galice.root  |   7294 |
 | LHC22d1b    | alien.py find alien:///alice/sim/2022/LHC22d1b   galice.root  |   7097 |
 
-
-
 # How to run runGrid.c
 ```
 cd $RUN_ON_GRID_DIR/Ebye/test_fastGen_netParticles/
@@ -43,6 +50,7 @@ cp $RUN_ON_GRID_DIR/Ebye/code/*.* $RUN_ON_GRID_DIR/Ebye/code/READ*  .; rm *.so *
 
 # test lxplus
 ```
+alicvmfs 20240617 6
 cp $RUN_ON_GRID_DIR/Ebye/code/AliAnalysisTaskTIdentityPID.*   /afs/cern.ch/work/m/marsland/workdir/test_pp_MC
 cp $RUN_ON_GRID_DIR/Ebye/code/AliAnalysisTaskTIdentityPID.*   /afs/cern.ch/work/m/marsland/workdir/test_pp_MC
 cp $RUN_ON_GRID_DIR/Ebye/code/AddTask_marsland_TIdentityPID.C /afs/cern.ch/work/m/marsland/workdir/test_pp_MC
@@ -51,7 +59,6 @@ cp $RUN_ON_GRID_DIR/Ebye/code/README_2024.md                  /afs/cern.ch/work/
 cp $RUN_ON_GRID_DIR/Ebye/code/runGrid.C                       /afs/cern.ch/work/m/marsland/workdir/test_pp_MC
 cp $RUN_ON_GRID_DIR/Ebye/code/AddTaskFilteredTreeLocal.C      /afs/cern.ch/work/m/marsland/workdir/test_pp_MC
 ```
-
 # runGrid.C macro parameters
 ```
 void runGrid(Bool_t fRunLocalFiles = kTRUE,
@@ -81,6 +88,11 @@ aliroot -b -q 'runGrid.C(0,"test",0,  40, "$TIdentityDIRcommit/TIdentity/lists/r
 aliroot -b -q 'runGrid.C(0,"test",0,  0,  "$TIdentityDIRcommit/TIdentity/lists/runsDPG-2018-LHC18q-pass3.list",0,2018,"18q",3,0)'
 aliroot -b -q 'runGrid.C(0,"test",0,  0,  "$TIdentityDIRcommit/TIdentity/lists/runsDPG-2018-LHC18r-pass3.list",0,2018,"18r",3,0)'
 aliroot -b -q 'runGrid.C(0,"test",0,  11, "$TIdentityDIRcommit/TIdentity/lists/runs-2018-LHC18b-pass2.list",0,2018,"18b",3,0)'
+```
+
+# Run real data only cutbased
+```
+aliroot -b -q 'runGrid.C(0,"test",0,  5,  "$TIdentityDIRcommit/TIdentity/lists/runsDPG-2018-LHC18q-pass3.list",0,2018,"18q",3,0)'
 ```
 
 
@@ -116,12 +128,12 @@ aliroot -b -q 'runGrid.C(0,"test",0,  200, "$TIdentityDIRcommit/TIdentity/lists/
 
 # copy data
 ```
-alien_cp -T 6 -parent 99 -glob AnalysisResults.root /Alice/cern.ch/user/m/marsland/PWGPP695_MC_remapping/LHC20e3a_pass3_20240625_228/2020 file:
+alien_cp -T 6 -parent 99 -glob AnalysisResults.root /alice/cern.ch/user/p/pwg_pp/PWGPP695_MC_remapping/LHC18q_pass3_20241001_17/ file:
 ```
 
 # merge data e.g. only for ebye fluct. related objects
 ```
-alihadd -i "cleanHists" -i "mcFull" -i "mcGen" -i "fTreeMC" -i "eventInfo" -i "eventInfoMC" -i "cutBased" -s 2000000000 AnalysisResults_mcTrees.root  @file.list
+alihadd -i "cleanHists" -i "momentsMCrec" -i "tracksMCrec" -i "eventInfo" -i "eventInfoMC" -i "cutBased" -s 2000000000 AnalysisResults_mcTrees.root  @file.list
 ```
 
 # kill the list of jobs 
@@ -136,9 +148,7 @@ for i in $(alien.py ps -E | grep LHC20e3a | awk '{print $2}'); do alien.py resub
 
 # kill all masterjobs for a given period
 ```
-for i in $(alien.py ps -M | grep LHC18b   | awk '{print $2}'); do alien.py kill $i; done
-for i in $(alien.py ps -M | grep LHC18g4  | awk '{print $2}'); do alien.py kill $i; done
-for i in $(alien.py ps -M | grep LHC20e3a | awk '{print $2}'); do alien.py kill $i; done
+for i in $(alien.py ps -M | grep TaskEbyeIterPIDMC_LHC20e3a | awk '{print $2}'); do alien.py kill $i; done
 ```
 
 # check data size 
@@ -149,7 +159,7 @@ du -ahx --max-depth=2 ./ | sort -k1 -rh
 
 # check each tree size in 
 ```
-TFile f("AnalysisResults_merged.root");
+TFile f("AnalysisResults.root");
 Double_t treesizes[22]={0.};
 treesizes[0] = (cleanSamp->GetZipBytes())/(1024.*1024.);
 treesizes[1] = (eventInfo->GetZipBytes())/(1024.*1024.);
