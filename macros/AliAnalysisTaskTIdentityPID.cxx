@@ -2771,24 +2771,24 @@ void AliAnalysisTaskTIdentityPID::FillMCFull_NetParticles()
                 if (trackReal->IsOn(AliESDtrack::kTPCrefit)) arrNtracksTPC[iEta][iMom]++;
                 if (trackReal->IsOn(AliESDtrack::kITSrefit)) arrNtracksITS[iEta][iMom]++;
                 arrNtracksRec[iEta][iMom]++;
-                if ( fPiMC>-1 && pdg<0) arrRecNeg[kPi][iEta][iMom]++;
-                if ( fKaMC>-1 && pdg<0) arrRecNeg[kKa][iEta][iMom]++;
-                if ( fPrMC>-1 && pdg<0) arrRecNeg[kPr][iEta][iMom]++;
+                if ( fPiMC>-1 && pdg<0) arrRecNeg[iEta][iMom][kPi]++;
+                if ( fKaMC>-1 && pdg<0) arrRecNeg[iEta][iMom][kKa]++;
+                if ( fPrMC>-1 && pdg<0) arrRecNeg[iEta][iMom][kPr]++;
                 //
-                if ( fPiMC>-1 && pdg>0) arrRecPos[kPi][iEta][iMom]++;
-                if ( fKaMC>-1 && pdg>0) arrRecPos[kKa][iEta][iMom]++;
-                if ( fPrMC>-1 && pdg>0) arrRecPos[kPr][iEta][iMom]++;
+                if ( fPiMC>-1 && pdg>0) arrRecPos[iEta][iMom][kPi]++;
+                if ( fKaMC>-1 && pdg>0) arrRecPos[iEta][iMom][kKa]++;
+                if ( fPrMC>-1 && pdg>0) arrRecPos[iEta][iMom][kPr]++;
                 //
                 // count first moments for given Centrality and momentum window without resonances
                 Bool_t acceptRes = CheckIfFromAnyResonance(trackMCgen,fetaDownArr[iEta],fetaUpArr[iEta],fpDownArr[iMom],fpUpArr[iMom]);
                 if ( acceptRes ) {
-                  if ( fPiMC>-1 && pdg<0) arrNrRecNeg[kPi][iEta][iMom]++;
-                  if ( fKaMC>-1 && pdg<0) arrNrRecNeg[kKa][iEta][iMom]++;
-                  if ( fPrMC>-1 && pdg<0) arrNrRecNeg[kPr][iEta][iMom]++;
+                  if ( fPiMC>-1 && pdg<0) arrNrRecNeg[iEta][iMom][kPi]++;
+                  if ( fKaMC>-1 && pdg<0) arrNrRecNeg[iEta][iMom][kKa]++;
+                  if ( fPrMC>-1 && pdg<0) arrNrRecNeg[iEta][iMom][kPr]++;
                   //
-                  if ( fPiMC>-1 && pdg>0) arrNrRecPos[kPi][iEta][iMom]++;
-                  if ( fKaMC>-1 && pdg>0) arrNrRecPos[kKa][iEta][iMom]++;
-                  if ( fPrMC>-1 && pdg>0) arrNrRecPos[kPr][iEta][iMom]++;
+                  if ( fPiMC>-1 && pdg>0) arrNrRecPos[iEta][iMom][kPi]++;
+                  if ( fKaMC>-1 && pdg>0) arrNrRecPos[iEta][iMom][kKa]++;
+                  if ( fPrMC>-1 && pdg>0) arrNrRecPos[iEta][iMom][kPr]++;
                 }
               }
             }
