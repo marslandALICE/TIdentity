@@ -284,6 +284,7 @@ fNSigmasPiTPC(0),
 fNSigmasKaTPC(0),
 fNSigmasPrTPC(0),
 fNSigmasDeTPC(0),
+fNSigmasPrITS(0),
 fTPCSignalMC(0),
 fPtotMC(0),
 fPtotMCtruth(0),
@@ -673,6 +674,7 @@ fNSigmasPiTPC(0),
 fNSigmasKaTPC(0),
 fNSigmasPrTPC(0),
 fNSigmasDeTPC(0),
+fNSigmasPrITS(0),
 fTPCSignalMC(0),
 fPtotMC(0),
 fPtotMCtruth(0),
@@ -1834,9 +1836,8 @@ void AliAnalysisTaskTIdentityPID::UserExec(Option_t *)
     if (fCentrality<0) fCentrality=fCentImpBin;
     //
     // Use file name in Hashing to create unique event ID
-    fEventGIDMC  = TMath::Abs(Int_t(TString::Hash(&fEventCountInFile,sizeof(Int_t))));    // uniqe event id for real data
-    // fEventGIDMC += TMath::Abs(Int_t(fCentrality)+fEventCountInFile+(1000*TMath::Abs(fMCImpactParameter)));  // ????
-    fEventGID    = fEventGIDMC;
+    TString stringToHash = Form("%s/%d", fChunkName.Data(), fEventCountInFile);
+    fEventGID    = TString::Hash(stringToHash.Data(), stringToHash.Length());
     if (fUseCouts) {
       std::cout << " Info::marsland: ========================================================================================== " << std::endl;
       std::cout << " Info::marsland: " << fEventCountInFile << " ----- eventIDMC = " << fEventGIDMC << "   " << fChunkName << std::endl;
@@ -2107,6 +2108,7 @@ void AliAnalysisTaskTIdentityPID::FillTPCdEdxReal()
     Double_t tofSignalTunedOnData = track->GetTOFsignalTunedOnData();
     Double_t length = track->GetIntegratedLength();
     Double_t tofSignal = track->GetTOFsignal();
+    Double_t starttime = fPIDResponse->GetTOFResponse().GetStartTime(fPVertex);
     Double_t beta = -.05;
     if((length > 0) && (tofSignal > 0)) beta = length / 2.99792458e-2 / tofSignal;
     //
@@ -2116,70 +2118,93 @@ void AliAnalysisTaskTIdentityPID::FillTPCdEdxReal()
       settings[i] = (Float_t) GetSystematicClassIndex(fTrackCutBits, i);
     }
 
+    Double_t nclsTRD     = (Double_t)track->GetTRDncls();
+    Double_t TOFSignalDx = track->GetTOFsignalDx();
+    Double_t TOFSignalDz = track->GetTOFsignalDz();
+    Float_t dca[2], covar[3];
+    track->GetImpactParameters(dca, covar);
+
     if(!fTreeSRedirector) return;
     (*fTreeSRedirector)<<"tracks"<<
     //
-    "gid=" << fEventGID << // global event ID
-    "cutBit=" << fTrackCutBits << // Systematic Cuts
-    "dEdx=" << fTPCSignal <<  // dEdx of the track
-    "beta=" << beta << // TOF beta  --> beta = GetIntegratedLength / 2.99792458e-2 / tofSignal;
-    "sign=" << fSign <<  // charge
-    "ptot=" << fPtot <<  // TPC momentum
-    "p=" << fPVertex <<  // momentum at vertex
-    "pT=" << fPt <<  // transverse momentum
-    "eta=" << fEta <<  // eta
-    "phi=" << fPhi <<  // phi
-    "katofpid=" << fNSigmasKaTOF << // nsigma TOF for kaons
-    "prtofpid=" << fNSigmasPrTOF << // nsigma TOF for protons
-    "katpcpid=" << fNSigmasKaTPC << // nsigma TPC for kaons
-    "prtpcpid=" << fNSigmasPrTPC << // nsigma TPC for protons
-    "eltpcpid=" << fNSigmasElTPC << // nsigma TPC for electrons
-    "cent=" << fCentrality; // centrality from V0
+    "gid="                << fEventGID                << // global event ID
+    "itrack="             << itrack                   << // track number
+    "cutBit="             << fTrackCutBits            << // Systematic Cuts
+    "sign="               << fSign                    << // charge
+    "ptot="               << fPtot                    << // TPC momentum
+    "eta="                << fEta                     << // eta
+    "phi="                << fPhi                     << // phi
+    "px="                 << fPx                      << // px
+    "py="                 << fPy                      << // py
+    "pz="                 << fPz                      << // pz
+    // tpc pid
+    "dEdx="               << fTPCSignal               << // dEdx of the track
+    "nsigmaTPCEl="        << fNSigmasElTPC            << // nsigma TPC for electrons
+    "nsigmaTPCPi="        << fNSigmasPiTPC            << // nsigma TPC for pions
+    "nsigmaTPCKa="        << fNSigmasKaTPC            << // nsigma TPC for kaons
+    "nsigmaTPCPr="        << fNSigmasPrTPC            << // nsigma TPC for protons
+    "nsigmaTPCDe="        << fNSigmasDeTPC            << // nsigma TPC for deuterons
+    // tof pid
+    "length="             << length                   << // integrated track length
+    "tofSignal="          << tofSignal                << // TOF signal
+    "nsigmaTOFEl="        << fNSigmasElTOF            << // nsigma TOF for electrons
+    "nsigmaTOFPi="        << fNSigmasPiTOF            << // nsigma TOF for pions
+    "nsigmaTOFKa="        << fNSigmasKaTOF            << // nsigma TOF for kaons
+    "nsigmaTOFPr="        << fNSigmasPrTOF            << // nsigma TOF for protons
+    "nsigmaTOFDe="        << fNSigmasDeTOF            << // nsigma TOF for deuterons
+    // its pid
+    "itsdEdx="            << fITSSignal               << // ITS dEdx
+    "nsigmaITSPr="        << fNSigmasPrITS            << // nsigma ITS for protons
+    //
+    "ncltpc="             << fNcl                     << // number of clusters
+    "findableCls="        << tpcFindableCls           << // number of findable clusters
+    "sharedCls="          << tpcSharedCls             << // number of shared clusters
+    "lengthInActiveZone=" << fTrackLengthInActiveZone << // track length in active zone
+    "tpcsignaln="         << fTrackTPCSignalN         << // number of cl used in dEdx
+    "dcaxy="              << fTrackDCAxy              << // dcaxy
+    "dcaz="               << fTrackDCAz               << // dcaz
+    "cRows="              << fTrackTPCCrossedRows     << // crossed Rows in TPC
+    "chi2tpc="            << fTrackChi2TPC;              // TPC chi2
+
     if (fFillDebug){
       (*fTreeSRedirector)<<"tracks"<<
-      "settings.=" << &settings << // Systematic settings
-      "run=" << fRunNo << // run Number
-      "bField=" << fBField << // magnetic filed
-      "intrate=" << fIntRate <<  // interaction rate
-      "pileupbit=" << fPileUpBit << // flag for pileup selection
-      "primMult=" << fNContributors << //  #prim tracks
-      "tpcClMult=" << tpcClusterMultiplicity << // TPC cluster multiplicity
-      "tpcmult=" << fTPCMult << //  TPC track multiplicity
-      "tpcclmult=" << nTPCClusters << // TPC cluster multiplicity
-      "itsmult=" << itsNumberOfTracklets << // ITS multiplicity
-      "itsclmult=" << nITSClusters << // ITS cluster multiplicity
-      "ncltpc=" << fNcl <<  // number of clusters
+      "settings.="        << &settings                << // Systematic settings
+      "run="              << fRunNo                   << // run Number
+      "bField="           << fBField                  << // magnetic filed
+      "intrate="          << fIntRate                 << // interaction rate
+      "pileupbit="        << fPileUpBit               << // flag for pileup selection
+      "primMult="         << fNContributors           << // #prim tracks
+      "tpcClMult="        << tpcClusterMultiplicity   << // TPC cluster multiplicity
+      "tpcmult="          << fTPCMult                 << // TPC track multiplicity
+      "tpcclmult="        << nTPCClusters             << // TPC cluster multiplicity
+      "itsmult="          << itsNumberOfTracklets     << // ITS multiplicity
+      "itsclmult="        << nITSClusters             << // ITS cluster multiplicity
       //
       // track level
-      "label=" << label <<
-      "eventtime=" << fTimeStamp << // event timeStamp
-      "defCut=" << fDefaultCuts << // default cuts tuned by hand
-      "bit96=" << fBit96_base << // tight cuts of 2011 tuned data
-      "bit128=" << fBit128 << // TPC only tracks cuts
-      "bit768=" << fBit768 << // Hybrid track cuts
-      "pixCut=" << ifDCAcutIfNoITSPixel << // cut: apply a DCAcut If No ITS Pixel
-      "dcabase=" << dcaBaseCut << // dcaxy base cut
-      "dca10h=" << dca10h << // dcaxy cut tuned to 10h
-      "dca11h=" << dca11h << // dcaxy cut tuned to 11h
-      "tpcFindableCls=" << tpcFindableCls << // number of findable clusters
-      "tpcSharedCls=" << tpcSharedCls << // number of shared clusters
-      "tpcSignalN=" << fTrackTPCSignalN << // number of cl used in dEdx
-      "lengthInActiveZone=" << fTrackLengthInActiveZone << // track length in active zone
-      "dcaxy=" << fTrackDCAxy << // dcaxy
-      "dcaz=" << fTrackDCAz << // dcaz
-      "cRows=" << fTrackTPCCrossedRows << // crossed Rows in TPC
-      "chi2tpc=" << fTrackChi2TPC << // TPC chi2
-      "missCl=" << fMissingCl << // fraction of missing clusters
+      "label="            << label                    <<
+      "eventtime="        << fTimeStamp               << // event timeStamp
+      "defCut="           << fDefaultCuts             << // default cuts tuned by hand
+      "bit96="            << fBit96_base              << // tight cuts of 2011 tuned data
+      "bit128="           << fBit128                  << // TPC only tracks cuts
+      "bit768="           << fBit768                  << // Hybrid track cuts
+      "pixCut="           << ifDCAcutIfNoITSPixel     << // cut: apply a DCAcut If No ITS Pixel
+      "dcabase="          << dcaBaseCut               << // dcaxy base cut
+      "dca10h="           << dca10h                   << // dcaxy cut tuned to 10h
+      "dca11h="           << dca11h                   << // dcaxy cut tuned to 11h
+      "missCl="           << fMissingCl               << // fraction of missing clusters
       //
-      "pitpcpid=" << fNSigmasPiTPC << // nsigma TPC for pions
-      "detpcpid=" << fNSigmasPrTOF << // nsigma TPC for deuterons
-      "eltofpid=" << fNSigmasElTOF << // nsigma TOF for electrons
-      "pitofpid=" << fNSigmasPiTOF << // nsigma TOF for pions
-      "detofpid=" << fNSigmasDeTOF << // nsigma TOF for deuterons
+      "itsFirstLayer="    << fTrackIsFirstITSlayer    <<  // first its layer
+      "itsSecondLayer="   << fTrackIsSecondITSlayer   <<  // second its layer
+      "itsRefit="         << fTrackRequireITSRefit    <<  // its refit
       //
-      "tofSignal=" << tofSignal << // tof signal --> GetTOFsignal
-      "tofSignalTOD=" << tofSignalTunedOnData << // tof signal tuneondata --> GetTOFsignalTunedOnData
-      "prtofpid=" << fNSigmasPrTOF ;
+      "tofSignalTOD="     << tofSignalTunedOnData     << // tof signal tuneondata --> GetTOFsignalTunedOnData
+      //
+      "ncltrd="           << nclsTRD                  <<  // trd clusters
+      "tofDx="            << TOFSignalDx              <<  // tof dx
+      "tofDz="            << TOFSignalDz              <<  // tof dz
+      "fCdd="             << covar[0]                 <<
+      "fCdz="             << covar[1]                 <<
+      "fCzz="             << covar[2];
     }
     (*fTreeSRedirector)<<"tracks"<<"\n";
 
@@ -2202,26 +2227,40 @@ void AliAnalysisTaskTIdentityPID::FillTPCdEdxReal()
     Bool_t ndEdxTPCall  = (fDEdxEl>20 || fDEdxPi>20 || fDEdxKa>20 || fDEdxPr>20 || fDEdxDe>20);
 
     if(fAcceptance && !fMCtrue){
-      if (fFillExpecteds && fEvent < 5 && (fNSigmasPiTPC >= 3 || (fNSigmasPiTPC < 3 && fRandom.Rndm() < 0.001))) {
+      if (fFillExpecteds && fEventCountInFile < 5 && (fNSigmasPiTPC >= 3 || (fNSigmasPiTPC < 3 && fRandom.Rndm() < 0.005))) {
         Double_t sign = static_cast<Double_t>(fSign);
         if(!fTreeSRedirector) return;
         (*fTreeSRedirector)<<"expecteds"<<
-        "cent=" << fCentrality   <<
-        "sign=" << sign <<
-        "ptot=" << fPtot <<
-        "eta=" << fEta <<
-        "phi=" << fPhi <<
-        "dEdxEl=" << fDEdxEl <<
-        "dEdxPi=" << fDEdxPi <<
-        "dEdxKa=" << fDEdxKa <<
-        "dEdxPr=" << fDEdxPr <<
-        "dEdxDe=" << fDEdxDe <<
-        "sigmaEl=" << fSigmaEl <<
-        "sigmaPi=" << fSigmaPi <<
-        "sigmaKa=" << fSigmaKa <<
-        "sigmaPr=" << fSigmaPr <<
-        "sigmaDe=" << fSigmaDe <<
-        "dEdx=" << fTPCSignal <<
+        "cent="        << fCentrality   <<
+        "sign="        << sign          <<
+        "ptot="        << fPtot         <<
+        "eta="         << fEta          <<
+        "phi="         << fPhi          <<
+        "dEdxEl="      << fDEdxEl       << // expected dEdx for electrons
+        "dEdxPi="      << fDEdxPi       << // expected dEdx for pions
+        "dEdxKa="      << fDEdxKa       << // expected dEdx for kaons
+        "dEdxPr="      << fDEdxPr       << // expected dEdx for protons
+        "dEdxDe="      << fDEdxDe       << // expected dEdx for deuterons
+        "sigmaEl="     << fSigmaEl      << // expected sigma for electrons
+        "sigmaPi="     << fSigmaPi      << // expected sigma for pions
+        "sigmaKa="     << fSigmaKa      << // expected sigma for kaons
+        "sigmaPr="     << fSigmaPr      << // expected sigma for protons
+        "sigmaDe="     << fSigmaDe      << // expected sigma for deuterons
+        "dEdx="        << fTPCSignal    <<
+
+        "length="      << length        <<
+        "starttime="   << starttime     <<
+        "tofsignalEl=" << fTOFSignalEl  << // expected TOF signal for electrons
+        "tofsignalPi=" << fTOFSignalPi  << // expected TOF signal for pions
+        "tofsignalKa=" << fTOFSignalKa  << // expected TOF signal for kaons
+        "tofsignalPr=" << fTOFSignalPr  << // expected TOF signal for protons
+        "tofsignalDe=" << fTOFSignalDe  << // expected TOF signal for deuterons
+        "tofsigmaEl="  << fTOFSigmaEl   << // expected TOF sigma for electrons
+        "tofsigmaPi="  << fTOFSigmaPi   << // expected TOF sigma for pions
+        "tofsigmaKa="  << fTOFSigmaKa   << // expected TOF sigma for kaons
+        "tofsigmaPr="  << fTOFSigmaPr   << // expected TOF sigma for protons
+        "tofsigmaDe="  << fTOFSigmaDe   << // expected TOF sigma for deuterons
+        "tofSignal="   << tofSignal     <<
         //
         "\n";
       }
@@ -3099,30 +3138,31 @@ void AliAnalysisTaskTIdentityPID::FillEventInfoMC()
       Bool_t acceptRes = CheckIfFromResonance(trackMCgen);
       Bool_t acceptAnyRes = CheckIfFromAnyResonance(trackMCgen,-0.8,0.8,0.2,10.);
       (*fTreeSRedirector)<<"tracksMCgen"<<
-      "gid=" << fEventGID << // global event ID
-      "part=" << iPart << // particle index --> pi, ka, pr, el, de, ksi, la, phi
-      "ifbar=" << ifBar <<
-      "acceptres=" << acceptRes <<
+      "gid="          << fEventGID    << // global event ID
+      "part="         << iPart        << // particle index --> pi, ka, pr, el, de, ksi, la, phi
+      "lab="          << iTrack       << // track label
+      "pdg="          << pdg          << // pdg of prim particle
+      "ifbar="        << ifBar        <<
+      "acceptres="    << acceptRes    <<
       "acceptanyres=" << acceptAnyRes <<
-      "sign=" << sign << // sign
-      "p=" << ptotMCgen << // vertex momentum
-      "px=" << pxMCgen << // vertex momentum
-      "py=" << pyMCgen << // vertex momentum
-      "pz=" << pzMCgen << // vertex momentum
-      "eta=" << etaMCgen << // mc pseudorapidity
-      "rap=" << rapMCgen << // mc rapidity
-      "phi=" << phiMCGen << // mc phi
-      "pdgMom=" << pdgMom << // pdg of mother
-      "pdgGMom=" << pdgGMom << // pdg of grandmother
-      "cent=" << fCentrality; // Centrality
+      "sign="         << sign         << // sign
+      "px="           << pxMCgen      << // vertex momentum
+      "py="           << pyMCgen      << // vertex momentum
+      "pz="           << pzMCgen      << // vertex momentum
+      "eta="          << etaMCgen     << // mc pseudorapidity
+      "rap="          << rapMCgen     << // mc rapidity
+      "phi="          << phiMCGen     << // mc phi
+      "pdgMom="       << pdgMom       << // pdg of mother
+      "pdgGMom="      << pdgGMom      << // pdg of grandmother
+      "cent="         << fCentrality;    // centrality
       if (fFillDebug){
         (*fTreeSRedirector)<<"tracksMCgen"<<
-        "pdg=" << pdg << // pdg of prim particle
-        "pdgMom=" << pdgMom << // pdg of mother
-        "pdgGMom=" << pdgGMom << // pdg of grandmother
-        "parName.=" << &parName << // name of particle
-        "momName.=" << &momName << // name of mother
-        "momGName.=" << &momGName ; // name of grandmother
+        "pdg="        << pdg          << // pdg of prim particle
+        "pdgMom="     << pdgMom       << // pdg of mother
+        "pdgGMom="    << pdgGMom      << // pdg of grandmother
+        "parName.="   << &parName     << // name of particle
+        "momName.="   << &momName     << // name of mother
+        "momGName.="  << &momGName;      // name of grandmother
       }
       (*fTreeSRedirector)<<"tracksMCgen"<<"\n";
     }
@@ -3730,92 +3770,114 @@ void AliAnalysisTaskTIdentityPID::FillTreeMC()
     Bool_t acceptRes    = CheckIfFromResonance(trackMCgen);
     Bool_t acceptAnyRes = CheckIfFromAnyResonance(trackMCgen,-0.8,0.8,0.2,10.);
     //
+    Double_t nclsTRD     = (Double_t)trackReal->GetTRDncls();
+    Double_t TOFSignalDx = trackReal->GetTOFsignalDx();
+    Double_t TOFSignalDz = trackReal->GetTOFsignalDz();
+    //
     // Fill MC closure tree
     if(!fTreeSRedirector) return;
     (*fTreeSRedirector)<<"tracksMCrec"<<
-    "gid=" << fEventGID <<  //  global event ID
-    "orig=" << trackOrigin <<   // origin of the track
-    "part=" << iPart <<
-    "ifbar=" << ifBar <<
-    "acceptRes=" << acceptRes <<
-    "acceptAnyRes=" << acceptAnyRes <<
-    "dEdx=" << fTPCSignalMC <<    // dEdx of mc track
-    "beta=" << beta <<
-    "cutBit=" << fTrackCutBits <<  //  Systematic Cuts
-    "sign=" << fSignMC <<         // sign
-    "ptot=" << fPtotMC <<         // tpc momentum
-    "p=" << pMC <<             // vertex momentum
-    "pT=" << fPtMC <<           // transverse momentum
-    "eta=" << fEtaMC <<          // mc eta
-    "phi=" << fPhiMC <<          // mc eta
-    "cent=" << fCentrality <<     // Centrality
-    "pdgMom=" << pdgMom <<        // pdg of mother
-    "pdgGMom=" << pdgGMom <<          // pdg of mother
-    "tpcpileup=" << isTPCPileup <<
-    "itspileup=" << isITSPileup <<
-    "nsigmatofel=" << fNSigmasElTOF <<  // interaction rate
-    "nsigmatofpi=" << fNSigmasPiTOF <<  // interaction rate
-    "nsigmatofka=" << fNSigmasKaTOF <<  // interaction rate
-    "nsigmatofpr=" << fNSigmasPrTOF <<  // interaction rate
-    "nsigmatpcel=" << fNSigmasElTPC <<  // interaction rate
-    "nsigmatpcpi=" << fNSigmasPiTPC <<  // interaction rate
-    "nsigmatpcka=" << fNSigmasKaTPC <<  // interaction rate
-    "nsigmatpcpr=" << fNSigmasPrTPC <<  // interaction rate
-    "effnocut=" << effNoCut <<
-    "efftof=" << effTOF <<
-    "efftpctof=" << effTPCTOF ;
+    "gid="                  << fEventGID                << // global event ID
+    "itrack="               << irectrack                << // track number
+    "cutBit="               << fTrackCutBits            << // Systematic Cuts
+    "sign="                 << fSign                    << // charge
+    "ptot="                 << fPtot                    << // TPC momentum
+    "eta="                  << fEta                     << // eta
+    "phi="                  << fPhi                     << // phi
+    "px="                   << fPx                      << // px
+    "py="                   << fPy                      << // py
+    "pz="                   << fPz                      << // pz
+    // tpc pid
+    "dEdx="                 << fTPCSignal               << // dEdx of the track
+    "nsigmaTPCEl="          << fNSigmasElTPC            << // nsigma TPC for electrons
+    "nsigmaTPCPi="          << fNSigmasPiTPC            << // nsigma TPC for pions
+    "nsigmaTPCKa="          << fNSigmasKaTPC            << // nsigma TPC for kaons
+    "nsigmaTPCPr="          << fNSigmasPrTPC            << // nsigma TPC for protons
+    "nsigmaTPCDe="          << fNSigmasDeTPC            << // nsigma TPC for deuterons
+    // tof pid
+    "length="               << length                   << // integrated track length
+    "tofSignal="            << tofSignal                << // TOF signal
+    "nsigmaTOFEl="          << fNSigmasElTOF            << // nsigma TOF for electrons
+    "nsigmaTOFPi="          << fNSigmasPiTOF            << // nsigma TOF for pions
+    "nsigmaTOFKa="          << fNSigmasKaTOF            << // nsigma TOF for kaons
+    "nsigmaTOFPr="          << fNSigmasPrTOF            << // nsigma TOF for protons
+    "nsigmaTOFDe="          << fNSigmasDeTOF            << // nsigma TOF for deuterons
+    // its pid
+    "itsdEdx="              << fITSSignal               << // ITS dEdx
+    "nsigmaITSPr="          << fNSigmasPrITS            << // nsigma ITS for protons
+    //
+    "ncltpc="               << fNcl                     << // number of clusters
+    "findableCls="          << tpcFindableCls           << // number of findable clusters
+    "sharedCls="            << tpcSharedCls             << // number of shared clusters
+    "lengthInActiveZone="   << fTrackLengthInActiveZone << // track length in active zone
+    "tpcsignaln="           << fTrackTPCSignalN         << // number of cl used in dEdx
+    "dcaxy="                << fTrackDCAxy              << // dcaxy
+    "dcaz="                 << fTrackDCAz               << // dcaz
+    "cRows="                << fTrackTPCCrossedRows     << // crossed Rows in TPC
+    "chi2tpc="              << fTrackChi2TPC            << // TPC chi2
+
+    "lab="                  << lab                      << // track label
+    "pdg="                  << pdg                      << // pdg code
+    "labMom="               << labMom                   << // mother label
+
+    "ifbar="                << ifBar                    << // baryon
+    "acceptRes="            << acceptRes                << // accept resonances
+    "acceptAnyRes="         << acceptAnyRes;               // accept any resonances
     if (fFillDebug){
       (*fTreeSRedirector)<<"tracksMCrec"<<
-      "run=" << fRunNo <<  // run Number
-      "settings.=" << &settings <<  //  Systematic settings
-      "bField=" << fBField <<  // run Number
-      "pileupbit=" << fPileUpBit <<
-      "generatorIndex=" << fMCGeneratorIndex <<  // generator index
-      "vZ=" << fVz <<
-      "centimp=" << fCentImpBin <<
-      "impPar=" << fMCImpactParameter <<      // impact parameter taken from MC event header
-      "primmult=" << fNContributors <<  //  #prim tracks
-      "ncltpc=" << fNcl <<  //  centrality
-      "ncltpccorr="<< fNclCorr <<  //  centrality
-      "tpcmult=" << fTPCMult <<  //  TPC multiplicity
-      "itsmult=" << itsNumberOfTracklets <<
-      "itsclmult=" << nITSClusters <<    // ITS multiplicity
-      "tpcclmult=" << nTPCClusters <<    // ITS multiplicity
+      "run="                << fRunNo <<  // run Number
+      "settings.="          << &settings <<  //  Systematic settings
+      "bField="             << fBField <<  // run Number
+      "pileupbit="          << fPileUpBit <<
+      "generatorIndex="     << fMCGeneratorIndex <<  // generator index
+      "vZ="                 << fVz <<
+      "centimp="            << fCentImpBin <<
+      "impPar="             << fMCImpactParameter <<      // impact parameter taken from MC event header
+      "primmult="           << fNContributors <<  //  #prim tracks
+      "ncltpc="             << fNcl <<  //  centrality
+      "ncltpccorr="         << fNclCorr <<  //  centrality
+      "tpcmult="            << fTPCMult <<  //  TPC multiplicity
+      "itsmult="            << itsNumberOfTracklets <<
+      "itsclmult="          << nITSClusters <<    // ITS multiplicity
+      "tpcclmult="          << nTPCClusters <<    // ITS multiplicity
       //
       // track level info
-      "defCut=" << fDefaultCuts <<  // default cut
-      "bit96=" << fBit96_base <<  // run Number
-      "bit128=" << fBit128 <<  // run Number
-      "bit768=" << fBit768 <<  // run Number
-      "pixCut=" << ifDCAcutIfNoITSPixel <<  // run Number
-      "tpcFindableCls=" << tpcFindableCls << // number of findable clusters
-      "tpcSharedCls=" << tpcSharedCls << // number of shared clusters
-      "tpcSignalN=" << fTrackTPCSignalN            <<  //  number of cl used in dEdx
+      "defCut="             << fDefaultCuts <<  // default cut
+      "bit96="              << fBit96_base <<  // run Number
+      "bit128="             << fBit128 <<  // run Number
+      "bit768="             << fBit768 <<  // run Number
+      "pixCut="             << ifDCAcutIfNoITSPixel <<  // run Number
+      "tpcFindableCls="     << tpcFindableCls << // number of findable clusters
+      "tpcSharedCls="       << tpcSharedCls << // number of shared clusters
+      "tpcSignalN="         << fTrackTPCSignalN            <<  //  number of cl used in dEdx
       "lengthInActiveZone=" << fTrackLengthInActiveZone <<  //  track length in active zone
-      "tofSignal=" << tofSignal <<
-      "tofSignalTOD=" << tofSignalTunedOnData <<
-      "dcaxy=" << fTrackDCAxy <<
-      "dcaz=" << fTrackDCAz <<
-      "cRows=" << fTrackTPCCrossedRows  <<
-      "chi2tpc=" << fTrackChi2TPC <<
-      "missCl=" << fMissingCl <<
-      "chi2tpccorr=" << fTrackChi2TPCcorr <<
-      "dcabase=" << dcaBaseCut <<  //  TPC multiplicity
-      "dca10h=" << dca10h <<  //  TPC multiplicity
-      "dca11h=" << dca11h <<  //  TPC multiplicity
-      "fCdd=" << covar[0] <<
-      "fCdz=" << covar[1] <<
-      "fCzz=" << covar[2] <<
+      "tofSignal="          << tofSignal <<
+      "tofSignalTOD="       << tofSignalTunedOnData <<
+      "dcaxy="              << fTrackDCAxy <<
+      "dcaz="               << fTrackDCAz <<
+      "cRows="              << fTrackTPCCrossedRows  <<
+      "chi2tpc="            << fTrackChi2TPC <<
+      "missCl="             << fMissingCl <<
+      "chi2tpccorr="        << fTrackChi2TPCcorr <<
+      "dcabase="            << dcaBaseCut <<  //  TPC multiplicity
+      "dca10h="             << dca10h <<  //  TPC multiplicity
+      "dca11h="             << dca11h <<  //  TPC multiplicity
+      "fCdd="               << covar[0] <<
+      "fCdz="               << covar[1] <<
+      "fCzz="               << covar[2] <<
       //
       // gen level info
-      "pgen=" << ptotMCgen <<             // vertex momentum
-      "pTgen=" << pTMCgen <<           // transverse momentum
-      "etagen=" << etaMCgen <<          // mc eta
-      "phigen=" << phiMCGen <<          // mc eta
-      "pdg=" << pdg <<        // pdg of prim particle
-      "parName.=" << &parName <<          // full path - file name with ESD
-      "momName.=" << &momName <<          // full path - file name with ESD
-      "momGName.=" << &momGName ;          // full path - file name with ESD
+      "pgen="               << ptotMCgen <<             // vertex momentum
+      "pTgen="              << pTMCgen <<           // transverse momentum
+      "etagen="             << etaMCgen <<          // mc eta
+      "phigen="             << phiMCGen <<          // mc eta
+      "pdg="                << pdg <<        // pdg of prim particle
+      "parName.="           << &parName <<          // full path - file name with ESD
+      "momName.="           << &momName <<          // full path - file name with ESD
+      "momGName.="          << &momGName <<          // full path - file name with ESD
+      "effnocut="           << effNoCut <<
+      "efftof="             << effTOF <<
+      "efftpctof="          << effTPCTOF ;
     }
     (*fTreeSRedirector)<<"tracksMCrec"<<"\n";
 
@@ -4506,6 +4568,7 @@ void AliAnalysisTaskTIdentityPID::FillCleanSamples()
     // positive leg
     UInt_t cutBit0 = 0, cutBit1=0, fTrackCutBits=0;
     cutBit0 = SetCutBitsAndSomeTrackVariables(trackPosTest,0);
+    Int_t itrack0 = trackPosTest->GetID();
     Float_t dEdx0    = trackPosTest->GetTPCsignal();
     Float_t itsdEdx0 = trackPosTest->GetITSsignal();
     Float_t ptot0  = trackPosTest->GetInnerParam()->GetP();
@@ -4519,6 +4582,7 @@ void AliAnalysisTaskTIdentityPID::FillCleanSamples()
     //
     // negative leg
     cutBit1 = SetCutBitsAndSomeTrackVariables(trackNegTest,0);
+    Int_t itrack1 = trackNegTest->GetID();
     Float_t dEdx1  = trackNegTest->GetTPCsignal();
     Float_t itsdEdx1 = trackNegTest->GetITSsignal();
     Float_t ptot1  = trackNegTest->GetInnerParam()->GetP();
@@ -4540,44 +4604,47 @@ void AliAnalysisTaskTIdentityPID::FillCleanSamples()
       {
         if(!fTreeSRedirector) return;
         (*fTreeSRedirector)<<"cleanSamp"<<
-        "gid=" << fEventGID << // global event ID
-        "eventtime=" << fTimeStamp <<
-        "intrate=" << fIntRate <<  // interaction rate
-        "piFromK0=" << fCleanPionsFromK0 << // K0s cut for pions
-        "v0haspixel=" << fHasV0FirstITSlayer  << // ITS pixel cout
-        "purity=" << v0purity <<
-        "lambdaMass=" << lambdaMass << // lambda mass
-        "antiLambdaMass=" << antiLambdaMass <<  // anti lambda mass
-        "k0sMass=" << k0sMass << // k0s mass
-        "photonMass=" << photonMass <<  // photon mass
-        "cosPA=" << fCosPA << // cosine of pointing angle
-        "qt=" << fQt << // qT
-        "alfa=" << fAlfa <<  // alpha
-        "cent=" << fCentrality << // centrality
+        "gid="            << fEventGID           << // global event ID
+        "v0id="           << iV0MI               << // V0 ID
+        "eventtime="      << fTimeStamp          <<
+        "intrate="        << fIntRate            << // interaction rate
+        "piFromK0="       << fCleanPionsFromK0   << // K0s cut for pions
+        "v0haspixel="     << fHasV0FirstITSlayer << // ITS pixel cout
+        "purity="         << v0purity            <<
+        "lambdaMass="     << lambdaMass          << // lambda mass
+        "antiLambdaMass=" << antiLambdaMass      << // anti lambda mass
+        "k0sMass="        << k0sMass             << // k0s mass
+        "photonMass="     << photonMass          << // photon mass
+        "cosPA="          << fCosPA              << // cosine of pointing angle
+        "qt="             << fQt                 << // qT
+        "alfa="           << fAlfa               << // alpha
+        "cent="           << fCentrality         << // centrality
         //
-        "cutBit0=" << cutBit0 << // cut bits
-        "itsdEdx0=" << itsdEdx0 << // TPC dEdx
-        "dEdx0=" << dEdx0 << // TPC dEdx
-        "sign0=" << sign0 <<
-        "ptot0=" << ptot0 << // momentum
-        "p0=" << p0 <<
-        "pT0=" << pT0 <<
-        "eta0=" << eta0 <<  // eta
-        "phi0=" << phi0 <<  // eta
-        "nSigmasPiTOF0=" << nSigmasPiTOF0 << // TOF nsigma cut for pions
-        "nSigmasPrTOF0=" << nSigmasPrTOF0 << // TOF nsigma cut for protons
+        "cutBit0="        << cutBit0             << // cut bits
+        "itrack0="        << itrack0             << // label
+        "dEdx0="          << dEdx0               << // TPC dEdx
+        "itsdEdx0="       << itsdEdx0            << // ITS dEdx
+        "sign0="          << sign0               << // sign
+        "ptot0="          << ptot0               << // vertex momentum
+        "p0="             << p0                  << // momentum
+        "pT0="            << pT0                 << // transverse momentum
+        "eta0="           << eta0                << // eta
+        "phi0="           << phi0                << // phi
+        "nSigmasPiTOF0="  << nSigmasPiTOF0       << // TOF nsigma cut for pions
+        "nSigmasPrTOF0="  << nSigmasPrTOF0       << // TOF nsigma cut for protons
         //
-        "cutBit1=" << cutBit1 <<  // cut bits
-        "dEdx1=" << dEdx1 <<  // TPC dEdx
-        "itsdEdx1=" << itsdEdx1 <<  // TPC dEdx
-        "sign1=" << sign1 <<
-        "ptot1=" << ptot1 << // momentum
-        "p1=" << p1 <<
-        "pT1=" << pT1 <<
-        "eta1=" << eta1 << // eta
-        "phi1=" << phi1 << // eta
-        "nSigmasPiTOF1=" << nSigmasPiTOF1 << // TOF nsigma cut for pions
-        "nSigmasPrTOF1=" << nSigmasPrTOF1 << // TOF nsigma cut for protons
+        "cutBit1="        << cutBit1             <<  // cut bits
+        "itrack1="        << itrack1             <<  // label
+        "dEdx1="          << dEdx1               <<  // TPC dEdx
+        "itsdEdx1="       << itsdEdx1            <<  // ITS dEdx
+        "sign1="          << sign1               << // sign
+        "ptot1="          << ptot1               << // vertex momentum
+        "p1="             << p1                  << // momentum
+        "pT1="            << pT1                 << // transverse momentum
+        "eta1="           << eta1                << // eta
+        "phi1="           << phi1                << // phi
+        "nSigmasPiTOF1="  << nSigmasPiTOF1       << // TOF nsigma cut for pions
+        "nSigmasPrTOF1="  << nSigmasPrTOF1       << // TOF nsigma cut for protons
         //
         "\n";
 
@@ -4591,12 +4658,12 @@ void AliAnalysisTaskTIdentityPID::FillCleanSamples()
 //________________________________________________________________________
 void AliAnalysisTaskTIdentityPID::GetExpecteds(AliESDtrack *track, Double_t closestPar[3])
 {
-
   //
-  // bettaGamma is not well deifned below bg=0.01 --> below 200MeV protons and deuterons
+  fNSigmasPrITS = fPIDResponse->NumberOfSigmasITS(track, AliPID::kProton);
+  //
+  // betaGamma is not well defined below bg=0.01 --> below 200MeV protons and deuterons
   Double_t ptotForBetaGamma = track->GetInnerParam()->GetP();
   Double_t ptotForBetaGammaThr = 0.2;
-  // if (ptotForBetaGamma<ptotForBetaGammaThr) return;
   //
   // --------------------------------------------------------------
   //  Calculates expected sigma and dEdx for a given track and returns colesest expected particle and its index
@@ -4627,6 +4694,9 @@ void AliAnalysisTaskTIdentityPID::GetExpecteds(AliESDtrack *track, Double_t clos
     // fSigmaEl = fPIDResponse->GetTPCResponse().GetExpectedSigma(track, AliPID::kElectron, AliTPCPIDResponse::kdEdxDefault,fPIDResponse->UseTPCEtaCorrection(),fPIDResponse->UseTPCMultiplicityCorrection(),fPIDResponse->UseTPCPileupCorrection());
     fDEdxEl  = fPIDResponse->GetExpectedSignal(AliPIDResponse::kTPC,track,AliPID::kElectron);
     fSigmaEl = fPIDResponse->GetExpectedSigma(AliPIDResponse::kTPC,track,AliPID::kElectron);
+
+    fTOFSignalEl = fPIDResponse->GetExpectedSignal(AliPIDResponse::kTOF, track, AliPID::kElectron);
+    fTOFSigmaEl  = fPIDResponse->GetExpectedSigma(AliPIDResponse::kTOF, track, AliPID::kElectron);
   }
   //
   // Pion Expected mean and sigma within 2nsigmaTPC
@@ -4635,6 +4705,9 @@ void AliAnalysisTaskTIdentityPID::GetExpecteds(AliESDtrack *track, Double_t clos
     // fSigmaPi = fPIDResponse->GetTPCResponse().GetExpectedSigma(track, AliPID::kPion,     AliTPCPIDResponse::kdEdxDefault,fPIDResponse->UseTPCEtaCorrection(),fPIDResponse->UseTPCMultiplicityCorrection(),fPIDResponse->UseTPCPileupCorrection());
     fDEdxPi  = fPIDResponse->GetExpectedSignal(AliPIDResponse::kTPC,track,AliPID::kPion);
     fSigmaPi = fPIDResponse->GetExpectedSigma(AliPIDResponse::kTPC,track,AliPID::kPion);
+
+    fTOFSignalPi = fPIDResponse->GetExpectedSignal(AliPIDResponse::kTOF, track, AliPID::kPion);
+    fTOFSigmaPi  = fPIDResponse->GetExpectedSigma(AliPIDResponse::kTOF, track, AliPID::kPion);
   }
   //
   // Kaon Expected mean and sigma within 2nsigmaTPC
@@ -4643,6 +4716,9 @@ void AliAnalysisTaskTIdentityPID::GetExpecteds(AliESDtrack *track, Double_t clos
     // fSigmaKa = fPIDResponse->GetTPCResponse().GetExpectedSigma(track, AliPID::kKaon,   AliTPCPIDResponse::kdEdxDefault,fPIDResponse->UseTPCEtaCorrection(),fPIDResponse->UseTPCMultiplicityCorrection(),fPIDResponse->UseTPCPileupCorrection());
     fDEdxKa  = fPIDResponse->GetExpectedSignal(AliPIDResponse::kTPC,track,AliPID::kKaon);
     fSigmaKa = fPIDResponse->GetExpectedSigma(AliPIDResponse::kTPC,track,AliPID::kKaon);
+
+    fTOFSignalKa = fPIDResponse->GetExpectedSignal(AliPIDResponse::kTOF, track, AliPID::kKaon);
+    fTOFSigmaKa  = fPIDResponse->GetExpectedSigma(AliPIDResponse::kTOF, track, AliPID::kKaon);
   }
   //
   // Proton Expected mean and sigma within 2nsigmaTPC
@@ -4651,6 +4727,9 @@ void AliAnalysisTaskTIdentityPID::GetExpecteds(AliESDtrack *track, Double_t clos
     // fSigmaPr = fPIDResponse->GetTPCResponse().GetExpectedSigma(track,  AliPID::kProton, AliTPCPIDResponse::kdEdxDefault,fPIDResponse->UseTPCEtaCorrection(),fPIDResponse->UseTPCMultiplicityCorrection(),fPIDResponse->UseTPCPileupCorrection());
     fDEdxPr  = fPIDResponse->GetExpectedSignal(AliPIDResponse::kTPC,track,AliPID::kProton);
     fSigmaPr = fPIDResponse->GetExpectedSigma(AliPIDResponse::kTPC,track,AliPID::kProton);
+
+    fTOFSignalPr = fPIDResponse->GetExpectedSignal(AliPIDResponse::kTOF, track, AliPID::kProton);
+    fTOFSigmaPr  = fPIDResponse->GetExpectedSigma(AliPIDResponse::kTOF, track, AliPID::kProton);
   }
   //
   // Deuteron Expected mean and sigma within 2nsigmaTPC
@@ -4659,6 +4738,9 @@ void AliAnalysisTaskTIdentityPID::GetExpecteds(AliESDtrack *track, Double_t clos
     // fSigmaDe = fPIDResponse->GetTPCResponse().GetExpectedSigma(track,  AliPID::kDeuteron, AliTPCPIDResponse::kdEdxDefault,fPIDResponse->UseTPCEtaCorrection(),fPIDResponse->UseTPCMultiplicityCorrection(),fPIDResponse->UseTPCPileupCorrection());
     fDEdxDe  = fPIDResponse->GetExpectedSignal(AliPIDResponse::kTPC,track,AliPID::kDeuteron);
     fSigmaDe = fPIDResponse->GetExpectedSigma(AliPIDResponse::kTPC,track,AliPID::kDeuteron);
+
+    fTOFSignalDe = fPIDResponse->GetExpectedSignal(AliPIDResponse::kTOF, track, AliPID::kDeuteron);
+    fTOFSigmaDe  = fPIDResponse->GetExpectedSigma(AliPIDResponse::kTOF, track, AliPID::kDeuteron);
   }
   //
   // --------------------------------------------------------------
@@ -4920,6 +5002,7 @@ UInt_t AliAnalysisTaskTIdentityPID::SetCutBitsAndSomeTrackVariables(AliESDtrack 
   Bool_t cleanDeTPC = kFALSE;
   if (track->GetInnerParam()){
     fPtot      = track->GetInnerParam()->GetP();
+    fITSSignal = track->GetITSsignal();
     fTPCSignal = track->GetTPCsignal();
     fTrackTPCSignalN     = track->GetTPCsignalN();
     fTrackTPCCrossedRows = Float_t(track->GetTPCCrossedRows());
@@ -5006,7 +5089,7 @@ UInt_t AliAnalysisTaskTIdentityPID::SetCutBitsAndSomeTrackVariables(AliESDtrack 
   fTrackIsSecondITSlayer = track->HasPointOnITSLayer(1);
   fTrackNewITScut        = ApplyDCAcutIfNoITSPixel(track);
   //
-  Double_t nclsTRD     = (Float_t)track->GetTRDncls();
+  Double_t nclsTRD     = (Double_t)track->GetTRDncls();
   Double_t TOFSignalDx = track->GetTOFsignalDx();
   Double_t TOFSignalDz = track->GetTOFsignalDz();
   //

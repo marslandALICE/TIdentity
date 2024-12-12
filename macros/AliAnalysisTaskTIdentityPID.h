@@ -11,7 +11,7 @@
 class TH1;
 class THn;
 class TH1F;
-class TH2D;
+class TH2F;
 class TH3D;
 class TList;
 class TTree;
@@ -707,14 +707,14 @@ private:
 
   TH2F             * fHist_EP_2_Qx_Qy_pos;
   TH2F             * fHist_EP_2_Qx_Qy_neg;
-  TH1F             * fHist_EP_2_Psi_pos;             
+  TH1F             * fHist_EP_2_Psi_pos;
   TH1F             * fHist_EP_2_Psi_neg;
-  TH1F             * fHist_EP_2_Psi;   
+  TH1F             * fHist_EP_2_Psi;
   TH2F             * fHist_EP_3_Qx_Qy_pos;
   TH2F             * fHist_EP_3_Qx_Qy_neg;
-  TH1F             * fHist_EP_3_Psi_pos;             
+  TH1F             * fHist_EP_3_Psi_pos;
   TH1F             * fHist_EP_3_Psi_neg;
-  TH1F             * fHist_EP_3_Psi;                          
+  TH1F             * fHist_EP_3_Psi;
 
 
   TH1F             * fHistInvK0s;             // helper histogram for TIdentity tree
@@ -795,29 +795,44 @@ private:
   Float_t           fQt;
   Float_t           fAlfa;
   Float_t           fCosPA;
-  Float_t           fNSigmasElTOF;           // TOF N sigma for Pion
-  Float_t           fNSigmasPiTOF;           // TOF N sigma for Pion
-  Float_t           fNSigmasKaTOF;           // TOF N sigma for Pion
-  Float_t           fNSigmasPrTOF;           // TOF N sigma for Pion
-  Float_t           fNSigmasDeTOF;           // TOF N sigma for Proton
+
+  Float_t           fNSigmasElTPC;           // TPC N sigma for Electron
+  Float_t           fNSigmasPiTPC;           // TPC N sigma for Pion
+  Float_t           fNSigmasKaTPC;           // TPC N sigma for Kaon
+  Float_t           fNSigmasPrTPC;           // TPC N sigma for Proton
+  Float_t           fNSigmasDeTPC;           // TPC N sigma for Deuteron
 
   Float_t           fDEdxEl;                 // Expected Electron dEdx
   Float_t           fDEdxKa;                 // Expected Kaon dEdx
   Float_t           fDEdxPi;                 // Expected Pion dEdx
   Float_t           fDEdxPr;                 // Expected Proton dEdx
-  Float_t           fDEdxDe;                 // Expected Proton dEdx
+  Float_t           fDEdxDe;                 // Expected Deuteron dEdx
 
   Float_t           fSigmaEl;                // Expected Electron sigma
   Float_t           fSigmaKa;                // Expected Kaon sigma
   Float_t           fSigmaPi;                // Expected Pion sigma
   Float_t           fSigmaPr;                // Expected Proton sigma
-  Float_t           fSigmaDe;                // Expected Proton sigma
+  Float_t           fSigmaDe;                // Expected Deuteron sigma
 
-  Float_t           fNSigmasElTPC;           // TOF N sigma for Electron
-  Float_t           fNSigmasPiTPC;           // TOF N sigma for Pion
-  Float_t           fNSigmasKaTPC;           // TOF N sigma for Kaon
-  Float_t           fNSigmasPrTPC;           // TOF N sigma for Proton
-  Float_t           fNSigmasDeTPC;           // TOF N sigma for Proton
+  Float_t           fNSigmasElTOF;           // TOF N sigma for Electron
+  Float_t           fNSigmasPiTOF;           // TOF N sigma for Pion
+  Float_t           fNSigmasKaTOF;           // TOF N sigma for Kaon
+  Float_t           fNSigmasPrTOF;           // TOF N sigma for Proton
+  Float_t           fNSigmasDeTOF;           // TOF N sigma for Deuteron
+
+  Float_t           fTOFSignalEl;            // Expected Electron TOF signal
+  Float_t           fTOFSignalKa;            // Expected Kaon TOF signal
+  Float_t           fTOFSignalPi;            // Expected Pion TOF signal
+  Float_t           fTOFSignalPr;            // Expected Proton TOF signal
+  Float_t           fTOFSignalDe;            // Expected Deuteron TOF signal
+
+  Float_t           fTOFSigmaEl;             // Expected Electron TOF sigma
+  Float_t           fTOFSigmaKa;             // Expected Kaon TOF sigma
+  Float_t           fTOFSigmaPi;             // Expected Pion TOF sigma
+  Float_t           fTOFSigmaPr;             // Expected Proton TOF sigma
+  Float_t           fTOFSigmaDe;             // Expected Deuteron TOF sigma
+
+  Float_t           fNSigmasPrITS;           // ITS N sigma for Proton
 
   Float_t           fTPCSignalMC;
   Float_t           fPtotMC;
@@ -890,6 +905,7 @@ private:
   Int_t              fTPCFindable;            // number of findable clusters
   Int_t              fNcl;                    // number of points used for dEdx
   Int_t              fNclCorr;                // number of points used for dEdx
+  Float_t            fITSSignal;              // ITS signal
 
   Int_t              fNResBins;
   Int_t              fNBarBins;
