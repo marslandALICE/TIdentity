@@ -248,7 +248,7 @@ fFillExpecteds(kFALSE),
 fFillQvectorHists(kFALSE),
 fApplyQVectorCorr(kFALSE),
 fDefaultCuts(kFALSE),
-fNSettings(18),
+fNSettings(kCutSettingsCount),
 fSystSettings(0),
 fNMomBins(0),
 fMomDown(0),
@@ -638,7 +638,7 @@ fFillExpecteds(kFALSE),
 fFillQvectorHists(kFALSE),
 fApplyQVectorCorr(kFALSE),
 fDefaultCuts(kFALSE),
-fNSettings(18),
+fNSettings(kCutSettingsCount),
 fSystSettings(0),
 fNMomBins(0),
 fMomDown(0),
@@ -5209,6 +5209,8 @@ UInt_t AliAnalysisTaskTIdentityPID::SetCutBitsAndSomeTrackVariables(AliESDtrack 
   if (fTrackTPCSignalN>=70) (fTrackCutBits |= 1 << kTPCSignalN);
   if (fTrackTPCSignalN>=80) (fTrackCutBits |= 1 << kTPCSignalNLarge);
   //
+  // ITS pixel cut
+  if (fTrackNewITScut) (fTrackCutBits |= 1 << kITSPixelCut);
   // pile-up
   if (!fMCtrue) { // real data
     if (fPileUpBit & 1 << 0) (fTrackCutBits |= 1 << kPileup);
@@ -5237,7 +5239,7 @@ UInt_t AliAnalysisTaskTIdentityPID::SetCutBitsAndSomeTrackVariables(AliESDtrack 
   //
   // Clean Kaons protons and deuterons
   if (cleanKaTOFTRD)        (fTrackCutBits |= 1 << kCleanKaTOFTRD);
-  if (fTrackProbKaTOF>=0.8) (fTrackCutBits |= 1 << kTrackProbKaTOF);
+  // if (fTrackProbKaTOF>=0.8) (fTrackCutBits |= 1 << kTrackProbKaTOF);
   // if (fTrackProbPrTOF>=0.8) (fTrackCutBits |= 1 << kTrackProbPrTOF);
   if (cleanDeTOF && cleanDeTPC) (fTrackCutBits |= 1 << kCleanDeTOF);
   //
@@ -5269,6 +5271,10 @@ Bool_t AliAnalysisTaskTIdentityPID::GetSystematicClassIndex(UInt_t cut,Int_t sys
   14 -->  kBFieldNeg
   15 -->  kTPCSignalNSmall
   16 -->  kTPCSignalNLarge
+  17 -->  kITSPixelCut
+  18 -->  tof loose
+  19 -->  tof loose 2
+
   */
 
   std::vector<Int_t> fCutArr;
@@ -5371,14 +5377,20 @@ Bool_t AliAnalysisTaskTIdentityPID::GetSystematicClassIndex(UInt_t cut,Int_t sys
     }
     break;
     //
-    case kCutNSigmaTOFLoose:   // 16 --> kNSigmaTOFLoose
+    case kCutITSPixel:   // 16 -->  kITSPixelCut
+    {
+      fCutArr = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDep, kVertexZ, kEventVertexZ, kPileup, kSharedCls, kFindableCls,kTPCSignalN, kITSPixelCut};
+    }
+    break;
+    //
+    case kCutNSigmaTOFLoose:   // 17 --> kNSigmaTOFLoose
     {
       // default cuts, different pid cuts are applied in settings or in post processing where necessary
       fCutArr = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDep, kVertexZ, kEventVertexZ, kPileup, kSharedCls, kFindableCls,kTPCSignalN};
     }
     break;
     //
-    case kCutNSigmaTOFLoose2:   // 17 --> kNSigmaTOFLoose2
+    case kCutNSigmaTOFLoose2:   // 18 --> kNSigmaTOFLoose2
     {
       // default cuts, different pid cuts are applied in settings or in post processing where necessary
       fCutArr = {kNCrossedRowsTPC80,  kMaxChi2PerClusterTPC, kMaxDCAToVertexXYPtDep, kVertexZ, kEventVertexZ, kPileup, kSharedCls, kFindableCls, kTPCSignalN};

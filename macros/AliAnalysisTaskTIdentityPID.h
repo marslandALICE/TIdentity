@@ -95,7 +95,7 @@ public:
     kCleanPrTOF=15,
     kCleanKaTOF=16,
     kCleanKaTOFTRD=17,
-    kTrackProbKaTOF=18,
+    kITSPixelCut=18,
     kCleanPiTOF=19,
     kCleanDeTOF=20,
     kPileup=21,
@@ -128,9 +128,10 @@ public:
     kCutBFieldNeg=13,
     kCutTPCSignalNSmall=14,
     kCutTPCSignalNLarge=15,
-    kCutNSigmaTOFLoose=16,
-    kCutNSigmaTOFLoose2=17,
-    kCutSettingsCount = 18
+    kCutITSPixel=16,
+    kCutNSigmaTOFLoose=17,
+    kCutNSigmaTOFLoose2=18,
+    kCutSettingsCount = 19
   };
 
   enum centEst {
