@@ -3137,6 +3137,19 @@ void AliAnalysisTaskTIdentityPID::FillEventInfoMC()
       Bool_t ifBar = CheckIfBaryon(trackMCgen);
       Bool_t acceptRes = CheckIfFromResonance(trackMCgen);
       Bool_t acceptAnyRes = CheckIfFromAnyResonance(trackMCgen,-0.8,0.8,0.2,10.);
+
+      if (IsFromPileup(iTrack)) continue; // pile up selection
+      //
+      // check the origin of the track
+      Bool_t bPrim     = fMCStack->IsPhysicalPrimary(iTrack);
+      Bool_t bMaterial = fMCStack->IsSecondaryFromMaterial(iTrack);
+      Bool_t bWeak     = fMCStack->IsSecondaryFromWeakDecay(iTrack);
+      Bool_t bAcceptOrigin = kFALSE;
+      Char_t orig = -1;
+      if (bPrim) orig = 0;
+      else if (bWeak) orig = 1;
+      else if (bMaterial) orig = 2;
+
       (*fTreeSRedirector)<<"tracksMCgen"<<
       "gid="          << fEventGID    << // global event ID
       "part="         << iPart        << // particle index --> pi, ka, pr, el, de, ksi, la, phi
@@ -3145,6 +3158,7 @@ void AliAnalysisTaskTIdentityPID::FillEventInfoMC()
       "ifbar="        << ifBar        <<
       "acceptres="    << acceptRes    <<
       "acceptanyres=" << acceptAnyRes <<
+      "orig="         << orig         << // origin
       "sign="         << sign         << // sign
       "px="           << pxMCgen      << // vertex momentum
       "py="           << pyMCgen      << // vertex momentum
