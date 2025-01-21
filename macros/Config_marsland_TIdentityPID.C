@@ -123,17 +123,17 @@ AliAnalysisTaskTIdentityPID* Config_marsland_TIdentityPID(Bool_t getFromAlien, I
       else if (periodName.Contains("15o")) task->SetRunNumberForExpecteds(246087);
       //
       // acceptance & settings
-      task->SetNSettings(13);
-      task->SetSettings({0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 16, 17});
+      task->SetNSettings(6);
+      task->SetSettings({0, 1, 2, 3, 4, 5});
       //
       const Int_t tmpCentbins  = 14;
       const Int_t tmpEtaBinsMC = 8;
-      const Int_t tmpMomBinsMC = 13;
+      const Int_t tmpMomBinsMC = 8;
       Float_t tmpfxCentBins[tmpCentbins] = {0,5,10,20,30,40,50,60,65,70,75,80,85,90};
       Float_t tmpetaDownArr[tmpEtaBinsMC] = {-0.1,-0.2,-0.3,-0.4,-0.5,-0.6,-0.7,-0.8};
       Float_t tmpetaUpArr[tmpEtaBinsMC]   = { 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8};
-      Float_t tmppDownArr[tmpMomBinsMC] = {0.3, 0.3, 0.3, 0.3, 0.6, 0.6, 0.6, 0.6, 1.5, 1.5, 1.5, 3.0, 0.4};
-      Float_t tmppUpArr[tmpMomBinsMC]   = {1.5, 2.0, 3.0, 5.0, 1.5, 2.0, 3.0, 5.0, 3.0, 4.0, 5.0, 5.0, 5.0};
+      Float_t tmppDownArr[tmpMomBinsMC] = {0.4, 0.4, 0.4, 0.6, 0.6, 1.5, 1.5, 1.5};
+      Float_t tmppUpArr[tmpMomBinsMC]   = {1.0, 1.5, 2.0, 1.5, 2.0, 3.0, 4.0, 5.0};
       task->SetMCEtaScanArray(tmpEtaBinsMC, tmpetaDownArr, tmpetaUpArr);
       task->SetMCMomScanArray(tmpMomBinsMC, tmppDownArr,   tmppUpArr);
       task->SetCentralityBinning(tmpCentbins,tmpfxCentBins);
@@ -175,8 +175,8 @@ AliAnalysisTaskTIdentityPID* Config_marsland_TIdentityPID(Bool_t getFromAlien, I
       task->SetTaskSelection(3); // 0; both jet+net-p, 1: only jet, 2: only net-p, 3: only cutbased
       task->SetDownscalingFactor(0.001);
       task->SetFillJetsBG(2); // 0: no PID info for const + no BG, 1: fill BG tree, 2: no BG tree + PID info
-      task->SetUseCouts(kTRUE);
-      task->SetFillDebug(kTRUE);
+      task->SetUseCouts(kFALSE);
+      task->SetFillDebug(kFALSE);
       task->SetFillArmPodTree(kFALSE);
       //
       task->SetFillEventInfo(kTRUE);
@@ -189,8 +189,11 @@ AliAnalysisTaskTIdentityPID* Config_marsland_TIdentityPID(Bool_t getFromAlien, I
       else if (periodName.Contains("15o")) task->SetRunNumberForExpecteds(246087);
       //
       // acceptance & settings
-      task->SetNSettings(6);
-      task->SetSettings({0, 5, 7, 11, 16, 17});
+      // task->SetNSettings(6);
+      // task->SetSettings({0, 5, 7, 11, 16, 17});
+      //
+      task->SetNSettings(13);
+      task->SetSettings({0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 16, 17});
       //
       const Int_t tmpCentbins  = 14;
       const Int_t tmpEtaBinsMC = 8;
@@ -362,12 +365,12 @@ AliAnalysisTaskTIdentityPID* Config_marsland_TIdentityPID(Bool_t getFromAlien, I
       task->SetEtaUpperEdge(0.8);
       //
       // mostly for debugging
-      task->SetApplyQVectorCorr(kFALSE);
-      task->SetUseCouts(kFALSE);
       task->SetFillDebug(kFALSE);
-      task->SetFillTracksMCgen(kFALSE);
-      task->SetFillArmPodTree(kFALSE);
-      task->SetV0InvMassHists(kFALSE);
+      task->SetApplyQVectorCorr(kFALSE);
+      task->SetUseCouts(kTRUE);
+      task->SetFillTracksMCgen(kTRUE);
+      task->SetFillArmPodTree(kTRUE);
+      task->SetV0InvMassHists(kTRUE);
       //
       std::cout << "period and pass = " << periodName << "    " << passIndex << std::endl;
       if( (passIndex==3) || (passIndex==2) ) {
@@ -385,17 +388,17 @@ AliAnalysisTaskTIdentityPID* Config_marsland_TIdentityPID(Bool_t getFromAlien, I
       task->fEventCuts.fUseVariablesCorrelationCuts = true;
       //
       // acceptance & settings
-      task->SetNSettings(13);
-      task->SetSettings({0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 16, 17});
+      task->SetNSettings(4);
+      task->SetSettings({0, 2, 4, 5});
       //
       const Int_t tmpCentbins  = 14;
       const Int_t tmpEtaBinsMC = 8;
-      const Int_t tmpMomBinsMC = 15;
+      const Int_t tmpMomBinsMC = 8;
       Float_t tmpfxCentBins[tmpCentbins] = {0,5,10,20,30,40,50,60,65,70,75,80,85,90};
       Float_t tmpetaDownArr[tmpEtaBinsMC] = {-0.1,-0.2,-0.3,-0.4,-0.5,-0.6,-0.7,-0.8};
       Float_t tmpetaUpArr[tmpEtaBinsMC]   = { 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8};
-      Float_t tmppDownArr[tmpMomBinsMC] = {0.3, 0.3, 0.3, 0.3, 0.6, 0.6, 0.6, 0.6, 1.5, 1.5, 1.5, 3.0, 0.4, 0.4,  0.4 };
-      Float_t tmppUpArr[tmpMomBinsMC]   = {1.5, 2.0, 3.0, 5.0, 1.5, 2.0, 3.0, 5.0, 3.0, 4.0, 5.0, 5.0, 5.0, 10.0, 20.0};
+      Float_t tmppDownArr[tmpMomBinsMC] = {0.4, 0.4, 0.4, 0.6, 0.6, 1.5, 1.5, 1.5};
+      Float_t tmppUpArr[tmpMomBinsMC]   = {1.0, 1.5, 2.0, 1.5, 2.0, 3.0, 4.0, 5.0};
       task->SetMCEtaScanArray(tmpEtaBinsMC, tmpetaDownArr, tmpetaUpArr);
       task->SetMCMomScanArray(tmpMomBinsMC, tmppDownArr,   tmppUpArr);
       task->SetCentralityBinning(tmpCentbins,tmpfxCentBins);

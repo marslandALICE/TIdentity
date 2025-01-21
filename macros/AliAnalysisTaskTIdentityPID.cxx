@@ -279,6 +279,16 @@ fSigmaKa(0),
 fSigmaPi(0),
 fSigmaPr(0),
 fSigmaDe(0),
+fTOFSignalEl(0),
+fTOFSignalKa(0),
+fTOFSignalPi(0),
+fTOFSignalPr(0),
+fTOFSignalDe(0),
+fTOFSigmaEl(0),
+fTOFSigmaKa(0),
+fTOFSigmaPi(0),
+fTOFSigmaPr(0),
+fTOFSigmaDe(0),
 fNSigmasElTPC(0),
 fNSigmasPiTPC(0),
 fNSigmasKaTPC(0),
@@ -347,6 +357,7 @@ fTPCShared(0),
 fTPCFindable(0),
 fNcl(0),
 fNclCorr(0),
+fITSSignal(0),
 fNResBins(0),
 fNBarBins(0),
 fNEtaWinBinsMC(-100),
@@ -669,6 +680,16 @@ fSigmaKa(0),
 fSigmaPi(0),
 fSigmaPr(0),
 fSigmaDe(0),
+fTOFSignalEl(0),
+fTOFSignalKa(0),
+fTOFSignalPi(0),
+fTOFSignalPr(0),
+fTOFSignalDe(0),
+fTOFSigmaEl(0),
+fTOFSigmaKa(0),
+fTOFSigmaPi(0),
+fTOFSigmaPr(0),
+fTOFSigmaDe(0),
 fNSigmasElTPC(0),
 fNSigmasPiTPC(0),
 fNSigmasKaTPC(0),
@@ -737,6 +758,7 @@ fTPCShared(0),
 fTPCFindable(0),
 fNcl(0),
 fNclCorr(0),
+fITSSignal(0),
 fNResBins(0),
 fNBarBins(0),
 fNEtaWinBinsMC(-100),
@@ -1177,13 +1199,13 @@ void AliAnalysisTaskTIdentityPID::Initialize()
   fESDtrackCuts = new AliESDtrackCuts("esdTrackCuts","");
   fESDtrackCuts->SetEtaRange(-0.9,0.9);
   fESDtrackCuts->SetPtRange(0.15,1000.);
-  fESDtrackCuts->SetMinRatioCrossedRowsOverFindableClustersTPC(0.8);
   fESDtrackCuts->SetAcceptKinkDaughters(kFALSE);
   fESDtrackCuts->SetMaxChi2TPCConstrainedGlobal(36);
   fESDtrackCuts->SetMaxChi2PerClusterITS(36);
-  fESDtrackCuts->SetMaxFractionSharedTPCClusters(0.4);    // ?? FROM MARIAN
   fESDtrackCuts->SetRequireTPCRefit(kTRUE);
   fESDtrackCuts->SetRequireITSRefit(kTRUE);
+  fESDtrackCuts->SetMinRatioCrossedRowsOverFindableClustersTPC(0.8);
+  fESDtrackCuts->SetMaxFractionSharedTPCClusters(0.4);    // ?? FROM MARIAN
   fESDtrackCuts->SetMinNCrossedRowsTPC(70);
   fESDtrackCuts->SetMaxDCAToVertexXYPtDep("0.0208+0.04/pt^1.01");
   fESDtrackCuts->SetMaxDCAToVertexXY(2.4);
@@ -1209,6 +1231,10 @@ void AliAnalysisTaskTIdentityPID::Initialize()
   fESDtrackCutsLoose->SetMinNCrossedRowsTPC(50);
   fESDtrackCutsLoose->SetMaxDCAToVertexXY(10);
   fESDtrackCutsLoose->SetMaxDCAToVertexZ(10);
+  fESDtrackCutsLoose->SetMaxChi2PerClusterTPC(10);
+  fESDtrackCutsLoose->SetRequireSigmaToVertex(kFALSE);
+  // fESDtrackCutsLoose->SetMaxChi2TPCConstrainedGlobal(36);
+  // fESDtrackCutsLoose->SetMaxChi2PerClusterITS(36);
   //
   // track cuts to be used for v0s
   fESDtrackCutsCleanSamp = new AliESDtrackCuts("AliESDtrackCutsV0","");
@@ -1313,22 +1339,24 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
     phiBins
   };
 
-  fHistPosEffMatrixRec  =new THnF("fHistPosEffMatrixRec", "fHistPosEffMatrixRec", ndim, nbins0, effMatrixBins);
-  fHistNegEffMatrixRec  =new THnF("fHistNegEffMatrixRec", "fHistNegEffMatrixRec", ndim, nbins0, effMatrixBins);
-  fHistPosEffMatrixGen  =new THnF("fHistPosEffMatrixGen", "fHistPosEffMatrixGen", ndim, nbins0, effMatrixBins);
-  fHistNegEffMatrixGen  =new THnF("fHistNegEffMatrixGen", "fHistNegEffMatrixGen", ndim, nbins0, effMatrixBins);
-  TString axisNameEff[ndim]  = {"particle"      ,"Centrality"     ,"momentum"      ,"eta"  ,"phi"};
-  TString axisTitleEff[ndim] = {"particle type" ,"Centrality (%)" ,"#it{p}_{T} (GeV/#it{c})" ,"#eta" ,"#phi"};
-  for (Int_t iEff=0; iEff<ndim;iEff++){
-    fHistPosEffMatrixRec->GetAxis(iEff)->SetName(axisNameEff[iEff]);  fHistPosEffMatrixRec->GetAxis(iEff)->SetTitle(axisTitleEff[iEff]);
-    fHistNegEffMatrixRec->GetAxis(iEff)->SetName(axisNameEff[iEff]);  fHistNegEffMatrixRec->GetAxis(iEff)->SetTitle(axisTitleEff[iEff]);
-    fHistPosEffMatrixGen->GetAxis(iEff)->SetName(axisNameEff[iEff]);  fHistPosEffMatrixGen->GetAxis(iEff)->SetTitle(axisTitleEff[iEff]);
-    fHistNegEffMatrixGen->GetAxis(iEff)->SetName(axisNameEff[iEff]);  fHistNegEffMatrixGen->GetAxis(iEff)->SetTitle(axisTitleEff[iEff]);
+  if (fMCtrue){
+    fHistPosEffMatrixRec  =new THnF("fHistPosEffMatrixRec", "fHistPosEffMatrixRec", ndim, nbins0, effMatrixBins);
+    fHistNegEffMatrixRec  =new THnF("fHistNegEffMatrixRec", "fHistNegEffMatrixRec", ndim, nbins0, effMatrixBins);
+    fHistPosEffMatrixGen  =new THnF("fHistPosEffMatrixGen", "fHistPosEffMatrixGen", ndim, nbins0, effMatrixBins);
+    fHistNegEffMatrixGen  =new THnF("fHistNegEffMatrixGen", "fHistNegEffMatrixGen", ndim, nbins0, effMatrixBins);
+    TString axisNameEff[ndim]  = {"particle"      ,"Centrality"     ,"momentum"      ,"eta"  ,"phi"};
+    TString axisTitleEff[ndim] = {"particle type" ,"Centrality (%)" ,"#it{p}_{T} (GeV/#it{c})" ,"#eta" ,"#phi"};
+    for (Int_t iEff=0; iEff<ndim;iEff++){
+      fHistPosEffMatrixRec->GetAxis(iEff)->SetName(axisNameEff[iEff]);  fHistPosEffMatrixRec->GetAxis(iEff)->SetTitle(axisTitleEff[iEff]);
+      fHistNegEffMatrixRec->GetAxis(iEff)->SetName(axisNameEff[iEff]);  fHistNegEffMatrixRec->GetAxis(iEff)->SetTitle(axisTitleEff[iEff]);
+      fHistPosEffMatrixGen->GetAxis(iEff)->SetName(axisNameEff[iEff]);  fHistPosEffMatrixGen->GetAxis(iEff)->SetTitle(axisTitleEff[iEff]);
+      fHistNegEffMatrixGen->GetAxis(iEff)->SetName(axisNameEff[iEff]);  fHistNegEffMatrixGen->GetAxis(iEff)->SetTitle(axisTitleEff[iEff]);
+    }
+    fListHist->Add(fHistPosEffMatrixRec);
+    fListHist->Add(fHistNegEffMatrixRec);
+    fListHist->Add(fHistPosEffMatrixGen);
+    fListHist->Add(fHistNegEffMatrixGen);
   }
-  fListHist->Add(fHistPosEffMatrixRec);
-  fListHist->Add(fHistNegEffMatrixRec);
-  fListHist->Add(fHistPosEffMatrixGen);
-  fListHist->Add(fHistNegEffMatrixGen);
   //
   //
   // const Int_t lastSystSetting = *max_element(fSystSettings.begin(), fSystSettings.end());
@@ -1360,23 +1388,25 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
     etaBins
   };
 
-  fHistPosEffMatrixScanRec  =new THnF("fHistPosEffMatrixScanRec", "fHistPosEffMatrixScanRec", ndimScan, nbinsScan, effMatrixScanBins);
-  fHistNegEffMatrixScanRec  =new THnF("fHistNegEffMatrixScanRec", "fHistNegEffMatrixScanRec", ndimScan, nbinsScan, effMatrixScanBins);
-  fHistPosEffMatrixScanGen  =new THnF("fHistPosEffMatrixScanGen", "fHistPosEffMatrixScanGen", ndimScan, nbinsScan, effMatrixScanBins);
-  fHistNegEffMatrixScanGen  =new THnF("fHistNegEffMatrixScanGen", "fHistNegEffMatrixScanGen", ndimScan, nbinsScan, effMatrixScanBins);
+  if (fMCtrue){
+    fHistPosEffMatrixScanRec  =new THnF("fHistPosEffMatrixScanRec", "fHistPosEffMatrixScanRec", ndimScan, nbinsScan, effMatrixScanBins);
+    fHistNegEffMatrixScanRec  =new THnF("fHistNegEffMatrixScanRec", "fHistNegEffMatrixScanRec", ndimScan, nbinsScan, effMatrixScanBins);
+    fHistPosEffMatrixScanGen  =new THnF("fHistPosEffMatrixScanGen", "fHistPosEffMatrixScanGen", ndimScan, nbinsScan, effMatrixScanBins);
+    fHistNegEffMatrixScanGen  =new THnF("fHistNegEffMatrixScanGen", "fHistNegEffMatrixScanGen", ndimScan, nbinsScan, effMatrixScanBins);
 
-  TString axisNameEffScan[ndimScan]  = {"detector", "origin",    "systematic", "particle"      ,"Centrality"     ,"momentum"                ,"eta"  };
-  TString axisTitleEffScan[ndimScan] = {"detector", "isprimary", "setting",    "particle type" ,"Centrality (%)" ,"#it{p}_{T} (GeV/#it{c})" ,"#eta"};
-  for (Int_t iEff=0; iEff<ndimScan;iEff++){
-    fHistPosEffMatrixScanRec->GetAxis(iEff)->SetName(axisNameEffScan[iEff]);  fHistPosEffMatrixScanRec->GetAxis(iEff)->SetTitle(axisTitleEffScan[iEff]);
-    fHistNegEffMatrixScanRec->GetAxis(iEff)->SetName(axisNameEffScan[iEff]);  fHistNegEffMatrixScanRec->GetAxis(iEff)->SetTitle(axisTitleEffScan[iEff]);
-    fHistPosEffMatrixScanGen->GetAxis(iEff)->SetName(axisNameEffScan[iEff]);  fHistPosEffMatrixScanGen->GetAxis(iEff)->SetTitle(axisTitleEffScan[iEff]);
-    fHistNegEffMatrixScanGen->GetAxis(iEff)->SetName(axisNameEffScan[iEff]);  fHistNegEffMatrixScanGen->GetAxis(iEff)->SetTitle(axisTitleEffScan[iEff]);
+    TString axisNameEffScan[ndimScan]  = {"detector", "origin",    "systematic", "particle"      ,"Centrality"     ,"momentum"                ,"eta"  };
+    TString axisTitleEffScan[ndimScan] = {"detector", "isprimary", "setting",    "particle type" ,"Centrality (%)" ,"#it{p}_{T} (GeV/#it{c})" ,"#eta"};
+    for (Int_t iEff=0; iEff<ndimScan;iEff++){
+      fHistPosEffMatrixScanRec->GetAxis(iEff)->SetName(axisNameEffScan[iEff]);  fHistPosEffMatrixScanRec->GetAxis(iEff)->SetTitle(axisTitleEffScan[iEff]);
+      fHistNegEffMatrixScanRec->GetAxis(iEff)->SetName(axisNameEffScan[iEff]);  fHistNegEffMatrixScanRec->GetAxis(iEff)->SetTitle(axisTitleEffScan[iEff]);
+      fHistPosEffMatrixScanGen->GetAxis(iEff)->SetName(axisNameEffScan[iEff]);  fHistPosEffMatrixScanGen->GetAxis(iEff)->SetTitle(axisTitleEffScan[iEff]);
+      fHistNegEffMatrixScanGen->GetAxis(iEff)->SetName(axisNameEffScan[iEff]);  fHistNegEffMatrixScanGen->GetAxis(iEff)->SetTitle(axisTitleEffScan[iEff]);
+    }
+    fListHist->Add(fHistPosEffMatrixScanRec);
+    fListHist->Add(fHistNegEffMatrixScanRec);
+    fListHist->Add(fHistPosEffMatrixScanGen);
+    fListHist->Add(fHistNegEffMatrixScanGen);
   }
-  fListHist->Add(fHistPosEffMatrixScanRec);
-  fListHist->Add(fHistNegEffMatrixScanRec);
-  fListHist->Add(fHistPosEffMatrixScanGen);
-  fListHist->Add(fHistNegEffMatrixScanGen);
 
   // array to store efficiency matrix projections
   // dimensions: [setting][cent][eta][isTOF][sign]
@@ -1438,48 +1468,45 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
   fListHist->Add(fHist_EP_3_Psi_neg);
   fListHist->Add(fHist_EP_3_Psi);
 
-  if (fRunFastSimulation){
-    fHistRapDistFullAccPr  = new TH2F("hRapDistFullAccPr",     "rapidity dist of protons in full acceptance" , 1200, -15, 15., 10, 0., 100.);
-    fHistRapDistFullAccAPr = new TH2F("hRapDistFullAccApr",    "rapidity dist of antiprotons in full acceptance", 1200, -15, 15., 10, 0., 100.);
+  fHistRapDistFullAccPr  = new TH2F("hRapDistFullAccPr",     "rapidity dist of protons in full acceptance" , 1200, -15, 15., 10, 0., 100.);
+  fHistRapDistFullAccAPr = new TH2F("hRapDistFullAccApr",    "rapidity dist of antiprotons in full acceptance", 1200, -15, 15., 10, 0., 100.);
+  fHistNhard   = new TH1F("fHistNhard",   "fHistNhard", 1000, 0., 1000.);
+  fHistNproj   = new TH1F("fHistNproj",   "fHistNproj", 300, 0., 300.);
+  fHistNtarget = new TH1F("fHistNtarget", "fHistNtarget", 300, 0., 300.);
+  fHistNN      = new TH1F("fHistNN", "fHistNN", 200, 0., 200.);
+  fHistNNW     = new TH1F("fHistNNW", "fHistNNW", 300, 0., 300.);
+  fHistNWN     = new TH1F("fHistNWN", "fHistNWN", 300, 0., 300.);
+  fHistNWNW    = new TH1F("fHistNWNW", "fHistNWNW", 1500, 0., 1500.);
+  fHistNpionsInTPC   = new TH1F("fHistNpionsInTPC",   "fHistNpionsInTPC",   5000,  0., 5000.);
+  fHistNkaonsInTPC   = new TH1F("fHistNkaonsInTPC",   "fHistNkaonsInTPC",   500,   0., 500.);
+  fHistNprotonsInTPC = new TH1F("fHistNprotonsInTPC", "fHistNprotonsInTPC", 500,   0., 500.);
+  fHistNchargedInTPC = new TH1F("fHistNchargedInTPC", "fHistNchargedInTPC", 6000,  0., 12000.);
+  fHistNallInTPC     = new TH1F("fHistNallInTPC",     "fHistNallInTPC",     5000,  0., 20000.);
+  fHistNpionsInV0M   = new TH1F("fHistNpionsInV0M",   "fHistNpionsInV0M",   5000,  0., 10000.);
+  fHistNkaonsInV0M   = new TH1F("fHistNkaonsInV0M",   "fHistNkaonsInV0M",   2000,  0., 2000.);
+  fHistNprotonsInV0M = new TH1F("fHistNprotonsInV0M", "fHistNprotonsInV0M", 1000,  0., 1000.);
+  fHistNchargedInV0M = new TH1F("fHistNchargedInV0M", "fHistNchargedInV0M", 6000,  0., 30000.);
+  fHistNallInV0M     = new TH1F("fHistNallInV0M",     "fHistNallInV0M",     10000, 0., 50000.);
+  fListHist->Add(fHistRapDistFullAccPr);
+  fListHist->Add(fHistRapDistFullAccAPr);
+  fListHist->Add(fHistNhard);
+  fListHist->Add(fHistNproj);
+  fListHist->Add(fHistNtarget);
+  fListHist->Add(fHistNN);
+  fListHist->Add(fHistNNW);
+  fListHist->Add(fHistNWN);
+  fListHist->Add(fHistNWNW);
+  fListHist->Add(fHistNpionsInTPC);
+  fListHist->Add(fHistNkaonsInTPC);
+  fListHist->Add(fHistNprotonsInTPC);
+  fListHist->Add(fHistNchargedInTPC);
+  fListHist->Add(fHistNallInTPC);
+  fListHist->Add(fHistNpionsInV0M);
+  fListHist->Add(fHistNkaonsInV0M);
+  fListHist->Add(fHistNprotonsInV0M);
+  fListHist->Add(fHistNchargedInV0M);
+  fListHist->Add(fHistNallInV0M);
 
-    fHistNhard   = new TH1F("fHistNhard",   "fHistNhard", 1000, 0., 1000.);
-    fHistNproj   = new TH1F("fHistNproj",   "fHistNproj", 300, 0., 300.);
-    fHistNtarget = new TH1F("fHistNtarget", "fHistNtarget", 300, 0., 300.);
-    fHistNN      = new TH1F("fHistNN", "fHistNN", 200, 0., 200.);
-    fHistNNW     = new TH1F("fHistNNW", "fHistNNW", 300, 0., 300.);
-    fHistNWN     = new TH1F("fHistNWN", "fHistNWN", 300, 0., 300.);
-    fHistNWNW    = new TH1F("fHistNWNW", "fHistNWNW", 1500, 0., 1500.);
-    fHistNpionsInTPC   = new TH1F("fHistNpionsInTPC",   "fHistNpionsInTPC",   5000,  0., 5000.);
-    fHistNkaonsInTPC   = new TH1F("fHistNkaonsInTPC",   "fHistNkaonsInTPC",   500,   0., 500.);
-    fHistNprotonsInTPC = new TH1F("fHistNprotonsInTPC", "fHistNprotonsInTPC", 500,   0., 500.);
-    fHistNchargedInTPC = new TH1F("fHistNchargedInTPC", "fHistNchargedInTPC", 6000,  0., 12000.);
-    fHistNallInTPC     = new TH1F("fHistNallInTPC",     "fHistNallInTPC",     5000,  0., 20000.);
-    fHistNpionsInV0M   = new TH1F("fHistNpionsInV0M",   "fHistNpionsInV0M",   5000,  0., 10000.);
-    fHistNkaonsInV0M   = new TH1F("fHistNkaonsInV0M",   "fHistNkaonsInV0M",   2000,  0., 2000.);
-    fHistNprotonsInV0M = new TH1F("fHistNprotonsInV0M", "fHistNprotonsInV0M", 1000,  0., 1000.);
-    fHistNchargedInV0M = new TH1F("fHistNchargedInV0M", "fHistNchargedInV0M", 6000,  0., 30000.);
-    fHistNallInV0M     = new TH1F("fHistNallInV0M",     "fHistNallInV0M",     10000, 0., 50000.);
-
-    fListHist->Add(fHistRapDistFullAccPr);
-    fListHist->Add(fHistRapDistFullAccAPr);
-    fListHist->Add(fHistNhard);
-    fListHist->Add(fHistNproj);
-    fListHist->Add(fHistNtarget);
-    fListHist->Add(fHistNN);
-    fListHist->Add(fHistNNW);
-    fListHist->Add(fHistNWN);
-    fListHist->Add(fHistNWNW);
-    fListHist->Add(fHistNpionsInTPC);
-    fListHist->Add(fHistNkaonsInTPC);
-    fListHist->Add(fHistNprotonsInTPC);
-    fListHist->Add(fHistNchargedInTPC);
-    fListHist->Add(fHistNallInTPC);
-    fListHist->Add(fHistNpionsInV0M);
-    fListHist->Add(fHistNkaonsInV0M);
-    fListHist->Add(fHistNprotonsInV0M);
-    fListHist->Add(fHistNchargedInV0M);
-    fListHist->Add(fHistNallInV0M);
-  }
   if (fMCtrue) {
     fListHist->Add(fHistCentralityImpPar);
     fListHist->Add(fHistImpParam);
@@ -1961,8 +1988,9 @@ void AliAnalysisTaskTIdentityPID::UserExec(Option_t *)
       if (fFillArmPodTree) FillCleanSamples();
       if (fTaskSelection==0) {FillTPCdEdxReal(); CalculateMoments_CutBasedMethod(); FindJetsFJ();} // bot jet and net-p
       if (fTaskSelection==1) {FindJetsFJ();} // only jet
-      if (fTaskSelection==2) {FillTPCdEdxReal(); CalculateMoments_CutBasedMethod();} // only net-p
+      if (fTaskSelection==2) {FillTPCdEdxReal();} // only tracks
       if (fTaskSelection==3) {CalculateMoments_CutBasedMethod();} // only net-p
+      if (fTaskSelection==4) {FillTPCdEdxReal(); CalculateMoments_CutBasedMethod();} //  net-p and tracks
       if (fUseCouts)  std::cout << " Info::marsland: (Real Data Analysis) End of Filling part = " << fEventCountInFile << std::endl;
       fHistReturns->Fill(5);
       return;
@@ -1986,7 +2014,7 @@ void AliAnalysisTaskTIdentityPID::UserExec(Option_t *)
       return;
     } else {
       if (fUseCouts) std::cout << " Info::marsland: (full MC analysis) End of Filling part = " << fEventCountInFile << std::endl;
-      FillEffMatrix();
+      // FillEffMatrix();
       CalculateEventInfo();
       CreateEventInfoTree();
       FillEventInfoMC();
@@ -2123,13 +2151,18 @@ void AliAnalysisTaskTIdentityPID::FillTPCdEdxReal()
     Double_t TOFSignalDz = track->GetTOFsignalDz();
     Float_t dca[2], covar[3];
     track->GetImpactParameters(dca, covar);
+    Bool_t isOnITS = track->IsOn(AliESDtrack::kITSrefit);
+    Bool_t isOnTPC = track->IsOn(AliESDtrack::kTPCrefit);
+    Double_t goldenChi2 = track->GetChi2TPCConstrainedVsGlobal(fVertex);
+    Int_t nclITS = track->GetITSNcls(); if (nclITS<1) nclITS=-1;
+    Double_t itschi2 = track->GetITSchi2()/nclITS;
+
 
     if(!fTreeSRedirector) return;
     (*fTreeSRedirector)<<"tracks"<<
     //
     "gid="                << fEventGID                << // global event ID
     "itrack="             << itrack                   << // track number
-    "cutBit="             << fTrackCutBits            << // Systematic Cuts
     "sign="               << fSign                    << // charge
     "ptot="               << fPtot                    << // TPC momentum
     "eta="                << fEta                     << // eta
@@ -2156,6 +2189,11 @@ void AliAnalysisTaskTIdentityPID::FillTPCdEdxReal()
     "itsdEdx="            << fITSSignal               << // ITS dEdx
     "nsigmaITSPr="        << fNSigmasPrITS            << // nsigma ITS for protons
     //
+    "goldenchi2="         << goldenChi2               << // golden chi2 cut GetChi2TPCConstrainedVsGlobal
+    "itschi2="            << itschi2                  << // ITS chi2
+    "itsrefit="           << isOnITS                  << // its refit
+    "tpcrefit="           << isOnTPC                  << // tpc refit
+    "noitspixel="         << fTrackNewITScut          << // if no its pixel use DCA cut
     "ncltpc="             << fNcl                     << // number of clusters
     "findableCls="        << tpcFindableCls           << // number of findable clusters
     "sharedCls="          << tpcSharedCls             << // number of shared clusters
@@ -2165,10 +2203,10 @@ void AliAnalysisTaskTIdentityPID::FillTPCdEdxReal()
     "dcaz="               << fTrackDCAz               << // dcaz
     "cRows="              << fTrackTPCCrossedRows     << // crossed Rows in TPC
     "chi2tpc="            << fTrackChi2TPC;              // TPC chi2
-
     if (fFillDebug){
       (*fTreeSRedirector)<<"tracks"<<
       "settings.="        << &settings                << // Systematic settings
+      "cutBit="             << fTrackCutBits            << // Systematic Cuts
       "run="              << fRunNo                   << // run Number
       "bField="           << fBField                  << // magnetic filed
       "intrate="          << fIntRate                 << // interaction rate
@@ -3787,13 +3825,18 @@ void AliAnalysisTaskTIdentityPID::FillTreeMC()
     Double_t nclsTRD     = (Double_t)trackReal->GetTRDncls();
     Double_t TOFSignalDx = trackReal->GetTOFsignalDx();
     Double_t TOFSignalDz = trackReal->GetTOFsignalDz();
+
+    Bool_t isOnITS = trackReal->IsOn(AliESDtrack::kITSrefit);
+    Bool_t isOnTPC = trackReal->IsOn(AliESDtrack::kTPCrefit);
+    Double_t goldenChi2 = trackReal->GetChi2TPCConstrainedVsGlobal(fVertex);
+    Int_t nclITS = trackReal->GetITSNcls(); if (nclITS<1) nclITS=-1;
+    Double_t itschi2 = trackReal->GetITSchi2()/nclITS;
     //
     // Fill MC closure tree
     if(!fTreeSRedirector) return;
     (*fTreeSRedirector)<<"tracksMCrec"<<
     "gid="                  << fEventGID                << // global event ID
     "itrack="               << irectrack                << // track number
-    "cutBit="               << fTrackCutBits            << // Systematic Cuts
     "sign="                 << fSign                    << // charge
     "ptot="                 << fPtot                    << // TPC momentum
     "eta="                  << fEta                     << // eta
@@ -3819,7 +3862,12 @@ void AliAnalysisTaskTIdentityPID::FillTreeMC()
     // its pid
     "itsdEdx="              << fITSSignal               << // ITS dEdx
     "nsigmaITSPr="          << fNSigmasPrITS            << // nsigma ITS for protons
-    //
+    // track properties
+    "goldenchi2="           << goldenChi2               << // golden chi2 cut GetChi2TPCConstrainedVsGlobal
+    "itschi2="              << itschi2                  << // ITS chi2
+    "itsrefit="             << isOnITS                  << // its refit
+    "tpcrefit="             << isOnTPC                  << // tpc refit
+    "noitspixel="           << fTrackNewITScut          << // if no its pixel use DCA cut
     "ncltpc="               << fNcl                     << // number of clusters
     "findableCls="          << tpcFindableCls           << // number of findable clusters
     "sharedCls="            << tpcSharedCls             << // number of shared clusters
@@ -3829,16 +3877,22 @@ void AliAnalysisTaskTIdentityPID::FillTreeMC()
     "dcaz="                 << fTrackDCAz               << // dcaz
     "cRows="                << fTrackTPCCrossedRows     << // crossed Rows in TPC
     "chi2tpc="              << fTrackChi2TPC            << // TPC chi2
-
+    // pileup info
+    "tpcpileup="            << isTPCPileup              << // out of bunch pileup check
+    "itspileup="            << isITSPileup              << // inbunch pileup check
+    // MC true information
+    "orig="                 << trackOrigin              << // origin of the track
+    "part="                 << iPart                    << // particle of interest
     "lab="                  << lab                      << // track label
     "pdg="                  << pdg                      << // pdg code
     "labMom="               << labMom                   << // mother label
-
+    "pdgMom="               << pdgMom                   << // pdg of mother
     "ifbar="                << ifBar                    << // baryon
     "acceptRes="            << acceptRes                << // accept resonances
-    "acceptAnyRes="         << acceptAnyRes;               // accept any resonances
+    "acceptAnyRes="         << acceptAnyRes             ;  // accept any resonance
     if (fFillDebug){
       (*fTreeSRedirector)<<"tracksMCrec"<<
+      "cutBit="             << fTrackCutBits            << // Systematic Cuts
       "run="                << fRunNo <<  // run Number
       "settings.="          << &settings <<  //  Systematic settings
       "bField="             << fBField <<  // run Number
@@ -6329,7 +6383,7 @@ Double_t AliAnalysisTaskTIdentityPID::GetTrackEfficiency(const Int_t& part, cons
 
   // get centrality index
   Int_t centIndex = -1;
-  for (Int_t iCent = 0; iCent < fEffMatrixCentBins.size(); iCent++) {
+  for (Int_t iCent = 0; iCent < static_cast<Int_t>(fEffMatrixCentBins.size()); iCent++) {
     if (fCentrality >= fEffMatrixCentBins[iCent] && fCentrality < fEffMatrixCentBins[iCent+1]) {
       centIndex = iCent;
       break;

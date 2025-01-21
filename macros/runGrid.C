@@ -110,7 +110,7 @@ lhcYear        --> year
 
 */
 
-Bool_t fAddFilteredTrees = kFALSE;
+Bool_t fAddFilteredTrees = kTRUE;
 Bool_t fAddTIdentityTask = kTRUE;
 //
 Bool_t fUseMultSelection = kTRUE;
@@ -121,7 +121,7 @@ const Int_t nTestFiles = 1;
 const Int_t nEvents = -1; // set -1 for all events in a given chunk
 // run selections
 const Int_t nTestRuns = -1; // set -1 for all runs of the list
-const Int_t nChunksPerJob = 25;
+const Int_t nChunksPerJob = 30;
 
 //
 // Set the local inout directory
