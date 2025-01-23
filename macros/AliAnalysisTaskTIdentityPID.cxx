@@ -347,6 +347,7 @@ fEventCountInFile(0),
 fEvent(0),
 fEventMC(0),
 fEventMCgen(0),
+fTrackCounter(0),
 fTPCSignal(0),
 fEta(0),
 fNContributors(0),
@@ -458,6 +459,8 @@ fpUpArr(),
 fxCentBins(),
 fResonances(),
 fBaryons(),
+fCounterEtaBins(),
+fCounterMomBins(),
 fHistPosEffMatrixRec(0),
 fHistNegEffMatrixRec(0),
 fHistPosEffMatrixGen(0),
@@ -748,6 +751,7 @@ fEventCountInFile(0),
 fEvent(0),
 fEventMC(0),
 fEventMCgen(0),
+fTrackCounter(0),
 fTPCSignal(0),
 fEta(0),
 fNContributors(0),
@@ -859,6 +863,8 @@ fpUpArr(),
 fxCentBins(),
 fResonances(),
 fBaryons(),
+fCounterEtaBins(),
+fCounterMomBins(),
 fHistPosEffMatrixRec(0),
 fHistNegEffMatrixRec(0),
 fHistPosEffMatrixGen(0),
@@ -1233,8 +1239,8 @@ void AliAnalysisTaskTIdentityPID::Initialize()
   fESDtrackCutsLoose->SetMaxDCAToVertexZ(10);
   fESDtrackCutsLoose->SetMaxChi2PerClusterTPC(10);
   fESDtrackCutsLoose->SetRequireSigmaToVertex(kFALSE);
-  // fESDtrackCutsLoose->SetMaxChi2TPCConstrainedGlobal(36);
-  // fESDtrackCutsLoose->SetMaxChi2PerClusterITS(36);
+  fESDtrackCutsLoose->SetMaxChi2TPCConstrainedGlobal(36);
+  fESDtrackCutsLoose->SetMaxChi2PerClusterITS(36);
   //
   // track cuts to be used for v0s
   fESDtrackCutsCleanSamp = new AliESDtrackCuts("AliESDtrackCutsV0","");
@@ -1269,6 +1275,17 @@ void AliAnalysisTaskTIdentityPID::Initialize()
   fPileUpTightnessCut2->SetRejectTPCPileupWithITSTPCnCluCorr(kTRUE,2);
   fPileUpTightnessCut1->SetRejectTPCPileupWithITSTPCnCluCorr(kTRUE,1);
   //
+
+  fCounterEtaBins = fetaUpArr;
+  fCounterMomBins = vector<float>(16, 0.);
+  for (Int_t i = 0; i < 16; i++) {
+    fCounterMomBins[i] = 0.1 * i + 0.4;
+  }
+  fTrackCounter = vector<vector<Int_t>>(fCounterEtaBins.size());
+  for (size_t i = 0; i < fCounterEtaBins.size(); i++) {
+    fTrackCounter[i] = vector<Int_t>(fCounterMomBins.size(), 0);
+  }
+
   //
   std::cout << " Info::marsland: ===================================================== " << std::endl;
   std::cout << " Info::marsland: =============== Summary of Track Cuts =============== " << std::endl;
@@ -2157,94 +2174,102 @@ void AliAnalysisTaskTIdentityPID::FillTPCdEdxReal()
     Int_t nclITS = track->GetITSNcls(); if (nclITS<1) nclITS=-1;
     Double_t itschi2 = track->GetITSchi2()/nclITS;
 
+    Bool_t fillTracks = kTRUE;
 
-    if(!fTreeSRedirector) return;
-    (*fTreeSRedirector)<<"tracks"<<
-    //
-    "gid="                << fEventGID                << // global event ID
-    "itrack="             << itrack                   << // track number
-    "sign="               << fSign                    << // charge
-    "ptot="               << fPtot                    << // TPC momentum
-    "eta="                << fEta                     << // eta
-    "phi="                << fPhi                     << // phi
-    "px="                 << fPx                      << // px
-    "py="                 << fPy                      << // py
-    "pz="                 << fPz                      << // pz
-    // tpc pid
-    "dEdx="               << fTPCSignal               << // dEdx of the track
-    "nsigmaTPCEl="        << fNSigmasElTPC            << // nsigma TPC for electrons
-    "nsigmaTPCPi="        << fNSigmasPiTPC            << // nsigma TPC for pions
-    "nsigmaTPCKa="        << fNSigmasKaTPC            << // nsigma TPC for kaons
-    "nsigmaTPCPr="        << fNSigmasPrTPC            << // nsigma TPC for protons
-    "nsigmaTPCDe="        << fNSigmasDeTPC            << // nsigma TPC for deuterons
-    // tof pid
-    "length="             << length                   << // integrated track length
-    "tofSignal="          << tofSignal                << // TOF signal
-    "nsigmaTOFEl="        << fNSigmasElTOF            << // nsigma TOF for electrons
-    "nsigmaTOFPi="        << fNSigmasPiTOF            << // nsigma TOF for pions
-    "nsigmaTOFKa="        << fNSigmasKaTOF            << // nsigma TOF for kaons
-    "nsigmaTOFPr="        << fNSigmasPrTOF            << // nsigma TOF for protons
-    "nsigmaTOFDe="        << fNSigmasDeTOF            << // nsigma TOF for deuterons
-    // its pid
-    "itsdEdx="            << fITSSignal               << // ITS dEdx
-    "nsigmaITSPr="        << fNSigmasPrITS            << // nsigma ITS for protons
-    //
-    "goldenchi2="         << goldenChi2               << // golden chi2 cut GetChi2TPCConstrainedVsGlobal
-    "itschi2="            << itschi2                  << // ITS chi2
-    "itsrefit="           << isOnITS                  << // its refit
-    "tpcrefit="           << isOnTPC                  << // tpc refit
-    "noitspixel="         << fTrackNewITScut          << // if no its pixel use DCA cut
-    "ncltpc="             << fNcl                     << // number of clusters
-    "findableCls="        << tpcFindableCls           << // number of findable clusters
-    "sharedCls="          << tpcSharedCls             << // number of shared clusters
-    "lengthInActiveZone=" << fTrackLengthInActiveZone << // track length in active zone
-    "tpcsignaln="         << fTrackTPCSignalN         << // number of cl used in dEdx
-    "dcaxy="              << fTrackDCAxy              << // dcaxy
-    "dcaz="               << fTrackDCAz               << // dcaz
-    "cRows="              << fTrackTPCCrossedRows     << // crossed Rows in TPC
-    "chi2tpc="            << fTrackChi2TPC;              // TPC chi2
-    if (fFillDebug){
+    if (fDownsampleTrees)
+      fillTracks = (fPtot < 1.0 && abs(fNSigmasPrTPC) < 4) || (fPtot >= 1.0 && abs(fNSigmasPrTOF) < 4) || (fPtot < 0.5 && abs(fNSigmasKaTPC) < 4) || (fPtot >= 0.5 && abs(fNSigmasKaTOF) < 4) || fRandom.Rndm() < fDownscalingFactor;
+
+    if (fillTracks) {
+      if(!fTreeSRedirector) return;
       (*fTreeSRedirector)<<"tracks"<<
-      "settings.="        << &settings                << // Systematic settings
-      "cutBit="             << fTrackCutBits            << // Systematic Cuts
-      "run="              << fRunNo                   << // run Number
-      "bField="           << fBField                  << // magnetic filed
-      "intrate="          << fIntRate                 << // interaction rate
-      "pileupbit="        << fPileUpBit               << // flag for pileup selection
-      "primMult="         << fNContributors           << // #prim tracks
-      "tpcClMult="        << tpcClusterMultiplicity   << // TPC cluster multiplicity
-      "tpcmult="          << fTPCMult                 << // TPC track multiplicity
-      "tpcclmult="        << nTPCClusters             << // TPC cluster multiplicity
-      "itsmult="          << itsNumberOfTracklets     << // ITS multiplicity
-      "itsclmult="        << nITSClusters             << // ITS cluster multiplicity
       //
-      // track level
-      "label="            << label                    <<
-      "eventtime="        << fTimeStamp               << // event timeStamp
-      "defCut="           << fDefaultCuts             << // default cuts tuned by hand
-      "bit96="            << fBit96_base              << // tight cuts of 2011 tuned data
-      "bit128="           << fBit128                  << // TPC only tracks cuts
-      "bit768="           << fBit768                  << // Hybrid track cuts
-      "pixCut="           << ifDCAcutIfNoITSPixel     << // cut: apply a DCAcut If No ITS Pixel
-      "dcabase="          << dcaBaseCut               << // dcaxy base cut
-      "dca10h="           << dca10h                   << // dcaxy cut tuned to 10h
-      "dca11h="           << dca11h                   << // dcaxy cut tuned to 11h
-      "missCl="           << fMissingCl               << // fraction of missing clusters
+      "gid="                << fEventGID                << // global event ID
+      "itrack="             << itrack                   << // track number
+      "sign="               << fSign                    << // charge
+      "ptot="               << fPtot                    << // TPC momentum
+      "eta="                << fEta                     << // eta
+      "phi="                << fPhi                     << // phi
+      "px="                 << fPx                      << // px
+      "py="                 << fPy                      << // py
+      "pz="                 << fPz                      << // pz
+      // tpc pid
+      "dEdx="               << fTPCSignal               << // dEdx of the track
+      "nsigmaTPCKa="        << fNSigmasKaTPC            << // nsigma TPC for kaons
+      "nsigmaTPCPr="        << fNSigmasPrTPC            << // nsigma TPC for protons
+      // tof pid
+      "length="             << length                   << // integrated track length
+      "tofSignal="          << tofSignal                << // TOF signal
+      "nsigmaTOFKa="        << fNSigmasKaTOF            << // nsigma TOF for kaons
+      "nsigmaTOFPr="        << fNSigmasPrTOF            << // nsigma TOF for protons
+      // its pid
+      "itsdEdx="            << fITSSignal               << // ITS dEdx
+      "nsigmaITSPr="        << fNSigmasPrITS            << // nsigma ITS for protons
       //
-      "itsFirstLayer="    << fTrackIsFirstITSlayer    <<  // first its layer
-      "itsSecondLayer="   << fTrackIsSecondITSlayer   <<  // second its layer
-      "itsRefit="         << fTrackRequireITSRefit    <<  // its refit
-      //
-      "tofSignalTOD="     << tofSignalTunedOnData     << // tof signal tuneondata --> GetTOFsignalTunedOnData
-      //
-      "ncltrd="           << nclsTRD                  <<  // trd clusters
-      "tofDx="            << TOFSignalDx              <<  // tof dx
-      "tofDz="            << TOFSignalDz              <<  // tof dz
-      "fCdd="             << covar[0]                 <<
-      "fCdz="             << covar[1]                 <<
-      "fCzz="             << covar[2];
+      "itsrefit="           << isOnITS                  << // its refit
+      "tpcrefit="           << isOnTPC                  << // tpc refit
+      "noitspixel="         << fTrackNewITScut          << // if no its pixel use DCA cut
+      "ncltpc="             << fNcl                     << // number of clusters
+      "findableCls="        << tpcFindableCls           << // number of findable clusters
+      "sharedCls="          << tpcSharedCls             << // number of shared clusters
+      "lengthInActiveZone=" << fTrackLengthInActiveZone << // track length in active zone
+      "tpcsignaln="         << fTrackTPCSignalN         << // number of cl used in dEdx
+      "dcaxy="              << fTrackDCAxy              << // dcaxy
+      "dcaz="               << fTrackDCAz               << // dcaz
+      "cRows="              << fTrackTPCCrossedRows     << // crossed Rows in TPC
+      "chi2tpc="            << fTrackChi2TPC;              // TPC chi2
+      if (fFillDebug){
+        (*fTreeSRedirector)<<"tracks"<<
+        "settings.="        << &settings                << // Systematic settings
+        "cutBit="             << fTrackCutBits            << // Systematic Cuts
+        "run="              << fRunNo                   << // run Number
+        "bField="           << fBField                  << // magnetic filed
+        "intrate="          << fIntRate                 << // interaction rate
+        "pileupbit="        << fPileUpBit               << // flag for pileup selection
+        "primMult="         << fNContributors           << // #prim tracks
+        "tpcClMult="        << tpcClusterMultiplicity   << // TPC cluster multiplicity
+        "tpcmult="          << fTPCMult                 << // TPC track multiplicity
+        "tpcclmult="        << nTPCClusters             << // TPC cluster multiplicity
+        "itsmult="          << itsNumberOfTracklets     << // ITS multiplicity
+        "itsclmult="        << nITSClusters             << // ITS cluster multiplicity
+        //
+        // track level
+        "label="            << label                    <<
+        "eventtime="        << fTimeStamp               << // event timeStamp
+        "defCut="           << fDefaultCuts             << // default cuts tuned by hand
+        "bit96="            << fBit96_base              << // tight cuts of 2011 tuned data
+        "bit128="           << fBit128                  << // TPC only tracks cuts
+        "bit768="           << fBit768                  << // Hybrid track cuts
+        "pixCut="           << ifDCAcutIfNoITSPixel     << // cut: apply a DCAcut If No ITS Pixel
+        "dcabase="          << dcaBaseCut               << // dcaxy base cut
+        "dca10h="           << dca10h                   << // dcaxy cut tuned to 10h
+        "dca11h="           << dca11h                   << // dcaxy cut tuned to 11h
+        "missCl="           << fMissingCl               << // fraction of missing clusters
+        "goldenchi2="         << goldenChi2               << // golden chi2 cut GetChi2TPCConstrainedVsGlobal
+        "itschi2="            << itschi2                  << // ITS chi2
+        //
+        "itsFirstLayer="    << fTrackIsFirstITSlayer    <<  // first its layer
+        "itsSecondLayer="   << fTrackIsSecondITSlayer   <<  // second its layer
+        "itsRefit="         << fTrackRequireITSRefit    <<  // its refit
+        //
+        "tofSignalTOD="     << tofSignalTunedOnData     << // tof signal tuneondata --> GetTOFsignalTunedOnData
+        //
+        "ncltrd="           << nclsTRD                  <<  // trd clusters
+        "tofDx="            << TOFSignalDx              <<  // tof dx
+        "tofDz="            << TOFSignalDz              <<  // tof dz
+        "fCdd="             << covar[0]                 <<
+        "fCdz="             << covar[1]                 <<
+        "fCzz="             << covar[2];
+
+        // pid
+        "nsigmaTPCEl="        << fNSigmasElTPC            << // nsigma TPC for electrons
+        "nsigmaTPCPi="        << fNSigmasPiTPC            << // nsigma TPC for pions
+        "nsigmaTPCDe="        << fNSigmasDeTPC            << // nsigma TPC for deuterons
+        "nsigmaTOFEl="        << fNSigmasElTOF            << // nsigma TOF for electrons
+        "nsigmaTOFPi="        << fNSigmasPiTOF            << // nsigma TOF for pions
+        "nsigmaTOFDe="        << fNSigmasDeTOF            << // nsigma TOF for deuterons
+      }
+      (*fTreeSRedirector)<<"tracks"<<"\n";
     }
-    (*fTreeSRedirector)<<"tracks"<<"\n";
 
     //
     // --------------------------------------------------------------
@@ -4670,51 +4695,57 @@ void AliAnalysisTaskTIdentityPID::FillCleanSamples()
     {
       if (fFillArmPodTree)
       {
-        if(!fTreeSRedirector) return;
-        (*fTreeSRedirector)<<"cleanSamp"<<
-        "gid="            << fEventGID           << // global event ID
-        "v0id="           << iV0MI               << // V0 ID
-        "eventtime="      << fTimeStamp          <<
-        "intrate="        << fIntRate            << // interaction rate
-        "piFromK0="       << fCleanPionsFromK0   << // K0s cut for pions
-        "v0haspixel="     << fHasV0FirstITSlayer << // ITS pixel cout
-        "purity="         << v0purity            <<
-        "lambdaMass="     << lambdaMass          << // lambda mass
-        "antiLambdaMass=" << antiLambdaMass      << // anti lambda mass
-        "k0sMass="        << k0sMass             << // k0s mass
-        "photonMass="     << photonMass          << // photon mass
-        "cosPA="          << fCosPA              << // cosine of pointing angle
-        "qt="             << fQt                 << // qT
-        "alfa="           << fAlfa               << // alpha
-        "cent="           << fCentrality         << // centrality
-        //
-        "cutBit0="        << cutBit0             << // cut bits
-        "itrack0="        << itrack0             << // label
-        "dEdx0="          << dEdx0               << // TPC dEdx
-        "itsdEdx0="       << itsdEdx0            << // ITS dEdx
-        "sign0="          << sign0               << // sign
-        "ptot0="          << ptot0               << // vertex momentum
-        "p0="             << p0                  << // momentum
-        "pT0="            << pT0                 << // transverse momentum
-        "eta0="           << eta0                << // eta
-        "phi0="           << phi0                << // phi
-        "nSigmasPiTOF0="  << nSigmasPiTOF0       << // TOF nsigma cut for pions
-        "nSigmasPrTOF0="  << nSigmasPrTOF0       << // TOF nsigma cut for protons
-        //
-        "cutBit1="        << cutBit1             <<  // cut bits
-        "itrack1="        << itrack1             <<  // label
-        "dEdx1="          << dEdx1               <<  // TPC dEdx
-        "itsdEdx1="       << itsdEdx1            <<  // ITS dEdx
-        "sign1="          << sign1               << // sign
-        "ptot1="          << ptot1               << // vertex momentum
-        "p1="             << p1                  << // momentum
-        "pT1="            << pT1                 << // transverse momentum
-        "eta1="           << eta1                << // eta
-        "phi1="           << phi1                << // phi
-        "nSigmasPiTOF1="  << nSigmasPiTOF1       << // TOF nsigma cut for pions
-        "nSigmasPrTOF1="  << nSigmasPrTOF1       << // TOF nsigma cut for protons
-        //
-        "\n";
+        Bool_t fillCleanSamp = kTRUE;
+        if (fDownsampleTrees)
+          fillCleanSamp = fRandom.Rndm() < fDownscalingFactor;
+
+        if (fillCleanSamp) {
+          if(!fTreeSRedirector) return;
+          (*fTreeSRedirector)<<"cleanSamp"<<
+          "gid="            << fEventGID           << // global event ID
+          "v0id="           << iV0MI               << // V0 ID
+          "eventtime="      << fTimeStamp          <<
+          "intrate="        << fIntRate            << // interaction rate
+          "piFromK0="       << fCleanPionsFromK0   << // K0s cut for pions
+          "v0haspixel="     << fHasV0FirstITSlayer << // ITS pixel cout
+          "purity="         << v0purity            <<
+          "lambdaMass="     << lambdaMass          << // lambda mass
+          "antiLambdaMass=" << antiLambdaMass      << // anti lambda mass
+          "k0sMass="        << k0sMass             << // k0s mass
+          "photonMass="     << photonMass          << // photon mass
+          "cosPA="          << fCosPA              << // cosine of pointing angle
+          "qt="             << fQt                 << // qT
+          "alfa="           << fAlfa               << // alpha
+          "cent="           << fCentrality         << // centrality
+          //
+          "cutBit0="        << cutBit0             << // cut bits
+          "itrack0="        << itrack0             << // label
+          "dEdx0="          << dEdx0               << // TPC dEdx
+          "itsdEdx0="       << itsdEdx0            << // ITS dEdx
+          "sign0="          << sign0               << // sign
+          "ptot0="          << ptot0               << // vertex momentum
+          "p0="             << p0                  << // momentum
+          "pT0="            << pT0                 << // transverse momentum
+          "eta0="           << eta0                << // eta
+          "phi0="           << phi0                << // phi
+          "nSigmasPiTOF0="  << nSigmasPiTOF0       << // TOF nsigma cut for pions
+          "nSigmasPrTOF0="  << nSigmasPrTOF0       << // TOF nsigma cut for protons
+          //
+          "cutBit1="        << cutBit1             <<  // cut bits
+          "itrack1="        << itrack1             <<  // label
+          "dEdx1="          << dEdx1               <<  // TPC dEdx
+          "itsdEdx1="       << itsdEdx1            <<  // ITS dEdx
+          "sign1="          << sign1               << // sign
+          "ptot1="          << ptot1               << // vertex momentum
+          "p1="             << p1                  << // momentum
+          "pT1="            << pT1                 << // transverse momentum
+          "eta1="           << eta1                << // eta
+          "phi1="           << phi1                << // phi
+          "nSigmasPiTOF1="  << nSigmasPiTOF1       << // TOF nsigma cut for pions
+          "nSigmasPrTOF1="  << nSigmasPrTOF1       << // TOF nsigma cut for protons
+          //
+          "\n";
+        }
 
       }
     }
@@ -5676,6 +5707,14 @@ void AliAnalysisTaskTIdentityPID::CreateEventInfoTree()
   fHist_EP_3_Psi_pos  ->Fill(fEP_3_Psi_pos);
   fHist_EP_3_Psi_neg  ->Fill(fEP_3_Psi_neg);
   fHist_EP_3_Psi      ->Fill(fEP_3_Psi);
+
+  TMatrixF trackCounter(fCounterEtaBins.size(), fCounterMomBins.size());
+  for (Int_t ieta = 0; ieta < fCounterEtaBins.size(); ieta++) {
+    for (Int_t imom = 0; imom < fCounterMomBins.size(); imom++) {
+      trackCounter(ieta, imom) = fTrackCounter[ieta][imom];
+    }
+  }
+
   //
   if(!fTreeSRedirector) return;
   DumpDownScaledTree();
@@ -5741,6 +5780,7 @@ void AliAnalysisTaskTIdentityPID::CreateEventInfoTree()
   "phiCountCITS.=" << &phiCountCITS <<  // track count fitted ITS on C side
   "phiCountAITSOnly.=" << &phiCountAITSonly << // track count only ITS on A side
   "phiCountCITSOnly.=" << &phiCountCITSonly << // track count only ITS on C side
+  "trackCounter.=" << &trackCounter << // proton counter
   "\n";
 
 }
@@ -5785,6 +5825,12 @@ void AliAnalysisTaskTIdentityPID::CalculateEventInfo()
     for (Int_t j=0;j<nNumberOfTracks;j++){
       tpcDCAarrPhiA[i][j]=kDCAtpcNULL;
       tpcDCAarrPhiC[i][j]=kDCAtpcNULL;
+    }
+  }
+  // Reset acceptance counters
+  for (size_t ieta = 0; ieta < fCounterEtaBins.size(); ieta++) {
+    for (size_t imom = 0; imom < fCounterMomBins.size(); imom++) {
+      fTrackCounter[ieta][imom] = 0;
     }
   }
   //
@@ -5994,6 +6040,23 @@ void AliAnalysisTaskTIdentityPID::CalculateEventInfo()
       (*fEventInfo_CacheTrackCounters)[3]++;
       (*fEventInfo_CacheTrackdEdxRatio)[3] += 1;   // dummy for the moment
       (*fEventInfo_CacheTrackChi2)[3]+= 1;   //
+    }
+
+    // set the track counters for each acceptance
+    if (!fESDtrackCutsLoose->AcceptTrack(track))  continue;    // Loose cuts
+    if (!(track->GetTPCsignalN()>0)) continue;
+    SetCutBitsAndSomeTrackVariables(track,0);
+    Bool_t passesDefaultCut = GetSystematicClassIndex(fTrackCutBits, 0);
+    if (passesDefaultCut) {
+      for (size_t ieta = 0; ieta < fCounterEtaBins.size(); ieta++) {
+        if (abs(fEta) <= fCounterEtaBins[ieta]) {
+          for (size_t imom = 0; imom < fCounterMomBins.size() - 1; imom++) {
+            if (fPVertex >= fCounterMomBins[imom] && fPVertex < fCounterMomBins[imom+1]) {
+              fTrackCounter[ieta][imom]++;
+            }
+          }
+        }
+      }
     }
   } // end of track LOOP
   //

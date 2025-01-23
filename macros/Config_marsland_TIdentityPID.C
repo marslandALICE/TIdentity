@@ -41,6 +41,7 @@ AliAnalysisTaskTIdentityPID* Config_marsland_TIdentityPID(Bool_t getFromAlien, I
       task->SetCollisionType(0); // 0 for PbPb, 1 for pp
       task->SetTaskSelection(2); // 0; both jet+net-p, 1: only jet, 2: only net-p, 3: only cutbased
       task->SetDownscalingFactor(0.001);
+      task->SetDownsampleTrees(kTRUE);
       task->SetFillJetsBG(2); // 0: no PID info for const + no BG, 1: fill BG tree, 2: no BG tree + PID info
       task->SetUseCouts(kFALSE);
       task->SetFillDebug(kFALSE);
@@ -642,6 +643,7 @@ void SetDefaults(AliAnalysisTaskTIdentityPID *defaultTask, Int_t year, TString p
   defaultTask->SetDownscalingFactor(0.001);
   defaultTask->SetFillQvectorHists(kFALSE);
   defaultTask->SetApplyQVectorCorr(kFALSE);
+  defaultTask->SetDownsampleTrees(kFALSE);
 
   // DEFAULT SETTINGS
   const Int_t tmpCentbins  = 14;

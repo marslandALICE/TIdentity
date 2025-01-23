@@ -17,13 +17,15 @@ class TList;
 class TTree;
 class TObjArray;
 class AliESDEvent;
-class AliESDtrack;
-class AliESDtrackCuts;
-class AliPIDResponse;
-class AliHeader;
 class AliESDpid;
 class AliESDtools;
+class AliESDtrack;
+class AliESDtrackCuts;
+class AliHeader;
+class AliMCParticle;
 class AliPIDCombined;
+class AliPIDResponse;
+class AliStack;
 
 
 #include "AliAnalysisTaskSE.h"
@@ -255,6 +257,7 @@ public:
   void   SetFillResonances(const Bool_t ifFillResonances = kFALSE)    {fFillResonances      = ifFillResonances;}
   void   SetFillQvectorHists(const Bool_t ifFillQvectorHists = kFALSE){fFillQvectorHists    = ifFillQvectorHists;}
   void   SetApplyQVectorCorr(const Bool_t ifApplyQVectorCorr = kFALSE){fApplyQVectorCorr    = ifApplyQVectorCorr;}
+  void   SetDownsampleTrees(const Bool_t ifDownsampleTrees = kFALSE)  {fDownsampleTrees     = ifDownsampleTrees;}
 
   void   SetSettings(const std::vector<Int_t> ifSystSettings) {
     fSystSettings = ifSystSettings;
@@ -263,7 +266,7 @@ public:
   void   SetNSettings(const Int_t nSettings = 22) {
     std::vector<Int_t> tempSettings(nSettings);
     for (Int_t i = 0; i < nSettings; i++)
-    tempSettings[i] = i;
+      tempSettings[i] = i;
     SetSettings(tempSettings);
   }
 
@@ -778,6 +781,7 @@ private:
   Bool_t            fFillQvectorHists;
   Bool_t            fApplyQVectorCorr;
   Bool_t            fDefaultCuts;
+  Bool_t            fDownsampleTrees;        // downsample the trees to save disk space
 
   Int_t             fNSettings;
   std::vector<Int_t> fSystSettings;
@@ -895,6 +899,7 @@ private:
   Int_t              fEvent;                  // Event counter for Christian
   Int_t              fEventMC;                // Event id for MC data
   Int_t              fEventMCgen;             // Event id for MC generated
+  std::vector<std::vector<Int_t>> fTrackCounter;      // counter for tracks in different acceptances
 
   Float_t            fTPCSignal;              // Measured dE/dx
   Float_t            fEta;                    // pseudo rapidity
@@ -1061,6 +1066,8 @@ private:
   std::vector<float>  fxCentBins;
   std::vector<std::string> fResonances;
   std::vector<int>    fBaryons;
+  std::vector<float>  fCounterEtaBins;
+  std::vector<float>  fCounterMomBins;
 
   //
   // control and QA histograms
@@ -1091,7 +1098,7 @@ private:
   TH2F             * fHistEP3QxQypos;           // histogram efficiency matrix read from file
   TH2F             * fHistEP3QxQyneg;           // histogram efficiency matrix read from file
 
-  vector<vector<vector<vector<TH2F*>>>> fEffMatrixProjections;  // container for efficiency matrix projections
+  std::vector<std::vector<std::vector<std::vector<TH2F*>>>> fEffMatrixProjections;  // container for efficiency matrix projections
   //
   // Counters for Marian
   //
