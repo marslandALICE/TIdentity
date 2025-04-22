@@ -63,6 +63,9 @@
 #include "AliRun.h"
 #include "AliHeader.h"
 #include "AliPID.h"
+#include "AliAODEvent.h"
+#include "AliAODInputHandler.h"
+#include "AliAODMCParticle.h"
 #include "AliESDtrackCuts.h"
 #include "AliESDv0Cuts.h"
 #include "AliESDv0.h"
@@ -116,7 +119,7 @@ const char* AliAnalysisTaskTIdentityPID::fEventInfo_centEstStr[] = {"V0M","CL0",
 // -----------------------------------------------------------------------
 //________________________________________________________________________
 AliAnalysisTaskTIdentityPID::AliAnalysisTaskTIdentityPID()
-: AliAnalysisTaskSE("TaskEbyeRatios"), fEventCuts(0), fPIDResponse(0),fESD(0), fListHist(0),
+: AliAnalysisTaskSE("TaskEbyeRatios"), fEventCuts(0), fPIDResponse(0),fESD(0),fAOD(0), fListHist(0),
 fESDtrackCuts(0),
 fESDtrackCuts_Bit96(0),
 fESDtrackCuts_Bit128(0),
@@ -248,6 +251,8 @@ fFillExpecteds(kFALSE),
 fFillQvectorHists(kFALSE),
 fApplyQVectorCorr(kFALSE),
 fDefaultCuts(kFALSE),
+fDownsampleTrees(kFALSE),
+fUseAODsForMC(kFALSE),
 fNSettings(kCutSettingsCount),
 fSystSettings(0),
 fNMomBins(0),
@@ -295,6 +300,7 @@ fNSigmasKaTPC(0),
 fNSigmasPrTPC(0),
 fNSigmasDeTPC(0),
 fNSigmasPrITS(0),
+fNSigmasKaITS(0),
 fTPCSignalMC(0),
 fPtotMC(0),
 fPtotMCtruth(0),
@@ -520,7 +526,7 @@ fPileUpTightnessCut4(0)
 
 //________________________________________________________________________
 AliAnalysisTaskTIdentityPID::AliAnalysisTaskTIdentityPID(const char *name)
-: AliAnalysisTaskSE(name), fEventCuts(0), fPIDResponse(0), fESD(0), fListHist(0),
+: AliAnalysisTaskSE(name), fEventCuts(0), fPIDResponse(0), fESD(0), fAOD(0), fListHist(0),
 fESDtrackCuts(0),
 fESDtrackCuts_Bit96(0),
 fESDtrackCuts_Bit128(0),
@@ -652,6 +658,8 @@ fFillExpecteds(kFALSE),
 fFillQvectorHists(kFALSE),
 fApplyQVectorCorr(kFALSE),
 fDefaultCuts(kFALSE),
+fDownsampleTrees(kFALSE),
+fUseAODsForMC(kFALSE),
 fNSettings(kCutSettingsCount),
 fSystSettings(0),
 fNMomBins(0),
@@ -699,6 +707,7 @@ fNSigmasKaTPC(0),
 fNSigmasPrTPC(0),
 fNSigmasDeTPC(0),
 fNSigmasPrITS(0),
+fNSigmasKaITS(0),
 fTPCSignalMC(0),
 fPtotMC(0),
 fPtotMCtruth(0),
@@ -1234,9 +1243,9 @@ void AliAnalysisTaskTIdentityPID::Initialize()
   fESDtrackCutsLoose->SetPtRange(0.1,100000.);
   fESDtrackCutsLoose->SetAcceptKinkDaughters(kFALSE);
   fESDtrackCutsLoose->SetMinNClustersTPC(50);
-  fESDtrackCutsLoose->SetMinNCrossedRowsTPC(50);
-  fESDtrackCutsLoose->SetMaxDCAToVertexXY(10);
-  fESDtrackCutsLoose->SetMaxDCAToVertexZ(10);
+  fESDtrackCutsLoose->SetMinNCrossedRowsTPC(60);
+  fESDtrackCutsLoose->SetMaxDCAToVertexXY(5);
+  fESDtrackCutsLoose->SetMaxDCAToVertexZ(5);
   fESDtrackCutsLoose->SetMaxChi2PerClusterTPC(10);
   fESDtrackCutsLoose->SetRequireSigmaToVertex(kFALSE);
   fESDtrackCutsLoose->SetMaxChi2TPCConstrainedGlobal(36);
@@ -1356,7 +1365,7 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
     phiBins
   };
 
-  if (fMCtrue){
+  if (fMCtrue && fFillEffMatrix){
     fHistPosEffMatrixRec  =new THnF("fHistPosEffMatrixRec", "fHistPosEffMatrixRec", ndim, nbins0, effMatrixBins);
     fHistNegEffMatrixRec  =new THnF("fHistNegEffMatrixRec", "fHistNegEffMatrixRec", ndim, nbins0, effMatrixBins);
     fHistPosEffMatrixGen  =new THnF("fHistPosEffMatrixGen", "fHistPosEffMatrixGen", ndim, nbins0, effMatrixBins);
@@ -1405,7 +1414,7 @@ void AliAnalysisTaskTIdentityPID::UserCreateOutputObjects()
     etaBins
   };
 
-  if (fMCtrue){
+  if (fMCtrue && fFillEffMatrix){
     fHistPosEffMatrixScanRec  =new THnF("fHistPosEffMatrixScanRec", "fHistPosEffMatrixScanRec", ndimScan, nbinsScan, effMatrixScanBins);
     fHistNegEffMatrixScanRec  =new THnF("fHistNegEffMatrixScanRec", "fHistNegEffMatrixScanRec", ndimScan, nbinsScan, effMatrixScanBins);
     fHistPosEffMatrixScanGen  =new THnF("fHistPosEffMatrixScanGen", "fHistPosEffMatrixScanGen", ndimScan, nbinsScan, effMatrixScanBins);
@@ -1669,10 +1678,6 @@ void AliAnalysisTaskTIdentityPID::UserExec(Option_t *)
   //
   if (fUseCouts) std::cout << "event = " << fEventCountInFile << " Info::marsland: ===== In the UserExec ===== " << std::endl;
   //
-  // Check Monte Carlo information and other access first:
-  AliMCEventHandler* eventHandler = dynamic_cast<AliMCEventHandler*> (AliAnalysisManager::GetAnalysisManager()->GetMCtruthEventHandler());
-  if (!eventHandler) fMCtrue = kFALSE;
-  //
   //  get the filename
   TTree *chain = (TChain*)GetInputData(0);
   if(!chain) { Printf(" Error::marsland: Could not receive input chain"); return; }
@@ -1690,7 +1695,10 @@ void AliAnalysisTaskTIdentityPID::UserExec(Option_t *)
   // ========================== See if MC or Real =========================
   // ======================================================================
   //
-  if (eventHandler) fMCEvent = eventHandler->MCEvent();
+  AliMCEventHandler* eventHandler = dynamic_cast<AliMCEventHandler*> (AliAnalysisManager::GetAnalysisManager()->GetMCtruthEventHandler());
+  if (!eventHandler) fMCtrue = kFALSE;
+  // if (eventHandler) fMCEvent = eventHandler->MCEvent();
+  if (eventHandler) fMCEvent = MCEvent();
   AliGenEventHeader* genHeader = 0x0;
   TString genheaderName;
   if (fMCEvent){
@@ -1707,7 +1715,15 @@ void AliAnalysisTaskTIdentityPID::UserExec(Option_t *)
   AliMultSelection *MultSelection = 0x0;
   AliMultSelectionTask *MultSelectionTask = 0x0;
   ULong64_t gid=0;
-  fESD = dynamic_cast<AliESDEvent*>( InputEvent() );
+  if(!fUseAODsForMC)
+  {
+    fESD = dynamic_cast<AliESDEvent*>(InputEvent());
+    if (!fESD) { printf("ERROR: fESD not available\n"); return; }
+  } else {
+    fAOD = dynamic_cast<AliAODEvent*>(InputEvent());
+    if (!fAOD)  { printf("ERROR: fAOD not available\n"); return; }
+  }
+
   if (fESD)
   {
     //
@@ -1800,7 +1816,7 @@ void AliAnalysisTaskTIdentityPID::UserExec(Option_t *)
   if (!fPIDResponse && !(fRunFastSimulation || fRunFastHighMomentCal)) fPIDResponse = ((AliESDInputHandler*)(AliAnalysisManager::GetAnalysisManager()->GetInputEventHandler()))->GetESDpid();
   if (fMCEvent && fPIDResponse) fPIDResponse->SetCurrentMCEvent(fMCEvent);
   //
-  if(fMCtrue)
+  if(fMCtrue && !fUseAODsForMC)
   {
     //
     // Add different generator particles to PDG Data Base to avoid problems when reading MC generator particles
@@ -1880,8 +1896,8 @@ void AliAnalysisTaskTIdentityPID::UserExec(Option_t *)
     if (fCentrality<0) fCentrality=fCentImpBin;
     //
     // Use file name in Hashing to create unique event ID
-    TString stringToHash = Form("%s/%d", fChunkName.Data(), fEventCountInFile);
-    fEventGID    = TString::Hash(stringToHash.Data(), stringToHash.Length());
+    TString stringToHash = Form("%s/%d/%4.10f", fChunkName.Data(), fEventCountInFile,fMCImpactParameter);
+    fEventGID = TString::Hash(stringToHash.Data(), stringToHash.Length());
     if (fUseCouts) {
       std::cout << " Info::marsland: ========================================================================================== " << std::endl;
       std::cout << " Info::marsland: " << fEventCountInFile << " ----- eventIDMC = " << fEventGIDMC << "   " << fChunkName << std::endl;
@@ -1893,7 +1909,7 @@ void AliAnalysisTaskTIdentityPID::UserExec(Option_t *)
   // the event exists, we start counting from here
   fHistReturns->Fill(0);
   //
-  if (!(fRunFastSimulation || fRunFastHighMomentCal))
+  if (!(fRunFastSimulation || fRunFastHighMomentCal) && !fUseAODsForMC)
   {
     //
     // ========================== Real =========================
@@ -2040,11 +2056,25 @@ void AliAnalysisTaskTIdentityPID::UserExec(Option_t *)
       if (fFillArmPodTree && fFillDebug) FillCleanSamples();
       if (fTaskSelection==0) {FillMCFull_NetParticles(); CalculateMoments_CutBasedMethod(); FindJetsFJ(); FindJetsFJGen();} // bot jet and net-p
       if (fTaskSelection==1) {FindJetsFJ(); FindJetsFJGen();} // only jet
-      if (fTaskSelection==2) {FillMCFull_NetParticles(); CalculateMoments_CutBasedMethod();} // only net-p
+      if (fTaskSelection==2) {FillMCFull_NetParticles();} // only net-p
       if (fTaskSelection==3) {CalculateMoments_CutBasedMethod();} // only net-p
+      if (fTaskSelection==4) {FillMCFull_NetParticles(); CalculateMoments_CutBasedMethod();} // only net-p
       fHistReturns->Fill(5);
       return;
     }
+  }
+
+  if (fAOD && !fRunFastSimulation){
+    if (fUseCouts) std::cout << " Info::marsland: (full MC analysis) AOD analysis = " << fEventCountInFile << std::endl;
+    if (CountEmptyEvents(2,-2)<1) {
+      fHistReturns->Fill(4);
+      return;
+    }
+    FillTreeMCAOD();
+    FillEventInfoMCAOD();
+    fHistReturns->Fill(5);
+    return;
+
   }
   //
   if (fMCtrue && fFillHigherMomentsMCclosure){
@@ -2174,15 +2204,18 @@ void AliAnalysisTaskTIdentityPID::FillTPCdEdxReal()
     Int_t nclITS = track->GetITSNcls(); if (nclITS<1) nclITS=-1;
     Double_t itschi2 = track->GetITSchi2()/nclITS;
 
-    Bool_t fillTracks = kTRUE;
+    Bool_t fillTracks = kFALSE;
+    Bool_t bprSelect = (fPtot < 1.0 && abs(fNSigmasPrTPC) < 4) || (fPtot >= 1.0 && abs(fNSigmasPrTOF) < 4);
+    Bool_t bkaSelect = (fPtot < 0.5 && abs(fNSigmasKaTPC) < 4) || (fPtot >= 0.5 && abs(fNSigmasKaTOF) < 4);
+    Bool_t bpiSelect = fRandom.Rndm() < fDownscalingFactor;
 
-    if (fDownsampleTrees)
-      fillTracks = (fPtot < 1.0 && abs(fNSigmasPrTPC) < 4) || (fPtot >= 1.0 && abs(fNSigmasPrTOF) < 4) || (fPtot < 0.5 && abs(fNSigmasKaTPC) < 4) || (fPtot >= 0.5 && abs(fNSigmasKaTOF) < 4) || fRandom.Rndm() < fDownscalingFactor;
+    if (fDownsampleTrees) fillTracks = (bprSelect || bkaSelect || bpiSelect) && fPtot>0.2;
 
     if (fillTracks) {
       if(!fTreeSRedirector) return;
       (*fTreeSRedirector)<<"tracks"<<
       //
+      "fillTracks="         << fillTracks               << // make tree smaller
       "gid="                << fEventGID                << // global event ID
       "itrack="             << itrack                   << // track number
       "sign="               << fSign                    << // charge
@@ -2204,6 +2237,7 @@ void AliAnalysisTaskTIdentityPID::FillTPCdEdxReal()
       // its pid
       "itsdEdx="            << fITSSignal               << // ITS dEdx
       "nsigmaITSPr="        << fNSigmasPrITS            << // nsigma ITS for protons
+      "nsigmaITSKa="        << fNSigmasKaITS            << // nsigma ITS for kaons
       //
       "itsrefit="           << isOnITS                  << // its refit
       "tpcrefit="           << isOnTPC                  << // tpc refit
@@ -2220,7 +2254,7 @@ void AliAnalysisTaskTIdentityPID::FillTPCdEdxReal()
       if (fFillDebug){
         (*fTreeSRedirector)<<"tracks"<<
         "settings.="        << &settings                << // Systematic settings
-        "cutBit="             << fTrackCutBits            << // Systematic Cuts
+        "cutBit="           << fTrackCutBits            << // Systematic Cuts
         "run="              << fRunNo                   << // run Number
         "bField="           << fBField                  << // magnetic filed
         "intrate="          << fIntRate                 << // interaction rate
@@ -2244,8 +2278,8 @@ void AliAnalysisTaskTIdentityPID::FillTPCdEdxReal()
         "dca10h="           << dca10h                   << // dcaxy cut tuned to 10h
         "dca11h="           << dca11h                   << // dcaxy cut tuned to 11h
         "missCl="           << fMissingCl               << // fraction of missing clusters
-        "goldenchi2="         << goldenChi2               << // golden chi2 cut GetChi2TPCConstrainedVsGlobal
-        "itschi2="            << itschi2                  << // ITS chi2
+        "goldenchi2="       << goldenChi2               << // golden chi2 cut GetChi2TPCConstrainedVsGlobal
+        "itschi2="          << itschi2                  << // ITS chi2
         //
         "itsFirstLayer="    << fTrackIsFirstITSlayer    <<  // first its layer
         "itsSecondLayer="   << fTrackIsSecondITSlayer   <<  // second its layer
@@ -2258,15 +2292,14 @@ void AliAnalysisTaskTIdentityPID::FillTPCdEdxReal()
         "tofDz="            << TOFSignalDz              <<  // tof dz
         "fCdd="             << covar[0]                 <<
         "fCdz="             << covar[1]                 <<
-        "fCzz="             << covar[2];
-
+        "fCzz="             << covar[2]                 <<
         // pid
         "nsigmaTPCEl="        << fNSigmasElTPC            << // nsigma TPC for electrons
         "nsigmaTPCPi="        << fNSigmasPiTPC            << // nsigma TPC for pions
         "nsigmaTPCDe="        << fNSigmasDeTPC            << // nsigma TPC for deuterons
         "nsigmaTOFEl="        << fNSigmasElTOF            << // nsigma TOF for electrons
         "nsigmaTOFPi="        << fNSigmasPiTOF            << // nsigma TOF for pions
-        "nsigmaTOFDe="        << fNSigmasDeTOF            << // nsigma TOF for deuterons
+        "nsigmaTOFDe="        << fNSigmasDeTOF            ; // nsigma TOF for deuterons
       }
       (*fTreeSRedirector)<<"tracks"<<"\n";
     }
@@ -3084,23 +3117,163 @@ void AliAnalysisTaskTIdentityPID::FillMCFull_NetParticles()
   } // settings loop
 }
 //________________________________________________________________________
+void AliAnalysisTaskTIdentityPID::FillEventInfoMCAOD()
+{
+
+  if (fUseCouts) std::cout << " Info::marsland: ===== In the FillEventInfoMC ===== " << std::endl;
+  //
+  // unique event ID
+  TString stringToHash = Form("%s/%d", fChunkName.Data(), fEventCountInFile);
+  fEventGID = TString::Hash(stringToHash.Data(), stringToHash.Length());
+  //
+  // get centrality
+  AliMultSelection *MultSelection = (AliMultSelection*) fAOD->FindListObject("MultSelection");
+  fCentrality = MultSelection->GetMultiplicityPercentile("V0M");
+  //
+  // initializers
+  TRandom3 randGen(time(0));
+  Int_t sampleNo = randGen.Integer(21);
+  const Int_t nMultType = 6;
+  TVectorF fMultTPC(nMultType);
+  TVectorF fMultV0M(nMultType);
+  for(Int_t i=0;i<nMultType; i++){ fMultTPC[i]=0.; fMultV0M[i]=0.; }
+  //
+  // Acceptance counter
+  fMCEvent = MCEvent();
+  TClonesArray* AODMCTrackArray = dynamic_cast<TClonesArray*>(fInputEvent->FindListObject(AliAODMCParticle::StdBranchName()));
+  Int_t trackCounterInAnalysis = 0;
+  for (Int_t iTrack = 0; iTrack < AODMCTrackArray->GetEntriesFast(); iTrack++)
+  {
+    AliAODMCParticle* trackMCgen = static_cast<AliAODMCParticle*>(AODMCTrackArray->At(iTrack));
+    if (!trackMCgen) continue;
+    if (!trackMCgen->IsPhysicalPrimary()) continue;
+    Int_t sign = trackMCgen->Charge();
+    Int_t pdg  = trackMCgen->GetPdgCode();
+    Int_t absPDG = TMath::Abs(pdg);
+    Int_t iPart = -10;
+    if (absPDG == kPDGpi) {iPart = 0;} // select pi+
+    if (absPDG == kPDGka) {iPart = 1;} // select ka+
+    if (absPDG == kPDGpr) {iPart = 2;} // select pr+
+    if (absPDG == kPDGde) {iPart = 3;} // select de
+    if (absPDG == kPDGel) {iPart = 4;} // select el
+    if (absPDG == kPDGxi) {iPart = 5;} // select ksi
+    if (absPDG == kPDGla) {iPart = 6;} // select La
+    if (absPDG == kPDGph) {iPart = 7;} // select phi
+    Float_t etaMCgen  = trackMCgen->Eta();
+    //
+    // multiplicity counters for V0 and TPC acceptances
+    Bool_t bV0Macc = (etaMCgen < 5.1 && etaMCgen > 2.8) || (etaMCgen < -1.7 && etaMCgen > -3.7);
+    Bool_t bTPCacc = (etaMCgen < 0.8 && etaMCgen > -0.8);
+    //
+    // for the V0M acceptance all particles
+    if (bV0Macc) {
+      if (iPart==0) fMultV0M[iPart]++; // pions in V0M
+      if (iPart==1) fMultV0M[iPart]++; // kaons in V0M
+      if (iPart==2) fMultV0M[iPart]++; // protons in V0M
+      if (TMath::Abs(sign)>1) fMultV0M[3]++; // all positive particles in V0M
+      if (TMath::Abs(sign)<1) fMultV0M[4]++; // all negative particles in V0M
+      if (sign==0) fMultV0M[5]++; // all particles in V0M
+    }
+    //
+    // for the TPC acc only charged particles
+    if (bTPCacc) {
+      if (iPart==0) fMultTPC[iPart]++; // pions in TPC
+      if (iPart==1) fMultTPC[iPart]++; // kaons in TPC
+      if (iPart==2) fMultTPC[iPart]++; // protons in TPC
+      if (TMath::Abs(sign)>1) fMultTPC[3]++; // all positive particles in TPC
+      if (TMath::Abs(sign)<1) fMultTPC[4]++; // all negative particles in TPC
+      if (sign==0) fMultTPC[5]++; // all particles in TPC
+    }
+    //
+    //
+    if (bTPCacc && trackMCgen->P()>0.2 && TMath::Abs(sign)>1) trackCounterInAnalysis++;
+  }
+ 
+  Bool_t ispileup = kFALSE;
+  Int_t trIndex = 0;
+  TVectorF fMultFourPi(5); // 0;protons, 1;baryons, 2;pos, 3,;neg, 4; neutral
+  for(Int_t i=0;i<5; i++) fMultFourPi[i]=0.;
+  for (Int_t iTrack = 0; iTrack < AODMCTrackArray->GetEntriesFast(); iTrack++)
+  {
+    AliAODMCParticle* trackMCgen = static_cast<AliAODMCParticle*>(AODMCTrackArray->At(iTrack));
+    if (!trackMCgen) continue;
+    if (!trackMCgen->IsPhysicalPrimary()) continue;    //
+    // pile up selection
+    ispileup = AliAnalysisUtils::IsParticleFromOutOfBunchPileupCollision(iTrack,fMCEvent);
+    if (ispileup) continue;
+    Int_t sign = trackMCgen->Charge();
+    Int_t pdg  = trackMCgen->GetPdgCode();
+    Int_t absPDG = TMath::Abs(pdg);
+    Int_t iPart = -10;
+    if (absPDG == kPDGpr) {iPart = 2;} // select pr+
+    //
+    // four pi multiplicities
+    if (iPart == 2) fMultFourPi[0]++; // all protons
+    if (CheckIfBaryonAOD(trackMCgen)) fMultFourPi[1]++; // all baryons
+    if (TMath::Abs(sign)>1) fMultFourPi[2]++; // all positive particles
+    if (TMath::Abs(sign)<1) fMultFourPi[3]++; // all negative particles
+    if (sign==0) fMultFourPi[4]++; // all neutral in V0M
+
+  }
+  //
+  // some event variables
+  Int_t eventNumber = fAOD ->GetEventNumberInFile();
+  Int_t N_tracks    = fAOD ->GetNumberOfTracks();
+  Float_t magF      = fAOD ->GetMagneticField();
+  Float_t vertexX   = fAOD ->GetPrimaryVertex()->GetX();
+  Float_t vertexY   = fAOD ->GetPrimaryVertex()->GetY();
+  Float_t vertexZ   = fAOD ->GetPrimaryVertex()->GetZ();
+  ULong64_t triggerMask = fAOD->GetTriggerMask();
+  Int_t tpcClusterMultiplicity   = fAOD->GetNumberOfTPCClusters();
+  AliAODTracklets* aodTrkl = (AliAODTracklets*)fAOD->GetTracklets();                                                                                                                                  
+  Int_t itsNumberOfTracklets = aodTrkl->GetNumberOfTracklets();
+  UInt_t fPileUpBit = 15;
+  //
+  // Fill th tree
+  (*fTreeSRedirector)<<"eventInfo"<<
+  "gid="         << fEventGID << // global event ID
+  "cent="        << fCentrality << // centrality from V0
+  "pileupbit="   << fPileUpBit <<
+  "bField="      << magF <<
+  "triggerMask=" << triggerMask << 
+  "tpcClMult="   << tpcClusterMultiplicity   << // TPC cluster multiplicity
+  "itsmult="     << itsNumberOfTracklets     << // ITS multiplicity
+  "vZ="          << vertexZ <<
+  //
+  "ntracks="     << N_tracks <<
+  "tpcpileup="   << ispileup <<
+  "vX="          << vertexX <<
+  "vY="          << vertexY <<
+  "event="       << fEventCountInFile <<
+  "chunk="       << fChunkIDinJob <<
+  "isample="     << sampleNo << // sample id for subsample method
+  "multTPC.="    << &fMultTPC <<
+  "multV0M.="    << &fMultV0M <<
+  "multfourpi.=" << &fMultFourPi <<
+  "\n";
+
+}
+//________________________________________________________________________
 void AliAnalysisTaskTIdentityPID::FillEventInfoMC()
 {
 
   //
   if (fUseCouts) std::cout << " Info::marsland: ===== In the FillEventInfoMC ===== " << std::endl;
-  Int_t sampleNo = 0;
-  Int_t nSubSample = 20;
-  sampleNo = Int_t(fEventGID)%nSubSample;
+  // Int_t sampleNo = 0;
+  // Int_t nSubSample = 20;
+  // sampleNo = Int_t(fEventGID)%nSubSample;
+
+  TRandom3 randGen(time(0));
+  Int_t sampleNo = randGen.Integer(21);
   const Int_t nMultType = 6;
   TVectorF fMultTPC(nMultType);
   TVectorF fMultV0M(nMultType);
   for(Int_t i=0;i<nMultType; i++){ fMultTPC[i]=0.; fMultV0M[i]=0.; }
   Int_t nStackTracks = fMCEvent->GetNumberOfTracks();
-
   //
   // Acceptance counter
   AliMCParticle *trackMCgen;
+  Int_t trackCounterInAnalysis = 0;
   for (Int_t iTrack = 0; iTrack < nStackTracks; iTrack++)
   {
     trackMCgen = (AliMCParticle *)fMCEvent->GetTrack(iTrack);
@@ -3143,14 +3316,51 @@ void AliAnalysisTaskTIdentityPID::FillEventInfoMC()
       if (TMath::Abs(sign)<1) fMultTPC[4]++; // all negative particles in TPC
       if (sign==0) fMultTPC[5]++; // all particles in TPC
     }
+    //
+    //
+    if (bTPCacc && trackMCgen->P()>0.2 && TMath::Abs(sign)>1) trackCounterInAnalysis++;
   }
   //
   // Fill track kinematics
   AliMCParticle *trackMCmother;
   AliMCParticle *trackMCGmother;
+  // track vectors
+  TVectorF tr_index(trackCounterInAnalysis);
+  TVectorF tr_part(trackCounterInAnalysis);
+  TVectorF tr_orig(trackCounterInAnalysis);
+  TVectorF tr_sign(trackCounterInAnalysis);
+  TVectorF tr_ptot(trackCounterInAnalysis);
+  TVectorF tr_px(trackCounterInAnalysis);
+  TVectorF tr_py(trackCounterInAnalysis);
+  TVectorF tr_pz(trackCounterInAnalysis);
+  TVectorF tr_eta(trackCounterInAnalysis);
+  TVectorF tr_rap(trackCounterInAnalysis);
+  TVectorF tr_phi(trackCounterInAnalysis);
+  TVectorF tr_lab(trackCounterInAnalysis);
+  TVectorF tr_pdg(trackCounterInAnalysis);
+  TVectorF tr_pdgMom(trackCounterInAnalysis);
+  TVectorF tr_pdgGMom(trackCounterInAnalysis);
+  TVectorF tr_res(trackCounterInAnalysis);
+
+  for(Int_t i=0;i<trackCounterInAnalysis; i++){
+    tr_index[i]=0.;    tr_part[i]=0.;  tr_pdgGMom[i]=0.;
+    tr_orig[i]=0.;     tr_sign[i]=0.;  tr_res[i]=0.;
+    tr_ptot[i]=0.;     tr_px[i]=0.;
+    tr_py[i]=0.;       tr_pz[i]=0.;
+    tr_eta[i]=0.;      tr_rap[i]=0.;
+    tr_phi[i]=0.;      tr_lab[i]=0.;
+    tr_pdg[i]=0.;      tr_pdgMom[i]=0.;
+  }
+
+  Int_t trIndex = 0;
+  TVectorF fMultFourPi(5); // 0;protons, 1;baryons, 2;pos, 3,;neg, 4; neutral
+  for(Int_t i=0;i<5; i++) fMultFourPi[i]=0.;
   for (Int_t iTrack = 0; iTrack < nStackTracks; iTrack++)
   {
     trackMCgen = (AliMCParticle *)fMCEvent->GetTrack(iTrack);
+    //
+    // pile up selection
+    if (IsFromPileup(iTrack)) continue;
     if (!trackMCgen) continue;
     if (!fMCStack->IsPhysicalPrimary(iTrack)) continue;
     Int_t sign = trackMCgen->Charge();
@@ -3175,6 +3385,13 @@ void AliAnalysisTaskTIdentityPID::FillEventInfoMC()
     Float_t etaMCgen  = trackMCgen->Eta();
     Float_t rapMCgen  = trackMCgen->Y();
     //
+    // four pi multiplicities
+    if (iPart == 2) fMultFourPi[0]++; // all protons
+    if (CheckIfBaryon(trackMCgen)) fMultFourPi[1]++; // all baryons
+    if (TMath::Abs(sign)>1) fMultFourPi[2]++; // all positive particles
+    if (TMath::Abs(sign)<1) fMultFourPi[3]++; // all negative particles
+    if (sign==0) fMultFourPi[4]++; // all neutral in V0M
+    //
     // get the pdg info for mother and daugh ter
     TObjString momName="xxx", momGName="ggg";
     Int_t labMom = 0, labGMom = 0, pdgMom = 0, pdgGMom = 0;
@@ -3192,16 +3409,12 @@ void AliAnalysisTaskTIdentityPID::FillEventInfoMC()
     }
     //
     // dump all tracks
-    Bool_t bV0Macc = (etaMCgen < 5.1 && etaMCgen > 2.8) || (etaMCgen < -1.7 && etaMCgen > -3.7);
-    Bool_t bTPCacc = (etaMCgen < 0.9  && etaMCgen > -0.9);
-    // if (fFillTracksMCgen && (bTPCacc || bV0Macc) ){
+    Bool_t bTPCacc = (etaMCgen < 0.8  && etaMCgen > -0.8 && ptotMCgen>0.2);
     if (fFillTracksMCgen && bTPCacc && TMath::Abs(sign)>1 ){
-      Int_t detectorAcc = (bV0Macc) ? 0 : 1;
+
       Bool_t ifBar = CheckIfBaryon(trackMCgen);
       Bool_t acceptRes = CheckIfFromResonance(trackMCgen);
       Bool_t acceptAnyRes = CheckIfFromAnyResonance(trackMCgen,-0.8,0.8,0.2,10.);
-
-      if (IsFromPileup(iTrack)) continue; // pile up selection
       //
       // check the origin of the track
       Bool_t bPrim     = fMCStack->IsPhysicalPrimary(iTrack);
@@ -3212,36 +3425,52 @@ void AliAnalysisTaskTIdentityPID::FillEventInfoMC()
       if (bPrim) orig = 0;
       else if (bWeak) orig = 1;
       else if (bMaterial) orig = 2;
+      //
+      // fill trck info into vectors
+      tr_index[trIndex] = trIndex;
+      tr_part[trIndex] = iPart;
+      tr_orig[trIndex] = orig;
+      tr_sign[trIndex] = sign;
+      tr_ptot[trIndex] = ptotMCgen;
+      tr_px[trIndex] = pxMCgen;
+      tr_py[trIndex] = pyMCgen;
+      tr_pz[trIndex] = pzMCgen;
+      tr_eta[trIndex] = etaMCgen;
+      tr_rap[trIndex] = rapMCgen;
+      tr_phi[trIndex] = phiMCGen;
+      tr_lab[trIndex] = iTrack;
+      tr_pdg[trIndex] = pdg;
+      tr_pdgMom[trIndex] = pdgMom;
+      tr_pdgGMom[trIndex] = pdgGMom;
+      tr_res[trIndex] = acceptAnyRes;
+      trIndex++;
 
-      (*fTreeSRedirector)<<"tracksMCgen"<<
-      "gid="          << fEventGID    << // global event ID
-      "part="         << iPart        << // particle index --> pi, ka, pr, el, de, ksi, la, phi
-      "lab="          << iTrack       << // track label
-      "pdg="          << pdg          << // pdg of prim particle
-      "ifbar="        << ifBar        <<
-      "acceptres="    << acceptRes    <<
-      "acceptanyres=" << acceptAnyRes <<
-      "orig="         << orig         << // origin
-      "sign="         << sign         << // sign
-      "px="           << pxMCgen      << // vertex momentum
-      "py="           << pyMCgen      << // vertex momentum
-      "pz="           << pzMCgen      << // vertex momentum
-      "eta="          << etaMCgen     << // mc pseudorapidity
-      "rap="          << rapMCgen     << // mc rapidity
-      "phi="          << phiMCGen     << // mc phi
-      "pdgMom="       << pdgMom       << // pdg of mother
-      "pdgGMom="      << pdgGMom      << // pdg of grandmother
-      "cent="         << fCentrality;    // centrality
       if (fFillDebug){
         (*fTreeSRedirector)<<"tracksMCgen"<<
-        "pdg="        << pdg          << // pdg of prim particle
-        "pdgMom="     << pdgMom       << // pdg of mother
-        "pdgGMom="    << pdgGMom      << // pdg of grandmother
+        "gid="          << fEventGID    << // global event ID
+        "cent="         << fCentrality  << // centrality
+        "part="         << iPart        << // particle index --> pi, ka, pr, el, de, ksi, la, phi
+        "lab="          << iTrack       << // track label
+        "pdg="          << pdg          << // pdg of prim particle
+        "ifbar="        << ifBar        <<
+        "acceptres="    << acceptRes    <<
+        "acceptanyres=" << acceptAnyRes <<
+        "orig="         << orig         << // origin
+        "sign="         << sign         << // sign
+        "px="           << pxMCgen      << // vertex momentum
+        "py="           << pyMCgen      << // vertex momentum
+        "pz="           << pzMCgen      << // vertex momentum
+        "eta="          << etaMCgen     << // mc pseudorapidity
+        "rap="          << rapMCgen     << // mc rapidity
+        "phi="          << phiMCGen     << // mc phi
+        "pdgMom="       << pdgMom       << // pdg of mother
+        "pdgGMom="      << pdgGMom      << // pdg of grandmother
         "parName.="   << &parName     << // name of particle
         "momName.="   << &momName     << // name of mother
-        "momGName.="  << &momGName;      // name of grandmother
+        "momGName.="  << &momGName    << // name of grandmother
+        "\n";
       }
-      (*fTreeSRedirector)<<"tracksMCgen"<<"\n";
+
     }
   }
   //
@@ -3286,19 +3515,16 @@ void AliAnalysisTaskTIdentityPID::FillEventInfoMC()
   // Fill th tree
   (*fTreeSRedirector)<<"eventInfoMC"<<
   "gid=" << fEventGID << // global event ID
-  // "event=" << fEventCountInFile <<
-  // "chunk=" << fChunkIDinJob <<
+  "nstacktracks=" << nStackTracks <<
+  "event=" << fEventCountInFile <<
+  "chunk=" << fChunkIDinJob <<
   "run=" << fRunNo << // run Number
-  "ntracks_neg=" << fEP_ntracks_neg << // total number of negative tracks
-  "ntracks_pos=" << fEP_ntracks_pos << // total number of positive tracks
   "momtype=" << fUsePtCut << // momentum type pt, ptot_tpc, ptot_vertex
   "isample=" << sampleNo << // sample id for subsample method
   "cent=" << fCentrality << // centrality from V0
-  "centimp=" << fCentImpBin << // centraltiy from impact parameter
   // event shape observables
-  "spher=" << fSpherocity <<
-  "flat=" << fFlatenicity <<
-  "flatS=" << fFlatenicityScaled <<
+  "ntracks_neg=" << fEP_ntracks_neg << // total number of negative tracks
+  "ntracks_pos=" << fEP_ntracks_pos << // total number of positive tracks
   "Qx2_neg=" << fEP_2_Qx_neg <<
   "Qx2_pos=" << fEP_2_Qx_pos <<
   "Qy2_neg=" << fEP_2_Qy_neg <<
@@ -3323,11 +3549,32 @@ void AliAnalysisTaskTIdentityPID::FillEventInfoMC()
   "nwn=" << fNwNColl << // Number of Nwounded-N collisons
   "nwnw=" << fNwNwColl << // Number of Nwounded-Nwounded collisions
   // multilicity estimators
-  "multTPC.=" << &fMultTPC << // momnets up to 4th order for (net)pions on gen level
-  "multV0M.=" << &fMultV0M << // momnets up to 4th order for (net)kaons on gen level
-  "\n";
-
-
+  "multTPC.=" << &fMultTPC <<
+  "multV0M.=" << &fMultV0M <<
+  "multfourpi.=" << &fMultFourPi <<
+  // track info
+  "index.=" << &tr_index << // momnets up to 4th order for (net)kaons on gen level
+  "lab.=" << &tr_lab << // momnets up to 4th order for (net)kaons on gen level
+  "part.=" << &tr_part << // momnets up to 4th order for (net)kaons on gen level
+  "orig.=" << &tr_orig << // momnets up to 4th order for (net)kaons on gen level
+  "sign.=" << &tr_sign << // momnets up to 4th order for (net)kaons on gen level
+  "ptot.=" << &tr_ptot << // momnets up to 4th order for (net)kaons on gen level
+  "px.=" << &tr_px << // momnets up to 4th order for (net)kaons on gen level
+  "py.=" << &tr_py << // momnets up to 4th order for (net)kaons on gen level
+  "pz.=" << &tr_pz << // momnets up to 4th order for (net)kaons on gen level
+  "eta.=" << &tr_eta << // momnets up to 4th order for (net)kaons on gen level
+  "rap.=" << &tr_rap << // momnets up to 4th order for (net)kaons on gen level
+  "phi.=" << &tr_phi << // momnets up to 4th order for (net)kaons on gen level
+  "pdg.=" << &tr_pdg << // momnets up to 4th order for (net)kaons on gen level
+  "res.=" << &tr_res <<
+  "pdgMom.=" << &tr_pdgMom ; // momnets up to 4th order for (net)kaons on gen level
+  if (fCollisionType == 1){
+    (*fTreeSRedirector)<<"eventInfoMC"<<
+    "spher=" << fSpherocity <<
+    "flat=" << fFlatenicity <<
+    "flatS=" << fFlatenicityScaled ;
+  }
+  (*fTreeSRedirector)<<"eventInfoMC"<<"\n";
 
 }
 //________________________________________________________________________
@@ -3887,6 +4134,7 @@ void AliAnalysisTaskTIdentityPID::FillTreeMC()
     // its pid
     "itsdEdx="              << fITSSignal               << // ITS dEdx
     "nsigmaITSPr="          << fNSigmasPrITS            << // nsigma ITS for protons
+    "nsigmaITSKa="          << fNSigmasKaITS            << // nsigma ITS for kaons
     // track properties
     "goldenchi2="           << goldenChi2               << // golden chi2 cut GetChi2TPCConstrainedVsGlobal
     "itschi2="              << itschi2                  << // ITS chi2
@@ -3978,6 +4226,283 @@ void AliAnalysisTaskTIdentityPID::FillTreeMC()
 
 
   if (fUseCouts) std::cout << " Info::marsland: ===== Out of FillTreeMC ===== " << std::endl;
+}
+//________________________________________________________________________
+void AliAnalysisTaskTIdentityPID::FillTreeMCAOD()
+{
+
+  if (fUseCouts) std::cout << " Info::marsland: ===== In the FillTreeMCAOD ===== " << std::endl;
+  
+  //
+  // unique event ID
+  TString stringToHash = Form("%s/%d", fChunkName.Data(), fEventCountInFile);
+  fEventGID = TString::Hash(stringToHash.Data(), stringToHash.Length());
+  //
+  // get PID response
+  AliAnalysisManager *man = AliAnalysisManager::GetAnalysisManager();
+  if(man)
+  {
+    AliAODInputHandler* handler = (AliAODInputHandler*)man->GetInputEventHandler();
+    if(handler) fPIDResponse = handler->GetPIDResponse();
+  }
+  //
+  // get centrality
+  AliMultSelection *MultSelection = (AliMultSelection*) fAOD->FindListObject("MultSelection");
+  fCentrality = MultSelection->GetMultiplicityPercentile("V0M");
+  //
+  // ======================================================================
+  // ------   reconstructed MC particles with dEdx information-------------
+  // ======================================================================
+  //
+  fMCEvent = MCEvent();
+  AliAODMCParticle *trackMCgen;
+  AliAODMCParticle *trackMCgenMom;
+  Int_t nStackTracks = fAOD->GetNumberOfTracks();
+  TClonesArray* AODMCTrackArray = dynamic_cast<TClonesArray*>(fInputEvent->FindListObject(AliAODMCParticle::StdBranchName()));
+  for(Int_t irectrack = 0; irectrack < fAOD->GetNumberOfTracks(); irectrack++)
+  {
+    //
+    AliAODTrack *trackAOD = (AliAODTrack *)fAOD->GetTrack(irectrack);
+    if (trackAOD==NULL) continue;
+    fEtaMC = trackAOD->Eta();
+    fPtMC  = trackAOD->Pt();
+    Bool_t momAcceptance = (fPtMC > 0.15 && fPtMC < 10.);
+    Bool_t etaAcceptance = (fEtaMC > -0.8 && fEtaMC < 0.8);
+    if (!(momAcceptance && etaAcceptance)) continue;
+    // 
+    Int_t lab = TMath::Abs(trackAOD->GetLabel());
+    if (lab < AODMCTrackArray->GetEntriesFast()) trackMCgen = static_cast<AliAODMCParticle*>(AODMCTrackArray->At(lab));
+    //
+    // Get generated track info
+    // Int_t labMom = trackMCgen->GetMother();
+    // if (labMom < AODMCTrackArray->GetEntriesFast() && labMom>0) trackMCgenMom = static_cast<AliAODMCParticle*>(AODMCTrackArray->At(labMom));
+    // Int_t pdgMom = trackMCgenMom->GetPdgCode();
+    //
+    // check the origin of the track
+    Int_t trackOrigin = -10;
+    if (trackMCgen->IsPhysicalPrimary())        trackOrigin = 0;
+    if (trackMCgen->IsSecondaryFromMaterial())  trackOrigin = 1;
+    if (trackMCgen->IsSecondaryFromWeakDecay()) trackOrigin = 2;
+    if (trackOrigin<-1) continue; 
+    //
+    //
+    Bool_t ifBar = CheckIfBaryonAOD(trackMCgen);
+    //
+    // get pileup info
+    Bool_t isTPCPileup=kFALSE, isITSPileup=kFALSE;
+    if (lab < AODMCTrackArray->GetEntriesFast()){
+      isTPCPileup = AliAnalysisUtils::IsParticleFromOutOfBunchPileupCollision(lab,fMCEvent);
+      // isITSPileup = AliAnalysisUtils::IsSameBunchPileupInGeneratedEvent(fMCEvent, "Hijing");
+    }
+    //
+    // match the track with mc track
+    Int_t pdg = trackMCgen->GetPdgCode();
+    Int_t iPart = -10;
+    if (TMath::Abs(pdg) == kPDGpi) { iPart = 0; } // select pi
+    if (TMath::Abs(pdg) == kPDGka) { iPart = 1; } // select ka
+    if (TMath::Abs(pdg) == kPDGpr) { iPart = 2; } // select pr
+    if (TMath::Abs(pdg) == kPDGde) { iPart = 3; } // select de
+    if (TMath::Abs(pdg) == kPDGel) { iPart = 4; } // select el
+    //
+    fEtaMC         = trackAOD->Eta();
+    fPtMC          = trackAOD->Pt();
+    fSignMC        = trackAOD->Charge();
+    Float_t fpMC   = trackAOD->P();
+    Float_t fPhiMC = trackAOD->Phi();
+    Float_t fPx    = trackAOD ->Px();
+    Float_t fPy    = trackAOD ->Py();
+    Float_t fPz    = trackAOD ->Pz();
+    trackAOD->GetImpactParameters(fTrackDCAxy,fTrackDCAz);  // signed dcas
+
+    fNcl                 = trackAOD->GetTPCncls();
+    fPtot                = trackAOD->GetTPCmomentum();
+    fTPCSignalMC         = trackAOD->GetTPCsignal();
+    fTrackTPCSignalN     = trackAOD->GetTPCsignalN();
+    fTrackTPCCrossedRows = Float_t(trackAOD->GetTPCCrossedRows());
+    fTPCShared           = trackAOD->GetTPCnclsS();
+    fTPCFindable         = trackAOD->GetTPCNclsF();
+    fMissingCl           = trackAOD->GetTPCClusterInfo(3,0,0,159);
+    fTrackChi2TPC        = (fNcl>0) ? TMath::Abs(trackAOD->GetTPCchi2()/fNcl) : -1;  // ???
+    fITSSignal           = trackAOD->GetITSsignal();
+    fTPCSignal           = trackAOD->GetTPCsignal();
+    if (TMath::Abs(fTrackDCAxy)>4) continue;
+    if (TMath::Abs(fTrackDCAz)>4) continue;
+    if (fNcl<50) continue;
+    //
+    if (fPIDResponse) {
+      fNSigmasPrITS = fPIDResponse->NumberOfSigmasITS(trackAOD, AliPID::kProton);
+      fNSigmasKaITS = fPIDResponse->NumberOfSigmasITS(trackAOD, AliPID::kKaon);
+      //
+      fNSigmasElTPC = fPIDResponse->NumberOfSigmasTPC(trackAOD, AliPID::kElectron);
+      fNSigmasPiTPC = fPIDResponse->NumberOfSigmasTPC(trackAOD, AliPID::kPion);
+      fNSigmasKaTPC = fPIDResponse->NumberOfSigmasTPC(trackAOD, AliPID::kKaon);
+      fNSigmasPrTPC = fPIDResponse->NumberOfSigmasTPC(trackAOD, AliPID::kProton);
+      fNSigmasDeTPC = fPIDResponse->NumberOfSigmasTPC(trackAOD, AliPID::kDeuteron);
+      //
+      fNSigmasElTOF = fPIDResponse->NumberOfSigmasTOF(trackAOD, AliPID::kElectron, fPIDResponse->GetTOFResponse().GetTimeZero());
+      fNSigmasPiTOF = fPIDResponse->NumberOfSigmasTOF(trackAOD, AliPID::kPion,     fPIDResponse->GetTOFResponse().GetTimeZero());
+      fNSigmasKaTOF = fPIDResponse->NumberOfSigmasTOF(trackAOD, AliPID::kKaon,     fPIDResponse->GetTOFResponse().GetTimeZero());
+      fNSigmasPrTOF = fPIDResponse->NumberOfSigmasTOF(trackAOD, AliPID::kProton,   fPIDResponse->GetTOFResponse().GetTimeZero());
+      fNSigmasDeTOF = fPIDResponse->NumberOfSigmasTOF(trackAOD, AliPID::kDeuteron, fPIDResponse->GetTOFResponse().GetTimeZero());
+    }
+    //
+    //
+    Int_t nTPCClusters = fAOD->GetNumberOfTPCClusters();
+    Int_t nITSClusters = 0;
+    AliVMultiplicity *multiObj = fAOD->GetMultiplicity();
+    for(Int_t i=2;i<6;i++) nITSClusters += multiObj->GetNumberOfITSClusters(i);
+    UShort_t tpcFindableCls = trackAOD->GetTPCNclsF();
+    UShort_t tpcSharedCls = trackAOD->GetTPCnclsS();
+    Float_t dca[2], covar[3];
+    trackAOD->GetImpactParameters(dca, covar);
+    Float_t dca0 = dca[0];
+    Float_t dca1 = dca[1];
+    Double_t tofSignalTunedOnData = trackAOD->GetTOFsignalTunedOnData();
+    Double_t length    = trackAOD->GetIntegratedLength();
+    Double_t tofSignal = trackAOD->GetTOFsignal();
+    Double_t beta = -.05;
+    if((length > 0) && (tofSignal > 0)) beta = length / 2.99792458e-2 / tofSignal;
+    //
+    Double_t nclsTRD     = (Double_t)trackAOD->GetTRDncls();
+    Double_t TOFSignalDx = trackAOD->GetTOFsignalDx();
+    Double_t TOFSignalDz = trackAOD->GetTOFsignalDz();
+
+    Bool_t isOnITS = trackAOD->IsOn(AliESDtrack::kITSrefit);
+    Bool_t isOnTPC = trackAOD->IsOn(AliESDtrack::kTPCrefit);
+    Double_t goldenChi2 = trackAOD->GetChi2TPCConstrainedVsGlobal();
+    Int_t nclITS = trackAOD->GetITSNcls(); if (nclITS<1) nclITS=-1;
+    Double_t itschi2 = trackAOD->GetITSchi2()/nclITS;
+    fTrackNewITScut = ApplyDCAcutIfNoITSPixelAOD(trackAOD);
+    //
+    // Fill MC closure tree
+    if(!fTreeSRedirector) return;
+    (*fTreeSRedirector)<<"tracksMCrec"<<
+    "year="                 << fYear                    << // year 
+    "gid="                  << fEventGID                << // global event ID
+    "itrack="               << irectrack                << // track number
+    "sign="                 << fSignMC                  << // charge
+    "p="                    << fpMC                     << // TPC momentum
+    "ptot="                 << fPtot                    << // TPC momentum
+    "eta="                  << fEtaMC                   << // eta
+    "phi="                  << fPhiMC                   << // phi
+    "px="                   << fPx                      << // px
+    "py="                   << fPy                      << // py
+    "pz="                   << fPz                      << // pz
+    "pt="                   << fPtMC                    << // pz
+    // tpc pid
+    "dEdx="                 << fTPCSignal               << // dEdx of the track
+    "nsigmaTPCEl="          << fNSigmasElTPC            << // nsigma TPC for electrons
+    "nsigmaTPCPi="          << fNSigmasPiTPC            << // nsigma TPC for pions
+    "nsigmaTPCKa="          << fNSigmasKaTPC            << // nsigma TPC for kaons
+    "nsigmaTPCPr="          << fNSigmasPrTPC            << // nsigma TPC for protons
+    "nsigmaTPCDe="          << fNSigmasDeTPC            << // nsigma TPC for deuterons
+    // tof pid
+    "length="               << length                   << // integrated track length
+    "tofSignal="            << tofSignal                << // TOF signal
+    "nsigmaTOFEl="          << fNSigmasElTOF            << // nsigma TOF for electrons
+    "nsigmaTOFPi="          << fNSigmasPiTOF            << // nsigma TOF for pions
+    "nsigmaTOFKa="          << fNSigmasKaTOF            << // nsigma TOF for kaons
+    "nsigmaTOFPr="          << fNSigmasPrTOF            << // nsigma TOF for protons
+    "nsigmaTOFDe="          << fNSigmasDeTOF            << // nsigma TOF for deuterons
+    // its pid
+    "itsdEdx="              << fITSSignal               << // ITS dEdx
+    "nsigmaITSPr="          << fNSigmasPrITS            << // nsigma ITS for protons
+    "nsigmaITSKa="          << fNSigmasKaITS            << // nsigma ITS for kaons
+    // track properties
+    "goldenchi2="           << goldenChi2               << // golden chi2 cut GetChi2TPCConstrainedVsGlobal
+    "itschi2="              << itschi2                  << // ITS chi2
+    "itsrefit="             << isOnITS                  << // its refit
+    "tpcrefit="             << isOnTPC                  << // tpc refit
+    "noitspixel="           << fTrackNewITScut          << // if no its pixel use DCA cut
+    "ncltpc="               << fNcl                     << // number of clusters
+    "findableCls="          << tpcFindableCls           << // number of findable clusters
+    "sharedCls="            << tpcSharedCls             << // number of shared clusters
+    "tpcsignaln="           << fTrackTPCSignalN         << // number of cl used in dEdx
+    "dcaxy="                << fTrackDCAxy              << // dcaxy
+    "dcaz="                 << fTrackDCAz               << // dcaz
+    "cRows="                << fTrackTPCCrossedRows     << // crossed Rows in TPC
+    "chi2tpc="              << fTrackChi2TPC            << // TPC chi2
+    // pileup info
+    "tpcpileup="            << isTPCPileup              << // out of bunch pileup check
+    "itspileup="            << isITSPileup              << // inbunch pileup check
+    // MC true information
+    "ifBar="                << ifBar                    <<
+    "orig="                 << trackOrigin              << // origin of the track
+    "part="                 << iPart                    << // particle of interest
+    "lab="                  << lab                      << // track label
+    "pdg="                  << pdg                      << // pdg code
+    // "labMom="               << labMom                   << // mother label
+    // "pdgMom="               << pdgMom                   << // pdg of mother
+    "\n";
+  } // ======= end of track loop for MC dEdx filling =======
+
+  //
+  // ======================================================================
+  // --------------------- generated MC particles -------------------------
+  // ======================================================================
+  //
+  for(Long_t iTrack = 0; iTrack < AODMCTrackArray->GetEntriesFast(); iTrack++)
+  {
+    AliAODMCParticle* particle = static_cast<AliAODMCParticle*>(AODMCTrackArray->At(iTrack));
+    if(!particle) continue;
+    Int_t pdg = particle ->GetPdgCode();
+    Int_t trackOrigin = -10;
+    if (particle->IsPhysicalPrimary())        trackOrigin = 0;
+    if (particle->IsSecondaryFromMaterial())  trackOrigin = 1;
+    if (particle->IsSecondaryFromWeakDecay()) trackOrigin = 2;
+    if (trackOrigin<-1) continue; // TODO
+    //
+    // match the track with mc track
+    Int_t iPart = -10;
+    if (TMath::Abs(pdg) == kPDGpi) { iPart = 0; } // select pi
+    if (TMath::Abs(pdg) == kPDGka) { iPart = 1; } // select ka
+    if (TMath::Abs(pdg) == kPDGpr) { iPart = 2; } // select pr
+    if (TMath::Abs(pdg) == kPDGde) { iPart = 3; } // select de
+    if (TMath::Abs(pdg) == kPDGel) { iPart = 4; } // select el
+    // 
+    if (!particle->IsPhysicalPrimary()) continue;
+    Float_t pxMCgen = particle ->Px();
+    Float_t pyMCgen = particle ->Py();
+    Float_t pzMCgen = particle ->Pz();
+    Float_t ptMCgen = particle ->Pt();
+    Float_t vxMCgen = particle ->Xv();
+    Float_t vyMCgen = particle ->Yv();
+    Float_t vzMCgen = particle ->Zv();
+    Float_t etaMCgen= particle ->Eta();
+    Float_t pMCgen = particle ->P();
+    Float_t rapMCgen= particle ->Y();
+    Float_t phiMCGen= particle ->Phi();
+    Short_t sign    = particle ->Charge();
+    Bool_t momAcceptance = (ptMCgen > 0.15 && ptMCgen < 10.);
+    Bool_t etaAcceptance = (etaMCgen > -0.8 && etaMCgen < 0.8);
+    Bool_t ifBar = CheckIfBaryonAOD(particle);
+    if (momAcceptance && etaAcceptance && TMath::Abs(sign)>0.5){
+      (*fTreeSRedirector)<<"tracksMCgen"<<
+      "gid="          << fEventGID    << // global event ID
+      "cent="         << fCentrality  << // centrality
+      "part="         << iPart        << // particle index --> pi, ka, pr, el, de, ksi, la, phi
+      "ifBar="        << ifBar        <<
+      "lab="          << iTrack       << // track label
+      "pdg="          << pdg          << // pdg of prim particle
+      "orig="         << trackOrigin  << // origin
+      "sign="         << sign         << // sign
+      "px="           << pxMCgen      << // vertex momentum
+      "py="           << pyMCgen      << // vertex momentum
+      "pz="           << pzMCgen      << // vertex momentum
+      "pt="           << ptMCgen      <<
+      "p="            << pMCgen      <<
+      "eta="          << etaMCgen     << // mc pseudorapidity
+      "rap="          << rapMCgen     << // mc rapidity
+      "phi="          << phiMCGen     << // mc phi
+      "vx="           << vxMCgen <<
+      "vy="           << vyMCgen <<
+      "vz="           << vzMCgen <<
+      "vz="           << vzMCgen <<
+      "\n";
+    }
+  }
+
+  if (fUseCouts) std::cout << " Info::marsland: ===== Out of FillTreeMCAOD ===== " << std::endl;
 }
 //________________________________________________________________________
 void AliAnalysisTaskTIdentityPID::MCclosureHigherMoments()
@@ -4697,15 +5222,13 @@ void AliAnalysisTaskTIdentityPID::FillCleanSamples()
       {
         Bool_t fillCleanSamp = kTRUE;
         if (fDownsampleTrees)
-          fillCleanSamp = fRandom.Rndm() < fDownscalingFactor;
+        fillCleanSamp = fRandom.Rndm() < fDownscalingFactor*50; // fDownscalingFactor = 0.001
 
         if (fillCleanSamp) {
           if(!fTreeSRedirector) return;
           (*fTreeSRedirector)<<"cleanSamp"<<
           "gid="            << fEventGID           << // global event ID
           "v0id="           << iV0MI               << // V0 ID
-          "eventtime="      << fTimeStamp          <<
-          "intrate="        << fIntRate            << // interaction rate
           "piFromK0="       << fCleanPionsFromK0   << // K0s cut for pions
           "v0haspixel="     << fHasV0FirstITSlayer << // ITS pixel cout
           "purity="         << v0purity            <<
@@ -4759,6 +5282,7 @@ void AliAnalysisTaskTIdentityPID::GetExpecteds(AliESDtrack *track, Double_t clos
 {
   //
   fNSigmasPrITS = fPIDResponse->NumberOfSigmasITS(track, AliPID::kProton);
+  fNSigmasKaITS = fPIDResponse->NumberOfSigmasITS(track, AliPID::kKaon);
   //
   // betaGamma is not well defined below bg=0.01 --> below 200MeV protons and deuterons
   Double_t ptotForBetaGamma = track->GetInnerParam()->GetP();
@@ -4896,6 +5420,24 @@ Bool_t AliAnalysisTaskTIdentityPID::CheckIfFromResonance(AliMCParticle *trackMCg
     }
   }
   return acceptRes;
+
+}
+//________________________________________________________________________
+Bool_t AliAnalysisTaskTIdentityPID::CheckIfBaryonAOD(AliAODMCParticle *trackMCgen)
+{
+  //
+  // default is accept baryons
+  Bool_t ifBar = kFALSE;
+  Int_t pdg = trackMCgen->GetPdgCode();
+  //
+  //Check if the particle is in the baryon list
+  for (Int_t ibar=0;ibar<fNBarBins;ibar++){
+    if ( fBaryons[ibar] == pdg ) {
+      ifBar = kTRUE;
+      break;
+    }
+  }
+  return ifBar;
 
 }
 //________________________________________________________________________
@@ -5044,6 +5586,26 @@ Bool_t AliAnalysisTaskTIdentityPID::ApplyDCAcutIfNoITSPixel(AliESDtrack *track)
 
   fIsITSpixel01 = (isFirstITSlayer || isSecondITSlayer);
   fNITSclusters = track->GetNumberOfITSClusters();
+
+  if (!cov[0] || !cov[2]) {
+    return kFALSE;
+  } else {
+    fPrimRestriction = TMath::Sqrt((p[0]*p[0])/cov[0] + (p[1]*p[1])/cov[2]);
+    return (fPrimRestriction<2 && fNITSclusters>2) || (fPrimRestriction<5 && fIsITSpixel01);
+  }
+
+}
+//________________________________________________________________________
+Bool_t AliAnalysisTaskTIdentityPID::ApplyDCAcutIfNoITSPixelAOD(AliAODTrack *track)
+{
+
+  Float_t p[2],cov[3];
+  track->GetImpactParameters(p,cov); // p[0]=fD; p[1]=fZ; cov[0]=fCdd; cov[1]=fCdz; cov[2]=fCzz;
+  Bool_t isFirstITSlayer  = track->HasPointOnITSLayer(0);
+  Bool_t isSecondITSlayer = track->HasPointOnITSLayer(1);
+
+  fIsITSpixel01 = (isFirstITSlayer || isSecondITSlayer);
+  fNITSclusters = track->GetITSNcls();
 
   if (!cov[0] || !cov[2]) {
     return kFALSE;
@@ -5603,6 +6165,19 @@ Int_t AliAnalysisTaskTIdentityPID::CountEmptyEvents(Int_t counterBin, Int_t sett
       Bool_t etaAcceptance = (etaMCgen > -0.8 && etaMCgen < 0.8);
       if (momAcceptance && etaAcceptance) trackcounter++;
     }
+  } else if (setting == -2){
+    TClonesArray* AODMCTrackArray = dynamic_cast<TClonesArray*>(fInputEvent->FindListObject(AliAODMCParticle::StdBranchName()));
+    for(Long_t i_MC_track = 0; i_MC_track < AODMCTrackArray->GetEntriesFast(); i_MC_track++)
+    {
+      AliAODMCParticle* particle = static_cast<AliAODMCParticle*>(AODMCTrackArray->At(i_MC_track));
+      if(!particle) continue;
+      if (!particle->IsPhysicalPrimary()) continue;
+      Double_t MC_Pt            = particle ->Pt();
+      Double_t MC_Eta           = particle ->Eta();
+      Bool_t momAcceptance = (MC_Pt > 0.15 && MC_Pt < 10.);
+      Bool_t etaAcceptance = (MC_Eta > -0.8 && MC_Eta < 0.8);
+      if (momAcceptance && etaAcceptance) trackcounter++;
+    }
   } else { // for data event plane
     if (fUseCouts) std::cout << " Info::marsland: ===== In the CountEmptyEvents from ESD tracks ===== " << std::endl;
     for (Int_t iTrack = 0; iTrack < fESD->GetNumberOfTracks(); iTrack++) {
@@ -5709,8 +6284,8 @@ void AliAnalysisTaskTIdentityPID::CreateEventInfoTree()
   fHist_EP_3_Psi      ->Fill(fEP_3_Psi);
 
   TMatrixF trackCounter(fCounterEtaBins.size(), fCounterMomBins.size());
-  for (Int_t ieta = 0; ieta < fCounterEtaBins.size(); ieta++) {
-    for (Int_t imom = 0; imom < fCounterMomBins.size(); imom++) {
+  for (Int_t ieta = 0; ieta < static_cast<Int_t>(fCounterEtaBins.size()); ieta++) {
+    for (Int_t imom = 0; imom < static_cast<Int_t>(fCounterMomBins.size()); imom++) {
       trackCounter(ieta, imom) = fTrackCounter[ieta][imom];
     }
   }

@@ -20,6 +20,7 @@ class AliESDEvent;
 class AliESDpid;
 class AliESDtools;
 class AliESDtrack;
+class AliAODTrack;
 class AliESDtrackCuts;
 class AliHeader;
 class AliMCParticle;
@@ -258,6 +259,7 @@ public:
   void   SetFillQvectorHists(const Bool_t ifFillQvectorHists = kFALSE){fFillQvectorHists    = ifFillQvectorHists;}
   void   SetApplyQVectorCorr(const Bool_t ifApplyQVectorCorr = kFALSE){fApplyQVectorCorr    = ifApplyQVectorCorr;}
   void   SetDownsampleTrees(const Bool_t ifDownsampleTrees = kFALSE)  {fDownsampleTrees     = ifDownsampleTrees;}
+  void   SetUseAODsForMC(const Bool_t ifUseAODsForMC = kFALSE)  {fUseAODsForMC     = ifUseAODsForMC;}
 
   void   SetSettings(const std::vector<Int_t> ifSystSettings) {
     fSystSettings = ifSystSettings;
@@ -597,6 +599,7 @@ private:
   void CalculateMoments_CutBasedMethod();
   void FillMCFull_NetParticles();
   void FillTreeMC();
+  void FillTreeMCAOD();
   void FastGen_NetParticles();              // Run over galice.root for Fastgen higher moments
   void MCclosureHigherMoments();   // Calculate higher moments for REC and GEN
   void FillEffMatrix();            // Prepare efficiency matrix
@@ -613,12 +616,16 @@ private:
   Int_t CacheTPCEventInformation();
   UInt_t SetCutBitsAndSomeTrackVariables(AliESDtrack *track, Int_t particleType);
   Bool_t CheckIfFromResonance(AliMCParticle *trackMCgen);
+  Bool_t CheckIfBaryonAOD(AliAODMCParticle *trackMCgen);
   Bool_t CheckIfBaryon(AliMCParticle *trackMCgen);
   Bool_t CheckIfFromAnyResonance(AliMCParticle *trackMCgen, Float_t etaLow, Float_t etaUp, Float_t pDown, Float_t pUp);
   Bool_t ApplyDCAcutIfNoITSPixel(AliESDtrack *track);
+  Bool_t ApplyDCAcutIfNoITSPixelAOD(AliAODTrack *track);
   Bool_t GetSystematicClassIndex(UInt_t cut,Int_t syst);
   Bool_t CheckPsiPair(const AliESDv0* v0);
   Double_t GetTrackEfficiency(const Int_t& part, const Double_t& ptot, const Double_t& eta, const Int_t& setting, const Int_t& sign, const Int_t& pidCutType=0);
+
+
   //
   // Jet Functions
   void FindJetsFJ();
@@ -627,6 +634,7 @@ private:
   void GetFlatenicityMC();
   void GetFlatenicity();
   Double_t ComputeSpherocity(Int_t setting);
+  void FillEventInfoMCAOD();
   void FillEventInfoMC();
   Float_t RelativePhi(Float_t mphi, Float_t vphi);
 
@@ -637,6 +645,7 @@ private:
   //
   AliPIDResponse   * fPIDResponse;            //! PID response object
   AliESDEvent      * fESD;                    //! ESD object
+  AliAODEvent      * fAOD;                    //! AOD object
   TList            * fListHist;               //! list for histograms
   AliESDtrackCuts  * fESDtrackCuts;           //! basic cut variables
   AliESDtrackCuts  * fESDtrackCuts_Bit96;     //! basic cut variables
@@ -782,6 +791,7 @@ private:
   Bool_t            fApplyQVectorCorr;
   Bool_t            fDefaultCuts;
   Bool_t            fDownsampleTrees;        // downsample the trees to save disk space
+  Bool_t            fUseAODsForMC;
 
   Int_t             fNSettings;
   std::vector<Int_t> fSystSettings;
@@ -838,6 +848,7 @@ private:
   Float_t           fTOFSigmaDe;             // Expected Deuteron TOF sigma
 
   Float_t           fNSigmasPrITS;           // ITS N sigma for Proton
+  Float_t           fNSigmasKaITS;           // ITS N sigma for Kaon
 
   Float_t           fTPCSignalMC;
   Float_t           fPtotMC;

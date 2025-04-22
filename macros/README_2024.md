@@ -36,16 +36,31 @@ singularity shell -B /cvmfs -B /data.local1 -B /u -B /lustre /data.local1/marsla
 | LHC20d2b    | alien.py find alien:///alice/sim/2020/LHC20d2b   AliESDs.root |  59542 | 
 | LHC20d2c    | alien.py find alien:///alice/sim/2020/LHC20d2c   AliESDs.root |   4583 |
 | LHC20g4     | alien.py find alien:///alice/sim/2020/LHC20g4    AliESDs.root |      0 | 
+| LHC20j6a    | alien.py find alien:///alice/sim/2020/LHC20j6a   AliESDs.root | 480803 | 
 | LHC18g4     | alien.py find alien:///alice/sim/2018/LHC18g4    AliESDs.root | 132421 |
 | LHC22d1c2   | alien.py find alien:///alice/sim/2022/LHC22d1c2  galice.root  | 116637 |
 | LHC22d1d2   | alien.py find alien:///alice/sim/2022/LHC22d1d2  galice.root  | 113410 |
 | LHC22d1a    | alien.py find alien:///alice/sim/2022/LHC22d1a   galice.root  |   7294 |
 | LHC22d1b    | alien.py find alien:///alice/sim/2022/LHC22d1b   galice.root  |   7097 |
+| ----------- | ------------------------------------------------------------- | ------ |
+| LHC21k2a    | alien.py find alien:///alice/sim/2021/LHC21k2a   AliAOD.root  |   6083 |
+| LHC21k2b    | alien.py find alien:///alice/sim/2021/LHC21k2b   AliAOD.root  |   7804 |
+| LHC21k2c    | alien.py find alien:///alice/sim/2021/LHC21k2c   AliAOD.root  |   4622 |
+| LHC21k7a    | alien.py find alien:///alice/sim/2021/LHC21k7a   AliAOD.root  |   7579 |
+| LHC21l5a    | alien.py find alien:///alice/sim/2021/LHC21l5a   AliAOD.root  |  10645 |
+| LHC21l5b    | alien.py find alien:///alice/sim/2021/LHC21l5b   AliAOD.root  |  13477 |
+| LHC21l5c    | alien.py find alien:///alice/sim/2021/LHC21l5c   AliAOD.root  |   8466 |
+| LHC20j6a    | alien.py find alien:///alice/sim/2020/LHC20j6a   AliAOD.root  |  11723 |
+
+
+
+
 
 # How to run runGrid.c
 ```
 cd $RUN_ON_GRID_DIR/Ebye/test_fastGen_netParticles/
 cp $RUN_ON_GRID_DIR/Ebye/code/*.* $RUN_ON_GRID_DIR/Ebye/code/READ*  .; rm *.so *.d *.pcm
+cp /home/marsland/Desktop/ubuntu_desktop/workdir/RUN_ON_GRID/Ebye/code/MEJets/* .
 ```
 
 # test lxplus
@@ -82,12 +97,15 @@ aliroot -b -q 'runGrid.C(0,"test",0,  40, "$TIdentityDIRcommit/lists/runsMC-2020
 aliroot -b -q 'runGrid.C(0,"test",0,  40, "$TIdentityDIRcommit/lists/runsMC-2020-LHC20e3b-pass3.list",1,2018,"18q",3,0)'
 aliroot -b -q 'runGrid.C(0,"test",0,  40, "$TIdentityDIRcommit/lists/runsMC-2020-LHC20e3c-pass3.list",1,2018,"18q",3,0)'
 aliroot -b -q 'runGrid.C(0,"test",0,  40, "$TIdentityDIRcommit/lists/runsMC-2022-LHC22b5-pass3.list",1,2018,"18q",3,0)'
+aliroot -b -q 'runGrid.C(0,"test",0,  40, "$TIdentityDIRcommit/lists/runsMC-2020-LHC20j6a-pass2.list",1,2020,"15o",2,0)'
+
 ```
 
 # Run real data
 ```
 aliroot -b -q 'runGrid.C(0,"test",0,  0,  "$TIdentityDIRcommit/lists/runsDPG-2018-LHC18q-pass3.list",0,2018,"18q",3,0)'
 aliroot -b -q 'runGrid.C(0,"test",0,  0,  "$TIdentityDIRcommit/lists/runsDPG-2018-LHC18r-pass3.list",0,2018,"18r",3,0)'
+aliroot -b -q 'runGrid.C(0,"test",0,  0,  "$TIdentityDIRcommit/lists/runsDPG-2015-LHC15o-pass2.list",0,2015,"15o",2,0)'
 aliroot -b -q 'runGrid.C(0,"test",0,  11, "$TIdentityDIRcommit/lists/runs-2018-LHC18b-pass2.list",0,2018,"18b",3,0)'
 ```
 
@@ -110,6 +128,7 @@ aliroot -b -q 'runGrid.C(0,"test",0,  50, "$TIdentityDIRcommit/lists/runsMC-2020
 aliroot -b -q 'runGrid.C(0,"test",0,  50, "$TIdentityDIRcommit/lists/runsMC-2020-LHC20e3b-pass3.list",1,2018,"18q",3,0)'
 aliroot -b -q 'runGrid.C(0,"test",0,  50, "$TIdentityDIRcommit/lists/runsMC-2020-LHC20e3c-pass3.list",1,2018,"18q",3,0)'
 aliroot -b -q 'runGrid.C(0,"test",0,  50, "$TIdentityDIRcommit/lists/runsMC-2022-LHC22b5-pass3.list",1,2018,"18q",3,0)'
+aliroot -b -q 'runGrid.C(0,"test",0,  50, "$TIdentityDIRcommit/lists/runsMC-2020-LHC20j6a-pass2.list",1,2020,"15o",2,0)'
 //
 aliroot -b -q 'runGrid.C(0,"test",0,  50, "$TIdentityDIRcommit/lists/runsMC-2020-LHC20d2a-pass3.list",1,2018,"18q",3,0)'
 aliroot -b -q 'runGrid.C(0,"test",0,  50, "$TIdentityDIRcommit/lists/runsMC-2020-LHC20d2b-pass3.list",1,2018,"18q",3,0)'
@@ -117,6 +136,35 @@ aliroot -b -q 'runGrid.C(0,"test",0,  50, "$TIdentityDIRcommit/lists/runsMC-2020
 ```
 ```
 aliroot -b -q 'runGrid.C(0,"test",0,  51, "$TIdentityDIRcommit/lists/runsMC-2018-LHC18g4-pass1.list",1,2018,"18b",3,0)'
+```
+
+# run full MC over AODs
+```
+--> 10h old production
+aliroot -b -q 'runGrid.C(0,"test",0,  60, "$TIdentityDIRcommit/lists/runsTest-2010-LHC11a10a_bis-pass1.list",12,2011,"10h",1,0)'
+
+
+--> 18qr old production
+aliroot -b -q 'runGrid.C(0,"test",0,  60, "$TIdentityDIRcommit/lists/runsMC-2020-LHC20e3a-pass3.list",10,2018,"18q",3,0)'
+
+--> 18qr GEANT4
+aliroot -b -q 'runGrid.C(0,"test",0,  60, "$TIdentityDIRcommit/lists/runsMC-2021-LHC21k7a-pass3.list",10,2018,"18q",3,0)'
+
+aliroot -b -q 'runGrid.C(0,"test",0,  60, "$TIdentityDIRcommit/lists/runsMC-2021-LHC21l5a-pass3.list",10,2018,"18q",3,0)'
+aliroot -b -q 'runGrid.C(0,"test",0,  60, "$TIdentityDIRcommit/lists/runsMC-2021-LHC21l5b-pass3.list",10,2018,"18q",3,0)'
+aliroot -b -q 'runGrid.C(0,"test",0,  60, "$TIdentityDIRcommit/lists/runsMC-2021-LHC21l5c-pass3.list",10,2018,"18q",3,0)'
+
+--> 15o pass2 GEANT3
+aliroot -b -q 'runGrid.C(0,"test",0,  60, "$TIdentityDIRcommit/lists/runsMC-2020-LHC20j6a-pass2.list",10,2015,"15o",2,0)'
+
+--> 15o pass2 GEANT4
+aliroot -b -q 'runGrid.C(0,"test",0,  60, "$TIdentityDIRcommit/lists/runsMC-2021-LHC21k2a-pass2.list",10,2018,"18q",3,0)'
+aliroot -b -q 'runGrid.C(0,"test",0,  60, "$TIdentityDIRcommit/lists/runsMC-2021-LHC21k2b-pass2.list",10,2018,"18q",3,0)'
+aliroot -b -q 'runGrid.C(0,"test",0,  60, "$TIdentityDIRcommit/lists/runsMC-2021-LHC21k2c-pass2.list",10,2018,"18q",3,0)'
+
+--> Nadines pp
+aliroot -b -q 'runGrid.C(0,"test",0,  60, "$TIdentityDIRcommit/lists/runsMC-2020-LHC20g4-pass3.list",11,2018,"18q",3,0)'
+
 ```
 
 # run fastGen
@@ -129,12 +177,27 @@ aliroot -b -q 'runGrid.C(0,"test",0,  200, "$TIdentityDIRcommit/lists/runsGen-20
 
 # copy data
 ```
-alien_cp -T 6 -parent 99 -glob AnalysisResults.root /alice/cern.ch/user/p/pwg_pp/PWGPP695_MC_remapping/LHC18q_pass3_20241001_2014 file:
+alien_cp -T 6 -parent 99 -glob AnalysisResults.root /alice/cern.ch/user/p/pwg_pp/PWGPP695_MC_remapping/sub500_5/ file:
+
+#!/bin/bash
+files=$(alien_find  /alice/cern.ch/user/p/pwg_pp/PWGPP695_MC_remapping/LHC22d1c2_pass3_20250131_2344 AnalysisResults.root)
+for f in $files; do
+  echo copy --- $f
+  alien_cp -timeout 300 -T 6 -parent 99 $f file:
+done
 ```
 
 # merge data e.g. only for ebye fluct. related objects
 ```
-alihadd -i "cleanHists" -i "momentsMCrec" -i "tracksMCrec" -i "eventInfo" -i "eventInfoMC" -i "cutBased" -s 2000000000 AnalysisResults_mcTrees.root  @file.list
+alihadd -i "momentsMCgen" -i "resonances" -i "eventInfoMC" -s 4000000000 AnalysisResults_trees.root  @files0.list
+
+alihadd -i "eventInfoMC"  -s 4000000000 AnalysisResults_eventInfoMC.root  @files0.list
+alihadd -i "momentsMCgen" -s 4000000000 AnalysisResults_momentsMCgen.root  @files0.list
+
+alihadd -i "cleanHists" AnalysisResults_hists.root  @files0.list
+alihadd -i "resonances"   -s 4000000000 AnalysisResults_resonances.root  @files0.list
+
+alihadd -k  -s 2000000000  AnalysisResults.root $(find -iname AnalysisResults.root)
 ```
 
 # kill the list of jobs 
@@ -165,8 +228,9 @@ for i in $(cat files.list); do alien.py xrdstat -O  $i ; done
 
 # check each tree size in 
 ```
+
 TFile f("AnalysisResults.root");
-Double_t treesizes[22]={0.};
+Double_t treesizes[28]={0.};
 treesizes[0] = (cleanSamp->GetZipBytes())/(1024.*1024.);
 treesizes[1] = (eventInfo->GetZipBytes())/(1024.*1024.);
 treesizes[2] = (eventInfoMC->GetZipBytes())/(1024.*1024.);
@@ -189,9 +253,19 @@ treesizes[18] = (jetsFJconst->GetZipBytes())/(1024.*1024.);
 treesizes[19] = (jetsFJGen->GetZipBytes())/(1024.*1024.);
 treesizes[20] = (jetsFJBGGen->GetZipBytes())/(1024.*1024.);
 treesizes[21] = (jetsFJconstGen->GetZipBytes())/(1024.*1024.);
+//
+treesizes[22] = (V0s->GetZipBytes())/(1024.*1024.);
+treesizes[23] = (highPt->GetZipBytes())/(1024.*1024.);
+treesizes[24] = (dEdx->GetZipBytes())/(1024.*1024.);
+treesizes[25] = (events->GetZipBytes())/(1024.*1024.);
+treesizes[26] = (eventInfoTracks->GetZipBytes())/(1024.*1024.);
+treesizes[27] = (eventInfoV0->GetZipBytes())/(1024.*1024.);
+
+
 Double_t total = 0.;
-for (Int_t i=0; i<22; i++)  { total += treesizes[i]; if (treesizes[i]>0) std:cout << "i = " << i << "  " << treesizes[i] << std::endl;}
+for (Int_t i=0; i<28; i++)  { total += treesizes[i]; if (treesizes[i]>0) std:cout << "i = " << i << "  " << treesizes[i] << std::endl;}
 std:cout << total << std::endl;
+
 ```
 
 

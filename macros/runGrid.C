@@ -113,15 +113,15 @@ lhcYear        --> year
 Bool_t fAddFilteredTrees = kTRUE;
 Bool_t fAddTIdentityTask = kTRUE;
 //
-Bool_t fUseMultSelection = kTRUE;
+Bool_t fUseMultSelection = kTRUE; // might be kFALSE for pp
 TString fname="PWGPP695_MC_remapping";  // output directory name in my home folder in alien
 //
 const Int_t timelimitTTL=15000; // in terms of hours 9000/60/60 = 2.5 hours
-const Int_t nTestFiles = 1;
+const Int_t nTestFiles = 15;
 const Int_t nEvents = -1; // set -1 for all events in a given chunk
 // run selections
 const Int_t nTestRuns = -1; // set -1 for all runs of the list
-const Int_t nChunksPerJob = 30;
+const Int_t nChunksPerJob = 10;
 
 //
 // Set the local inout directory
@@ -134,7 +134,7 @@ TString fValgrind  = "/usr/bin/valgrind --leak-check=full --leak-resolution=high
 TString fCallgrind = "/usr/bin/valgrind --tool=callgrind --log-file=cpu.txt   --num-callers=40 -v  --trace-children=yes ";
 TString fMassif    = "/usr/bin/valgrind --tool=massif ";
 
-Bool_t fDoAOD = kFALSE;
+Bool_t fDoAOD = kTRUE;
 
 void runGrid(Bool_t fRunLocalFiles = kTRUE,
   TString mode="test",
@@ -216,18 +216,14 @@ void runGrid(Bool_t fRunLocalFiles = kTRUE,
       // if (isMC==0) taskPID=AddTaskPIDResponse(kFALSE,kTRUE,kFALSE,passStr,kFALSE,"TPC-OADB:COMMON/PID/data/TPCPIDResponseOADB_pileupCorr.root;TPC-Maps:$ALICE_PHYSICS/OADB/COMMON/PID/data/TPCetaMaps_pileupCorr.root" );
       if (isMC==0) taskPID=AddTaskPIDResponse(kFALSE,kTRUE,kFALSE,passStr,kFALSE);
       // if (isMC==1 || isMC==3 || isMC==5 ) taskPID=AddTaskPIDResponse(kTRUE,kTRUE,kTRUE,passStr,kFALSE,"TPC-OADB:COMMON/PID/data/TPCPIDResponseOADB_pileupCorr.root;TPC-Maps:$ALICE_PHYSICS/OADB/COMMON/PID/data/TPCetaMaps_pileupCorr.root" );
-      if (isMC==1 || isMC==3 || isMC==5 ) taskPID=AddTaskPIDResponse(kTRUE,kTRUE,kTRUE,passStr,kFALSE);
+      if (isMC==1 || isMC==3 || isMC==5 || isMC>8 ) taskPID=AddTaskPIDResponse(kTRUE,kTRUE,kTRUE,passStr,kFALSE);
     }
     AliCentralitySelectionTask *taskCentrality=AddTaskCentrality(kTRUE, fDoAOD);
     if(fUseMultSelection){
       AliMultSelectionTask* multTask = AddTaskMultSelection();
-      if (fAddFilteredTrees)
-      {
-        AddTaskConfigOCDB("raw://");
-      }
+      if (fAddFilteredTrees) AddTaskConfigOCDB("raw://");
       std::cout << "period name = " << periodName << std::endl;
       if(periodName.Contains("15o")) multTask->SetAlternateOADBforEstimators("LHC15o-DefaultMC-HIJING");
-      //
     }
   }
   //
@@ -256,7 +252,8 @@ void runGrid(Bool_t fRunLocalFiles = kTRUE,
   } else {
     std::cout << " Info::runGrid::marsland: StartStartAnalysis over local files " << std::endl; 
     if (isMC==0){
-      chain = new TChain("esdTree");
+      if (!fDoAOD) chain = new TChain("esdTree");
+      else chain = new TChain("aodTree");
       TString localFiles[] =
       {
         "/alice/data/2018/LHC18q/000296622/pass3/18000296622035.401/AliESDs.root",
@@ -375,8 +372,8 @@ AliAnalysisGrid* CreateAlienHandler(Int_t valgrindOption = 0,TString list = "", 
   }
   else if (isMC==1) {  // RUN2 full MC gen+rec
     std::cout << " Data SOURCE = RUN2 full MC gen+rec " << std::endl;
-    plugin->SetAdditionalLibs("libAliPythia6 pythia6 Tree Geom VMC Physics Minuit Gui Minuit2 STEERBase ESD OADB ANALYSIS ANALYSISalice CDB STEER CORRFW EMCALUtils EMCALrec VZERObase VZEROrec");
-    plugin->SetAdditionalRootLibs("libVMC.so libPhysics.so libTree.so libMinuit.so libProof.so libSTEERBase.so libESD.so libAOD.so libAliPythia6.so");
+    plugin->SetAdditionalLibs("libpythia6 libAliPythia6");
+    plugin->SetAdditionalRootLibs("libpythia6.so libAliPythia6.so");
     plugin->SetGridDataDir(Form("/alice/sim/%d/%s/",year,period.Data()));
     plugin->SetDataPattern("/*/AliESDs.root");
   }
@@ -419,7 +416,29 @@ AliAnalysisGrid* CreateAlienHandler(Int_t valgrindOption = 0,TString list = "", 
     std::cout << " Data SOURCE = RUN1 full MC gen+rec AMPT " << std::endl;
     plugin->SetGridDataDir(Form("/alice/sim/%d/%s/",year,period.Data()));
     plugin->SetDataPattern("/*/AliESDs.root");
-  } else {
+  } 
+  else if (isMC==10) {  // MC using AOD --> /alice/sim/2021/LHC21k7a/297590/AOD/001/AliAOD.root
+    std::cout << " Data SOURCE = RUN2 full MC gen+rec AOD " << std::endl;
+    plugin->SetAdditionalLibs("pythia6 Tree Geom VMC Physics Minuit Gui Minuit2 STEERBase ESD OADB ANALYSIS ANALYSISalice CDB STEER CORRFW EMCALUtils EMCALrec VZERObase VZEROrec");
+    plugin->SetAdditionalRootLibs("libVMC.so libPhysics.so libTree.so libMinuit.so libProof.so libSTEERBase.so libESD.so libAOD.so libAliPythia6.so");
+    plugin->SetGridDataDir(Form("/alice/sim/%d/%s/",year,period.Data()));
+    plugin->SetDataPattern("*/AliAOD.root");
+  } 
+  else if (isMC==11) {  // MC using AOD --> /alice/sim/2021/LHC21k7a/297590/AOD/001/AliAOD.root
+    std::cout << " Data SOURCE = RUN2 full MC gen+rec AOD " << std::endl;
+    plugin->SetAdditionalLibs("pythia6 Tree Geom VMC Physics Minuit Gui Minuit2 STEERBase ESD OADB ANALYSIS ANALYSISalice CDB STEER CORRFW EMCALUtils EMCALrec VZERObase VZEROrec");
+    plugin->SetAdditionalRootLibs("libVMC.so libPhysics.so libTree.so libMinuit.so libProof.so libSTEERBase.so libESD.so libAOD.so libAliPythia6.so");
+    plugin->SetGridDataDir(Form("/alice/sim/%d/%s/",year,period.Data()));
+    plugin->SetDataPattern("*/*/AliAOD.root");
+  } 
+  else if (isMC==12) {  // MC using AOD --> /alice/sim/2021/LHC21k7a/297590/AOD/001/AliAOD.root
+    std::cout << " Data SOURCE = RUN2 full MC gen+rec AOD " << std::endl;
+    plugin->SetAdditionalLibs("pythia6 Tree Geom VMC Physics Minuit Gui Minuit2 STEERBase ESD OADB ANALYSIS ANALYSISalice CDB STEER CORRFW EMCALUtils EMCALrec VZERObase VZEROrec");
+    plugin->SetAdditionalRootLibs("libVMC.so libPhysics.so libTree.so libMinuit.so libProof.so libSTEERBase.so libESD.so libAOD.so libAliPythia6.so");
+    plugin->SetGridDataDir(Form("/alice/sim/%s/",period.Data()));
+    plugin->SetDataPattern("*/AliAOD.root");
+  } 
+  else {
     std::cout << " Unknown data source: isMC = " << isMC << std::endl;
   }
 
