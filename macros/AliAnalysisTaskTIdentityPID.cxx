@@ -4259,6 +4259,11 @@ void AliAnalysisTaskTIdentityPID::FillTreeMCAOD()
   AliAODMCParticle *trackMCgenMom;
   Int_t nStackTracks = fAOD->GetNumberOfTracks();
   TClonesArray* AODMCTrackArray = dynamic_cast<TClonesArray*>(fInputEvent->FindListObject(AliAODMCParticle::StdBranchName()));
+  Int_t ntpconlytr = 0;
+  Int_t npionstpc = 0;
+  Int_t npions = 0;
+  Int_t npions768 = 0;
+  Int_t npions16 = 0;
   for(Int_t irectrack = 0; irectrack < fAOD->GetNumberOfTracks(); irectrack++)
   {
     //
@@ -4328,6 +4333,14 @@ void AliAnalysisTaskTIdentityPID::FillTreeMCAOD()
     if (TMath::Abs(fTrackDCAxy)>4) continue;
     if (TMath::Abs(fTrackDCAz)>4) continue;
     if (fNcl<50) continue;
+    Bool_t bit128 = trackAOD->TestFilterBit(128);
+    Bool_t bit768 = trackAOD->TestFilterBit(768);
+    Bool_t bit16  = trackAOD->TestFilterBit(16);
+    if ( bit128 ) ntpconlytr++;
+    if ( bit128 && iPart==0 ) npionstpc++;
+    if ( bit768 && iPart==0 ) npions768++;
+    if ( bit16 && iPart==0 ) npions16++;
+    if ( iPart==0 ) npions++;
     //
     if (fPIDResponse) {
       fNSigmasPrITS = fPIDResponse->NumberOfSigmasITS(trackAOD, AliPID::kProton);
@@ -4389,6 +4402,11 @@ void AliAnalysisTaskTIdentityPID::FillTreeMCAOD()
     "py="                   << fPy                      << // py
     "pz="                   << fPz                      << // pz
     "pt="                   << fPtMC                    << // pz
+    "bit128="               << bit128                   << // tpc only tracks
+    "bit768="               << bit768                   << // tpc only tracks
+    "bit16="                << bit16                   << // tpc only tracks
+    "ntracks="              << nStackTracks             << // n AOD tracks
+    "cent="                 << fCentrality              << // centrality from V0
     // tpc pid
     "dEdx="                 << fTPCSignal               << // dEdx of the track
     "nsigmaTPCEl="          << fNSigmasElTPC            << // nsigma TPC for electrons
@@ -4501,6 +4519,17 @@ void AliAnalysisTaskTIdentityPID::FillTreeMCAOD()
       "\n";
     }
   }
+
+  if(!fTreeSRedirector) return;
+  (*fTreeSRedirector)<<"debug3"<<
+  "cent=" << fCentrality << // centrality from V0
+  "npions=" << npions << 
+  "npions768=" << npions768 << 
+  "npions16=" << npions16 << 
+  "npionstpc=" << npionstpc << 
+  "ntracks=" << nStackTracks << // n AOD tracks
+  "ntpconlytr=" << ntpconlytr << 
+  "\n";
 
   if (fUseCouts) std::cout << " Info::marsland: ===== Out of FillTreeMCAOD ===== " << std::endl;
 }
